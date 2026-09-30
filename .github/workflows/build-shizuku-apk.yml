@@ -1,4 +1,4 @@
-name: Build Z Fold 7 Service-Owned Dual Screen Probe Fix
+name: Build Z Fold 7 Service-Owned Dual Screen Probe Validate Fix
 
 on:
   workflow_dispatch:
@@ -810,7 +810,7 @@ jobs:
                               (
                                   width == 1968 &&
                                       height == 2184
-                                  )
+                              )
                       }.toList()
 
                   val target =
@@ -1468,8 +1468,8 @@ jobs:
           git diff --check
           git diff --stat
 
-          grep -R "source live" app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
-          grep -R "source live" app/src/main/java/com/duoopen/ui/ControlSheet.kt
+          grep -R "lastFreshState" app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
+          grep -R "Continuous angle is live." app/src/main/java/com/duoopen/ui/ControlSheet.kt
           grep -R "ENABLE_SECONDARY_DISPLAY" app/src/full/java/com/duoopen/shell
           grep -R "Enable inactive panel" app/src/main/java/com/duoopen/ui/ControlSheet.kt
           grep -R "90-second safety reset" app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
