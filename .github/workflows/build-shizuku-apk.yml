@@ -27,14 +27,7 @@ jobs:
       # ================================================================
       # ITERATION 1
       #
-      # Core Z Fold 7 correctness / jank fixes.
-      #
-      # This build:
-      # - filters duplicate Samsung wallpaper angle samples
-      # - fixes hinge event-rate bookkeeping
-      # - removes display enumeration from every hinge callback
-      # - publishes the real Shizuku angle to the app UI
-      # - fixes the misleading 0/90/180 diagnostic while Shizuku is active
+      # Core Z Fold 7 correctness / jank fixes
       # ================================================================
 
       - name: Apply Z Fold 7 core fixes
@@ -43,7 +36,7 @@ jobs:
           from pathlib import Path
 
 
-          def replace(path, old, new, count=1):
+          def replace_exact(path, old, new, count=1):
               p = Path(path)
               text = p.read_text()
 
@@ -57,28 +50,21 @@ jobs:
               p.write_text(text.replace(old, new, count))
 
 
-          # ------------------------------------------------------------
-          # HingeAngleSource
-          # ------------------------------------------------------------
+          # ============================================================
+          # HingeAngleSource.kt
           #
-          # Samsung's FoldInteractive wallpaper can emit the same angle
-          # repeatedly because Duo Open continuously asks it for a reading.
+          # Samsung's wallpaper can return the same physical angle over
+          # and over because Duo Open polls it continuously.
           #
-          # Previously every reply became an onAngle() event, even when the
-          # hinge had not physically moved.
-          #
-          # That creates unnecessary work and also keeps "movement" timers
-          # alive indefinitely while the phone is stationary.
-          #
-          # Keep the source heartbeat fresh, but only publish meaningful
-          # physical angle changes.
-          # ------------------------------------------------------------
+          # Keep the heartbeat fresh, but don't treat identical readings
+          # as actual hinge movement.
+          # ============================================================
 
           hinge = "app/src/main/java/com/duoopen/fold/HingeAngleSource.kt"
 
-          replace(
+          replace_exact(
               hinge,
-              """    fun feedExternal(angle: Float) {
+              '''    fun feedExternal(angle: Float) {
                   if (!angle.isFinite()) return
                   val now = SystemClock.uptimeMillis()
                   externalActive = true
@@ -87,21 +73,21 @@ jobs:
                   tickRate(now)
                   lastAngle = angle.coerceIn(0f, 180f)
                   onAngle(lastAngle)
-              }""",
-              """    fun feedExternal(angle: Float) {
+              }''',
+              '''    fun feedExternal(angle: Float) {
                   if (!angle.isFinite()) return
 
                   val now = SystemClock.uptimeMillis()
                   externalActive = true
                   externalLastUptime = now
 
-                  // Update the source heartbeat even while the hinge is still,
-                  // but don't turn repeated identical wallpaper responses into
-                  // fake physical hinge movement.
+                  // Preserve the heartbeat even while stationary, but don't
+                  // turn duplicate wallpaper replies into fake movement.
                   tickRate(now)
                   lastEventUptime = now
 
                   val next = angle.coerceIn(0f, 180f)
+
                   val changed =
                       lastAngle.isNaN() ||
                           abs(next - lastAngle) >= EXTERNAL_CHANGE_EPS
@@ -111,99 +97,89 @@ jobs:
                   if (changed) {
                       onAngle(next)
                   }
-              }"""
+              }'''
           )
 
-          # tickRate() checks how long it has been since the previous sample.
-          # The old code overwrote lastEventUptime first, so that comparison
-          # always saw an age of zero.
-          replace(
+          # tickRate() needs to see the PREVIOUS event time.
+          replace_exact(
               hinge,
-              """        val now = SystemClock.uptimeMillis()
+              '''        val now = SystemClock.uptimeMillis()
                   lastEventUptime = now
                   tickRate(now)
-                  lastAngle = value.coerceIn(0f, 180f)""",
-              """        val now = SystemClock.uptimeMillis()
+                  lastAngle = value.coerceIn(0f, 180f)''',
+              '''        val now = SystemClock.uptimeMillis()
                   tickRate(now)
                   lastEventUptime = now
-                  lastAngle = value.coerceIn(0f, 180f)"""
+                  lastAngle = value.coerceIn(0f, 180f)'''
           )
 
-          replace(
+          replace_exact(
               hinge,
-              """        const val EXTERNAL_STALE_MS = 3_000L
-                  val STOPS = intArrayOf(0, 90, 180)""",
-              """        const val EXTERNAL_STALE_MS = 3_000L
+              '''        const val EXTERNAL_STALE_MS = 3_000L
+                  val STOPS = intArrayOf(0, 90, 180)''',
+              '''        const val EXTERNAL_STALE_MS = 3_000L
 
-                  // Ignore tiny wallpaper-angle jitter while preserving real
-                  // hinge movement. Samsung generally reports much larger
-                  // physical changes than this threshold.
+                  // Ignore tiny Samsung wallpaper-angle jitter.
                   const val EXTERNAL_CHANGE_EPS = 0.15f
 
-                  val STOPS = intArrayOf(0, 90, 180)"""
+                  val STOPS = intArrayOf(0, 90, 180)'''
           )
 
 
-          # ------------------------------------------------------------
-          # FoldOverlayService
-          # ------------------------------------------------------------
+          # ============================================================
+          # FoldOverlayService.kt
           #
-          # The old hot path did syncDisplays() for every hinge sample.
+          # Previously syncDisplays() ran for EVERY hinge sample.
           #
-          # With a fast continuous reader that means repeatedly enumerating
-          # DisplayManager state while trying to animate.
-          #
-          # DisplayManager already has callbacks for panel state changes, so
-          # keep hinge callbacks focused on animation.
-          # ------------------------------------------------------------
+          # DisplayManager already notifies us about display changes, so
+          # don't enumerate displays on the animation hot path.
+          # ============================================================
 
           service = "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
 
-          replace(
+          replace_exact(
               service,
-              """    private fun onHinge(angle: Float) {
+              '''    private fun onHinge(angle: Float) {
                   syncDisplays()
                   for (e in engines.values.toList()) e.onHinge(angle)
-              }""",
-              """    private fun onHinge(angle: Float) {
+              }''',
+              '''    private fun onHinge(angle: Float) {
                   OverlayState.setHingeAngle(angle)
 
                   for (e in engines.values.toList()) {
                       e.onHinge(angle)
                   }
-              }"""
+              }'''
           )
 
-          replace(
+          replace_exact(
               service,
-              """        OverlayState.setRunning(false)
-                  scope.cancel()""",
-              """        OverlayState.setRunning(false)
+              '''        OverlayState.setRunning(false)
+                  scope.cancel()''',
+              '''        OverlayState.setRunning(false)
                   OverlayState.setHingeAngle(Float.NaN)
-                  scope.cancel()"""
+                  scope.cancel()'''
           )
 
 
-          # ------------------------------------------------------------
-          # OverlayState
-          # ------------------------------------------------------------
+          # ============================================================
+          # OverlayState.kt
           #
-          # Publish the real Shizuku-driven continuous angle so the app
-          # preview and diagnostics don't continue displaying the public
-          # Samsung 0/90/180 degree sensor.
-          # ------------------------------------------------------------
+          # Publish the actual continuous Shizuku-driven hinge angle to
+          # the UI.
+          # ============================================================
 
           state = "app/src/main/java/com/duoopen/overlay/OverlayState.kt"
 
-          replace(
+          replace_exact(
               state,
-              """    private val _running = MutableStateFlow(false)
+              '''    private val _running = MutableStateFlow(false)
               val running: StateFlow<Boolean> = _running.asStateFlow()
 
               internal fun setRunning(running: Boolean) {
                   _running.value = running
-              }""",
-              """    private val _running = MutableStateFlow(false)
+              }''',
+              '''    private val _running = MutableStateFlow(false)
               val running: StateFlow<Boolean> = _running.asStateFlow()
 
               private val _hingeAngle = MutableStateFlow(Float.NaN)
@@ -215,97 +191,103 @@ jobs:
 
               internal fun setHingeAngle(angle: Float) {
                   _hingeAngle.value = angle
-              }"""
+              }'''
           )
 
 
-          # ------------------------------------------------------------
-          # DuoApp
-          # ------------------------------------------------------------
+          # ============================================================
+          # DuoApp.kt
+          #
+          # Use the continuous service angle for the app preview when
+          # available.
+          # ============================================================
 
           app = "app/src/main/java/com/duoopen/ui/DuoApp.kt"
 
-          replace(
+          replace_exact(
               app,
-              """    val config by DuoSettings.config.collectAsStateWithLifecycle()
+              '''    val config by DuoSettings.config.collectAsStateWithLifecycle()
               val foldLine by foldLineFlow.collectAsStateWithLifecycle()
 
-              var hingeAngle by remember { mutableFloatStateOf(Float.NaN) }""",
-              """    val config by DuoSettings.config.collectAsStateWithLifecycle()
+              var hingeAngle by remember { mutableFloatStateOf(Float.NaN) }''',
+              '''    val config by DuoSettings.config.collectAsStateWithLifecycle()
               val foldLine by foldLineFlow.collectAsStateWithLifecycle()
               val overlayHingeAngle by OverlayState.hingeAngle.collectAsStateWithLifecycle()
 
-              var hingeAngle by remember { mutableFloatStateOf(Float.NaN) }"""
+              var hingeAngle by remember { mutableFloatStateOf(Float.NaN) }'''
           )
 
-          replace(
+          replace_exact(
               app,
-              """    val angle = if (simulate || hinge.sensor == null) simulatedAngle else hingeAngle""",
-              """    val angle = when {
+              '''    val angle = if (simulate || hinge.sensor == null) simulatedAngle else hingeAngle''',
+              '''    val angle = when {
                   simulate || hinge.sensor == null -> simulatedAngle
                   overlayHingeAngle.isFinite() -> overlayHingeAngle
                   else -> hingeAngle
-              }"""
+              }'''
           )
 
 
-          # ------------------------------------------------------------
-          # ControlSheet diagnostics
-          # ------------------------------------------------------------
+          # ============================================================
+          # ControlSheet.kt
+          #
+          # Don't claim the Fold 7 is restricted to 0/90/180 while the
+          # continuous Samsung Shizuku reader is actually running.
+          # ============================================================
 
           sheet = "app/src/main/java/com/duoopen/ui/ControlSheet.kt"
 
-          replace(
+          replace_exact(
               sheet,
-              """    var showGuide by remember { mutableStateOf(false) }""",
-              """    val continuousSamsungAngle =
+              '''    var showGuide by remember { mutableStateOf(false) }''',
+              '''    val continuousSamsungAngle =
                   shizukuReady &&
                       config.shizukuAngle &&
                       foldWallpaperActive &&
                       angleFeedStatus().contains("Reader receiving")
 
-              var showGuide by remember { mutableStateOf(false) }"""
+              var showGuide by remember { mutableStateOf(false) }'''
           )
 
-          replace(
+          replace_exact(
               sheet,
-              """            if (hasSensor && hinge.isCoarse) {
-                      Hint(
-                          "This sensor only reports 0°, 90° and 180° (the continuous one is locked to system apps on " +
-                              "Galaxy Z Fold 7 and earlier), so the fold plays as a short animation at each stop instead of " +
-                              "tracking your hand.",
-                          warn = true,
-                      )
-                  }""",
-              """            if (hasSensor && hinge.isCoarse && !continuousSamsungAngle) {
-                      Hint(
-                          "This sensor only reports 0°, 90° and 180° (the continuous one is locked to system apps on " +
-                              "Galaxy Z Fold 7 and earlier), so the fold plays as a short animation at each stop instead of " +
-                              "tracking your hand.",
-                          warn = true,
-                      )
-                  } else if (continuousSamsungAngle) {
-                      Hint(
-                          "Continuous Samsung hinge angle is active through Shizuku; " +
-                              "the preview and whole-screen effect are using it.",
-                      )
-                  }"""
+              '''            if (hasSensor && hinge.isCoarse) {
+                  Hint(
+                      "This sensor only reports 0°, 90° and 180° (the continuous one is locked to system apps on " +
+                          "Galaxy Z Fold 7 and earlier), so the fold plays as a short animation at each stop instead of " +
+                          "tracking your hand.",
+                      warn = true,
+                  )
+              }''',
+              '''            if (hasSensor && hinge.isCoarse && !continuousSamsungAngle) {
+                  Hint(
+                      "This sensor only reports 0°, 90° and 180° (the continuous one is locked to system apps on " +
+                          "Galaxy Z Fold 7 and earlier), so the fold plays as a short animation at each stop instead of " +
+                          "tracking your hand.",
+                      warn = true,
+                  )
+              } else if (continuousSamsungAngle) {
+                  Hint(
+                      "Continuous Samsung hinge angle is active through Shizuku; " +
+                          "the preview and whole-screen effect are using it.",
+                  )
+              }'''
           )
 
 
-          # ------------------------------------------------------------
-          # Give iteration 1 its own version
-          # ------------------------------------------------------------
+          # ============================================================
+          # Version iteration 1
+          # ============================================================
 
           gradle = "app/build.gradle.kts"
 
-          replace(
+          replace_exact(
               gradle,
               'versionCode = 4',
               'versionCode = 5'
           )
 
-          replace(
+          replace_exact(
               gradle,
               'versionName = "1.3.0"',
               'versionName = "1.3.1-zfold7-core"'
@@ -318,7 +300,6 @@ jobs:
         run: |
           git diff --check
           git diff --stat
-          git diff
 
       - name: Compile and test iteration 1
         run: |
@@ -336,19 +317,11 @@ jobs:
           cp "$CORE_APK" \
             zfold7-artifacts/DuoOpen-ZFold7-core-debug.apk
 
+
       # ================================================================
       # ITERATION 2
       #
-      # Smoothness / latency pass.
-      #
-      # Builds on iteration 1.
-      #
-      # This build:
-      # - runs Samsung angle polling much faster during movement
-      # - falls back to slower polling when stationary
-      # - reduces continuous hinge smoothing latency
-      # - completion-paces Shizuku screen captures
-      # - avoids capture interval = capture time + fixed 80ms
+      # Smoothness / latency enhancements
       # ================================================================
 
       - name: Apply Z Fold 7 smoothness enhancements
@@ -357,7 +330,7 @@ jobs:
           from pathlib import Path
 
 
-          def replace(path, old, new, count=1):
+          def replace_exact(path, old, new, count=1):
               p = Path(path)
               text = p.read_text()
 
@@ -371,50 +344,49 @@ jobs:
               p.write_text(text.replace(old, new, count))
 
 
-          # ------------------------------------------------------------
-          # WallpaperAngleFeed
-          # ------------------------------------------------------------
+          # ============================================================
+          # WallpaperAngleFeed.kt
           #
-          # Existing implementation: one request every 33ms (~30 Hz).
+          # Existing behavior:
+          #     33 ms polling = ~30 Hz
           #
-          # New behavior:
-          # - 33ms while stationary
-          # - 8ms while physical movement is being observed
+          # Enhanced behavior:
+          #     33 ms while stationary
+          #      8 ms while moving = ~125 Hz target
           #
-          # That puts hinge updates much closer to the Fold 7's display
-          # refresh cadence without polling hard all day while stationary.
-          # ------------------------------------------------------------
+          # This is much better aligned with the Fold 7's 120 Hz panel.
+          # ============================================================
 
           feed = "app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt"
 
-          replace(
+          replace_exact(
               feed,
-              """import com.duoopen.fold.HingeAngleSource""",
-              """import com.duoopen.fold.HingeAngleSource
-          import kotlin.math.abs"""
+              '''import com.duoopen.fold.HingeAngleSource''',
+              '''import com.duoopen.fold.HingeAngleSource
+          import kotlin.math.abs'''
           )
 
-          replace(
+          replace_exact(
               feed,
-              """ * wallpaper through it at [POLL_MS], and let the Shizuku-side log reader""",
-              """ * wallpaper through it at an adaptive cadence, and let the Shizuku-side log reader"""
+              ''' * wallpaper through it at [POLL_MS], and let the Shizuku-side log reader''',
+              ''' * wallpaper through it at an adaptive cadence, and let the Shizuku-side log reader'''
           )
 
-          replace(
+          replace_exact(
               feed,
-              """    private var anchorKey = ""
-              private var lastCallbackUptime = 0L""",
-              """    private var anchorKey = ""
+              '''    private var anchorKey = ""
+              private var lastCallbackUptime = 0L''',
+              '''    private var anchorKey = ""
               private var lastCallbackUptime = 0L
 
               private var lastAngleSeen = Float.NaN
-              private var lastAngleChangeUptime = 0L"""
+              private var lastAngleChangeUptime = 0L'''
           )
 
-          replace(
+          replace_exact(
               feed,
-              """            handler.postDelayed(this, POLL_MS)""",
-              """            val now = SystemClock.uptimeMillis()
+              '''            handler.postDelayed(this, POLL_MS)''',
+              '''            val now = SystemClock.uptimeMillis()
 
                   val moving =
                       lastAngleChangeUptime != 0L &&
@@ -423,30 +395,31 @@ jobs:
                   handler.postDelayed(
                       this,
                       if (moving) ACTIVE_POLL_MS else IDLE_POLL_MS,
-                  )"""
+                  )'''
           )
 
-          replace(
+          replace_exact(
               feed,
-              """        running = true
+              '''        running = true
               startedAt = SystemClock.uptimeMillis()
-              status = "Starting" """.rstrip(),
-              """        running = true
+              status = "Starting"''',
+              '''        running = true
               startedAt = SystemClock.uptimeMillis()
+
               lastAngleSeen = Float.NaN
               lastAngleChangeUptime = 0L
-              status = "Starting" """
-              .rstrip()
+
+              status = "Starting"'''
           )
 
-          replace(
+          replace_exact(
               feed,
-              """    private fun onAngle(angle: Float) {
+              '''    private fun onAngle(angle: Float) {
                   if (!running) return
                   lastCallbackUptime = SystemClock.uptimeMillis()
                   hinge.feedExternal(angle)
-              }""",
-              """    private fun onAngle(angle: Float) {
+              }''',
+              '''    private fun onAngle(angle: Float) {
                   if (!running) return
 
                   val now = SystemClock.uptimeMillis()
@@ -461,42 +434,40 @@ jobs:
                   }
 
                   hinge.feedExternal(angle)
-              }"""
+              }'''
           )
 
-          replace(
+          replace_exact(
               feed,
-              """        const val POLL_MS = 33L
-                  private const val STALE_MS = 2_500L""",
-              """        // At rest there is no reason to hammer Samsung's
-                  // wallpaper service. Once movement begins, burst close to
-                  // display-refresh cadence for responsive animation.
+              '''        const val POLL_MS = 33L
+                  private const val STALE_MS = 2_500L''',
+              '''        // Low-overhead polling at rest; burst close to the
+                  // display refresh rate while the hinge is moving.
                   const val IDLE_POLL_MS = 33L
                   const val ACTIVE_POLL_MS = 8L
                   const val ACTIVE_BURST_MS = 750L
                   const val ANGLE_CHANGE_EPS = 0.15f
 
-                  private const val STALE_MS = 2_500L"""
+                  private const val STALE_MS = 2_500L'''
           )
 
 
-          # ------------------------------------------------------------
-          # PanelEngine
-          # ------------------------------------------------------------
+          # ============================================================
+          # PanelEngine.kt
           #
-          # Continuous Samsung angle input benefits from slightly less
-          # follower smoothing than a coarse/noisy public sensor.
-          # ------------------------------------------------------------
+          # Reduce smoothing latency when a real continuous Samsung
+          # angle is being supplied.
+          # ============================================================
 
           engine = "app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
 
-          replace(
+          replace_exact(
               engine,
-              """        follower = TiltFollower { t ->
+              '''        follower = TiltFollower { t ->
                   created.tilt = t
                   if (t < DuoShader.FLAT_EPSILON && !demoRunning) dismiss(fadeMs = FADE_OUT_FLAT_MS)
-              }.also { it.snap(startTilt) }""",
-              """        follower = TiltFollower { t ->
+              }.also { it.snap(startTilt) }''',
+              '''        follower = TiltFollower { t ->
                   created.tilt = t
 
                   if (t < DuoShader.FLAT_EPSILON && !demoRunning) {
@@ -508,28 +479,27 @@ jobs:
                   if (hinge.externalActive && easeTo == null) {
                       it.tauS = SAMSUNG_LIVE_TAU_S
                   }
-              }"""
+              }'''
           )
 
 
-          # ------------------------------------------------------------
-          # Completion-paced screen capture
-          # ------------------------------------------------------------
+          # ============================================================
+          # Live Shizuku capture loop
           #
-          # Existing loop:
+          # Old:
+          #     ~50 ms capture
+          #     + 80 ms wait
+          #     = ~130 ms/frame in practice
           #
-          # capture takes ~50ms
-          # THEN wait another 80ms
+          # New:
+          #     completion-paced around 60 ms/frame
           #
-          # = roughly one frame every 130ms in practice.
-          #
-          # New loop targets one completed frame every ~60ms, but never
-          # allows overlapping captures.
-          # ------------------------------------------------------------
+          # Captures never overlap.
+          # ============================================================
 
-          replace(
+          replace_exact(
               engine,
-              """    private fun startLiveLoop() {
+              '''    private fun startLiveLoop() {
                   if (liveLoop) return
                   liveLoop = true
                   val myGen = captureGen
@@ -551,8 +521,8 @@ jobs:
                       }
                   }
                   handler.postDelayed({ tick() }, LIVE_INTERVAL_MS)
-              }""",
-              """    private fun startLiveLoop() {
+              }''',
+              '''    private fun startLiveLoop() {
                   if (liveLoop) return
 
                   liveLoop = true
@@ -572,7 +542,10 @@ jobs:
 
                       val s = surface as? SnapshotSurface
 
-                      if (s == null || s.tilt < DuoShader.FLAT_EPSILON) {
+                      if (
+                          s == null ||
+                          s.tilt < DuoShader.FLAT_EPSILON
+                      ) {
                           handler.postDelayed(
                               { tick() },
                               LIVE_FRAME_PERIOD_MS,
@@ -613,7 +586,10 @@ jobs:
 
                               frames++
 
-                              if (frames == 1 || frames % 25 == 0) {
+                              if (
+                                  frames == 1 ||
+                                  frames % 25 == 0
+                              ) {
                                   Log.i(
                                       TAG,
                                       "display $displayId: live frame $frames " +
@@ -624,11 +600,10 @@ jobs:
 
                           // Completion-paced:
                           //
-                          // If capture took 50ms, wait about 10ms.
-                          // If capture took >=60ms, immediately request the
-                          // next frame.
+                          // Capture took 50 ms -> wait about 10 ms.
+                          // Capture took >=60 ms -> continue immediately.
                           //
-                          // We never queue concurrent captures.
+                          // No overlapping capture requests.
                           val delay =
                               (
                                   frameStarted +
@@ -647,53 +622,51 @@ jobs:
                       { tick() },
                       LIVE_START_DELAY_MS,
                   )
-              }"""
+              }'''
           )
 
-          replace(
+          replace_exact(
               engine,
-              """        /** Shizuku capture: full-size first frame, half-size live frames at ~12 fps. */
+              '''        /** Shizuku capture: full-size first frame, half-size live frames at ~12 fps. */
                   const val INITIAL_SHELL_SCALE = 1f
                   const val LIVE_SHELL_SCALE = 0.5f
                   const val LIVE_INTERVAL_MS = 80L
-                  const val SHELL_RETRY_MS = 60L""",
-              """        /**
+                  const val SHELL_RETRY_MS = 60L''',
+              '''        /**
                    * Shizuku capture:
                    *
-                   * - full resolution for the initial frame
-                   * - reduced resolution for rapidly refreshed frames under
-                   *   the frost
-                   * - completion-paced around 16 fps rather than adding a
-                   *   fixed delay after capture completion
+                   * Full resolution initial capture, then reduced-resolution
+                   * completion-paced live frames.
                    */
                   const val INITIAL_SHELL_SCALE = 1f
                   const val LIVE_SHELL_SCALE = 0.45f
+
                   const val LIVE_FRAME_PERIOD_MS = 60L
                   const val LIVE_START_DELAY_MS = 20L
 
                   /**
-                   * Samsung's Shizuku wallpaper angle is continuous and high
-                   * frequency, so use less smoothing than the public sensor.
+                   * The Samsung Shizuku source is continuous and frequent,
+                   * so it needs less smoothing than the public hinge sensor.
                    */
                   const val SAMSUNG_LIVE_TAU_S = 0.030f
 
-                  const val SHELL_RETRY_MS = 60L"""
+                  const val SHELL_RETRY_MS = 60L'''
           )
 
 
-          # ------------------------------------------------------------
-          # Iteration 2 version
-          # ------------------------------------------------------------
+          # ============================================================
+          # Version iteration 2
+          # ============================================================
 
           gradle = "app/build.gradle.kts"
 
-          replace(
+          replace_exact(
               gradle,
               'versionCode = 5',
               'versionCode = 6'
           )
 
-          replace(
+          replace_exact(
               gradle,
               'versionName = "1.3.1-zfold7-core"',
               'versionName = "1.3.1-zfold7-enhanced"'
@@ -720,6 +693,11 @@ jobs:
 
           cp "$ENHANCED_APK" \
             zfold7-artifacts/DuoOpen-ZFold7-enhanced-debug.apk
+
+
+      # ================================================================
+      # ARTIFACTS
+      # ================================================================
 
       - name: APK checksums
         run: |
