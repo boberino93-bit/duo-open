@@ -24,10 +24,13 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x gradlew
 
+      - name: Create artifact directory
+        run: mkdir -p zfold7-artifacts
+
       # ================================================================
       # ITERATION 1
       #
-      # Core Z Fold 7 correctness / jank fixes
+      # Core correctness / jank fixes
       # ================================================================
 
       - name: Apply Z Fold 7 core fixes
@@ -42,23 +45,24 @@ jobs:
 
               if old not in text:
                   raise SystemExit(
-                      f"\nExpected source block was not found in {path}.\n"
-                      f"Patch stopped rather than silently producing a bad build.\n\n"
-                      f"{old}\n"
+                      f"\nExpected source block not found in {path}\n\n{old}\n"
                   )
 
               p.write_text(text.replace(old, new, count))
 
 
-          # ============================================================
-          # HingeAngleSource.kt
+          # ------------------------------------------------------------
+          # HingeAngleSource
           #
-          # Samsung's wallpaper can return the same physical angle over
-          # and over because Duo Open polls it continuously.
+          # Samsung's FoldInteractive wallpaper repeatedly reports the
+          # same angle while stationary.
           #
-          # Keep the heartbeat fresh, but don't treat identical readings
-          # as actual hinge movement.
-          # ============================================================
+          # Previously every duplicate callback was treated as physical
+          # hinge movement.
+          #
+          # Keep the data-source heartbeat alive, but only drive animation
+          # when the hinge actually changes.
+          # ------------------------------------------------------------
 
           hinge = "app/src/main/java/com/duoopen/fold/HingeAngleSource.kt"
 
@@ -78,16 +82,19 @@ jobs:
                   if (!angle.isFinite()) return
 
                   val now = SystemClock.uptimeMillis()
+
                   externalActive = true
                   externalLastUptime = now
 
-                  // Preserve the heartbeat even while stationary, but don't
-                  // turn duplicate wallpaper replies into fake movement.
+                  // Measure the source rate before overwriting the previous
+                  // timestamp.
                   tickRate(now)
                   lastEventUptime = now
 
                   val next = angle.coerceIn(0f, 180f)
 
+                  // Samsung's wallpaper commonly returns the exact same angle
+                  // repeatedly. That is a heartbeat, not hinge movement.
                   val changed =
                       lastAngle.isNaN() ||
                           abs(next - lastAngle) >= EXTERNAL_CHANGE_EPS
@@ -100,7 +107,8 @@ jobs:
               }'''
           )
 
-          # tickRate() needs to see the PREVIOUS event time.
+
+          # The public sensor path had the same event-rate ordering issue.
           replace_exact(
               hinge,
               '''        val now = SystemClock.uptimeMillis()
@@ -113,27 +121,32 @@ jobs:
                   lastAngle = value.coerceIn(0f, 180f)'''
           )
 
+
           replace_exact(
               hinge,
               '''        const val EXTERNAL_STALE_MS = 3_000L
                   val STOPS = intArrayOf(0, 90, 180)''',
               '''        const val EXTERNAL_STALE_MS = 3_000L
 
-                  // Ignore tiny Samsung wallpaper-angle jitter.
+                  /**
+                   * Ignore tiny changes/noise from the Samsung wallpaper
+                   * reader while retaining real physical hinge movement.
+                   */
                   const val EXTERNAL_CHANGE_EPS = 0.15f
 
                   val STOPS = intArrayOf(0, 90, 180)'''
           )
 
 
-          # ============================================================
-          # FoldOverlayService.kt
+          # ------------------------------------------------------------
+          # FoldOverlayService
           #
-          # Previously syncDisplays() ran for EVERY hinge sample.
+          # syncDisplays() was running on EVERY hinge update.
           #
-          # DisplayManager already notifies us about display changes, so
-          # don't enumerate displays on the animation hot path.
-          # ============================================================
+          # With a continuous angle source this is unnecessarily expensive.
+          #
+          # DisplayManager already generates events when displays change.
+          # ------------------------------------------------------------
 
           service = "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
 
@@ -144,140 +157,16 @@ jobs:
                   for (e in engines.values.toList()) e.onHinge(angle)
               }''',
               '''    private fun onHinge(angle: Float) {
-                  OverlayState.setHingeAngle(angle)
-
                   for (e in engines.values.toList()) {
                       e.onHinge(angle)
                   }
               }'''
           )
 
-          replace_exact(
-              service,
-              '''        OverlayState.setRunning(false)
-                  scope.cancel()''',
-              '''        OverlayState.setRunning(false)
-                  OverlayState.setHingeAngle(Float.NaN)
-                  scope.cancel()'''
-          )
 
-
-          # ============================================================
-          # OverlayState.kt
-          #
-          # Publish the actual continuous Shizuku-driven hinge angle to
-          # the UI.
-          # ============================================================
-
-          state = "app/src/main/java/com/duoopen/overlay/OverlayState.kt"
-
-          replace_exact(
-              state,
-              '''    private val _running = MutableStateFlow(false)
-              val running: StateFlow<Boolean> = _running.asStateFlow()
-
-              internal fun setRunning(running: Boolean) {
-                  _running.value = running
-              }''',
-              '''    private val _running = MutableStateFlow(false)
-              val running: StateFlow<Boolean> = _running.asStateFlow()
-
-              private val _hingeAngle = MutableStateFlow(Float.NaN)
-              val hingeAngle: StateFlow<Float> = _hingeAngle.asStateFlow()
-
-              internal fun setRunning(running: Boolean) {
-                  _running.value = running
-              }
-
-              internal fun setHingeAngle(angle: Float) {
-                  _hingeAngle.value = angle
-              }'''
-          )
-
-
-          # ============================================================
-          # DuoApp.kt
-          #
-          # Use the continuous service angle for the app preview when
-          # available.
-          # ============================================================
-
-          app = "app/src/main/java/com/duoopen/ui/DuoApp.kt"
-
-          replace_exact(
-              app,
-              '''    val config by DuoSettings.config.collectAsStateWithLifecycle()
-              val foldLine by foldLineFlow.collectAsStateWithLifecycle()
-
-              var hingeAngle by remember { mutableFloatStateOf(Float.NaN) }''',
-              '''    val config by DuoSettings.config.collectAsStateWithLifecycle()
-              val foldLine by foldLineFlow.collectAsStateWithLifecycle()
-              val overlayHingeAngle by OverlayState.hingeAngle.collectAsStateWithLifecycle()
-
-              var hingeAngle by remember { mutableFloatStateOf(Float.NaN) }'''
-          )
-
-          replace_exact(
-              app,
-              '''    val angle = if (simulate || hinge.sensor == null) simulatedAngle else hingeAngle''',
-              '''    val angle = when {
-                  simulate || hinge.sensor == null -> simulatedAngle
-                  overlayHingeAngle.isFinite() -> overlayHingeAngle
-                  else -> hingeAngle
-              }'''
-          )
-
-
-          # ============================================================
-          # ControlSheet.kt
-          #
-          # Don't claim the Fold 7 is restricted to 0/90/180 while the
-          # continuous Samsung Shizuku reader is actually running.
-          # ============================================================
-
-          sheet = "app/src/main/java/com/duoopen/ui/ControlSheet.kt"
-
-          replace_exact(
-              sheet,
-              '''    var showGuide by remember { mutableStateOf(false) }''',
-              '''    val continuousSamsungAngle =
-                  shizukuReady &&
-                      config.shizukuAngle &&
-                      foldWallpaperActive &&
-                      angleFeedStatus().contains("Reader receiving")
-
-              var showGuide by remember { mutableStateOf(false) }'''
-          )
-
-          replace_exact(
-              sheet,
-              '''            if (hasSensor && hinge.isCoarse) {
-                  Hint(
-                      "This sensor only reports 0°, 90° and 180° (the continuous one is locked to system apps on " +
-                          "Galaxy Z Fold 7 and earlier), so the fold plays as a short animation at each stop instead of " +
-                          "tracking your hand.",
-                      warn = true,
-                  )
-              }''',
-              '''            if (hasSensor && hinge.isCoarse && !continuousSamsungAngle) {
-                  Hint(
-                      "This sensor only reports 0°, 90° and 180° (the continuous one is locked to system apps on " +
-                          "Galaxy Z Fold 7 and earlier), so the fold plays as a short animation at each stop instead of " +
-                          "tracking your hand.",
-                      warn = true,
-                  )
-              } else if (continuousSamsungAngle) {
-                  Hint(
-                      "Continuous Samsung hinge angle is active through Shizuku; " +
-                          "the preview and whole-screen effect are using it.",
-                  )
-              }'''
-          )
-
-
-          # ============================================================
-          # Version iteration 1
-          # ============================================================
+          # ------------------------------------------------------------
+          # Version this iteration separately
+          # ------------------------------------------------------------
 
           gradle = "app/build.gradle.kts"
 
@@ -293,24 +182,25 @@ jobs:
               'versionName = "1.3.1-zfold7-core"'
           )
 
-          print("Iteration 1 patches applied successfully.")
+          print("Core Z Fold 7 patches applied.")
           PY
 
-      - name: Check iteration 1 patch
+
+      - name: Validate core source patch
         run: |
           git diff --check
           git diff --stat
+          git diff > zfold7-artifacts/zfold7-core.patch
 
-      - name: Compile and test iteration 1
+
+      - name: Compile and test core iteration
         run: |
           ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
-
-          mkdir -p zfold7-artifacts
 
           CORE_APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
 
           if [ -z "$CORE_APK" ]; then
-            echo "Iteration 1 APK was not produced."
+            echo "Core APK was not produced."
             exit 1
           fi
 
@@ -321,7 +211,7 @@ jobs:
       # ================================================================
       # ITERATION 2
       #
-      # Smoothness / latency enhancements
+      # Latency / smoothness overhaul
       # ================================================================
 
       - name: Apply Z Fold 7 smoothness enhancements
@@ -336,26 +226,26 @@ jobs:
 
               if old not in text:
                   raise SystemExit(
-                      f"\nExpected source block was not found in {path}.\n"
-                      f"Patch stopped rather than silently producing a bad build.\n\n"
-                      f"{old}\n"
+                      f"\nExpected source block not found in {path}\n\n{old}\n"
                   )
 
               p.write_text(text.replace(old, new, count))
 
 
-          # ============================================================
-          # WallpaperAngleFeed.kt
+          # ------------------------------------------------------------
+          # WallpaperAngleFeed
           #
-          # Existing behavior:
-          #     33 ms polling = ~30 Hz
+          # Old:
+          #     fixed 33 ms polling
+          #     ~= 30 angle requests/sec
           #
-          # Enhanced behavior:
-          #     33 ms while stationary
-          #      8 ms while moving = ~125 Hz target
+          # New:
+          #     33 ms at rest
+          #      8 ms while moving
           #
-          # This is much better aligned with the Fold 7's 120 Hz panel.
-          # ============================================================
+          # The Fold 7 has a 120 Hz display, so a ~125 Hz target while
+          # physically folding gives the renderer much fresher input.
+          # ------------------------------------------------------------
 
           feed = "app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt"
 
@@ -366,11 +256,13 @@ jobs:
           import kotlin.math.abs'''
           )
 
+
           replace_exact(
               feed,
               ''' * wallpaper through it at [POLL_MS], and let the Shizuku-side log reader''',
               ''' * wallpaper through it at an adaptive cadence, and let the Shizuku-side log reader'''
           )
+
 
           replace_exact(
               feed,
@@ -382,6 +274,7 @@ jobs:
               private var lastAngleSeen = Float.NaN
               private var lastAngleChangeUptime = 0L'''
           )
+
 
           replace_exact(
               feed,
@@ -398,6 +291,7 @@ jobs:
                   )'''
           )
 
+
           replace_exact(
               feed,
               '''        running = true
@@ -411,6 +305,7 @@ jobs:
 
               status = "Starting"'''
           )
+
 
           replace_exact(
               feed,
@@ -437,12 +332,16 @@ jobs:
               }'''
           )
 
+
           replace_exact(
               feed,
               '''        const val POLL_MS = 33L
                   private const val STALE_MS = 2_500L''',
-              '''        // Low-overhead polling at rest; burst close to the
-                  // display refresh rate while the hinge is moving.
+              '''        /**
+                   * Idle polling keeps the Samsung source alive cheaply.
+                   * During real hinge movement we burst near the panel's
+                   * 120 Hz refresh cadence.
+                   */
                   const val IDLE_POLL_MS = 33L
                   const val ACTIVE_POLL_MS = 8L
                   const val ACTIVE_BURST_MS = 750L
@@ -452,12 +351,13 @@ jobs:
           )
 
 
-          # ============================================================
-          # PanelEngine.kt
+          # ------------------------------------------------------------
+          # PanelEngine
           #
-          # Reduce smoothing latency when a real continuous Samsung
-          # angle is being supplied.
-          # ============================================================
+          # Use less temporal smoothing for the real continuous Samsung
+          # source. The original follower was designed around much slower
+          # ~50 Hz / stepped hinge data.
+          # ------------------------------------------------------------
 
           engine = "app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
 
@@ -470,32 +370,46 @@ jobs:
               '''        follower = TiltFollower { t ->
                   created.tilt = t
 
-                  if (t < DuoShader.FLAT_EPSILON && !demoRunning) {
+                  if (
+                      t < DuoShader.FLAT_EPSILON &&
+                      !demoRunning
+                  ) {
                       dismiss(fadeMs = FADE_OUT_FLAT_MS)
                   }
               }.also {
                   it.snap(startTilt)
 
-                  if (hinge.externalActive && easeTo == null) {
+                  if (
+                      hinge.externalActive &&
+                      easeTo == null
+                  ) {
                       it.tauS = SAMSUNG_LIVE_TAU_S
                   }
               }'''
           )
 
 
-          # ============================================================
-          # Live Shizuku capture loop
+          # ------------------------------------------------------------
+          # Shizuku live-capture pipeline
           #
-          # Old:
-          #     ~50 ms capture
-          #     + 80 ms wait
-          #     = ~130 ms/frame in practice
+          # Old scheduling:
           #
-          # New:
-          #     completion-paced around 60 ms/frame
+          #     capture (~50 ms)
+          #     THEN wait 80 ms
           #
-          # Captures never overlap.
-          # ============================================================
+          # Actual cadence can therefore approach 130 ms/frame,
+          # only ~7.7 FPS.
+          #
+          # New scheduling is completion-paced:
+          #
+          #     start capture
+          #     aim for next frame at T + 60 ms
+          #
+          # If capture takes 50 ms -> wait ~10 ms.
+          # If capture takes 70 ms -> immediately continue.
+          #
+          # Captures are still strictly sequential, never overlapping.
+          # ------------------------------------------------------------
 
           replace_exact(
               engine,
@@ -563,16 +477,18 @@ jobs:
                           return
                       }
 
-                      val frameStarted = SystemClock.uptimeMillis()
+                      val frameStarted =
+                          SystemClock.uptimeMillis()
 
                       scope.launch {
-                          val frame = withContext(Dispatchers.IO) {
-                              ShizukuBridge.capture(
-                                  displayId,
-                                  excluded,
-                                  LIVE_SHELL_SCALE,
-                              )
-                          }
+                          val frame =
+                              withContext(Dispatchers.IO) {
+                                  ShizukuBridge.capture(
+                                      displayId,
+                                      excluded,
+                                      LIVE_SHELL_SCALE,
+                                  )
+                              }
 
                           if (
                               liveLoop &&
@@ -598,13 +514,7 @@ jobs:
                               }
                           }
 
-                          // Completion-paced:
-                          //
-                          // Capture took 50 ms -> wait about 10 ms.
-                          // Capture took >=60 ms -> continue immediately.
-                          //
-                          // No overlapping capture requests.
-                          val delay =
+                          val nextDelay =
                               (
                                   frameStarted +
                                       LIVE_FRAME_PERIOD_MS -
@@ -613,7 +523,7 @@ jobs:
 
                           handler.postDelayed(
                               { tick() },
-                              delay,
+                              nextDelay,
                           )
                       }
                   }
@@ -625,6 +535,7 @@ jobs:
               }'''
           )
 
+
           replace_exact(
               engine,
               '''        /** Shizuku capture: full-size first frame, half-size live frames at ~12 fps. */
@@ -633,10 +544,11 @@ jobs:
                   const val LIVE_INTERVAL_MS = 80L
                   const val SHELL_RETRY_MS = 60L''',
               '''        /**
-                   * Shizuku capture:
+                   * Full-resolution initial capture followed by reduced-size
+                   * live frames.
                    *
-                   * Full resolution initial capture, then reduced-resolution
-                   * completion-paced live frames.
+                   * The live loop is completion-paced, not capture time plus
+                   * an additional fixed sleep.
                    */
                   const val INITIAL_SHELL_SCALE = 1f
                   const val LIVE_SHELL_SCALE = 0.45f
@@ -645,8 +557,8 @@ jobs:
                   const val LIVE_START_DELAY_MS = 20L
 
                   /**
-                   * The Samsung Shizuku source is continuous and frequent,
-                   * so it needs less smoothing than the public hinge sensor.
+                   * Continuous Samsung input can use a much faster follower
+                   * than the coarse/public sensor path.
                    */
                   const val SAMSUNG_LIVE_TAU_S = 0.030f
 
@@ -654,9 +566,9 @@ jobs:
           )
 
 
-          # ============================================================
+          # ------------------------------------------------------------
           # Version iteration 2
-          # ============================================================
+          # ------------------------------------------------------------
 
           gradle = "app/build.gradle.kts"
 
@@ -672,22 +584,25 @@ jobs:
               'versionName = "1.3.1-zfold7-enhanced"'
           )
 
-          print("Iteration 2 patches applied successfully.")
+          print("Enhanced Z Fold 7 patches applied.")
           PY
 
-      - name: Check iteration 2 patch
+
+      - name: Validate enhanced source patch
         run: |
           git diff --check
           git diff --stat
+          git diff > zfold7-artifacts/zfold7-enhanced.patch
 
-      - name: Compile and test iteration 2
+
+      - name: Compile and test enhanced iteration
         run: |
           ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
 
           ENHANCED_APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
 
           if [ -z "$ENHANCED_APK" ]; then
-            echo "Iteration 2 APK was not produced."
+            echo "Enhanced APK was not produced."
             exit 1
           fi
 
@@ -696,22 +611,23 @@ jobs:
 
 
       # ================================================================
-      # ARTIFACTS
+      # RESULTS
       # ================================================================
 
       - name: APK checksums
         run: |
           echo
-          echo "Built APKs:"
+          echo "Artifacts:"
           ls -lh zfold7-artifacts
           echo
-          echo "SHA-256:"
+          echo "APK SHA-256:"
           sha256sum zfold7-artifacts/*.apk
 
-      - name: Upload both APKs
+
+      - name: Upload Z Fold 7 builds and patches
         uses: actions/upload-artifact@v4
         with:
           name: DuoOpen-ZFold7-debug-variants
-          path: zfold7-artifacts/*.apk
+          path: zfold7-artifacts/*
           if-no-files-found: error
           retention-days: 30
