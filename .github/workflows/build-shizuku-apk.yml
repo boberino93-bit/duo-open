@@ -1,4 +1,4 @@
-name: Build Z Fold 7 Dual Power + OLED Idle Dim
+name: Build Z Fold 7 Dual Power + OLED Idle Dim Fix
 
 on:
   workflow_dispatch:
@@ -746,25 +746,14 @@ jobs:
 
           replace_once(
               service_path,
-              """                enable ->
-                              "The enable command returned without an error, but " +
-                                  "display $target is not exposed as active yet."
-
-                          else ->
-                              "Secondary panel power was returned to Samsung."
-          """,
-              """                enable ->
-                              "The enable command returned without an error, but " +
-                                  "display $target is not exposed as active yet."
-
-                          !visibleAfter ->
-                              "Success: display $target is disabled and Samsung can " +
-                                  "resume normal one-panel fold behavior."
-
-                          else ->
-                              "The disable command returned without an error, but " +
-                                  "display $target is still exposed."
-          """,
+              '"Secondary panel power was returned to Samsung."',
+              """if (!visibleAfter) {
+                                  "Success: display $target is disabled and Samsung can " +
+                                      "resume normal one-panel fold behavior."
+                              } else {
+                                  "The disable command returned without an error, but " +
+                                      "display $target is still exposed."
+                              }""",
               "FoldOverlayService disable result",
           )
 
