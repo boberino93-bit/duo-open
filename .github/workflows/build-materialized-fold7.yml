@@ -57,7 +57,7 @@ jobs:
               Path(path).write_text(value, encoding="utf-8")
 
           def sub_once(value: str, pattern: str, repl: str, label: str, flags=re.DOTALL) -> str:
-              out, count = re.subn(pattern, repl, value, count=1, flags=flags)
+              out, count = re.subn(pattern, lambda _: repl, value, count=1, flags=flags)
               if count != 1:
                   raise SystemExit(f"{label}: expected exactly one match, found {count}")
               return out
