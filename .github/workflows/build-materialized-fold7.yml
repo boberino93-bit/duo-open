@@ -21,7 +21,7 @@ jobs:
           ref: generated/fold7-1.3.16-baseline
           fetch-depth: 0
 
-      - name: Overlay 1.3.18 source from main
+      - name: Overlay 1.3.19 source from main
         shell: bash
         run: |
           set -euo pipefail
@@ -83,7 +83,7 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x gradlew
 
-      - name: Validate Fold7 1.3.18 source
+      - name: Validate Fold7 1.3.19 source
         shell: bash
         run: |
           set -euo pipefail
@@ -117,11 +117,11 @@ jobs:
           echo "Checking version..."
 
           grep -F \
-            'versionCode = 22' \
+            'versionCode = 23' \
             "$GRADLE"
 
           grep -F \
-            'versionName = "1.3.18-zfold7-opening-sync"' \
+            'versionName = "1.3.19-zfold7-stability"' \
             "$GRADLE"
 
           echo
@@ -171,7 +171,7 @@ jobs:
             "$SERVICE"
 
           echo
-          echo "Checking 1.3.18 opening-sync fixes..."
+          echo "Checking 1.3.19 stability fixes..."
 
           grep -F \
             'host seeded hinge=' \
@@ -182,12 +182,20 @@ jobs:
             "$ANGLES"
 
           grep -F \
-            'hiddenTrusted' \
+            'if (!visible)' \
             "$SHELL"
 
           grep -F \
-            'hiddenAccepted' \
-            "$SHELL"
+            'display callbacks coalesced reason=' \
+            "$SERVICE"
+
+          grep -F \
+            'DISPLAY_SYNC_DEBOUNCE_MS' \
+            "$SERVICE"
+
+          grep -F \
+            'displayManager.getDisplay(' \
+            "$ANGLES"
 
           if grep -F \
             'scheduleMirrorRefresh(' \
@@ -205,7 +213,7 @@ jobs:
           git diff --check
 
           echo
-          echo "Fold7 1.3.18 source validation passed."
+          echo "Fold7 1.3.19 source validation passed."
 
       - name: Compile and run unit tests
         shell: bash
@@ -217,7 +225,7 @@ jobs:
             assembleFullDebug \
             --stacktrace
 
-      - name: Prepare 1.3.18 field-test APK
+      - name: Prepare 1.3.19 field-test APK
         shell: bash
         run: |
           set -euo pipefail
@@ -238,7 +246,7 @@ jobs:
             exit 1
           fi
 
-          OUTPUT_APK="$OUTPUT_DIR/DuoOpen-ZFold7-1.3.18-opening-sync-debug.apk"
+          OUTPUT_APK="$OUTPUT_DIR/DuoOpen-ZFold7-1.3.19-stability-debug.apk"
 
           cp \
             "$APK" \
@@ -246,7 +254,7 @@ jobs:
 
           sha256sum \
             "$OUTPUT_APK" \
-            > "$OUTPUT_DIR/APK-SHA256-1.3.18.txt"
+            > "$OUTPUT_DIR/APK-SHA256-1.3.19.txt"
 
           MATERIALIZED_BASE="$(
             git rev-parse HEAD
@@ -257,8 +265,8 @@ jobs:
           )"
 
           {
-            echo "version=1.3.18-zfold7-opening-sync"
-            echo "versionCode=22"
+            echo "version=1.3.19-zfold7-stability"
+            echo "versionCode=23"
             echo
             echo "target=Samsung Galaxy Z Fold7"
             echo "innerGeometry=1968x2184"
@@ -268,27 +276,27 @@ jobs:
             echo "overlayMain=${OVERLAY_MAIN}"
             echo "historicalReplay=false"
             echo
-            echo "1.3.18 experiment:"
+            echo "1.3.19 experiment:"
             echo "- left-pane mirror geometry unchanged"
-            echo "- Fold7 cover + inner wallpaper anchors when available"
-            echo "- guarded hidden FoldInteractive angle bootstrap near closed"
+            echo "- one wallpaper anchor on DEFAULT_DISPLAY only"
+            echo "- visible FoldInteractive angle responses only"
             echo "- watchdog no longer drives mirror geometry refresh"
-            echo "- repeated watchdog diagnostics deduplicated"
+            echo "- Samsung display callbacks coalesced before syncDisplays"
             echo "- mirror host seeded with latest hinge angle"
             echo
             echo "APK:"
             sha256sum "$OUTPUT_APK"
-          } > "$OUTPUT_DIR/BUILD-INFO-1.3.18.txt"
+          } > "$OUTPUT_DIR/BUILD-INFO-1.3.19.txt"
 
-          cat "$OUTPUT_DIR/BUILD-INFO-1.3.18.txt"
+          cat "$OUTPUT_DIR/BUILD-INFO-1.3.19.txt"
 
-      - name: Upload 1.3.18 field-test APK
+      - name: Upload 1.3.19 field-test APK
         uses: actions/upload-artifact@v4
         with:
-          name: DuoOpen-ZFold7-1.3.18-opening-sync
+          name: DuoOpen-ZFold7-1.3.19-stability
           path: |
-            fold7-build/DuoOpen-ZFold7-1.3.18-opening-sync-debug.apk
-            fold7-build/APK-SHA256-1.3.18.txt
-            fold7-build/BUILD-INFO-1.3.18.txt
+            fold7-build/DuoOpen-ZFold7-1.3.19-stability-debug.apk
+            fold7-build/APK-SHA256-1.3.19.txt
+            fold7-build/BUILD-INFO-1.3.19.txt
           if-no-files-found: error
           retention-days: 30
