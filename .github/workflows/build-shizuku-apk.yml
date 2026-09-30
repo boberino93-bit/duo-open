@@ -28,46 +28,37 @@ jobs:
         run: mkdir -p zfold7-artifacts
 
       # ================================================================
-      # ITERATION 1
-      #
-      # Core correctness / jank fixes
+      # ITERATION 1 — CORE Z FOLD 7 FIXES
       # ================================================================
 
-      - name: Apply Z Fold 7 core fixes
+      - name: Apply core fixes
         run: |
           python3 <<'PY'
           from pathlib import Path
 
-
-          def replace_exact(path, old, new, count=1):
+          def replace(path, old, new):
               p = Path(path)
-              text = p.read_text()
+              s = p.read_text()
 
-              if old not in text:
+              if old not in s:
                   raise SystemExit(
-                      f"\nExpected source block not found in {path}\n\n{old}\n"
+                      f"Could not find expected text in {path}:\n{old}"
                   )
 
-              p.write_text(text.replace(old, new, count))
+              p.write_text(s.replace(old, new, 1))
 
 
           # ------------------------------------------------------------
           # HingeAngleSource
           #
-          # Samsung's FoldInteractive wallpaper repeatedly reports the
-          # same angle while stationary.
-          #
-          # Previously every duplicate callback was treated as physical
-          # hinge movement.
-          #
-          # Keep the data-source heartbeat alive, but only drive animation
-          # when the hinge actually changes.
+          # Do not treat duplicate Samsung wallpaper readings as actual
+          # physical hinge movement.
           # ------------------------------------------------------------
 
-          hinge = "app/src/main/java/com/duoopen/fold/HingeAngleSource.kt"
+          p = "app/src/main/java/com/duoopen/fold/HingeAngleSource.kt"
 
-          replace_exact(
-              hinge,
+          replace(
+              p,
               '''    fun feedExternal(angle: Float) {
                   if (!angle.isFinite()) return
                   val now = SystemClock.uptimeMillis()
@@ -86,15 +77,13 @@ jobs:
                   externalActive = true
                   externalLastUptime = now
 
-                  // Measure the source rate before overwriting the previous
-                  // timestamp.
+                  // Keep the Shizuku source heartbeat alive without treating
+                  // repeated identical wallpaper replies as hinge movement.
                   tickRate(now)
                   lastEventUptime = now
 
                   val next = angle.coerceIn(0f, 180f)
 
-                  // Samsung's wallpaper commonly returns the exact same angle
-                  // repeatedly. That is a heartbeat, not hinge movement.
                   val changed =
                       lastAngle.isNaN() ||
                           abs(next - lastAngle) >= EXTERNAL_CHANGE_EPS
@@ -107,10 +96,9 @@ jobs:
               }'''
           )
 
-
-          # The public sensor path had the same event-rate ordering issue.
-          replace_exact(
-              hinge,
+          # Fix event-rate calculation ordering for the normal sensor path.
+          replace(
+              p,
               '''        val now = SystemClock.uptimeMillis()
                   lastEventUptime = now
                   tickRate(now)
@@ -121,17 +109,13 @@ jobs:
                   lastAngle = value.coerceIn(0f, 180f)'''
           )
 
-
-          replace_exact(
-              hinge,
+          replace(
+              p,
               '''        const val EXTERNAL_STALE_MS = 3_000L
                   val STOPS = intArrayOf(0, 90, 180)''',
               '''        const val EXTERNAL_STALE_MS = 3_000L
 
-                  /**
-                   * Ignore tiny changes/noise from the Samsung wallpaper
-                   * reader while retaining real physical hinge movement.
-                   */
+                  // Small deadband for Samsung wallpaper angle jitter.
                   const val EXTERNAL_CHANGE_EPS = 0.15f
 
                   val STOPS = intArrayOf(0, 90, 180)'''
@@ -141,493 +125,4 @@ jobs:
           # ------------------------------------------------------------
           # FoldOverlayService
           #
-          # syncDisplays() was running on EVERY hinge update.
-          #
-          # With a continuous angle source this is unnecessarily expensive.
-          #
-          # DisplayManager already generates events when displays change.
-          # ------------------------------------------------------------
-
-          service = "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
-
-          replace_exact(
-              service,
-              '''    private fun onHinge(angle: Float) {
-                  syncDisplays()
-                  for (e in engines.values.toList()) e.onHinge(angle)
-              }''',
-              '''    private fun onHinge(angle: Float) {
-                  for (e in engines.values.toList()) {
-                      e.onHinge(angle)
-                  }
-              }'''
-          )
-
-
-          # ------------------------------------------------------------
-          # Version this iteration separately
-          # ------------------------------------------------------------
-
-          gradle = "app/build.gradle.kts"
-
-          replace_exact(
-              gradle,
-              'versionCode = 4',
-              'versionCode = 5'
-          )
-
-          replace_exact(
-              gradle,
-              'versionName = "1.3.0"',
-              'versionName = "1.3.1-zfold7-core"'
-          )
-
-          print("Core Z Fold 7 patches applied.")
-          PY
-
-
-      - name: Validate core source patch
-        run: |
-          git diff --check
-          git diff --stat
-          git diff > zfold7-artifacts/zfold7-core.patch
-
-
-      - name: Compile and test core iteration
-        run: |
-          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
-
-          CORE_APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
-
-          if [ -z "$CORE_APK" ]; then
-            echo "Core APK was not produced."
-            exit 1
-          fi
-
-          cp "$CORE_APK" \
-            zfold7-artifacts/DuoOpen-ZFold7-core-debug.apk
-
-
-      # ================================================================
-      # ITERATION 2
-      #
-      # Latency / smoothness overhaul
-      # ================================================================
-
-      - name: Apply Z Fold 7 smoothness enhancements
-        run: |
-          python3 <<'PY'
-          from pathlib import Path
-
-
-          def replace_exact(path, old, new, count=1):
-              p = Path(path)
-              text = p.read_text()
-
-              if old not in text:
-                  raise SystemExit(
-                      f"\nExpected source block not found in {path}\n\n{old}\n"
-                  )
-
-              p.write_text(text.replace(old, new, count))
-
-
-          # ------------------------------------------------------------
-          # WallpaperAngleFeed
-          #
-          # Old:
-          #     fixed 33 ms polling
-          #     ~= 30 angle requests/sec
-          #
-          # New:
-          #     33 ms at rest
-          #      8 ms while moving
-          #
-          # The Fold 7 has a 120 Hz display, so a ~125 Hz target while
-          # physically folding gives the renderer much fresher input.
-          # ------------------------------------------------------------
-
-          feed = "app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt"
-
-          replace_exact(
-              feed,
-              '''import com.duoopen.fold.HingeAngleSource''',
-              '''import com.duoopen.fold.HingeAngleSource
-          import kotlin.math.abs'''
-          )
-
-
-          replace_exact(
-              feed,
-              ''' * wallpaper through it at [POLL_MS], and let the Shizuku-side log reader''',
-              ''' * wallpaper through it at an adaptive cadence, and let the Shizuku-side log reader'''
-          )
-
-
-          replace_exact(
-              feed,
-              '''    private var anchorKey = ""
-              private var lastCallbackUptime = 0L''',
-              '''    private var anchorKey = ""
-              private var lastCallbackUptime = 0L
-
-              private var lastAngleSeen = Float.NaN
-              private var lastAngleChangeUptime = 0L'''
-          )
-
-
-          replace_exact(
-              feed,
-              '''            handler.postDelayed(this, POLL_MS)''',
-              '''            val now = SystemClock.uptimeMillis()
-
-                  val moving =
-                      lastAngleChangeUptime != 0L &&
-                          now - lastAngleChangeUptime <= ACTIVE_BURST_MS
-
-                  handler.postDelayed(
-                      this,
-                      if (moving) ACTIVE_POLL_MS else IDLE_POLL_MS,
-                  )'''
-          )
-
-
-          replace_exact(
-              feed,
-              '''        running = true
-              startedAt = SystemClock.uptimeMillis()
-              status = "Starting"''',
-              '''        running = true
-              startedAt = SystemClock.uptimeMillis()
-
-              lastAngleSeen = Float.NaN
-              lastAngleChangeUptime = 0L
-
-              status = "Starting"'''
-          )
-
-
-          replace_exact(
-              feed,
-              '''    private fun onAngle(angle: Float) {
-                  if (!running) return
-                  lastCallbackUptime = SystemClock.uptimeMillis()
-                  hinge.feedExternal(angle)
-              }''',
-              '''    private fun onAngle(angle: Float) {
-                  if (!running) return
-
-                  val now = SystemClock.uptimeMillis()
-                  lastCallbackUptime = now
-
-                  if (
-                      lastAngleSeen.isNaN() ||
-                      abs(angle - lastAngleSeen) >= ANGLE_CHANGE_EPS
-                  ) {
-                      lastAngleSeen = angle
-                      lastAngleChangeUptime = now
-                  }
-
-                  hinge.feedExternal(angle)
-              }'''
-          )
-
-
-          replace_exact(
-              feed,
-              '''        const val POLL_MS = 33L
-                  private const val STALE_MS = 2_500L''',
-              '''        /**
-                   * Idle polling keeps the Samsung source alive cheaply.
-                   * During real hinge movement we burst near the panel's
-                   * 120 Hz refresh cadence.
-                   */
-                  const val IDLE_POLL_MS = 33L
-                  const val ACTIVE_POLL_MS = 8L
-                  const val ACTIVE_BURST_MS = 750L
-                  const val ANGLE_CHANGE_EPS = 0.15f
-
-                  private const val STALE_MS = 2_500L'''
-          )
-
-
-          # ------------------------------------------------------------
-          # PanelEngine
-          #
-          # Use less temporal smoothing for the real continuous Samsung
-          # source. The original follower was designed around much slower
-          # ~50 Hz / stepped hinge data.
-          # ------------------------------------------------------------
-
-          engine = "app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
-
-          replace_exact(
-              engine,
-              '''        follower = TiltFollower { t ->
-                  created.tilt = t
-                  if (t < DuoShader.FLAT_EPSILON && !demoRunning) dismiss(fadeMs = FADE_OUT_FLAT_MS)
-              }.also { it.snap(startTilt) }''',
-              '''        follower = TiltFollower { t ->
-                  created.tilt = t
-
-                  if (
-                      t < DuoShader.FLAT_EPSILON &&
-                      !demoRunning
-                  ) {
-                      dismiss(fadeMs = FADE_OUT_FLAT_MS)
-                  }
-              }.also {
-                  it.snap(startTilt)
-
-                  if (
-                      hinge.externalActive &&
-                      easeTo == null
-                  ) {
-                      it.tauS = SAMSUNG_LIVE_TAU_S
-                  }
-              }'''
-          )
-
-
-          # ------------------------------------------------------------
-          # Shizuku live-capture pipeline
-          #
-          # Old scheduling:
-          #
-          #     capture (~50 ms)
-          #     THEN wait 80 ms
-          #
-          # Actual cadence can therefore approach 130 ms/frame,
-          # only ~7.7 FPS.
-          #
-          # New scheduling is completion-paced:
-          #
-          #     start capture
-          #     aim for next frame at T + 60 ms
-          #
-          # If capture takes 50 ms -> wait ~10 ms.
-          # If capture takes 70 ms -> immediately continue.
-          #
-          # Captures are still strictly sequential, never overlapping.
-          # ------------------------------------------------------------
-
-          replace_exact(
-              engine,
-              '''    private fun startLiveLoop() {
-                  if (liveLoop) return
-                  liveLoop = true
-                  val myGen = captureGen
-                  var frames = 0
-                  fun tick() {
-                      if (!liveLoop || phase != Phase.SHOWING || myGen != captureGen) { liveLoop = false; return }
-                      val s = surface as? SnapshotSurface
-                      if (s == null || s.tilt < DuoShader.FLAT_EPSILON) { handler.postDelayed({ tick() }, LIVE_INTERVAL_MS); return }
-                      val excluded = excludedLayers()
-                      if (excluded.isEmpty()) { handler.postDelayed({ tick() }, LIVE_INTERVAL_MS); return }
-                      scope.launch {
-                          val frame = withContext(Dispatchers.IO) { ShizukuBridge.capture(displayId, excluded, LIVE_SHELL_SCALE) }
-                          if (liveLoop && phase == Phase.SHOWING && myGen == captureGen && frame != null && !bridging) {
-                              (surface as? SnapshotSurface)?.replaceSnapshot(frame)
-                              frames++
-                              if (frames == 1 || frames % 25 == 0) Log.i(TAG, "display $displayId: live frame $frames (${frame.width}x${frame.height})")
-                          }
-                          handler.postDelayed({ tick() }, LIVE_INTERVAL_MS)
-                      }
-                  }
-                  handler.postDelayed({ tick() }, LIVE_INTERVAL_MS)
-              }''',
-              '''    private fun startLiveLoop() {
-                  if (liveLoop) return
-
-                  liveLoop = true
-
-                  val myGen = captureGen
-                  var frames = 0
-
-                  fun tick() {
-                      if (
-                          !liveLoop ||
-                          phase != Phase.SHOWING ||
-                          myGen != captureGen
-                      ) {
-                          liveLoop = false
-                          return
-                      }
-
-                      val s = surface as? SnapshotSurface
-
-                      if (
-                          s == null ||
-                          s.tilt < DuoShader.FLAT_EPSILON
-                      ) {
-                          handler.postDelayed(
-                              { tick() },
-                              LIVE_FRAME_PERIOD_MS,
-                          )
-                          return
-                      }
-
-                      val excluded = excludedLayers()
-
-                      if (excluded.isEmpty()) {
-                          handler.postDelayed(
-                              { tick() },
-                              LIVE_FRAME_PERIOD_MS,
-                          )
-                          return
-                      }
-
-                      val frameStarted =
-                          SystemClock.uptimeMillis()
-
-                      scope.launch {
-                          val frame =
-                              withContext(Dispatchers.IO) {
-                                  ShizukuBridge.capture(
-                                      displayId,
-                                      excluded,
-                                      LIVE_SHELL_SCALE,
-                                  )
-                              }
-
-                          if (
-                              liveLoop &&
-                              phase == Phase.SHOWING &&
-                              myGen == captureGen &&
-                              frame != null &&
-                              !bridging
-                          ) {
-                              (surface as? SnapshotSurface)
-                                  ?.replaceSnapshot(frame)
-
-                              frames++
-
-                              if (
-                                  frames == 1 ||
-                                  frames % 25 == 0
-                              ) {
-                                  Log.i(
-                                      TAG,
-                                      "display $displayId: live frame $frames " +
-                                          "(${frame.width}x${frame.height})",
-                                  )
-                              }
-                          }
-
-                          val nextDelay =
-                              (
-                                  frameStarted +
-                                      LIVE_FRAME_PERIOD_MS -
-                                      SystemClock.uptimeMillis()
-                              ).coerceAtLeast(0L)
-
-                          handler.postDelayed(
-                              { tick() },
-                              nextDelay,
-                          )
-                      }
-                  }
-
-                  handler.postDelayed(
-                      { tick() },
-                      LIVE_START_DELAY_MS,
-                  )
-              }'''
-          )
-
-
-          replace_exact(
-              engine,
-              '''        /** Shizuku capture: full-size first frame, half-size live frames at ~12 fps. */
-                  const val INITIAL_SHELL_SCALE = 1f
-                  const val LIVE_SHELL_SCALE = 0.5f
-                  const val LIVE_INTERVAL_MS = 80L
-                  const val SHELL_RETRY_MS = 60L''',
-              '''        /**
-                   * Full-resolution initial capture followed by reduced-size
-                   * live frames.
-                   *
-                   * The live loop is completion-paced, not capture time plus
-                   * an additional fixed sleep.
-                   */
-                  const val INITIAL_SHELL_SCALE = 1f
-                  const val LIVE_SHELL_SCALE = 0.45f
-
-                  const val LIVE_FRAME_PERIOD_MS = 60L
-                  const val LIVE_START_DELAY_MS = 20L
-
-                  /**
-                   * Continuous Samsung input can use a much faster follower
-                   * than the coarse/public sensor path.
-                   */
-                  const val SAMSUNG_LIVE_TAU_S = 0.030f
-
-                  const val SHELL_RETRY_MS = 60L'''
-          )
-
-
-          # ------------------------------------------------------------
-          # Version iteration 2
-          # ------------------------------------------------------------
-
-          gradle = "app/build.gradle.kts"
-
-          replace_exact(
-              gradle,
-              'versionCode = 5',
-              'versionCode = 6'
-          )
-
-          replace_exact(
-              gradle,
-              'versionName = "1.3.1-zfold7-core"',
-              'versionName = "1.3.1-zfold7-enhanced"'
-          )
-
-          print("Enhanced Z Fold 7 patches applied.")
-          PY
-
-
-      - name: Validate enhanced source patch
-        run: |
-          git diff --check
-          git diff --stat
-          git diff > zfold7-artifacts/zfold7-enhanced.patch
-
-
-      - name: Compile and test enhanced iteration
-        run: |
-          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
-
-          ENHANCED_APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
-
-          if [ -z "$ENHANCED_APK" ]; then
-            echo "Enhanced APK was not produced."
-            exit 1
-          fi
-
-          cp "$ENHANCED_APK" \
-            zfold7-artifacts/DuoOpen-ZFold7-enhanced-debug.apk
-
-
-      # ================================================================
-      # RESULTS
-      # ================================================================
-
-      - name: APK checksums
-        run: |
-          echo
-          echo "Artifacts:"
-          ls -lh zfold7-artifacts
-          echo
-          echo "APK SHA-256:"
-          sha256sum zfold7-artifacts/*.apk
-
-
-      - name: Upload Z Fold 7 builds and patches
-        uses: actions/upload-artifact@v4
-        with:
-          name: DuoOpen-ZFold7-debug-variants
-          path: zfold7-artifacts/*
-          if-no-files-found: error
-          retention-days: 30
+          # Display enumeration does not belong
