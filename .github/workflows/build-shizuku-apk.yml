@@ -399,12 +399,6 @@ jobs:
               "DisplayMirrorHost.kt"
           )
 
-          /*
-           * Do not accept a stale/off logical display simply because
-           * it still advertises the Fold7 inner native dimensions.
-           *
-           * The source must represent an active inner panel.
-           */
           replace_once(
               mirror_host_path,
               '''    private fun findInnerDisplay(): Display? =
@@ -434,12 +428,6 @@ jobs:
           service_text =
               service_path.read_text()
 
-          /*
-           * These are the exact 1.3.13 regression markers.
-           *
-           * If either returns in a future integration pass,
-           * deliberately fail the build.
-           */
           for forbidden in (
               "Native cover is primary; temporary geometry mirror released.",
               "native-cover-handoff",
