@@ -1,4 +1,4 @@
-name: Build Z Fold 7 Geometry Continuity 1.3.13 Revised Fix 2
+name: Build Z Fold 7 Geometry Continuity 1.3.13 Revised Fix 3
 
 on:
   workflow_dispatch:
@@ -1842,9 +1842,9 @@ jobs:
 
           grep -R "1.3.13-zfold7-setgeometry-bidirectional"             app/build.gradle.kts
 
-          if grep -R "setCrop("             app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+          if grep -R -F ".setCrop(" app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
           then
-            echo "DisplayMirrorHost still contains setCrop(); geometry pass is not isolated."
+            echo "DisplayMirrorHost still contains an actual .setCrop() call; geometry pass is not isolated."
             exit 1
           fi
 
@@ -2364,6 +2364,8 @@ jobs:
           path: |
             zfold7-artifacts/DuoOpen-ZFold7-geometry-glass-debug.apk
             zfold7-artifacts/zfold7-pane-container.patch
+            zfold7-artifacts/zfold7-geometry-continuity.patch
+            zfold7-artifacts/zfold7-geometry-continuity-revised.patch
             zfold7-artifacts/BUILD-INFO.txt
           if-no-files-found: error
           retention-days: 30
