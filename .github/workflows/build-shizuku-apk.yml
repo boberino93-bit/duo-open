@@ -107,18 +107,14 @@ jobs:
               wanted_steps,
               start=1,
           ):
-              script = extract_run_block(
-                  step_name
-              )
+              script = extract_run_block(step_name)
 
               script_path = Path(
                   f"/tmp/duo-open-base-{number}.sh"
               )
 
               script_path.write_text(
-                  "set -euo pipefail\n" +
-                  script +
-                  "\n"
+                  "set -euo pipefail\n" + script + "\n"
               )
 
               print(
@@ -126,10 +122,7 @@ jobs:
               )
 
               subprocess.run(
-                  [
-                      "bash",
-                      str(script_path),
-                  ],
+                  ["bash", str(script_path)],
                   check=True,
               )
 
@@ -140,41 +133,13 @@ jobs:
 
       - name: Apply cover-primary continuity fix
         run: |
-          python3 <<'PY'
+          cat > /tmp/apply-cover-primary.py <<'PY'
           from pathlib import Path
           import re
 
-          def replace_once(
-              path,
-              old,
-              new,
-              label,
-          ):
+          def regex_replace_once(path, pattern, replacement, label):
               p = Path(path)
               text = p.read_text()
-
-              if old not in text:
-                  raise SystemExit(
-                      f"{label}: expected source not found in {path}"
-                  )
-
-              p.write_text(
-                  text.replace(
-                      old,
-                      new,
-                      1,
-                  )
-              )
-
-          def regex_replace_once(
-              path,
-              pattern,
-              replacement,
-              label,
-          ):
-              p = Path(path)
-              text = p.read_text()
-
               updated, count = re.subn(
                   pattern,
                   replacement,
@@ -182,30 +147,19 @@ jobs:
                   count=1,
                   flags=re.S,
               )
-
               if count != 1:
                   raise SystemExit(
                       f"{label}: expected exactly one match, got {count}"
                   )
-
-              p.write_text(
-                  updated
-              )
+              p.write_text(updated)
 
           service_path = Path(
-              "app/src/full/java/com/duoopen/overlay/"
-              "FoldOverlayService.kt"
+              "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
           )
 
           regex_replace_once(
               service_path,
-              r'''    private fun syncMirrorHost\(
-                  reason: String,
-              \) \{
-          .*?
-              \}
-
-              private fun safeToReleaseSecondaryPanel\(\): Boolean \{''',
+              r'''    private fun syncMirrorHost\(\s*reason: String,\s*\)\s*\{.*?\n\s*private fun safeToReleaseSecondaryPanel\(\): Boolean \{''',
               '''    private fun syncMirrorHost(
                   reason: String,
               ) {
@@ -226,23 +180,12 @@ jobs:
                           "live-mirror",
                           "default display missing reason=$reason",
                       )
-
                       return
                   }
 
                   val primaryMode =
                       primary.mode
 
-                  /*
-                   * Never assume that logical display 0 is
-                   * permanently the inner or cover panel.
-                   *
-                   * Samsung can change which physical panel owns
-                   * Android's DEFAULT_DISPLAY during the fold.
-                   *
-                   * Identify the physical Fold7 panels using their
-                   * native dimensions instead.
-                   */
                   val coverIsPrimary =
                       primaryMode.physicalWidth == 1080 &&
                           primaryMode.physicalHeight == 2520
@@ -265,27 +208,9 @@ jobs:
                               "mode=${primaryMode.physicalWidth}x${primaryMode.physicalHeight} " +
                               "hostUsable=${mirrorHost?.isUsable == true}",
                       )
-
                       return
                   }
 
-                  /*
-                   * CRITICAL 1.3.14 CHANGE
-                   *
-                   * 1.3.13r previously treated:
-                   *
-                   *     DEFAULT_DISPLAY == 1080x2520
-                   *
-                   * as a reason to destroy the mirror.
-                   *
-                   * That is exactly the point at which Samsung has
-                   * promoted the physical cover panel to primary.
-                   *
-                   * Do the opposite:
-                   *
-                   * Use that physical cover panel as the continuity
-                   * destination and retain/recreate the mirror host.
-                   */
                   val cover =
                       if (coverIsPrimary) {
                           primary
@@ -293,6 +218,8 @@ jobs:
                           displayManager.displays
                               .firstOrNull { candidate ->
                                   if (
+                                      candidate.displayId ==
+                                          Display.DEFAULT_DISPLAY ||
                                       candidate.state ==
                                           Display.STATE_OFF ||
                                       candidate.state ==
@@ -318,7 +245,6 @@ jobs:
                           "cover logical display missing; host retained reason=$reason " +
                               "hostUsable=${mirrorHost?.isUsable == true}",
                       )
-
                       return
                   }
 
@@ -337,17 +263,6 @@ jobs:
                   val current =
                       mirrorHost
 
-                  /*
-                   * Recreate the host only if:
-                   *
-                   * - no host exists,
-                   * - Samsung changed the logical ID representing
-                   *   the physical cover panel, or
-                   * - the existing SurfaceControl host died.
-                   *
-                   * Merely becoming DEFAULT_DISPLAY is no longer a
-                   * teardown condition.
-                   */
                   if (
                       current == null ||
                       current.displayId != cover.displayId ||
@@ -375,16 +290,9 @@ jobs:
                               "mode=${cover.mode.physicalWidth}x${cover.mode.physicalHeight} " +
                               "coverIsPrimary=$coverIsPrimary",
                       )
-
                       return
                   }
 
-                  /*
-                   * The same physical destination is still alive.
-                   *
-                   * Refresh its SurfaceControl geometry instead of
-                   * destroying it.
-                   */
                   current.refresh(
                       reason
                   )
@@ -394,39 +302,7 @@ jobs:
               "FoldOverlayService cover-primary continuity",
           )
 
-          mirror_host_path = Path(
-              "app/src/full/java/com/duoopen/overlay/"
-              "DisplayMirrorHost.kt"
-          )
-
-          replace_once(
-              mirror_host_path,
-              '''    private fun findInnerDisplay(): Display? =
-                  displayManager.displays
-                      .firstOrNull { candidate ->
-                          val mode = candidate.mode
-
-                          mode.physicalWidth == INNER_WIDTH &&
-                              mode.physicalHeight == INNER_HEIGHT
-                      }
-          ''',
-              '''    private fun findInnerDisplay(): Display? =
-                  displayManager.displays
-                      .firstOrNull { candidate ->
-                          val mode =
-                              candidate.mode
-
-                          candidate.state != Display.STATE_OFF &&
-                              candidate.state != Display.STATE_UNKNOWN &&
-                              mode.physicalWidth == INNER_WIDTH &&
-                              mode.physicalHeight == INNER_HEIGHT
-                      }
-          ''',
-              "DisplayMirrorHost active inner-panel lookup",
-          )
-
-          service_text =
-              service_path.read_text()
+          service_text = service_path.read_text()
 
           for forbidden in (
               "Native cover is primary; temporary geometry mirror released.",
@@ -434,113 +310,78 @@ jobs:
           ):
               if forbidden in service_text:
                   raise SystemExit(
-                      "Known cover-primary regression remains: " +
-                      forbidden
+                      "Known cover-primary regression remains: " + forbidden
                   )
 
-          if (
-              "cover-primary-continuity"
-              not in service_text
-          ):
+          if "cover-primary-continuity" not in service_text:
               raise SystemExit(
                   "Cover-primary continuity diagnostic marker missing."
               )
 
-          gradle_path = Path(
-              "app/build.gradle.kts"
-          )
+          gradle_path = Path("app/build.gradle.kts")
+          gradle = gradle_path.read_text()
 
-          gradle =
-              gradle_path.read_text()
-
-          if (
-              "versionCode = 18"
-              not in gradle
-          ):
+          if "versionCode = 18" not in gradle:
               raise SystemExit(
                   "Expected versionCode 18 from the known-good baseline."
               )
 
-          if (
-              'versionName = "1.3.13r-zfold7-geometry-glass"'
-              not in gradle
-          ):
+          if 'versionName = "1.3.13r-zfold7-geometry-glass"' not in gradle:
               raise SystemExit(
                   "Expected 1.3.13r baseline versionName."
               )
 
-          gradle =
-              gradle.replace(
-                  "versionCode = 18",
-                  "versionCode = 19",
-                  1,
-              )
-
-          gradle =
-              gradle.replace(
-                  'versionName = "1.3.13r-zfold7-geometry-glass"',
-                  'versionName = "1.3.14-zfold7-cover-primary-continuity"',
-                  1,
-              )
-
-          gradle_path.write_text(
-              gradle
+          gradle = gradle.replace(
+              "versionCode = 18",
+              "versionCode = 19",
+              1,
           )
 
-          Path(
-              "zfold7-artifacts"
-          ).mkdir(
+          gradle = gradle.replace(
+              'versionName = "1.3.13r-zfold7-geometry-glass"',
+              'versionName = "1.3.14-zfold7-cover-primary-continuity"',
+              1,
+          )
+
+          gradle_path.write_text(gradle)
+
+          Path("zfold7-artifacts").mkdir(
               parents=True,
               exist_ok=True,
           )
 
-          print(
-              "Cover-primary continuity fix applied."
-          )
+          print("Cover-primary continuity fix applied.")
           PY
+
+          python3 -m py_compile /tmp/apply-cover-primary.py
+          python3 /tmp/apply-cover-primary.py
 
       - name: Validate cover-primary continuity fix
         run: |
           set -euo pipefail
 
-          echo
-          echo "=============================================="
-          echo "Validate Fold7 cover-primary continuity"
-          echo "=============================================="
-          echo
-
           git diff --check
 
-          grep -R \
+          grep -R -F \
             "cover-primary-continuity" \
             app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
 
-          grep -R \
-            "retaining geometry continuity from the inner panel" \
+          grep -R -F \
+            "Native cover is primary; retaining geometry continuity from the inner panel." \
             app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
 
-          grep -R \
-            "candidate.state != Display.STATE_OFF" \
-            app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
-
-          grep -R \
-            "candidate.state != Display.STATE_UNKNOWN" \
-            app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
-
-          grep -R \
-            "1.3.14-zfold7-cover-primary-continuity" \
+          grep -R -F \
+            'versionName = "1.3.14-zfold7-cover-primary-continuity"' \
             app/build.gradle.kts
 
-          echo
-          echo "Checking that the 1.3.13 regression cannot return..."
-          echo
+          grep -R -F \
+            "versionCode = 19" \
+            app/build.gradle.kts
 
           if grep -R -F \
             "Native cover is primary; temporary geometry mirror released." \
             app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
           then
-            echo
-            echo "ERROR:"
             echo "Known cover-primary teardown regression still exists."
             exit 1
           fi
@@ -549,24 +390,21 @@ jobs:
             "native-cover-handoff" \
             app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
           then
-            echo
-            echo "ERROR:"
-            echo "Legacy native-cover teardown event still exists."
+            echo "Legacy cover handoff teardown event still exists."
             exit 1
           fi
 
-          echo
-          echo "Cover-primary teardown regression is absent."
-          echo
+          if grep -R -F \
+            "ShizukuBridge.stopDisplayMirror()" \
+            app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt \
+            | grep -F "native-cover"
+          then
+            echo "Cover-primary path still stops the display mirror."
+            exit 1
+          fi
 
           git diff > \
             zfold7-artifacts/zfold7-cover-primary-continuity.patch
-
-          echo
-          echo "=============================================="
-          echo "Integrated diff"
-          echo "=============================================="
-          echo
 
           git diff --stat
 
@@ -574,28 +412,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          echo
-          echo "=============================================="
-          echo "Building Duo Open Fold7 1.3.14"
-          echo "=============================================="
-          echo
-
           ./gradlew \
             testFullDebugUnitTest \
             assembleFullDebug \
             --stacktrace
-
-          echo
-          echo "=============================================="
-          echo "Gradle build completed"
-          echo "=============================================="
-          echo
-
-          find \
-            app/build/outputs/apk/full/debug \
-            -type f \
-            -name '*.apk' \
-            -print
 
       - name: Prepare field-test APK
         run: |
@@ -627,23 +447,14 @@ jobs:
             echo "target=Samsung Galaxy Z Fold7"
             echo "inner=1968x2184"
             echo "cover=1080x2520"
-            echo "pass=known-good-1.3.13r+cover-primary-host-retention+active-inner-source"
+            echo "pass=known-good-1.3.13r+cover-primary-host-retention"
             echo
 
             sha256sum \
               zfold7-artifacts/DuoOpen-ZFold7-cover-primary-continuity-debug.apk
+          } > zfold7-artifacts/BUILD-INFO-1.3.14.txt
 
-          } > \
-            zfold7-artifacts/BUILD-INFO-1.3.14.txt
-
-          echo
-          echo "=============================================="
-          echo "Field test build information"
-          echo "=============================================="
-          echo
-
-          cat \
-            zfold7-artifacts/BUILD-INFO-1.3.14.txt
+          cat zfold7-artifacts/BUILD-INFO-1.3.14.txt
 
       - name: Upload field-test artifacts
         uses: actions/upload-artifact@v4
