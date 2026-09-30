@@ -25,10 +25,10 @@ jobs:
       OUTPUT_BRANCH: ${{ inputs.output_branch }}
 
     steps:
-      - name: Checkout trusted 1.3.16 baseline
+      - name: Checkout current main with full history
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.BASELINE_SHA }}
+          ref: main
           fetch-depth: 0
 
       - name: Set up Java 17
