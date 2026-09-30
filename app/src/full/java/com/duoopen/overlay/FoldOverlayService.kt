@@ -160,6 +160,41 @@ class FoldOverlayService : AccessibilityService() {
             }
         }
 
+    private var pendingDisplaySyncReason =
+        ""
+
+    private val displaySyncRunnable =
+        Runnable {
+            val reason =
+                pendingDisplaySyncReason
+
+            pendingDisplaySyncReason =
+                ""
+
+            com.duoopen.debug.DuoDiagnostics.event(
+                "live-mirror",
+                "display callbacks coalesced reason=$reason",
+            )
+
+            syncDisplays()
+        }
+
+    private fun scheduleDisplaySync(
+        reason: String,
+    ) {
+        pendingDisplaySyncReason =
+            reason
+
+        handler.removeCallbacks(
+            displaySyncRunnable
+        )
+
+        handler.postDelayed(
+            displaySyncRunnable,
+            DISPLAY_SYNC_DEBOUNCE_MS,
+        )
+    }
+
     private val displayListener =
         object :
             DisplayManager.DisplayListener {
@@ -167,7 +202,9 @@ class FoldOverlayService : AccessibilityService() {
             override fun onDisplayAdded(
                 displayId: Int,
             ) {
-                syncDisplays()
+                scheduleDisplaySync(
+                    "display-added:$displayId"
+                )
 
                 scheduleDisplayProbe(
                     "display-added:$displayId"
@@ -177,7 +214,9 @@ class FoldOverlayService : AccessibilityService() {
             override fun onDisplayRemoved(
                 displayId: Int,
             ) {
-                syncDisplays()
+                scheduleDisplaySync(
+                    "display-removed:$displayId"
+                )
 
                 scheduleDisplayProbe(
                     "display-removed:$displayId"
@@ -187,7 +226,9 @@ class FoldOverlayService : AccessibilityService() {
             override fun onDisplayChanged(
                 displayId: Int,
             ) {
-                syncDisplays()
+                scheduleDisplaySync(
+                    "display-changed:$displayId"
+                )
 
                 scheduleDisplayProbe(
                     "display-changed:$displayId"
@@ -280,6 +321,10 @@ class FoldOverlayService : AccessibilityService() {
 
         handler.removeCallbacks(
             secondaryDisplaySafetyReset
+        )
+
+        handler.removeCallbacks(
+            displaySyncRunnable
         )
 
         angleFeed?.stop()
@@ -1440,6 +1485,9 @@ class FoldOverlayService : AccessibilityService() {
 
             return true
         }
+
+        private const val DISPLAY_SYNC_DEBOUNCE_MS =
+            48L
 
         private const val MIRROR_REBIND_DEBOUNCE_MS =
             80L
