@@ -456,6 +456,7 @@ jobs:
 
           git diff --stat
 
+
       - name: Add motion-gated cover power hold
         run: |
           set -euo pipefail
@@ -662,20 +663,7 @@ jobs:
 
           replace_once(
               shell_path,
-              """                  val target =
-                      foldDisplays.firstOrNull { (id, _, _) ->
-                          id != 0
-                      }
-
-                  if (target == null) {
-                      return Bundle().apply {
-                          putBoolean("ok", false)
-                          putInt("targetDisplayId", -1)
-                          putString(
-                              "error",
-                              "No non-zero Fold7 internal display was found.",
-                          )
-          """,
+              '        val target =\n            foldDisplays.firstOrNull { (id, _, _) ->\n                id != 0\n            }\n\n        if (target == null) {\n            return Bundle().apply {\n                putBoolean("ok", false)\n                putInt("targetDisplayId", -1)\n                putString(\n                    "error",\n                    "No non-zero Fold7 internal display was found.",\n                )\n',
               """                  val target =
                       foldDisplays.firstOrNull { (_, width, height) ->
                           width == 1080 &&
@@ -703,11 +691,7 @@ jobs:
 
           replace_once(
               shell_path,
-              """                  val commandOutput =
-                      runProbe(command)
-
-                  Thread.sleep(600L)
-          """,
+              '        val commandOutput =\n            runProbe(command)\n\n        Thread.sleep(600L)\n',
               """                  val commandOutput =
                       runProbe(command)
 
@@ -732,9 +716,7 @@ jobs:
 
           replace_once(
               shell_path,
-              """                      putBoolean("visibleAfter", visibleAfter)
-                      putString("command", command)
-          """,
+              '            putBoolean("visibleAfter", visibleAfter)\n            putString("command", command)\n',
               """                      putBoolean("visibleAfter", visibleAfter)
                       putBoolean("immediatePowerOn", immediatePowerOn)
                       putString("command", command)
@@ -1262,10 +1244,7 @@ jobs:
 
           replace_once(
               service_path,
-              """                  if (!enable) {
-                      mirrorRequested =
-                          false
-          """,
+              '        if (!enable) {\n            mirrorRequested =\n                false\n',
               """                  if (!enable) {
                       continuityArmed =
                           false
@@ -1284,14 +1263,7 @@ jobs:
 
           replace_once(
               service_path,
-              """                      val target =
-                          result.getInt(
-                              "targetDisplayId",
-                              -1,
-                          )
-
-                      val width =
-          """,
+              '            val target =\n                result.getInt(\n                    "targetDisplayId",\n                    -1,\n                )\n\n            val width =\n',
               """                      val target =
                           result.getInt(
                               "targetDisplayId",
@@ -1379,11 +1351,7 @@ jobs:
 
           replace_once(
               service_path,
-              """                      service.runSecondaryDisplayExperiment(
-                          enable = enable,
-                      )
-                      return true
-          """,
+              '            service.runSecondaryDisplayExperiment(\n                enable = enable,\n            )\n            return true\n',
               """                      if (enable) {
                           service.armGeometryContinuity()
                       } else {
