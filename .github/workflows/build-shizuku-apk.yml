@@ -1,4 +1,4 @@
-name: Build Z Fold 7 Dual Power + OLED Idle Dim Fix
+name: Build Z Fold 7 Dual Power + OLED Idle Dim Fix 2
 
 on:
   workflow_dispatch:
@@ -952,31 +952,21 @@ jobs:
 
           replace_once(
               sheet_path,
-              """                    Text(
-                                  "Reset panel power"
-                              )
-          """,
-              """                    Text(
-                                  "Disable secondary panel"
-                              )
-          """,
+              '"Reset panel power"',
+              '"Disable secondary panel"',
               "ControlSheet disable label",
           )
 
           replace_once(
               sheet_path,
-              """            Hint(
-                          "One-shot Fold7 test. There is no retry loop. " +
+              '''"One-shot Fold7 test. There is no retry loop. " +
                               "The secondary panel is automatically power-reset " +
-                              "after 90 seconds.",
-                      )""",
-              """            Hint(
-                          "Field-test mode: enable-display keeps the second panel alive " +
+                              "after 90 seconds."''',
+              '''"Field-test mode: enable-display keeps the second panel alive " +
                               "without Samsung's presentation popup. While fully open and " +
                               "idle, the cover OLED is set to 1%; its previous brightness " +
                               "returns after about 2° of hinge movement. The secondary " +
-                              "display auto-disables after 90 seconds in this build.",
-                      )""",
+                              "display auto-disables after 90 seconds in this build."''',
               "ControlSheet power explanation",
           )
 
