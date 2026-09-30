@@ -1,4 +1,4 @@
-name: Build Z Fold 7 Root Surface Mirror Probe
+name: Build Z Fold 7 Root Surface Mirror Probe Fix
 
 on:
   workflow_dispatch:
@@ -821,8 +821,9 @@ jobs:
                                       mirror,
                                       10_000,
                                   )
-                                  .show(
-                                      mirror
+                                  .setVisibility(
+                                      mirror,
+                                      true,
                                   )
 
                               /*
