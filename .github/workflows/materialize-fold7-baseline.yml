@@ -1,0 +1,469 @@
+name: Materialize Fold7 1.3.16 Baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      output_branch:
+        description: Branch that will receive the generated 1.3.16 source
+        required: true
+        default: generated/fold7-1.3.16-baseline
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: materialize-fold7-1.3.16
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+
+    env:
+      BASELINE_SHA: 1a8787c5727be47f40d77ca9258e1cadb56fa1a4
+      OUTPUT_BRANCH: ${{ inputs.output_branch }}
+
+    steps:
+      - name: Checkout trusted 1.3.16 baseline
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BASELINE_SHA }}
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+
+      - name: Reconstruct generated 1.3.16 source
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+          import subprocess
+          import textwrap
+
+          baseline = "1a8787c5727be47f40d77ca9258e1cadb56fa1a4"
+          workflow_path = ".github/workflows/build-shizuku-apk.yml"
+
+          workflow = subprocess.check_output(
+              [
+                  "git",
+                  "show",
+                  f"{baseline}:{workflow_path}",
+              ],
+              text=True,
+          )
+
+          lines = workflow.splitlines()
+
+          wanted_steps = [
+              "Replay last successful Fold7 geometry build",
+              "Fix Fold7 physical panel handoff",
+              "Validate Fold7 physical handoff source",
+              "Add motion-gated cover power hold",
+              "Validate motion-gated cover power source",
+          ]
+
+          def extract_run_block(step_name: str) -> str:
+              step_start = None
+
+              for index, line in enumerate(lines):
+                  if line.strip() == f"- name: {step_name}":
+                      step_start = index
+                      break
+
+              if step_start is None:
+                  raise SystemExit(
+                      f"Could not find baseline workflow step: {step_name}"
+                  )
+
+              run_line = None
+
+              for index in range(step_start + 1, len(lines)):
+                  line = lines[index]
+
+                  if line.startswith("      - name:"):
+                      break
+
+                  if line.strip() == "run: |":
+                      run_line = index
+                      break
+
+              if run_line is None:
+                  raise SystemExit(
+                      f"No run block found for: {step_name}"
+                  )
+
+              block = []
+
+              for index in range(run_line + 1, len(lines)):
+                  line = lines[index]
+
+                  if line.startswith("      - name:"):
+                      break
+
+                  block.append(line)
+
+              return textwrap.dedent(
+                  "\n".join(block)
+              )
+
+          for number, step_name in enumerate(
+              wanted_steps,
+              start=1,
+          ):
+              script = extract_run_block(step_name)
+
+              safe_name = re.sub(
+                  r"[^A-Za-z0-9]+",
+                  "-",
+                  step_name,
+              ).strip("-")
+
+              script_path = Path(
+                  f"/tmp/{number:02d}-{safe_name}.sh"
+              )
+
+              script_path.write_text(
+                  "set -euo pipefail\n"
+                  + script
+                  + "\n"
+              )
+
+              print()
+              print("=" * 80)
+              print(f"RUNNING: {step_name}")
+              print("=" * 80)
+
+              subprocess.run(
+                  [
+                      "bash",
+                      str(script_path),
+                  ],
+                  check=True,
+              )
+
+          print()
+          print("1.3.16 source reconstruction completed.")
+          PY
+
+      - name: Verify reconstructed version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          GRADLE="app/build.gradle.kts"
+          SERVICE="app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
+          HOST="app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt"
+          PANEL="app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
+          BRIDGE="app/src/full/java/com/duoopen/shell/ShizukuBridge.kt"
+          SHELL="app/src/full/java/com/duoopen/shell/DuoShellService.kt"
+
+          test -f "$GRADLE"
+          test -f "$SERVICE"
+          test -f "$HOST"
+          test -f "$PANEL"
+          test -f "$BRIDGE"
+          test -f "$SHELL"
+
+          grep -F \
+            'versionCode = 20' \
+            "$GRADLE"
+
+          grep -F \
+            'versionName = "1.3.16-zfold7-motion-power"' \
+            "$GRADLE"
+
+          grep -F \
+            'COVER_WAKE_TRAVEL_DEG' \
+            "$SERVICE"
+
+          grep -F \
+            'physical-resolve reason=' \
+            "$SERVICE"
+
+          grep -F \
+            'REQUEST_DISPLAY_POWER = 10' \
+            app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+
+          grep -F \
+            'requestDisplayPowerInternal' \
+            "$SHELL"
+
+          grep -F \
+            'fun requestDisplayPower(' \
+            "$BRIDGE"
+
+          grep -F \
+            'DisplayMirrorHost' \
+            "$SERVICE"
+
+          git diff --check
+
+      - name: Show generated source changes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo
+          echo "========================================"
+          echo "GENERATED FILES"
+          echo "========================================"
+
+          git status --short
+
+          echo
+          echo "========================================"
+          echo "DIFF STAT"
+          echo "========================================"
+
+          git diff --stat
+
+      - name: Compile and run unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ./gradlew \
+            testFullDebugUnitTest \
+            assembleFullDebug \
+            --stacktrace
+
+      - name: Prepare recovery artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p zfold7-materialized
+
+          git diff \
+            > zfold7-materialized/generated-1.3.16.patch
+
+          git status --short \
+            > zfold7-materialized/generated-files.txt
+
+          {
+            echo "baselineCommit=$BASELINE_SHA"
+            echo "version=1.3.16-zfold7-motion-power"
+            echo "versionCode=20"
+            echo "innerGeometry=1968x2184"
+            echo "coverGeometry=1080x2520"
+            echo
+            echo "This source tree was reconstructed from the trusted"
+            echo "1.3.16 GitHub Actions workflow."
+          } > zfold7-materialized/BASELINE-INFO.txt
+
+          {
+            echo "Fold7 1.3.16 hot-path references"
+            echo
+
+            grep -RInE \
+              'onHinge\(|postDelayed|Choreographer|LIVE_INTERVAL_MS|LIVE_SHELL_SCALE|POLL_MS|ShizukuBridge\.capture|displayManager\.displays|SurfaceControl\.Transaction|setGeometry|mirrorDisplay|applyTransactionOnDraw|requestDisplayPower' \
+              app/src/full/java \
+              app/src/main/java \
+              || true
+
+          } > zfold7-materialized/HOTPATH-INDEX.txt
+
+          APK="$(
+            find \
+              app/build/outputs/apk/full/debug \
+              -type f \
+              -name '*.apk' \
+              | head -n 1
+          )"
+
+          if [ -z "$APK" ]; then
+            echo "Debug APK not found."
+            exit 1
+          fi
+
+          cp \
+            "$APK" \
+            zfold7-materialized/DuoOpen-ZFold7-1.3.16-materialized-debug.apk
+
+          sha256sum \
+            zfold7-materialized/DuoOpen-ZFold7-1.3.16-materialized-debug.apk \
+            > zfold7-materialized/APK-SHA256.txt
+
+      - name: Write canonical Fold7 baseline document
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p docs
+
+          cat > docs/FOLD7-GENERATED-BASELINE.md <<'EOF'
+          # Duo Open — Samsung Galaxy Z Fold7 Generated Baseline
+
+          ## Trusted source
+
+          Baseline commit:
+
+          `1a8787c5727be47f40d77ca9258e1cadb56fa1a4`
+
+          Version:
+
+          `1.3.16-zfold7-motion-power`
+
+          Version code:
+
+          `20`
+
+          ## Target hardware
+
+          Samsung Galaxy Z Fold7.
+
+          Physically verified panel geometry:
+
+          - Inner: `1968 x 2184`
+          - Cover: `1080 x 2520`
+
+          Logical Android display IDs are not treated as permanent physical
+          panel identities. Samsung may remap the physical panels between
+          logical routes during topology transitions.
+
+          ## Preserved continuity architecture
+
+          The 1.3.16 baseline uses:
+
+          - live SurfaceControl display mirroring
+          - explicit source/destination geometry
+          - the left pane of the inner display as continuity content
+          - Shizuku-assisted privileged operations
+          - the existing glass/frost rendering system
+          - motion-gated cover activation
+          - cover power hold during the transition
+          - Samsung native display handoff
+
+          The Android application/task remains the actual source of truth.
+
+          The continuity implementation does not move the application task to
+          a secondary display.
+
+          ## Purpose of this branch
+
+          Historical Duo Open Fold7 builds reconstructed large portions of the
+          final source inside GitHub Actions.
+
+          This branch materializes the effective 1.3.16 source into ordinary
+          repository files so future engineering can work from a stable source
+          tree instead of repeatedly replaying multiple generations of workflow
+          transformations.
+
+          ## Validation status
+
+          Creation of this branch means the source reconstruction compiled and
+          passed the existing Full debug unit tests.
+
+          It does not establish new physical Fold7 behavior.
+
+          Any future behavioral or performance change must still be physically
+          tested on the target Galaxy Z Fold7.
+          EOF
+
+      - name: Create materialized source branch
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "$OUTPUT_BRANCH" ]; then
+            echo "OUTPUT_BRANCH is empty."
+            exit 1
+          fi
+
+          echo "Requested branch:"
+          echo "$OUTPUT_BRANCH"
+
+          git fetch origin --prune
+
+          if git ls-remote \
+              --exit-code \
+              --heads \
+              origin \
+              "refs/heads/$OUTPUT_BRANCH" \
+              >/dev/null 2>&1
+          then
+            echo
+            echo "ERROR:"
+            echo "The output branch already exists:"
+            echo "$OUTPUT_BRANCH"
+            echo
+            echo "Delete it or run this workflow with another branch name."
+            exit 1
+          fi
+
+          git config \
+            user.name \
+            "github-actions[bot]"
+
+          git config \
+            user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git switch \
+            -c \
+            "$OUTPUT_BRANCH"
+
+          git add \
+            app/build.gradle.kts \
+            app/src \
+            docs/FOLD7-GENERATED-BASELINE.md
+
+          echo
+          echo "Files staged for materialized baseline:"
+          git diff \
+            --cached \
+            --stat
+
+          if git diff --cached --quiet
+          then
+            echo
+            echo "ERROR:"
+            echo "No generated source changes were staged."
+            exit 1
+          fi
+
+          git commit \
+            -m \
+            "Materialize Fold7 1.3.16 generated source"
+
+          MATERIALIZED_SHA="$(
+            git rev-parse HEAD
+          )"
+
+          git push \
+            origin \
+            "HEAD:refs/heads/$OUTPUT_BRANCH"
+
+          {
+            echo "branch=$OUTPUT_BRANCH"
+            echo "commit=$MATERIALIZED_SHA"
+            echo "baseline=$BASELINE_SHA"
+          } | tee \
+            zfold7-materialized/MATERIALIZED-BRANCH.txt
+
+      - name: Upload materialization artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-Fold7-1.3.16-materialized
+          path: |
+            zfold7-materialized/DuoOpen-ZFold7-1.3.16-materialized-debug.apk
+            zfold7-materialized/APK-SHA256.txt
+            zfold7-materialized/BASELINE-INFO.txt
+            zfold7-materialized/generated-files.txt
+            zfold7-materialized/generated-1.3.16.patch
+            zfold7-materialized/HOTPATH-INDEX.txt
+            zfold7-materialized/MATERIALIZED-BRANCH.txt
+          if-no-files-found: error
+          retention-days: 30
