@@ -52,6 +52,17 @@ class FoldOverlayService : AccessibilityService() {
     private val snapshots = SnapshotCache(maxAgeMs = SNAPSHOT_MAX_AGE_MS)
     private var angleFeed: WallpaperAngleFeed? = null
 
+    /**
+     * Automatically arm Fold7 geometry continuity once per accessibility-service
+     * lifetime after Shizuku becomes ready.
+     *
+     * This is equivalent to pressing "Arm geometry continuity (4°)" once after
+     * startup. It deliberately does not repeatedly re-arm on later Shizuku state
+     * emissions, which could otherwise reset an active fold transition.
+     */
+    private var continuityAutoArmAttempted =
+        false
+
     private var pendingProbeReason =
         "service-connected"
 
@@ -203,6 +214,13 @@ class FoldOverlayService : AccessibilityService() {
                     state is
                         ShizukuBridge.State.Ready
                 ) {
+                    if (!continuityAutoArmAttempted) {
+                        continuityAutoArmAttempted =
+                            true
+
+                        armGeometryContinuity()
+                    }
+
                     scheduleDisplayProbe(
                         "shizuku-ready",
                         delayMs = 800L,
@@ -913,7 +931,7 @@ class FoldOverlayService : AccessibilityService() {
             "begin enable=$enable reason=$reason",
         )
 
-                  if (!enable) {
+        if (!enable) {
             continuityArmed =
                 false
 
@@ -964,7 +982,7 @@ class FoldOverlayService : AccessibilityService() {
                     false,
                 )
 
-                      val target =
+            val target =
                 result.getInt(
                     "targetDisplayId",
                     -1,
@@ -1364,7 +1382,7 @@ class FoldOverlayService : AccessibilityService() {
 
         val secondaryDisplayStatus:
             StateFlow<String> =
-                _secondaryDisplayStatus.asStateFlow()
+            _secondaryDisplayStatus.asStateFlow()
 
         fun testSecondaryDisplay(
             enable: Boolean,
@@ -1377,7 +1395,7 @@ class FoldOverlayService : AccessibilityService() {
                         return false
                     }
 
-                      if (enable) {
+            if (enable) {
                 service.armGeometryContinuity()
             } else {
                 service.runSecondaryDisplayExperiment(
