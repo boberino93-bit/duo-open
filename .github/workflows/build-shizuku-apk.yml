@@ -1,4 +1,4 @@
-name: Build Z Fold 7 Live Display Mirror Probe Fix
+name: Build Z Fold 7 Live Display Mirror Probe Fix 2
 
 on:
   workflow_dispatch:
@@ -1044,7 +1044,7 @@ jobs:
 
           replace_once(
               service_path,
-              '''        com.duoopen.debug.DuoDiagnostics.event(
+              '''        DuoDiagnostics.event(
                       "dual-shell",
                       "begin enable=$enable reason=$reason",
                   )
