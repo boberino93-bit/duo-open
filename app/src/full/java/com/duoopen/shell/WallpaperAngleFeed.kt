@@ -46,10 +46,9 @@ class WallpaperAngleFeed(
     private var action = ""
 
     /**
-     * Fold7 can expose the cover and inner panels as two logical routes at the
-     * same time. Keep a tiny wallpaper target on every known physical Fold7
-     * panel so the FoldInteractive service can answer before Samsung changes
-     * which route is DEFAULT_DISPLAY.
+     * Keep one tiny wallpaper target on Samsung's current DEFAULT_DISPLAY.
+     * Do not create a second accessibility-overlay anchor on the other Fold7
+     * panel while Samsung is changing display topology.
      */
     private val anchors =
         LinkedHashMap<String, AnchorBinding>()
@@ -440,13 +439,9 @@ class WallpaperAngleFeed(
     }
 
     /**
-     * Keep wallpaper-showing 1×1 windows on every currently exposed physical
-     * Fold7 panel. Samsung may keep FoldInteractive associated with the inner
-     * route while the cover is DEFAULT_DISPLAY, so a default-only anchor can
-     * miss the beginning of an unfold.
-     *
-     * Other devices retain the old behavior and get one anchor on the default
-     * display only.
+     * Keep exactly one wallpaper-showing 1×1 window on DEFAULT_DISPLAY.
+     * This intentionally avoids touching the secondary Fold7 panel during
+     * Samsung's topology handoff.
      */
     private fun ensureAnchors() {
         val displayManager =
@@ -454,25 +449,20 @@ class WallpaperAngleFeed(
                 DisplayManager::class.java
             )
 
-        val allDisplays =
-            displayManager.displays
-                .toList()
-
-        val fold7Displays =
-            allDisplays.filter(
-                ::isFold7Panel
-            )
-
+        // Stability pass: anchor only the current DEFAULT_DISPLAY.
+        //
+        // 1.3.18 tried to keep wallpaper anchors on both physical Fold7
+        // panels. Field diagnostics showed that the secondary anchor was
+        // repeatedly removed/re-added while Samsung was committing its
+        // display topology, which correlated with cover-panel black flashes.
+        // Keep Samsung's normal panel routing in control and use the same
+        // single-route strategy as the stable 1.3.17 behavior.
         val targets =
-            if (fold7Displays.isNotEmpty()) {
-                fold7Displays
-            } else {
-                listOfNotNull(
-                    displayManager.getDisplay(
-                        Display.DEFAULT_DISPLAY
-                    )
+            listOfNotNull(
+                displayManager.getDisplay(
+                    Display.DEFAULT_DISPLAY
                 )
-            }
+            )
 
         val wantedKeys =
             targets.mapTo(
