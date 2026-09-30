@@ -21,7 +21,7 @@ jobs:
           ref: generated/fold7-1.3.16-baseline
           fetch-depth: 0
 
-      - name: Overlay 1.3.19 source from main
+      - name: Overlay 1.3.19 stability source from main
         shell: bash
         run: |
           set -euo pipefail
@@ -36,11 +36,12 @@ jobs:
           echo "materialized_base=$(git rev-parse HEAD)"
           echo "overlay_main=${OVERLAY_MAIN_SHA}"
 
+          # Deliberately DO NOT overlay WallpaperAngleFeed.kt or
+          # DuoShellService.kt. 1.3.19 restores those files exactly from
+          # the stable materialized baseline.
           FILES=(
             "app/build.gradle.kts"
             "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
-            "app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt"
-            "app/src/full/java/com/duoopen/shell/DuoShellService.kt"
           )
 
           for path in "${FILES[@]}"; do
@@ -173,18 +174,12 @@ jobs:
           echo
           echo "Checking 1.3.19 stability fixes..."
 
+          # Safe 1.3.18 improvement retained.
           grep -F \
             'host seeded hinge=' \
             "$SERVICE"
 
-          grep -F \
-            'private fun ensureAnchors()' \
-            "$ANGLES"
-
-          grep -F \
-            'if (!visible)' \
-            "$SHELL"
-
+          # Samsung display callbacks are coalesced before topology resolution.
           grep -F \
             'display callbacks coalesced reason=' \
             "$SERVICE"
@@ -193,15 +188,38 @@ jobs:
             'DISPLAY_SYNC_DEBOUNCE_MS' \
             "$SERVICE"
 
+          # The angle source is deliberately the stable, default-display-only
+          # implementation from the materialized baseline.
           grep -F \
-            'displayManager.getDisplay(' \
+            'dm.getDisplay(Display.DEFAULT_DISPLAY)' \
             "$ANGLES"
 
+          # The stable reader only accepts visible FoldInteractive responses.
+          grep -F \
+            'isVisible=true' \
+            "$SHELL"
+
+          # Reject the experimental 1.3.18 multi-anchor / hidden-angle logic.
           if grep -F \
-            'scheduleMirrorRefresh(' \
-            "$SERVICE" \
-            | grep -F \
-            'cover-power:'
+            'AnchorBinding' \
+            "$ANGLES"
+          then
+            echo "ERROR: 1.3.18 multi-anchor logic is present."
+            exit 1
+          fi
+
+          if grep -F \
+            'hiddenTrusted' \
+            "$SHELL"
+          then
+            echo "ERROR: 1.3.18 hidden-angle bootstrap logic is present."
+            exit 1
+          fi
+
+          # The watchdog must not directly schedule a mirror geometry refresh.
+          if grep -F \
+            'cover-power:$reason' \
+            "$SERVICE"
           then
             echo "ERROR: watchdog-driven mirror refresh is still present."
             exit 1
@@ -276,12 +294,14 @@ jobs:
             echo "overlayMain=${OVERLAY_MAIN}"
             echo "historicalReplay=false"
             echo
-            echo "1.3.19 experiment:"
+            echo "1.3.19 stability pass:"
             echo "- left-pane mirror geometry unchanged"
-            echo "- one wallpaper anchor on DEFAULT_DISPLAY only"
-            echo "- visible FoldInteractive angle responses only"
+            echo "- stable baseline WallpaperAngleFeed restored exactly"
+            echo "- stable baseline DuoShellService restored exactly"
+            echo "- no dual-panel wallpaper anchors"
+            echo "- no hidden FoldInteractive angle bootstrap"
+            echo "- display topology callbacks coalesced"
             echo "- watchdog no longer drives mirror geometry refresh"
-            echo "- Samsung display callbacks coalesced before syncDisplays"
             echo "- mirror host seeded with latest hinge angle"
             echo
             echo "APK:"
