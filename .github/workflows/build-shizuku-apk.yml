@@ -1,4 +1,4 @@
-name: Build Z Fold 7 Background Display Probe
+name: Build Z Fold 7 Service-Owned Dual Screen Probe
 
 on:
   workflow_dispatch:
@@ -26,36 +26,7 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x gradlew
 
-      - name: Verify expected source base
-        run: |
-          check_blob() {
-            path="$1"
-            expected="$2"
-            actual="$(git hash-object "$path")"
-
-            if [ "$actual" != "$expected" ]; then
-              echo "::error file=$path::Source changed since this probe was designed. Expected $expected but found $actual."
-              exit 1
-            fi
-          }
-
-          check_blob "app/src/main/java/com/duoopen/fold/HingeAngleSource.kt" "da3fe9abda7795bfd714d4b5074acf90a1b91c48"
-          check_blob "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt" "7610633d11dc8bdb3667e2670cace595305f853e"
-          check_blob "app/src/full/java/com/duoopen/shell/ShizukuBridge.kt" "4600ea293222c94cca02310734850a78e6cc62bd"
-          check_blob "app/src/full/java/com/duoopen/shell/DuoShellService.kt" "87414a0e7cde36673daeb574d18402e7f1a29c4b"
-          check_blob "app/src/full/java/com/duoopen/shell/ShellProtocol.kt" "4a413f20cfd8c316fe7c8f80ca470e40940f341c"
-          check_blob "app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt" "fdc4f607ed8e8e7d03df4223bd79dac36be93952"
-          check_blob "app/src/full/java/com/duoopen/overlay/PanelEngine.kt" "a1285f81ffe5e1f7d7e0f46e86b4e7bef747e5ae"
-          check_blob "app/build.gradle.kts" "dcbfbaf660fd2efd4f625569affc1db738e52ec8"
-          check_blob "app/src/main/java/com/duoopen/DualScreen.kt" "5c89b33a4970ee87a08671f47b1edebaf57c5d90"
-          check_blob "app/src/main/java/com/duoopen/DuoApplication.kt" "e07dc81c3479afe0a1f493b53ae92d7b96d692cd"
-          check_blob "app/src/main/java/com/duoopen/ui/ControlSheet.kt" "7f88ae6a7f6ce8452c8c8f17d1b2627442eaea6f"
-
-          git cat-file -e fd41615491e8939352ae3e298637585f4958b5c0^{commit}
-
-          echo "Source guard passed."
-
-      - name: Replay previous proven transforms
+      - name: Replay previous display-probe build
         run: |
           python3 <<'PY'
           from pathlib import Path
@@ -63,7 +34,7 @@ jobs:
           import subprocess
           import textwrap
 
-          previous_commit = "fd41615491e8939352ae3e298637585f4958b5c0"
+          previous_commit = "83cc8a3816b3286017a0cbbaaa61d7ec9fe8a68c"
 
           previous_workflow = subprocess.check_output(
               [
@@ -77,10 +48,9 @@ jobs:
           lines = previous_workflow.splitlines()
 
           wanted_steps = [
-              "Reapply proven Fold 7 smoothness pass",
-              "Install persistent dual-screen lifecycle",
-              "Install on-device field diagnostics",
-              "Stabilize dual-screen recovery state machine",
+              "Verify expected source base",
+              "Replay previous proven transforms",
+              "Add service-owned read-only display probe",
           ]
 
           def extract_run_block(step_name: str) -> str:
@@ -159,7 +129,7 @@ jobs:
               )
           PY
 
-      - name: Add service-owned read-only display probe
+      - name: Keep Samsung angle reader alive across cover-screen handoff
         run: |
           python3 <<'PY'
           from pathlib import Path
@@ -187,215 +157,6 @@ jobs:
                   ),
               )
 
-          # Binder protocol.
-          replace_once(
-              "app/src/full/java/com/duoopen/shell/ShellProtocol.kt",
-              """    /** → Bundle{state, lines, parsed, rejected, last, angle} */
-              const val ANGLE_STATUS = 5
-
-              /** callback: float angle, long uptimeMs */""",
-              """    /** → Bundle{state, lines, parsed, rejected, last, angle} */
-              const val ANGLE_STATUS = 5
-
-              /**
-               * Read-only shell-side display investigation.
-               * No display state is changed by this transaction.
-               */
-              const val DISPLAY_PROBE = 6
-
-              /** callback: float angle, long uptimeMs */""",
-              "ShellProtocol DISPLAY_PROBE",
-          )
-
-          # Shizuku user service.
-          shell_path = (
-              "app/src/full/java/com/duoopen/shell/"
-              "DuoShellService.kt"
-          )
-
-          replace_once(
-              shell_path,
-              """            ShellProtocol.ANGLE_STATUS -> {
-                          out.writeNoException()
-                          out.writeBundle(reader?.status() ?: Bundle().apply { putString("state", "not started") })
-                      }
-                      else -> return super.onTransact(code, data, reply, flags)""",
-              """            ShellProtocol.ANGLE_STATUS -> {
-                          out.writeNoException()
-                          out.writeBundle(reader?.status() ?: Bundle().apply { putString("state", "not started") })
-                      }
-                      ShellProtocol.DISPLAY_PROBE -> {
-                          val identity = clearCallingIdentity()
-                          val result = try {
-                              displayProbe()
-                          } catch (t: Throwable) {
-                              Bundle().apply {
-                                  putString(
-                                      "error",
-                                      "${t.javaClass.simpleName}: ${t.message}",
-                                  )
-                              }
-                          } finally {
-                              restoreCallingIdentity(identity)
-                          }
-
-                          out.writeNoException()
-                          out.writeBundle(result)
-                      }
-                      else -> return super.onTransact(code, data, reply, flags)""",
-              "DuoShellService DISPLAY_PROBE transaction",
-          )
-
-          replace_once(
-              shell_path,
-              """    // ---- capture -----------------------------------------------------------
-          """,
-              """    // ---- read-only display probe -------------------------------------------
-
-              private fun displayProbe(): Bundle =
-                  Bundle().apply {
-
-                      putInt(
-                          "uid",
-                          Process.myUid(),
-                      )
-
-                      putInt(
-                          "pid",
-                          Process.myPid(),
-                      )
-
-                      putString(
-                          "identity",
-                          runProbe(
-                              "id"
-                          ),
-                      )
-
-                      putString(
-                          "cmd_display",
-                          runProbe(
-                              "cmd display get-displays"
-                          ),
-                      )
-
-                      putString(
-                          "cmd_display_help",
-                          runProbe(
-                              "cmd display help"
-                          ),
-                      )
-
-                      putString(
-                          "surfaceflinger",
-                          runProbe(
-                              "dumpsys SurfaceFlinger --display-id"
-                          ),
-                      )
-
-                      putString(
-                          "display_filtered",
-                          runProbe(
-                              "dumpsys display | " +
-                                  "grep -E -i " +
-                                  "'DisplayDeviceInfo|LogicalDisplay|uniqueId=|" +
-                                  "displayId|mDisplayId|state=|type=|address=|" +
-                                  "modeId|supportedModes|Built-in|fold|rear' | " +
-                                  "head -n 300"
-                          ),
-                      )
-
-                      putString(
-                          "window_displays",
-                          runProbe(
-                              "dumpsys window displays | head -n 250"
-                          ),
-                      )
-                  }
-
-              private fun runProbe(
-                  command: String,
-              ): String {
-
-                  val process =
-                      ProcessBuilder(
-                          "sh",
-                          "-c",
-                          "$command 2>&1",
-                      ).start()
-
-                  val output =
-                      process.inputStream
-                          .bufferedReader()
-                          .use {
-                              it.readText()
-                          }
-
-                  val finished =
-                      process.waitFor(
-                          3,
-                          java.util.concurrent.TimeUnit.SECONDS,
-                      )
-
-                  if (
-                      !finished
-                  ) {
-                      process.destroyForcibly()
-
-                      return (
-                          "timeout after 3000ms\\n" +
-                              output.take(
-                                  PROBE_OUTPUT_LIMIT
-                              )
-                          )
-                  }
-
-                  return (
-                      "exit=${process.exitValue()}\\n" +
-                          output.take(
-                              PROBE_OUTPUT_LIMIT
-                          )
-                      )
-              }
-
-              // ---- capture -----------------------------------------------------------
-          """,
-              "DuoShellService displayProbe implementation",
-          )
-
-          replace_once(
-              shell_path,
-              """        const val SHIZUKU_DESTROY = 16777115
-                  val FAMILIES = listOf("android.window.ScreenCaptureInternal", "android.window.ScreenCapture")""",
-              """        const val SHIZUKU_DESTROY = 16777115
-
-                  const val PROBE_OUTPUT_LIMIT =
-                      16_000
-
-                  val FAMILIES = listOf("android.window.ScreenCaptureInternal", "android.window.ScreenCapture")""",
-              "DuoShellService probe limit",
-          )
-
-          # App-side Shizuku bridge.
-          replace_once(
-              "app/src/full/java/com/duoopen/shell/ShizukuBridge.kt",
-              """    fun angleStatus(): Bundle? = call(ShellProtocol.ANGLE_STATUS)
-          }""",
-              """    fun angleStatus(): Bundle? = call(ShellProtocol.ANGLE_STATUS)
-
-              /**
-               * Executes the read-only display probe as Shizuku's shell user.
-               * This is blocking and must be called off the main thread.
-               */
-              fun displayProbe(): Bundle? =
-                  call(
-                      ShellProtocol.DISPLAY_PROBE
-                  )
-          }""",
-              "ShizukuBridge displayProbe",
-          )
-
-          # Persistent accessibility service owns the probe.
           service_path = (
               "app/src/full/java/com/duoopen/overlay/"
               "FoldOverlayService.kt"
@@ -403,380 +164,1424 @@ jobs:
 
           replace_once(
               service_path,
-              """import android.util.Log
-          import android.view.Display""",
-              """import android.util.Log
-          import android.view.Display
-          import com.duoopen.debug.DuoDiagnostics""",
-              "FoldOverlayService diagnostics import",
+              """        val want = DuoSettings.config.value.shizukuAngle && ShizukuBridge.ready && WallpaperAngleFeed.foldWallpaperActive(this)
+                  if (want && !feed.active) feed.start() else if (!want && feed.active) feed.stop()""",
+              """        /*
+                   * Do not gate the live Samsung angle reader on WallpaperManager.
+                   *
+                   * On the Fold7, the inner display reports Samsung's FoldInteractive
+                   * service while the cover display may report a Video wallpaper.
+                   * That metadata switch does not prove the underlying angle source has
+                   * disappeared. The real authority is whether fresh angle callbacks
+                   * continue arriving from the Shizuku-side log reader.
+                   */
+                  val want =
+                      DuoSettings.config.value.shizukuAngle &&
+                          ShizukuBridge.ready
+
+                  if (
+                      want &&
+                      !feed.active
+                  ) {
+                      feed.start()
+                  } else if (
+                      !want &&
+                      feed.active
+                  ) {
+                      feed.stop()
+                  }""",
+              "FoldOverlayService angle source gate",
+          )
+
+          angle_path = (
+              "app/src/full/java/com/duoopen/shell/"
+              "WallpaperAngleFeed.kt"
+          )
+
+          replace_once(
+              angle_path,
+              """        if (!ShizukuBridge.ready) { status = "Shizuku not ready"; return }
+                  if (!foldWallpaperActive(context)) { status = "Samsung's Fold interactive wallpaper isn't the home wallpaper"; return }
+                  action = "com.duoopen.angle.READ_${SystemClock.elapsedRealtime()}\"""".replace('\\"', '"'),
+              """        if (!ShizukuBridge.ready) {
+                      status = "Shizuku not ready"
+                      return
+                  }
+
+                  /*
+                   * Samsung exposes different wallpaper metadata on the Fold7 cover
+                   * display. Always attempt the reader and let fresh/stale callbacks
+                   * determine whether the continuous source is usable.
+                   */
+                  action = "com.duoopen.angle.READ_${SystemClock.elapsedRealtime()}\"""".replace('\\"', '"'),
+              "WallpaperAngleFeed hard wallpaper gate",
+          )
+
+          replace_once(
+              angle_path,
+              """    private var duplicateAngles = 0L
+
+              /** One line for the UI. */""",
+              """    private var duplicateAngles = 0L
+
+              private var lastWallpaperIdentity =
+                  ""
+
+              private var lastFreshState:
+                  Boolean? = null
+
+              /** One line for the UI. */""",
+              "WallpaperAngleFeed metadata fields",
+          )
+
+          old_status = """    private val statusTick = object : Runnable {
+                  override fun run() {
+                      if (!running) return
+                      val b = ShizukuBridge.angleStatus()
+                      val age = if (lastCallbackUptime == 0L) -1 else SystemClock.uptimeMillis() - lastCallbackUptime
+                      status =
+                          if (b == null) {
+                              "Reader unreachable"
+                          } else {
+                              "Reader ${b.getString("state")}: " +
+                                  "${b.getInt("parsed")} angles / " +
+                                  "${b.getInt("lines")} lines" +
+                                  (
+                                      if (age >= 0) {
+                                          " · last ${age} ms ago"
+                                      } else {
+                                          " · nothing received yet"
+                                      }
+                                  ) +
+                                  (
+                                      if (lastDeliveryLagMs >= 0) {
+                                          " · delivery ${lastDeliveryLagMs} ms " +
+                                              "(max ${maxDeliveryLagMs})"
+                                      } else {
+                                          ""
+                                      }
+                                  ) +
+                                  " · poll ${pollInterval(SystemClock.uptimeMillis())} ms" +
+                                  " · dup $duplicateAngles"
+                          }
+                      if (age > STALE_MS || (age < 0 && SystemClock.uptimeMillis() - startedAt > STALE_MS)) hinge.clearExternal()
+                      handler.postDelayed(this, 1_000)
+                  }
+              }"""
+
+          new_status = """    private val statusTick = object : Runnable {
+                  override fun run() {
+                      if (!running) return
+
+                      val now =
+                          SystemClock.uptimeMillis()
+
+                      val b =
+                          ShizukuBridge.angleStatus()
+
+                      val age =
+                          if (
+                              lastCallbackUptime == 0L
+                          ) {
+                              -1L
+                          } else {
+                              now -
+                                  lastCallbackUptime
+                          }
+
+                      val fresh =
+                          age in 0..STALE_MS ||
+                              (
+                                  age < 0L &&
+                                      now - startedAt <=
+                                      STALE_MS
+                                  )
+
+                      val wallpaper =
+                          wallpaperIdentity(
+                              context
+                          )
+
+                      if (
+                          wallpaper !=
+                          lastWallpaperIdentity
+                      ) {
+                          com.duoopen.debug.DuoDiagnostics.event(
+                              "angle-source",
+                              "wallpaper changed from=" +
+                                  "${lastWallpaperIdentity.ifEmpty { "(initial)" }} " +
+                                  "to=$wallpaper " +
+                                  "readerFresh=$fresh ageMs=$age",
+                          )
+
+                          lastWallpaperIdentity =
+                              wallpaper
+                      }
+
+                      if (
+                          lastFreshState != fresh
+                      ) {
+                          com.duoopen.debug.DuoDiagnostics.event(
+                              "angle-source",
+                              "readerFresh=$fresh ageMs=$age " +
+                                  "wallpaper=$wallpaper",
+                          )
+
+                          lastFreshState =
+                              fresh
+                      }
+
+                      status =
+                          if (
+                              b == null
+                          ) {
+                              "Reader unreachable · wallpaper $wallpaper"
+                          } else {
+                              "Reader ${b.getString("state")}: " +
+                                  "${b.getInt("parsed")} angles / " +
+                                  "${b.getInt("lines")} lines" +
+                                  (
+                                      if (
+                                          age >= 0
+                                      ) {
+                                          " · last ${age} ms ago"
+                                      } else {
+                                          " · waiting for first angle"
+                                      }
+                                  ) +
+                                  (
+                                      if (
+                                          lastDeliveryLagMs >= 0
+                                      ) {
+                                          " · delivery ${lastDeliveryLagMs} ms " +
+                                              "(max ${maxDeliveryLagMs})"
+                                      } else {
+                                          ""
+                                      }
+                                  ) +
+                                  " · poll ${pollInterval(now)} ms" +
+                                  " · dup $duplicateAngles" +
+                                  " · source " +
+                                  (
+                                      if (
+                                          fresh
+                                      ) {
+                                          "live"
+                                      } else {
+                                          "stale"
+                                      }
+                                  ) +
+                                  " · wallpaper $wallpaper"
+                          }
+
+                      if (
+                          !fresh &&
+                          (
+                              age > STALE_MS ||
+                                  (
+                                      age < 0 &&
+                                          now - startedAt >
+                                          STALE_MS
+                                      )
+                              )
+                      ) {
+                          hinge.clearExternal()
+                      }
+
+                      handler.postDelayed(
+                          this,
+                          1_000
+                      )
+                  }
+              }"""
+
+          replace_once(
+              angle_path,
+              old_status,
+              new_status,
+              "WallpaperAngleFeed status authority",
+          )
+
+          replace_once(
+              angle_path,
+              """        duplicateAngles = 0L
+
+                  status = "Starting\"""".replace('\\"', '"'),
+              """        duplicateAngles = 0L
+
+                  lastWallpaperIdentity =
+                      ""
+
+                  lastFreshState =
+                      null
+
+                  status =
+                      "Starting live Samsung hinge reader\"""".replace('\\"', '"'),
+              "WallpaperAngleFeed diagnostics reset",
+          )
+
+          replace_once(
+              angle_path,
+              """        /** Whether Samsung's fold-reactive wallpaper is the current home wallpaper. */
+                  fun foldWallpaperActive(context: Context): Boolean {
+                      val info = runCatching { WallpaperManager.getInstance(context).wallpaperInfo }.getOrNull() ?: return false
+                      return info.packageName == FOLD_WALLPAPER.packageName &&
+                          (info.serviceName == FOLD_WALLPAPER.className || info.serviceName.contains("FoldInteractive"))
+                  }
+              }""",
+              """        /**
+                   * WallpaperManager metadata is diagnostic only.
+                   *
+                   * Samsung may report FoldInteractive on the inner display and a Video
+                   * wallpaper on the cover display even during the same physical fold
+                   * session, so this must never be used as the live-angle kill switch.
+                   */
+                  fun foldWallpaperActive(
+                      context: Context,
+                  ): Boolean {
+                      val info =
+                          runCatching {
+                              WallpaperManager.getInstance(
+                                  context
+                              ).wallpaperInfo
+                          }.getOrNull()
+                              ?: return false
+
+                      return (
+                          info.packageName ==
+                              FOLD_WALLPAPER.packageName &&
+                              (
+                                  info.serviceName ==
+                                      FOLD_WALLPAPER.className ||
+                                      info.serviceName.contains(
+                                          "FoldInteractive"
+                                      )
+                                  )
+                          )
+                  }
+
+                  fun wallpaperIdentity(
+                      context: Context,
+                  ): String {
+                      val info =
+                          runCatching {
+                              WallpaperManager.getInstance(
+                                  context
+                              ).wallpaperInfo
+                          }.getOrNull()
+                              ?: return "none"
+
+                      val service =
+                          info.serviceName
+                              .substringAfterLast(
+                                  '.'
+                              )
+                              .ifEmpty {
+                                  "unknown"
+                              }
+
+                      return (
+                          "${info.packageName.substringAfterLast('.')}/" +
+                              service
+                          )
+                  }
+              }""",
+              "WallpaperAngleFeed wallpaper metadata helper",
+          )
+
+          sheet_path = (
+              "app/src/main/java/com/duoopen/ui/"
+              "ControlSheet.kt"
+          )
+
+          replace_once(
+              sheet_path,
+              """    val sensorStatus by produceState(hinge.statusText(), hinge) {
+                  while (true) {
+                      delay(250)
+                      value = hinge.statusText()
+                  }
+              }
+              var showGuide by remember { mutableStateOf(false) }""",
+              """    val sensorStatus by produceState(hinge.statusText(), hinge) {
+                  while (true) {
+                      delay(250)
+                      value = hinge.statusText()
+                  }
+              }
+
+              val liveAngleStatus by produceState(
+                  angleFeedStatus(),
+                  angleFeedStatus,
+              ) {
+                  while (true) {
+                      delay(250)
+                      value = angleFeedStatus()
+                  }
+              }
+
+              val liveAngleHealthy =
+                  liveAngleStatus.contains(
+                      "source live"
+                  )
+
+              var showGuide by remember { mutableStateOf(false) }""",
+              "ControlSheet live angle state",
+          )
+
+          old_ui = """                            Hint(
+                                          if (foldWallpaperActive) "Samsung's Fold interactive wallpaper is set — the real angle is read from it. " + angleFeedStatus()
+                                          else "Needs Samsung's built-in “Fold interactive” wallpaper as the home wallpaper (it's what receives the real angle). Set it, then come back.",
+                                          warn = !foldWallpaperActive,
+                                      )
+                                  }
+                                  Switch(checked = config.shizukuAngle, onCheckedChange = { v -> DuoSettings.update { it.copy(shizukuAngle = v) } })
+                              }
+                              if (!foldWallpaperActive) {
+                                  TextButton(onClick = onOpenWallpaperSettings) { Text("Open wallpaper settings") }
+                              }"""
+
+          new_ui = """                            Hint(
+                                          when {
+                                              config.shizukuAngle &&
+                                                  liveAngleHealthy -> {
+                                                  "Continuous angle is live. " +
+                                                      liveAngleStatus +
+                                                      if (!foldWallpaperActive) {
+                                                          " · Samsung reports the cover wallpaper separately; Duo Open keeps the reader active."
+                                                      } else {
+                                                          ""
+                                                      }
+                                              }
+
+                                              config.shizukuAngle -> {
+                                                  "Trying Samsung's continuous hinge source. " +
+                                                      liveAngleStatus +
+                                                      if (!foldWallpaperActive) {
+                                                          " · Cover-screen wallpaper metadata is not used as a kill switch."
+                                                      } else {
+                                                          ""
+                                                      }
+                                              }
+
+                                              foldWallpaperActive -> {
+                                                  "Samsung Fold interactive is detected. Enable this to use the continuous angle source."
+                                              }
+
+                                              else -> {
+                                                  "Enable this to try Samsung's continuous hinge source. The Fold7 may report the cover wallpaper as Video, so live callbacks are used as the authority."
+                                              }
+                                          },
+                                          warn =
+                                              config.shizukuAngle &&
+                                                  !liveAngleHealthy &&
+                                                  liveAngleStatus.contains(
+                                                      "stale"
+                                                  ),
+                                      )
+                                  }
+
+                                  Switch(
+                                      checked = config.shizukuAngle,
+                                      onCheckedChange = { value ->
+                                          DuoSettings.update {
+                                              it.copy(
+                                                  shizukuAngle = value
+                                              )
+                                          }
+                                      },
+                                  )
+                              }
+
+                              if (
+                                  !foldWallpaperActive &&
+                                  !liveAngleHealthy
+                              ) {
+                                  TextButton(
+                                      onClick = onOpenWallpaperSettings
+                                  ) {
+                                      Text(
+                                          "Open wallpaper settings"
+                                      )
+                                  }
+                              }"""
+
+          replace_once(
+              sheet_path,
+              old_ui,
+              new_ui,
+              "ControlSheet continuous angle UI",
+          )
+
+          gradle_path = Path("app/build.gradle.kts")
+          gradle = gradle_path.read_text()
+
+          if "versionCode = 9" not in gradle:
+              raise SystemExit(
+                  "Expected display-probe versionCode 9 was not found."
+              )
+
+          if 'versionName = "1.3.5-zfold7-display-probe"' not in gradle:
+              raise SystemExit(
+                  "Expected display-probe versionName was not found."
+              )
+
+          gradle = gradle.replace(
+              "versionCode = 9",
+              "versionCode = 10",
+              1,
+          )
+
+          gradle = gradle.replace(
+              'versionName = "1.3.5-zfold7-display-probe"',
+              'versionName = "1.3.6-zfold7-angle-resilient"',
+              1,
+          )
+
+          gradle_path.write_text(
+              gradle
+          )
+          PY
+
+      - name: Add controlled service-owned secondary-display experiment
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          def load(path):
+              return Path(path).read_text()
+
+          def save(path, text):
+              Path(path).write_text(text)
+
+          def replace_once(path, old, new, label):
+              text = load(path)
+              if old not in text:
+                  raise SystemExit(
+                      f"{label}: expected source not found in {path}"
+                  )
+              save(
+                  path,
+                  text.replace(
+                      old,
+                      new,
+                      1,
+                  ),
+              )
+
+          # 1. Add two explicit Shizuku transactions.
+          protocol_path = (
+              "app/src/full/java/com/duoopen/shell/"
+              "ShellProtocol.kt"
+          )
+
+          replace_once(
+              protocol_path,
+              """    const val DISPLAY_PROBE = 6
+
+              /** callback: float angle, long uptimeMs */""",
+              """    const val DISPLAY_PROBE = 6
+
+              /**
+               * One-shot Fold7 service-owned display experiment.
+               */
+              const val ENABLE_SECONDARY_DISPLAY = 7
+              const val RESET_SECONDARY_DISPLAY = 8
+
+              /** callback: float angle, long uptimeMs */""",
+              "ShellProtocol secondary display commands",
+          )
+
+          shell_path = (
+              "app/src/full/java/com/duoopen/shell/"
+              "DuoShellService.kt"
+          )
+
+          replace_once(
+              shell_path,
+              """            else -> return super.onTransact(code, data, reply, flags)""",
+              """            ShellProtocol.ENABLE_SECONDARY_DISPLAY -> {
+                          val identity = clearCallingIdentity()
+
+                          val result = try {
+                              secondaryDisplayCommand(
+                                  enable = true
+                              )
+                          } catch (t: Throwable) {
+                              Bundle().apply {
+                                  putBoolean(
+                                      "ok",
+                                      false,
+                                  )
+
+                                  putString(
+                                      "error",
+                                      "${t.javaClass.simpleName}: ${t.message}",
+                                  )
+                              }
+                          } finally {
+                              restoreCallingIdentity(
+                                  identity
+                              )
+                          }
+
+                          out.writeNoException()
+                          out.writeBundle(
+                              result
+                          )
+                      }
+
+                      ShellProtocol.RESET_SECONDARY_DISPLAY -> {
+                          val identity = clearCallingIdentity()
+
+                          val result = try {
+                              secondaryDisplayCommand(
+                                  enable = false
+                              )
+                          } catch (t: Throwable) {
+                              Bundle().apply {
+                                  putBoolean(
+                                      "ok",
+                                      false,
+                                  )
+
+                                  putString(
+                                      "error",
+                                      "${t.javaClass.simpleName}: ${t.message}",
+                                  )
+                              }
+                          } finally {
+                              restoreCallingIdentity(
+                                  identity
+                              )
+                          }
+
+                          out.writeNoException()
+                          out.writeBundle(
+                              result
+                          )
+                      }
+
+                      else -> return super.onTransact(code, data, reply, flags)""",
+              "DuoShellService secondary display transactions",
+          )
+
+          replace_once(
+              shell_path,
+              """    // ---- capture -----------------------------------------------------------
+          """,
+              """    // ---- one-shot Fold7 secondary display experiment -----------------------
+
+              private fun secondaryDisplayCommand(
+                  enable: Boolean,
+              ): Bundle {
+
+                  val windowDisplays =
+                      runProbe(
+                          "dumpsys window displays | " +
+                              "grep -E '^[[:space:]]*Display: mDisplayId=|^[[:space:]]*init='"
+                      )
+
+                  val foldDisplays =
+                      Regex(
+                          "Display: mDisplayId=(\\\\d+).*?init=(\\\\d+)x(\\\\d+)",
+                          setOf(
+                              RegexOption.DOT_MATCHES_ALL
+                          ),
+                      ).findAll(
+                          windowDisplays
+                      ).mapNotNull { match ->
+
+                          val id =
+                              match.groupValues[1]
+                                  .toIntOrNull()
+                                  ?: return@mapNotNull null
+
+                          val width =
+                              match.groupValues[2]
+                                  .toIntOrNull()
+                                  ?: return@mapNotNull null
+
+                          val height =
+                              match.groupValues[3]
+                                  .toIntOrNull()
+                                  ?: return@mapNotNull null
+
+                          Triple(
+                              id,
+                              width,
+                              height,
+                          )
+                      }.filter { (_, width, height) ->
+                          (
+                              width == 1080 &&
+                                  height == 2520
+                              ) ||
+                              (
+                                  width == 1968 &&
+                                      height == 2184
+                                  )
+                      }.toList()
+
+                  val target =
+                      foldDisplays.firstOrNull { (id, _, _) ->
+                          id != 0
+                      }
+
+                  if (
+                      target == null
+                  ) {
+                      return Bundle().apply {
+                          putBoolean(
+                              "ok",
+                              false,
+                          )
+
+                          putInt(
+                              "targetDisplayId",
+                              -1,
+                          )
+
+                          putString(
+                              "error",
+                              "No non-zero Fold7 internal display was found.",
+                          )
+
+                          putString(
+                              "windowDisplays",
+                              windowDisplays,
+                          )
+                      }
+                  }
+
+                  val targetId =
+                      target.first
+
+                  val command =
+                      if (
+                          enable
+                      ) {
+                          "cmd display enable-display $targetId"
+                      } else {
+                          "cmd display power-reset $targetId"
+                      }
+
+                  val commandOutput =
+                      runProbe(
+                          command
+                      )
+
+                  Thread.sleep(
+                      600L
+                  )
+
+                  val afterDisplays =
+                      runProbe(
+                          "cmd display get-displays"
+                      )
+
+                  val afterPhysical =
+                      runProbe(
+                          "dumpsys display | " +
+                              "grep -E -i " +
+                              "'DisplayDeviceInfo|mDisplayId=|mState=|" +
+                              "mCommittedState=|mPhysicalDisplayId=|" +
+                              "uniqueId=|state ON|state OFF' | " +
+                              "head -n 220"
+                      )
+
+                  val visibleAfter =
+                      afterDisplays.contains(
+                          "Display id $targetId:"
+                      )
+
+                  val commandFailed =
+                      commandOutput.contains(
+                          "Exception",
+                          ignoreCase = true,
+                      ) ||
+                          commandOutput.contains(
+                              "error",
+                              ignoreCase = true,
+                          ) ||
+                          commandOutput.contains(
+                              "not possible",
+                              ignoreCase = true,
+                          )
+
+                  return Bundle().apply {
+                      putBoolean(
+                          "ok",
+                          !commandFailed
+                      )
+
+                      putBoolean(
+                          "enable",
+                          enable,
+                      )
+
+                      putInt(
+                          "targetDisplayId",
+                          targetId,
+                      )
+
+                      putInt(
+                          "targetWidth",
+                          target.second,
+                      )
+
+                      putInt(
+                          "targetHeight",
+                          target.third,
+                      )
+
+                      putBoolean(
+                          "visibleAfter",
+                          visibleAfter,
+                      )
+
+                      putString(
+                          "command",
+                          command,
+                      )
+
+                      putString(
+                          "commandOutput",
+                          commandOutput,
+                      )
+
+                      putString(
+                          "windowDisplays",
+                          windowDisplays,
+                      )
+
+                      putString(
+                          "afterDisplays",
+                          afterDisplays,
+                      )
+
+                      putString(
+                          "afterPhysical",
+                          afterPhysical,
+                      )
+                  }
+              }
+
+              // ---- capture -----------------------------------------------------------
+          """,
+              "DuoShellService secondary display implementation",
+          )
+
+          bridge_path = (
+              "app/src/full/java/com/duoopen/shell/"
+              "ShizukuBridge.kt"
+          )
+
+          replace_once(
+              bridge_path,
+              """    fun displayProbe(): Bundle? =
+                  call(ShellProtocol.DISPLAY_PROBE)
+          }""",
+              """    fun displayProbe(): Bundle? =
+                  call(ShellProtocol.DISPLAY_PROBE)
+
+              /** Blocking; call off the main thread. */
+              fun enableSecondaryDisplay(): Bundle? =
+                  call(
+                      ShellProtocol.ENABLE_SECONDARY_DISPLAY
+                  )
+
+              /** Blocking; call off the main thread. */
+              fun resetSecondaryDisplay(): Bundle? =
+                  call(
+                      ShellProtocol.RESET_SECONDARY_DISPLAY
+                  )
+          }""",
+              "ShizukuBridge secondary display commands",
+          )
+
+          # 2. FoldOverlayService owns the experiment.
+          service_path = (
+              "app/src/full/java/com/duoopen/overlay/"
+              "FoldOverlayService.kt"
           )
 
           replace_once(
               service_path,
-              """import kotlinx.coroutines.launch
+              """import kotlinx.coroutines.Dispatchers
+          import kotlinx.coroutines.launch
           import kotlinx.coroutines.MainScope
           import kotlinx.coroutines.cancel""",
               """import kotlinx.coroutines.Dispatchers
           import kotlinx.coroutines.launch
           import kotlinx.coroutines.MainScope
-          import kotlinx.coroutines.cancel""",
-              "FoldOverlayService dispatcher import",
+          import kotlinx.coroutines.cancel
+          import kotlinx.coroutines.flow.MutableStateFlow
+          import kotlinx.coroutines.flow.StateFlow
+          import kotlinx.coroutines.flow.asStateFlow""",
+              "FoldOverlayService state-flow imports",
           )
 
           replace_once(
               service_path,
-              """    private val snapshots = SnapshotCache(maxAgeMs = SNAPSHOT_MAX_AGE_MS)
-              private var angleFeed: WallpaperAngleFeed? = null
-
-              private val displayListener = object : DisplayManager.DisplayListener {
-                  override fun onDisplayAdded(displayId: Int) = syncDisplays()
-                  override fun onDisplayRemoved(displayId: Int) = syncDisplays()
-                  override fun onDisplayChanged(displayId: Int) = syncDisplays()
-              }""",
-              """    private val snapshots = SnapshotCache(maxAgeMs = SNAPSHOT_MAX_AGE_MS)
-              private var angleFeed: WallpaperAngleFeed? = null
-
-              private var pendingProbeReason =
-                  "service-connected"
-
-              private var lastDisplayProbeUptime =
-                  0L
-
-              private val displayProbeRunnable =
-                  Runnable {
-                      runDisplayProbe(
-                          pendingProbeReason
-                      )
-                  }
-
-              private val displayListener =
-                  object :
-                      DisplayManager.DisplayListener {
-
-                      override fun onDisplayAdded(
-                          displayId: Int,
-                      ) {
-                          syncDisplays()
-
-                          scheduleDisplayProbe(
-                              "display-added:$displayId"
-                          )
-                      }
-
-                      override fun onDisplayRemoved(
-                          displayId: Int,
-                      ) {
-                          syncDisplays()
-
-                          scheduleDisplayProbe(
-                              "display-removed:$displayId"
-                          )
-                      }
-
-                      override fun onDisplayChanged(
-                          displayId: Int,
-                      ) {
-                          syncDisplays()
-
-                          scheduleDisplayProbe(
-                              "display-changed:$displayId"
-                          )
-                      }
-                  }""",
-              "FoldOverlayService display listener",
-          )
-
-          replace_once(
-              service_path,
-              """        scope.launch { ShizukuBridge.state.collect { syncAngleFeed() } }
-                  scope.launch { DuoSettings.config.collect { syncAngleFeed() } }
-                  syncDisplays()
-                  Log.i(TAG, "connected; hinge=${hinge.sensor?.name} live displays=${engines.keys}")""",
-              """        scope.launch {
-                      ShizukuBridge.state.collect { state ->
-                          syncAngleFeed()
-
-                          if (
-                              state is
-                                  ShizukuBridge.State.Ready
-                          ) {
-                              scheduleDisplayProbe(
-                                  "shizuku-ready",
-                                  delayMs = 800L,
-                              )
-                          }
-                      }
-                  }
-
-                  scope.launch {
-                      DuoSettings.config.collect {
-                          syncAngleFeed()
-                      }
-                  }
-
-                  syncDisplays()
-
-                  scheduleDisplayProbe(
-                      "service-connected",
-                      delayMs = 1_000L,
-                  )
-
-                  Log.i(
-                      TAG,
-                      "connected; hinge=${hinge.sensor?.name} live displays=${engines.keys}",
-                  )""",
-              "FoldOverlayService startup",
-          )
-
-          replace_once(
-              service_path,
-              """        instance = null
-                  angleFeed?.stop()""",
-              """        instance = null
-
-                  handler.removeCallbacks(
-                      displayProbeRunnable
-                  )
-
-                  angleFeed?.stop()""",
-              "FoldOverlayService cleanup",
-          )
-
-          replace_once(
-              service_path,
-              """    fun angleFeedStatus(): String = angleFeed?.status ?: "Idle"
-
-              private fun updateRunning() {""",
-              """    fun angleFeedStatus(): String =
-                  angleFeed?.status ?: "Idle"
-
-              private fun scheduleDisplayProbe(
-                  reason: String,
-                  delayMs: Long =
-                      DISPLAY_PROBE_DEBOUNCE_MS,
-              ) {
-                  if (
-                      !ShizukuBridge.ready
-                  ) {
-                      return
-                  }
-
-                  pendingProbeReason =
-                      reason
-
-                  handler.removeCallbacks(
-                      displayProbeRunnable
-                  )
-
-                  handler.postDelayed(
-                      displayProbeRunnable,
-                      delayMs,
-                  )
+              """    private val displayProbeRunnable = Runnable {
+                  runDisplayProbe(pendingProbeReason)
               }
 
-              private fun runDisplayProbe(
-                  reason: String,
+              private val displayListener = object : DisplayManager.DisplayListener {""",
+              """    private val displayProbeRunnable = Runnable {
+                  runDisplayProbe(pendingProbeReason)
+              }
+
+              private val secondaryDisplaySafetyReset =
+                  Runnable {
+                      runSecondaryDisplayExperiment(
+                          enable = false,
+                          reason = "90-second safety reset",
+                      )
+                  }
+
+              private val displayListener = object : DisplayManager.DisplayListener {""",
+              "FoldOverlayService safety reset",
+          )
+
+          replace_once(
+              service_path,
+              """        handler.removeCallbacks(displayProbeRunnable)
+                  angleFeed?.stop()""",
+              """        handler.removeCallbacks(displayProbeRunnable)
+                  handler.removeCallbacks(secondaryDisplaySafetyReset)
+                  angleFeed?.stop()""",
+              "FoldOverlayService reset cleanup",
+          )
+
+          replace_once(
+              service_path,
+              """    private fun updateRunning() {""",
+              """    fun runSecondaryDisplayExperiment(
+                  enable: Boolean,
+                  reason: String = "user",
               ) {
                   if (
                       !ShizukuBridge.ready
                   ) {
-                      return
-                  }
+                      _secondaryDisplayStatus.value =
+                          "Shizuku isn't ready."
 
-                  val now =
-                      android.os.SystemClock
-                          .uptimeMillis()
-
-                  val elapsed =
-                      now -
-                          lastDisplayProbeUptime
-
-                  if (
-                      lastDisplayProbeUptime != 0L &&
-                      elapsed <
-                          DISPLAY_PROBE_MIN_GAP_MS
-                  ) {
-                      handler.removeCallbacks(
-                          displayProbeRunnable
-                      )
-
-                      handler.postDelayed(
-                          displayProbeRunnable,
-                          DISPLAY_PROBE_MIN_GAP_MS -
-                              elapsed,
+                      DuoDiagnostics.event(
+                          "dual-shell",
+                          "refused enable=$enable reason=$reason; Shizuku not ready",
                       )
 
                       return
                   }
 
-                  lastDisplayProbeUptime =
-                      now
+                  handler.removeCallbacks(
+                      secondaryDisplaySafetyReset
+                  )
 
-                  val local =
-                      displayManager.displays
-                          .joinToString(
-                              " | "
-                          ) { display ->
-
-                              val mode =
-                                  runCatching {
-                                      display.mode
-                                  }.getOrNull()
-
-                              (
-                                  "id=${display.displayId} " +
-                                      "name=${display.name} " +
-                                      "state=${display.state} " +
-                                      "mode=${mode?.physicalWidth}x" +
-                                      "${mode?.physicalHeight}@" +
-                                      "${mode?.refreshRate}Hz"
-                                  )
-                          }
+                  _secondaryDisplayStatus.value =
+                      if (
+                          enable
+                      ) {
+                          "Requesting the inactive Fold7 panel from the persistent service…"
+                      } else {
+                          "Returning the secondary panel to Samsung's normal power state…"
+                      }
 
                   DuoDiagnostics.event(
-                      "display-probe",
-                      "begin reason=$reason local=[$local]",
+                      "dual-shell",
+                      "begin enable=$enable reason=$reason",
                   )
 
                   scope.launch(
                       Dispatchers.IO
                   ) {
                       val result =
-                          ShizukuBridge.displayProbe()
+                          if (
+                              enable
+                          ) {
+                              ShizukuBridge.enableSecondaryDisplay()
+                          } else {
+                              ShizukuBridge.resetSecondaryDisplay()
+                          }
 
                       if (
                           result == null
                       ) {
+                          _secondaryDisplayStatus.value =
+                              "No response from the Shizuku display service."
+
                           DuoDiagnostics.event(
-                              "display-probe",
-                              "unavailable reason=$reason",
+                              "dual-shell",
+                              "no binder response enable=$enable reason=$reason",
                           )
 
                           return@launch
                       }
 
-                      result.getString(
-                          "error"
-                      )?.let { error ->
-
-                          DuoDiagnostics.event(
-                              "display-probe",
-                              "shell error reason=$reason error=$error",
+                      val ok =
+                          result.getBoolean(
+                              "ok",
+                              false,
                           )
-                      }
+
+                      val target =
+                          result.getInt(
+                              "targetDisplayId",
+                              -1,
+                          )
+
+                      val width =
+                          result.getInt(
+                              "targetWidth",
+                              -1,
+                          )
+
+                      val height =
+                          result.getInt(
+                              "targetHeight",
+                              -1,
+                          )
+
+                      val visibleAfter =
+                          result.getBoolean(
+                              "visibleAfter",
+                              false,
+                          )
+
+                      val error =
+                          result.getString(
+                              "error"
+                          )
+
+                      val command =
+                          result.getString(
+                              "command"
+                          )
+
+                      val commandOutput =
+                          result.getString(
+                              "commandOutput"
+                          ) ?: ""
+
+                      _secondaryDisplayStatus.value =
+                          when {
+                              !ok -> {
+                                  "Shell command did not succeed" +
+                                      (
+                                          error?.let {
+                                              ": $it"
+                                          } ?: "."
+                                          )
+                              }
+
+                              enable &&
+                                  visibleAfter -> {
+                                  "Success: Android now exposes Fold7 display $target " +
+                                      "($width×$height) to apps. Leave Duo Open and test it."
+                              }
+
+                              enable -> {
+                                  "The enable command returned without an error, but display " +
+                                      "$target is not yet exposed as an active logical display."
+                              }
+
+                              else -> {
+                                  "Secondary panel power was returned to Samsung."
+                              }
+                          }
 
                       DuoDiagnostics.event(
-                          "display-probe",
-                          "shell uid=${result.getInt("uid", -1)} " +
-                              "pid=${result.getInt("pid", -1)} " +
-                              "reason=$reason",
+                          "dual-shell",
+                          "result enable=$enable ok=$ok target=$target " +
+                              "size=${width}x$height visibleAfter=$visibleAfter " +
+                              "command=$command error=$error output=" +
+                              commandOutput
+                                  .replace("\\r", "")
+                                  .replace("\\n", "\\\\n"),
                       )
 
-                      listOf(
-                          "identity",
-                          "cmd_display",
-                          "cmd_display_help",
-                          "surfaceflinger",
-                          "display_filtered",
-                          "window_displays",
-                      ).forEach { key ->
+                      DuoDiagnostics.event(
+                          "dual-shell",
+                          "afterDisplays=" +
+                              (
+                                  result.getString(
+                                      "afterDisplays"
+                                  ) ?: "(missing)"
+                                  )
+                                  .replace("\\r", "")
+                                  .replace("\\n", "\\\\n"),
+                      )
 
-                          val value =
-                              result.getString(
-                                  key
-                              ) ?: "(missing)"
+                      DuoDiagnostics.event(
+                          "dual-shell",
+                          "afterPhysical=" +
+                              (
+                                  result.getString(
+                                      "afterPhysical"
+                                  ) ?: "(missing)"
+                                  )
+                                  .replace("\\r", "")
+                                  .replace("\\n", "\\\\n"),
+                      )
 
-                          DuoDiagnostics.event(
-                              "display-probe",
-                              "$key=" +
-                                  value
-                                      .replace(
-                                          "\\r",
-                                          ""
-                                      )
-                                      .replace(
-                                          "\\n",
-                                          "\\\\n"
-                                      ),
+                      if (
+                          enable &&
+                          ok
+                      ) {
+                          handler.postDelayed(
+                              secondaryDisplaySafetyReset,
+                              SECONDARY_DISPLAY_SAFETY_RESET_MS,
                           )
                       }
+
+                      scheduleDisplayProbe(
+                          if (
+                              enable
+                          ) {
+                              "service-dual-enable"
+                          } else {
+                              "service-dual-reset"
+                          },
+                          delayMs = 750L,
+                      )
                   }
               }
 
               private fun updateRunning() {""",
-              "FoldOverlayService probe methods",
+              "FoldOverlayService service-owned experiment",
           )
 
           replace_once(
               service_path,
-              """        const val ACTION_DEMO = "com.duoopen.DEMO"
-                  private const val TEST_DISPLAYS_SETTING = "duoopen_test_displays"
-                  /** How old a panel's last picture may be and still bridge the next fold. */""",
-              """        const val ACTION_DEMO = "com.duoopen.DEMO"
-
-                  private const val TEST_DISPLAYS_SETTING =
-                      "duoopen_test_displays"
-
-                  private const val DISPLAY_PROBE_DEBOUNCE_MS =
-                      450L
-
-                  private const val DISPLAY_PROBE_MIN_GAP_MS =
-                      1_500L
+              """        private const val DISPLAY_PROBE_MIN_GAP_MS = 1_500L
 
                   /** How old a panel's last picture may be and still bridge the next fold. */""",
-              "FoldOverlayService probe constants",
+              """        private const val DISPLAY_PROBE_MIN_GAP_MS = 1_500L
+
+                  private const val SECONDARY_DISPLAY_SAFETY_RESET_MS =
+                      90_000L
+
+                  private val _secondaryDisplayStatus =
+                      MutableStateFlow(
+                          "Service-owned secondary-panel test is idle."
+                      )
+
+                  val secondaryDisplayStatus:
+                      StateFlow<String> =
+                          _secondaryDisplayStatus.asStateFlow()
+
+                  fun testSecondaryDisplay(
+                      enable: Boolean,
+                  ): Boolean {
+                      val service =
+                          instance
+                              ?: run {
+                                  _secondaryDisplayStatus.value =
+                                      "The Duo Open accessibility service isn't connected."
+
+                                  return false
+                              }
+
+                      service.runSecondaryDisplayExperiment(
+                          enable = enable,
+                      )
+
+                      return true
+                  }
+
+                  /** How old a panel's last picture may be and still bridge the next fold. */""",
+              "FoldOverlayService companion state",
           )
 
-          # Version.
-          gradle = Path(
+          # 3. Surface the service-owned control through OverlayFeature.
+          feature_path = (
+              "app/src/full/java/com/duoopen/overlay/"
+              "OverlayFeature.kt"
+          )
+
+          replace_once(
+              feature_path,
+              """    /** Status of the continuous-angle reader, from the running service. */
+              fun angleFeedStatus(): String = FoldOverlayService.instance?.angleFeedStatus() ?: "Service not running"
+          }""",
+              """    /** Status of the continuous-angle reader, from the running service. */
+              fun angleFeedStatus(): String =
+                  FoldOverlayService.instance?.angleFeedStatus()
+                      ?: "Service not running"
+
+              val secondaryDisplayStatus:
+                  StateFlow<String> =
+                      FoldOverlayService.secondaryDisplayStatus
+
+              fun testSecondaryDisplay(
+                  enable: Boolean,
+              ): Boolean =
+                  FoldOverlayService.testSecondaryDisplay(
+                      enable
+                  )
+          }""",
+              "OverlayFeature service-owned display API",
+          )
+
+          # 4. Disable the legacy Activity-owned WindowArea path for this probe.
+          main_path = (
+              "app/src/main/java/com/duoopen/"
+              "MainActivity.kt"
+          )
+
+          replace_once(
+              main_path,
+              """        dualScreen = DualScreen(this)
+                  setContent {""",
+              """        dualScreen = DualScreen(this)
+
+                  /*
+                   * This field build deliberately disables the legacy Activity-owned
+                   * WindowArea presentation so it cannot race the service-owned probe.
+                   */
+                  dualScreen.stop()
+
+                  setContent {""",
+              "MainActivity legacy dual disable",
+          )
+
+          # 5. UI controls.
+          app_path = (
+              "app/src/main/java/com/duoopen/ui/"
+              "DuoApp.kt"
+          )
+
+          replace_once(
+              app_path,
+              """    val dualStatus by (dualScreen?.status ?: kotlinx.coroutines.flow.MutableStateFlow("")).collectAsStateWithLifecycle()
+              val dualActive by (dualScreen?.active ?: kotlinx.coroutines.flow.MutableStateFlow(false)).collectAsStateWithLifecycle()
+          """,
+              """    val dualStatus by (dualScreen?.status ?: kotlinx.coroutines.flow.MutableStateFlow("")).collectAsStateWithLifecycle()
+              val dualActive by (dualScreen?.active ?: kotlinx.coroutines.flow.MutableStateFlow(false)).collectAsStateWithLifecycle()
+
+              val serviceDualStatus by
+                  OverlayFeature.secondaryDisplayStatus
+                      .collectAsStateWithLifecycle()
+          """,
+              "DuoApp service dual status",
+          )
+
+          replace_once(
+              app_path,
+              """                dualStatus = dualStatus,
+                          shizukuAvailable = OverlayFeature.SHIZUKU_AVAILABLE,""",
+              """                dualStatus = dualStatus,
+                          serviceDualStatus = serviceDualStatus,
+                          shizukuAvailable = OverlayFeature.SHIZUKU_AVAILABLE,""",
+              "DuoApp service dual status parameter",
+          )
+
+          replace_once(
+              app_path,
+              """                dualActive = dualActive,
+                          onDualChange = { on -> if (on) dualScreen?.start() else dualScreen?.stop() },
+                          onEnableOverlay = { openAccessibilitySettings(context) },""",
+              """                dualActive = dualActive,
+                          onDualChange = {
+                              // Disabled in this service-owned probe build.
+                          },
+                          onServiceDualEnable = {
+                              dualScreen?.stop()
+
+                              scope.launch {
+                                  kotlinx.coroutines.delay(
+                                      900L
+                                  )
+
+                                  if (
+                                      !OverlayFeature.testSecondaryDisplay(
+                                          true
+                                      )
+                                  ) {
+                                      Toast.makeText(
+                                          context,
+                                          "The accessibility service isn't connected",
+                                          Toast.LENGTH_SHORT,
+                                      ).show()
+                                  }
+                              }
+                          },
+                          onServiceDualReset = {
+                              OverlayFeature.testSecondaryDisplay(
+                                  false
+                              )
+                          },
+                          onEnableOverlay = { openAccessibilitySettings(context) },""",
+              "DuoApp service dual callbacks",
+          )
+
+          sheet_path = (
+              "app/src/main/java/com/duoopen/ui/"
+              "ControlSheet.kt"
+          )
+
+          replace_once(
+              sheet_path,
+              """    dualStatus: String,
+              dualActive: Boolean,
+              onDualChange: (Boolean) -> Unit,
+              shizukuAvailable: Boolean,""",
+              """    dualStatus: String,
+              serviceDualStatus: String,
+              dualActive: Boolean,
+              onDualChange: (Boolean) -> Unit,
+              onServiceDualEnable: () -> Unit,
+              onServiceDualReset: () -> Unit,
+              shizukuAvailable: Boolean,""",
+              "ControlSheet service dual parameters",
+          )
+
+          old_section = """            Row(verticalAlignment = Alignment.CenterVertically) {
+                          Hint(dualStatus, modifier = Modifier.weight(1f))
+                          Switch(checked = dualActive, onCheckedChange = onDualChange, enabled = dualStatus.startsWith("Available") || dualActive)
+                      }"""
+
+          new_section = """            Row(verticalAlignment = Alignment.CenterVertically) {
+                          Column(
+                              Modifier.weight(
+                                  1f
+                              )
+                          ) {
+                              Text(
+                                  "Legacy Activity presentation",
+                                  style =
+                                      MaterialTheme.typography.titleSmall,
+                              )
+
+                              Hint(
+                                  "Disabled for this field build so Samsung's Window Area " +
+                                      "session can't race the persistent service test. " +
+                                      dualStatus,
+                              )
+                          }
+
+                          Switch(
+                              checked = false,
+                              onCheckedChange = onDualChange,
+                              enabled = false,
+                          )
+                      }
+
+                      Spacer(
+                          Modifier.height(
+                              12.dp
+                          )
+                      )
+
+                      Text(
+                          "Persistent service / Shizuku test",
+                          style =
+                              MaterialTheme.typography.titleSmall,
+                      )
+
+                      Hint(
+                          serviceDualStatus
+                      )
+
+                      Row(
+                          horizontalArrangement =
+                              Arrangement.spacedBy(
+                                  12.dp
+                              )
+                      ) {
+                          TextButton(
+                              onClick =
+                                  onServiceDualEnable,
+                              enabled =
+                                  shizukuReady &&
+                                      overlayEnabled,
+                          ) {
+                              Text(
+                                  "Enable inactive panel"
+                              )
+                          }
+
+                          TextButton(
+                              onClick =
+                                  onServiceDualReset,
+                              enabled =
+                                  shizukuReady &&
+                                      overlayEnabled,
+                          ) {
+                              Text(
+                                  "Reset panel power"
+                              )
+                          }
+                      }
+
+                      Hint(
+                          "This is a one-shot Fold7 test. There is no retry loop, and " +
+                              "Duo Open automatically power-resets the secondary panel " +
+                              "after 90 seconds as a safety measure.",
+                      )"""
+
+          replace_once(
+              sheet_path,
+              old_section,
+              new_section,
+              "ControlSheet service dual controls",
+          )
+
+          # 6. Version.
+          gradle_path = Path(
               "app/build.gradle.kts"
           )
 
-          text = gradle.read_text()
+          gradle = gradle_path.read_text()
 
           if (
-              "versionCode = 8"
-              not in text
+              "versionCode = 10"
+              not in gradle
           ):
               raise SystemExit(
-                  "Expected dual-stable versionCode 8 was not found."
+                  "Expected angle-resilient versionCode 10 was not found."
               )
 
           if (
-              'versionName = "1.3.4-zfold7-dual-stable"'
-              not in text
+              'versionName = "1.3.6-zfold7-angle-resilient"'
+              not in gradle
           ):
               raise SystemExit(
-                  "Expected dual-stable versionName was not found."
+                  "Expected angle-resilient versionName was not found."
               )
 
-          text = text.replace(
-              "versionCode = 8",
-              "versionCode = 9",
+          gradle = gradle.replace(
+              "versionCode = 10",
+              "versionCode = 11",
               1,
           )
 
-          text = text.replace(
-              'versionName = "1.3.4-zfold7-dual-stable"',
-              'versionName = "1.3.5-zfold7-display-probe"',
+          gradle = gradle.replace(
+              'versionName = "1.3.6-zfold7-angle-resilient"',
+              'versionName = "1.3.7-zfold7-service-dual-probe"',
               1,
           )
 
-          gradle.write_text(
-              text
+          gradle_path.write_text(
+              gradle
           )
           PY
 
-      - name: Validate probe pass
+      - name: Validate service-dual probe
         run: |
           git diff --check
           git diff --stat
 
-          grep -R "DISPLAY_PROBE" app/src/full/java/com/duoopen/shell
-          grep -R "display-probe" app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -R "source live" app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
+          grep -R "source live" app/src/main/java/com/duoopen/ui/ControlSheet.kt
+          grep -R "ENABLE_SECONDARY_DISPLAY" app/src/full/java/com/duoopen/shell
+          grep -R "Enable inactive panel" app/src/main/java/com/duoopen/ui/ControlSheet.kt
+          grep -R "90-second safety reset" app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
 
           mkdir -p zfold7-artifacts
-          git diff > zfold7-artifacts/zfold7-display-probe.patch
+          git diff > zfold7-artifacts/zfold7-service-dual-probe.patch
 
       - name: Compile, unit test, and build
         run: |
@@ -802,16 +1607,16 @@ jobs:
 
           cp \
             "$APK" \
-            zfold7-artifacts/DuoOpen-ZFold7-display-probe-debug.apk
+            zfold7-artifacts/DuoOpen-ZFold7-service-dual-probe-debug.apk
 
           {
             echo "commit=${GITHUB_SHA}"
             echo "built=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "pass=background-display-probe"
+            echo "pass=service-owned-dual-probe+angle-resilience+display-probe"
             echo
 
             sha256sum \
-              zfold7-artifacts/DuoOpen-ZFold7-display-probe-debug.apk
+              zfold7-artifacts/DuoOpen-ZFold7-service-dual-probe-debug.apk
 
           } > zfold7-artifacts/BUILD-INFO.txt
 
@@ -820,12 +1625,10 @@ jobs:
       - name: Upload field-test artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: DuoOpen-ZFold7-display-probe
-
+          name: DuoOpen-ZFold7-service-dual-probe
           path: |
-            zfold7-artifacts/DuoOpen-ZFold7-display-probe-debug.apk
-            zfold7-artifacts/zfold7-display-probe.patch
+            zfold7-artifacts/DuoOpen-ZFold7-service-dual-probe-debug.apk
+            zfold7-artifacts/zfold7-service-dual-probe.patch
             zfold7-artifacts/BUILD-INFO.txt
-
           if-no-files-found: error
           retention-days: 30
