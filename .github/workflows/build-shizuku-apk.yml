@@ -1,4 +1,4 @@
-name: Build Z Fold 7 Field Diagnostics
+name: Build Z Fold 7 Dual Screen Stable Recovery
 
 on:
   workflow_dispatch:
@@ -13,8 +13,6 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -32,9 +30,8 @@ jobs:
             path="$1"
             expected="$2"
             actual="$(git hash-object "$path")"
-
             if [ "$actual" != "$expected" ]; then
-              echo "::error file=$path::Source changed since this diagnostic pass was designed. Expected $expected but found $actual. Stopping instead of overwriting newer work."
+              echo "::error file=$path::Source changed since this pass was designed. Expected $expected but found $actual. Stopping instead of overwriting a newer commit."
               exit 1
             fi
           }
@@ -46,99 +43,370 @@ jobs:
           check_blob "app/src/full/java/com/duoopen/overlay/PanelEngine.kt" "a1285f81ffe5e1f7d7e0f46e86b4e7bef747e5ae"
           check_blob "app/build.gradle.kts" "dcbfbaf660fd2efd4f625569affc1db738e52ec8"
           check_blob "app/src/main/java/com/duoopen/DualScreen.kt" "5c89b33a4970ee87a08671f47b1edebaf57c5d90"
+          check_blob "app/src/main/java/com/duoopen/DuoApplication.kt" "e07dc81c3479afe0a1f493b53ae92d7b96d692cd"
           check_blob "app/src/main/java/com/duoopen/ui/ControlSheet.kt" "7f88ae6a7f6ce8452c8c8f17d1b2627442eaea6f"
-          check_blob "app/src/main/java/com/duoopen/ui/DuoApp.kt" "d4d2a66adc94645e7347a184b5598b0d95575d67"
-
-          if [ -e "app/src/main/java/com/duoopen/diagnostics/DuoDiagnostics.kt" ]; then
-            echo "::error::DuoDiagnostics.kt already exists. Reconcile the newer diagnostics implementation instead of overwriting it."
-            exit 1
-          fi
 
           echo "Conflict guard passed."
 
-      - name: Restore last known-good smoothness and dual-screen pass
+      - name: Reapply proven Fold 7 smoothness pass
         run: |
-          python3 <<'PY'
-          from pathlib import Path
-          import base64
-          import gzip
-          import re
-          import subprocess
-          import textwrap
-
-          BASE_WORKFLOW_COMMIT = "b589534faf84f47d51ad91675138c824ccac08a6"
-
-          old = subprocess.check_output(
-              [
-                  "git",
-                  "show",
-                  f"{BASE_WORKFLOW_COMMIT}:.github/workflows/build-shizuku-apk.yml",
-              ],
-              text=True,
-          )
-
-          patch_match = re.search(
-              r"printf '%s' '([^']+)' \| base64 -d \| gzip -d > /tmp/zfold7-smoothness\.patch",
-              old,
-          )
-
-          if not patch_match:
-              raise SystemExit(
-                  "Could not recover the proven smoothness patch from the last known-good workflow."
-              )
-
-          patch_bytes = gzip.decompress(
-              base64.b64decode(
-                  patch_match.group(1)
-              )
-          )
-
-          Path(
-              "/tmp/zfold7-smoothness.patch"
-          ).write_bytes(
-              patch_bytes
-          )
-
-          dual_match = re.search(
-              r"cat > app/src/main/java/com/duoopen/DualScreen\.kt <<'KOTLIN'\n(.*?)\n\s+KOTLIN",
-              old,
-              flags=re.S,
-          )
-
-          if not dual_match:
-              raise SystemExit(
-                  "Could not recover the proven persistent DualScreen implementation from the last known-good workflow."
-              )
-
-          dual_source = textwrap.dedent(
-              dual_match.group(1)
-          )
-
-          Path(
-              "/tmp/DualScreen-persistent.kt"
-          ).write_text(
-              dual_source
-          )
-
-          print(
-              "Recovered proven smoothness patch and persistent dual-screen source."
-          )
-          PY
-
+          printf '%s' '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' | base64 -d | gzip -d > /tmp/zfold7-smoothness.patch
           git apply --check /tmp/zfold7-smoothness.patch
           git apply /tmp/zfold7-smoothness.patch
 
-          cp \
-            /tmp/DualScreen-persistent.kt \
-            app/src/main/java/com/duoopen/DualScreen.kt
-
-      - name: Add rolling on-device diagnostics
+      - name: Install persistent dual-screen lifecycle
         run: |
-          mkdir -p \
-            app/src/main/java/com/duoopen/diagnostics
+          cat > app/src/main/java/com/duoopen/DualScreen.kt <<'KOTLIN'
+          package com.duoopen
 
-          cat > app/src/main/java/com/duoopen/diagnostics/DuoDiagnostics.kt <<'KOTLIN'
-          package com.duoopen.diagnostics
+          import android.content.Context
+          import android.graphics.Color
+          import android.graphics.drawable.GradientDrawable
+          import android.util.Log
+          import android.view.Gravity
+          import android.view.View
+          import android.widget.FrameLayout
+          import android.widget.TextView
+          import androidx.activity.ComponentActivity
+          import androidx.core.content.ContextCompat
+          import androidx.lifecycle.DefaultLifecycleObserver
+          import androidx.lifecycle.Lifecycle
+          import androidx.lifecycle.LifecycleOwner
+          import androidx.lifecycle.lifecycleScope
+          import androidx.lifecycle.repeatOnLifecycle
+          import androidx.window.area.WindowAreaCapability
+          import androidx.window.area.WindowAreaController
+          import androidx.window.area.WindowAreaInfo
+          import androidx.window.area.WindowAreaPresentationSessionCallback
+          import androidx.window.area.WindowAreaSessionPresenter
+          import androidx.window.core.ExperimentalWindowApi
+          import kotlinx.coroutines.Job
+          import kotlinx.coroutines.delay
+          import kotlinx.coroutines.flow.MutableStateFlow
+          import kotlinx.coroutines.flow.StateFlow
+          import kotlinx.coroutines.launch
+
+          @OptIn(ExperimentalWindowApi::class)
+          class DualScreen(private val activity: ComponentActivity) : DefaultLifecycleObserver {
+
+              private val controller = WindowAreaController.getOrCreate()
+              private val prefs = activity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+              private val _status = MutableStateFlow("Checking…")
+              val status: StateFlow<String> = _status
+
+              private val _active = MutableStateFlow(prefs.getBoolean(PREF_ENABLED, false))
+              val active: StateFlow<Boolean> = _active
+
+              val supported: Boolean get() = rearInfo != null
+
+              private var desired = _active.value
+              private var rearInfo: WindowAreaInfo? = null
+              private var presenter: WindowAreaSessionPresenter? = null
+              private var requestInFlight = false
+              private var generation = 0L
+              private var retryJob: Job? = null
+              private var timeoutJob: Job? = null
+
+              init {
+                  activity.lifecycle.addObserver(this)
+
+                  activity.lifecycleScope.launch {
+                      activity.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                          controller.windowAreaInfos.collect { infos ->
+                              Log.i(TAG, "window areas: " + infos.joinToString { info ->
+                                  val present = info.getCapability(
+                                      WindowAreaCapability.Operation.OPERATION_PRESENT_ON_AREA,
+                                  )?.status
+                                  val transfer = info.getCapability(
+                                      WindowAreaCapability.Operation.OPERATION_TRANSFER_ACTIVITY_TO_AREA,
+                                  )?.status
+                                  "${info.type} ${info.metrics.bounds} present=$present transfer=$transfer"
+                              }.ifEmpty { "(none)" })
+
+                              rearInfo = infos.firstOrNull {
+                                  it.type == WindowAreaInfo.Type.TYPE_REAR_FACING
+                              }
+
+                              refreshStatus()
+                              if (desired) maybeStart("window-area update")
+                          }
+                      }
+                  }
+              }
+
+              override fun onStart(owner: LifecycleOwner) {
+                  if (desired) scheduleRetry(0L, "activity started")
+              }
+
+              override fun onResume(owner: LifecycleOwner) {
+                  if (desired) scheduleRetry(120L, "activity resumed")
+              }
+
+              override fun onDestroy(owner: LifecycleOwner) {
+                  retryJob?.cancel()
+                  timeoutJob?.cancel()
+                  generation++
+                  requestInFlight = false
+                  val old = presenter
+                  presenter = null
+                  runCatching { old?.close() }
+                  activity.lifecycle.removeObserver(this)
+              }
+
+              fun start() {
+                  desired = true
+                  _active.value = true
+                  prefs.edit().putBoolean(PREF_ENABLED, true).apply()
+                  _status.value = "Both screens armed — starting when Samsung exposes the cover display."
+                  scheduleRetry(0L, "user enabled")
+              }
+
+              fun stop() {
+                  desired = false
+                  _active.value = false
+                  prefs.edit().putBoolean(PREF_ENABLED, false).apply()
+                  retryJob?.cancel()
+                  timeoutJob?.cancel()
+                  generation++
+                  requestInFlight = false
+                  val old = presenter
+                  presenter = null
+                  runCatching { old?.close() }
+                      .onFailure { Log.w(TAG, "closing dual-screen session failed", it) }
+                  refreshStatus()
+              }
+
+              private fun maybeStart(reason: String) {
+                  if (!desired || presenter != null || requestInFlight) return
+
+                  if (!activity.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+                      _status.value = "Both screens armed — waiting for Duo Open to return to the foreground."
+                      return
+                  }
+
+                  val info = rearInfo ?: run {
+                      _status.value = "Both screens armed — waiting for Samsung's second-screen capability."
+                      return
+                  }
+
+                  val cap = info.getCapability(
+                      WindowAreaCapability.Operation.OPERATION_PRESENT_ON_AREA,
+                  )
+
+                  when (cap?.status) {
+                      WindowAreaCapability.Status.WINDOW_AREA_STATUS_AVAILABLE -> beginSession(info, reason)
+                      WindowAreaCapability.Status.WINDOW_AREA_STATUS_ACTIVE ->
+                          _status.value = "Both screens armed — Samsung reports the second screen active."
+                      WindowAreaCapability.Status.WINDOW_AREA_STATUS_UNAVAILABLE ->
+                          _status.value = "Both screens armed — temporarily unavailable while the phone changes display state."
+                      else ->
+                          _status.value = "Both screens armed — waiting for a usable second-screen session."
+                  }
+              }
+
+              private fun beginSession(info: WindowAreaInfo, reason: String) {
+                  if (!desired || requestInFlight || presenter != null) return
+
+                  requestInFlight = true
+                  val myGeneration = ++generation
+                  _status.value = "Starting both screens…"
+                  Log.i(TAG, "request dual screen gen=$myGeneration reason=$reason")
+
+                  val callback = object : WindowAreaPresentationSessionCallback {
+                      override fun onSessionStarted(session: WindowAreaSessionPresenter) {
+                          if (myGeneration != generation || !desired) {
+                              runCatching { session.close() }
+                              return
+                          }
+
+                          timeoutJob?.cancel()
+                          requestInFlight = false
+                          presenter = session
+
+                          val attached = runCatching {
+                              session.setContentView(placeholder(session.context))
+                          }
+
+                          if (attached.isFailure) {
+                              Log.w(TAG, "dual-screen content attach failed", attached.exceptionOrNull())
+                              presenter = null
+                              runCatching { session.close() }
+                              _status.value = "Dual screen couldn't attach content — retrying."
+                              scheduleRetry(500L, "content attach failed")
+                              return
+                          }
+
+                          Log.i(TAG, "dual-screen session started gen=$myGeneration")
+                          _status.value = "Both screens are on."
+                      }
+
+                      override fun onSessionEnded(t: Throwable?) {
+                          if (myGeneration != generation) return
+
+                          timeoutJob?.cancel()
+                          requestInFlight = false
+                          presenter = null
+                          Log.i(TAG, "dual-screen session ended gen=$myGeneration reason=${t?.message}")
+
+                          if (!desired) {
+                              refreshStatus()
+                              return
+                          }
+
+                          _status.value = "Dual screen paused during the fold transition — waiting to restore."
+                          scheduleRetry(300L, "session ended")
+                      }
+
+                      override fun onContainerVisibilityChanged(isVisible: Boolean) {
+                          if (myGeneration != generation || !desired || presenter == null) return
+                          _status.value = if (isVisible) {
+                              "Both screens are on."
+                          } else {
+                              "Both screens armed — cover presentation is temporarily hidden."
+                          }
+                      }
+                  }
+
+                  val result = runCatching {
+                      controller.presentContentOnWindowArea(
+                          info.token,
+                          activity,
+                          ContextCompat.getMainExecutor(activity),
+                          callback,
+                      )
+                  }
+
+                  if (result.isFailure) {
+                      requestInFlight = false
+                      Log.w(TAG, "presentContentOnWindowArea failed", result.exceptionOrNull())
+                      _status.value = "Couldn't start dual screen — retrying when the display is ready."
+                      scheduleRetry(500L, "request failed")
+                      return
+                  }
+
+                  timeoutJob?.cancel()
+                  timeoutJob = activity.lifecycleScope.launch {
+                      delay(2_500L)
+                      if (desired && myGeneration == generation && requestInFlight && presenter == null) {
+                          Log.w(TAG, "dual-screen request timed out gen=$myGeneration")
+                          requestInFlight = false
+                          _status.value = "Dual-screen start timed out — waiting to retry."
+                          scheduleRetry(500L, "request timeout")
+                      }
+                  }
+              }
+
+              private fun scheduleRetry(delayMs: Long, reason: String) {
+                  if (!desired) return
+                  retryJob?.cancel()
+                  retryJob = activity.lifecycleScope.launch {
+                      if (delayMs > 0L) delay(delayMs)
+                      if (desired) maybeStart(reason)
+                  }
+              }
+
+              private fun refreshStatus() {
+                  if (presenter != null) {
+                      _status.value = "Both screens are on."
+                      return
+                  }
+
+                  val info = rearInfo
+                  val cap = info?.getCapability(
+                      WindowAreaCapability.Operation.OPERATION_PRESENT_ON_AREA,
+                  )
+
+                  _status.value = if (desired) {
+                      when {
+                          info == null -> "Both screens armed — waiting for Samsung's second-screen capability."
+                          cap?.status == WindowAreaCapability.Status.WINDOW_AREA_STATUS_AVAILABLE ->
+                              "Both screens armed — cover display available."
+                          cap?.status == WindowAreaCapability.Status.WINDOW_AREA_STATUS_ACTIVE ->
+                              "Both screens armed — Samsung reports the second screen active."
+                          cap?.status == WindowAreaCapability.Status.WINDOW_AREA_STATUS_UNAVAILABLE ->
+                              "Both screens armed — temporarily unavailable while the phone changes display state."
+                          else -> "Both screens armed — waiting for the second display."
+                      }
+                  } else {
+                      when {
+                          info == null -> "This phone doesn't offer its second screen to apps."
+                          cap?.status == WindowAreaCapability.Status.WINDOW_AREA_STATUS_ACTIVE ->
+                              "Both screens are already active."
+                          cap?.status == WindowAreaCapability.Status.WINDOW_AREA_STATUS_AVAILABLE ->
+                              "Available: the cover screen can be lit while the inner screen is in use."
+                          cap?.status == WindowAreaCapability.Status.WINDOW_AREA_STATUS_UNAVAILABLE ->
+                              "Not available right now — open the phone fully and try again."
+                          else -> "This phone doesn't support lighting both screens for apps."
+                      }
+                  }
+              }
+
+              private fun placeholder(context: Context): View = FrameLayout(context).apply {
+                  background = GradientDrawable(
+                      GradientDrawable.Orientation.TL_BR,
+                      intArrayOf(
+                          0xFF7B5CFF.toInt(),
+                          0xFFC44EDD.toInt(),
+                          0xFFF0564A.toInt(),
+                      ),
+                  )
+
+                  addView(
+                      TextView(context).apply {
+                          text = "Duo Open\n\nBoth screens are on.\nFold the phone."
+                          setTextColor(Color.WHITE)
+                          textSize = 26f
+                          gravity = Gravity.CENTER
+                      },
+                      FrameLayout.LayoutParams(
+                          FrameLayout.LayoutParams.MATCH_PARENT,
+                          FrameLayout.LayoutParams.MATCH_PARENT,
+                      ),
+                  )
+              }
+
+              private companion object {
+                  const val TAG = "DuoDual"
+                  const val PREFS_NAME = "duo_open"
+                  const val PREF_ENABLED = "dual_screen_experimental_enabled"
+              }
+          }
+          KOTLIN
+
+          python3 <<'PY'
+          from pathlib import Path
+
+          p = Path("app/build.gradle.kts")
+          s = p.read_text()
+
+          if "versionCode = 5" not in s:
+              raise SystemExit("Expected smooth versionCode was not found.")
+
+          if 'versionName = "1.3.1-zfold7-smooth"' not in s:
+              raise SystemExit("Expected smooth versionName was not found.")
+
+          s = s.replace(
+              "versionCode = 5",
+              "versionCode = 6",
+              1,
+          )
+
+          s = s.replace(
+              'versionName = "1.3.1-zfold7-smooth"',
+              'versionName = "1.3.2-zfold7-dual-persist"',
+              1,
+          )
+
+          p.write_text(s)
+          PY
+
+      - name: Install on-device field diagnostics
+        run: |
+          mkdir -p app/src/main/java/com/duoopen/debug
+
+          cat > app/src/main/java/com/duoopen/debug/DuoDiagnostics.kt <<'KOTLIN'
+          package com.duoopen.debug
 
           import android.app.KeyguardManager
           import android.content.Context
@@ -146,812 +414,343 @@ jobs:
           import android.os.Build
           import android.os.PowerManager
           import android.os.SystemClock
-          import android.view.Display
+          import android.util.Log
+          import com.duoopen.BuildConfig
           import java.io.File
           import java.time.Instant
-          import java.util.Locale
+          import java.util.ArrayDeque
+          import java.util.concurrent.Executors
 
           /**
-           * Small persistent field recorder for Fold lifecycle/display debugging.
-           *
-           * It records Duo Open state transitions and Android display state only.
-           * It does not capture screen contents, notifications, typed text,
-           * passwords, clipboard contents, or other app data.
+           * Persistent, low-overhead field recorder for fold/dual-screen debugging.
+           * It records technical state transitions only; it never records screen
+           * pixels, notification contents, messages, passwords, or keystrokes.
            */
           object DuoDiagnostics {
+              private const val TAG = "DuoDiag"
+              private const val FILE_NAME = "duoopen-field-debug.log"
+              private const val MAX_LINES = 1200
+              private const val MAX_FILE_BYTES = 1_000_000L
+              private const val KEEP_BYTES = 500_000
 
-              private const val FILE_NAME =
-                  "duo-open-field-diagnostics.log"
-
-              private const val MAX_BYTES =
-                  128 * 1024L
-
-              private const val TRIM_TO_BYTES =
-                  64 * 1024
-
-              private val lock =
-                  Any()
-
-              fun record(
-                  context: Context,
-                  category: String,
-                  message: String,
-              ) {
-                  val app =
-                      context.applicationContext
-
-                  val line =
-                      buildString {
-                          append(
-                              Instant.now()
-                                  .toString()
-                          )
-                          append(
-                              " up="
-                          )
-                          append(
-                              SystemClock.uptimeMillis()
-                          )
-                          append(
-                              " ["
-                          )
-                          append(
-                              category
-                          )
-                          append(
-                              "] "
-                          )
-                          append(
-                              sanitize(message)
-                          )
-                          append(
-                              " | "
-                          )
-                          append(
-                              compactSystemState(app)
-                          )
-                          append(
-                              '\n'
-                          )
-                      }
-
-                  synchronized(lock) {
-                      runCatching {
-                          val file =
-                              logFile(app)
-
-                          if (
-                              file.exists() &&
-                              file.length() >
-                              MAX_BYTES
-                          ) {
-                              val old =
-                                  file.readText()
-
-                              file.writeText(
-                                  old.takeLast(
-                                      TRIM_TO_BYTES,
-                                  )
-                              )
-
-                              file.appendText(
-                                  "\n--- rolling log trimmed ---\n"
-                              )
-                          }
-
-                          file.appendText(
-                              line
-                          )
-                      }
-                  }
+              private val lock = Any()
+              private val lines = ArrayDeque<String>(MAX_LINES)
+              private val writer = Executors.newSingleThreadExecutor { r ->
+                  Thread(r, "DuoDiagnostics").apply { isDaemon = true }
               }
 
-              fun clear(
-                  context: Context,
-              ) {
-                  val app =
-                      context.applicationContext
+              @Volatile
+              private var ready = false
+
+              private lateinit var app: Context
+              private lateinit var file: File
+
+              fun init(context: Context) {
+                  if (ready) return
 
                   synchronized(lock) {
+                      if (ready) return
+
+                      app = context.applicationContext
+                      file = File(
+                          app.filesDir,
+                          FILE_NAME,
+                      )
+
                       runCatching {
-                          logFile(app)
-                              .delete()
+                          if (file.exists()) {
+                              file.readLines()
+                                  .takeLast(MAX_LINES)
+                                  .forEach(::pushLocked)
+                          }
                       }
+
+                      ready = true
                   }
 
-                  record(
-                      app,
-                      "DIAG",
-                      "diagnostics cleared",
+                  event(
+                      "app",
+                      "session-start version=${BuildConfig.VERSION_NAME} code=${BuildConfig.VERSION_CODE} " +
+                          "manufacturer=${Build.MANUFACTURER} model=${Build.MODEL} " +
+                          "device=${Build.DEVICE} sdk=${Build.VERSION.SDK_INT}",
+                  )
+
+                  event(
+                      "display",
+                      displaySummary(),
                   )
               }
 
-              fun report(
-                  context: Context,
-              ): String {
-                  val app =
-                      context.applicationContext
+              fun event(
+                  category: String,
+                  message: String,
+                  error: Throwable? = null,
+              ) {
+                  if (!ready) return
 
-                  val contents =
-                      synchronized(lock) {
-                          runCatching {
-                              logFile(app)
-                                  .takeIf {
-                                      it.exists()
-                                  }
-                                  ?.readText()
-                                  .orEmpty()
-                          }.getOrDefault(
-                              ""
+                  val suffix =
+                      error?.let {
+                          " error=${it.javaClass.simpleName}:${it.message}"
+                      } ?: ""
+
+                  val line =
+                      "${Instant.now()} uptime=${SystemClock.uptimeMillis()} [$category] $message$suffix"
+
+                  synchronized(lock) {
+                      pushLocked(line)
+                  }
+
+                  Log.i(
+                      TAG,
+                      line,
+                  )
+
+                  writer.execute {
+                      runCatching {
+                          rotateIfNeeded()
+
+                          file.appendText(
+                              line + "\n"
                           )
+                      }.onFailure {
+                          Log.w(
+                              TAG,
+                              "diagnostic write failed",
+                              it,
+                          )
+                      }
+                  }
+              }
+
+              fun report(): String {
+                  if (!ready) {
+                      return "DuoDiagnostics not initialised."
+                  }
+
+                  val snapshot =
+                      synchronized(lock) {
+                          lines.toList()
                       }
 
                   return buildString {
                       appendLine(
-                          "Duo Open field diagnostics"
+                          "=== Duo Open field diagnostics ==="
                       )
                       appendLine(
                           "generated=${Instant.now()}"
                       )
                       appendLine(
-                          "device=${Build.MANUFACTURER} ${Build.MODEL} (${Build.DEVICE})"
+                          "version=${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
                       )
                       appendLine(
-                          "android=${Build.VERSION.RELEASE} sdk=${Build.VERSION.SDK_INT}"
+                          "manufacturer=${Build.MANUFACTURER}"
                       )
                       appendLine(
-                          "current=${fullSystemState(app)}"
+                          "model=${Build.MODEL}"
+                      )
+                      appendLine(
+                          "device=${Build.DEVICE}"
+                      )
+                      appendLine(
+                          "sdk=${Build.VERSION.SDK_INT}"
+                      )
+                      appendLine(
+                          displaySummary()
+                      )
+                      appendLine(
+                          deviceStateSummary()
+                      )
+                      appendLine(
+                          "events=${snapshot.size}"
                       )
                       appendLine()
-                      appendLine(
-                          "Rolling event log:"
-                      )
 
-                      if (
-                          contents.isBlank()
-                      ) {
-                          appendLine(
-                              "(empty)"
-                          )
-                      } else {
-                          append(
-                              contents
-                          )
-                      }
+                      snapshot.forEach(
+                          ::appendLine
+                      )
                   }
               }
 
-              private fun logFile(
-                  context: Context,
-              ): File =
-                  File(
-                      context.filesDir,
-                      FILE_NAME,
+              fun clear() {
+                  if (!ready) return
+
+                  synchronized(lock) {
+                      lines.clear()
+                  }
+
+                  writer.execute {
+                      runCatching {
+                          file.delete()
+                      }
+                  }
+
+                  event(
+                      "app",
+                      "diagnostics-cleared",
                   )
+              }
 
-              private fun sanitize(
-                  value: String,
-              ): String =
-                  value
-                      .replace(
-                          '\n',
-                          ' ',
+              private fun pushLocked(
+                  line: String,
+              ) {
+                  while (
+                      lines.size >= MAX_LINES
+                  ) {
+                      lines.removeFirst()
+                  }
+
+                  lines.addLast(line)
+              }
+
+              private fun rotateIfNeeded() {
+                  if (
+                      !file.exists() ||
+                      file.length() <= MAX_FILE_BYTES
+                  ) {
+                      return
+                  }
+
+                  val bytes =
+                      file.readBytes()
+
+                  val start =
+                      (
+                          bytes.size -
+                              KEEP_BYTES
+                          )
+                          .coerceAtLeast(0)
+
+                  file.writeBytes(
+                      bytes.copyOfRange(
+                          start,
+                          bytes.size,
                       )
-                      .replace(
-                          '\r',
-                          ' ',
-                      )
+                  )
+              }
 
-              private fun compactSystemState(
-                  context: Context,
-              ): String {
-
-                  val power =
-                      context.getSystemService(
+              private fun deviceStateSummary(): String {
+                  val pm =
+                      app.getSystemService(
                           PowerManager::class.java,
                       )
 
-                  val keyguard =
-                      context.getSystemService(
+                  val km =
+                      app.getSystemService(
                           KeyguardManager::class.java,
                       )
 
+                  return (
+                      "interactive=${pm?.isInteractive} " +
+                          "keyguardLocked=${km?.isKeyguardLocked}"
+                      )
+              }
+
+              private fun displaySummary(): String {
                   val dm =
-                      context.getSystemService(
+                      app.getSystemService(
                           DisplayManager::class.java,
                       )
 
-                  val displays =
-                      runCatching {
-                          dm?.displays
-                              ?.joinToString(
-                                  separator = ",",
-                              ) {
-                                  displayCompact(it)
+                  return (
+                      "displays=" +
+                          dm.displays.joinToString(
+                              " | "
+                          ) { display ->
+
+                              val mode =
+                                  runCatching {
+                                      display.mode
+                                  }.getOrNull()
+
+                              if (mode == null) {
+                                  "id=${display.displayId} " +
+                                      "name=${display.name} " +
+                                      "state=${display.state}"
+                              } else {
+                                  "id=${display.displayId} " +
+                                      "name=${display.name} " +
+                                      "state=${display.state} " +
+                                      "${mode.physicalWidth}x${mode.physicalHeight}@" +
+                                      "${"%.1f".format(mode.refreshRate)}Hz"
                               }
-                              .orEmpty()
-                      }.getOrDefault(
-                          "?"
-                      )
-
-                  return (
-                      "interactive=${power?.isInteractive} " +
-                          "keyguard=${keyguard?.isKeyguardLocked} " +
-                          "displays=[$displays]"
-                      )
-              }
-
-              private fun fullSystemState(
-                  context: Context,
-              ): String {
-
-                  val dm =
-                      context.getSystemService(
-                          DisplayManager::class.java,
-                      )
-
-                  val displays =
-                      runCatching {
-                          dm?.displays
-                              ?.joinToString(
-                                  separator = " ; ",
-                              ) {
-                                  displayFull(it)
-                              }
-                              .orEmpty()
-                      }.getOrDefault(
-                          "unavailable"
-                      )
-
-                  return (
-                      compactSystemState(context) +
-                          " fullDisplays=[$displays]"
-                      )
-              }
-
-              private fun displayCompact(
-                  display: Display,
-              ): String {
-
-                  val mode =
-                      runCatching {
-                          display.mode
-                      }.getOrNull()
-
-                  val hz =
-                      mode?.refreshRate
-                          ?.let {
-                              String.format(
-                                  Locale.US,
-                                  "%.1f",
-                                  it,
-                              )
                           }
-                          ?: "?"
-
-                  return (
-                      "${display.displayId}:" +
-                          stateName(
-                              display.state
-                          ) +
-                          "@${hz}Hz"
                       )
               }
-
-              private fun displayFull(
-                  display: Display,
-              ): String {
-
-                  val mode =
-                      runCatching {
-                          display.mode
-                      }.getOrNull()
-
-                  val width =
-                      mode?.physicalWidth
-                          ?: -1
-
-                  val height =
-                      mode?.physicalHeight
-                          ?: -1
-
-                  val hz =
-                      mode?.refreshRate
-                          ?.let {
-                              String.format(
-                                  Locale.US,
-                                  "%.2f",
-                                  it,
-                              )
-                          }
-                          ?: "?"
-
-                  return (
-                      "id=${display.displayId} " +
-                          "name=${display.name} " +
-                          "state=${stateName(display.state)} " +
-                          "mode=${width}x${height}@${hz}Hz " +
-                          "flags=${display.flags}"
-                      )
-              }
-
-              private fun stateName(
-                  state: Int,
-              ): String =
-                  when (state) {
-                      Display.STATE_OFF ->
-                          "OFF"
-                      Display.STATE_ON ->
-                          "ON"
-                      Display.STATE_DOZE ->
-                          "DOZE"
-                      Display.STATE_DOZE_SUSPEND ->
-                          "DOZE_SUSPEND"
-                      Display.STATE_VR ->
-                          "VR"
-                      Display.STATE_ON_SUSPEND ->
-                          "ON_SUSPEND"
-                      else ->
-                          state.toString()
-                  }
           }
           KOTLIN
 
-      - name: Instrument persistent dual-screen state machine
-        run: |
           python3 <<'PY'
           from pathlib import Path
 
+          def one(
+              path,
+              old,
+              new,
+              label,
+          ):
+              p = Path(path)
+              s = p.read_text()
+
+              if old not in s:
+                  raise SystemExit(
+                      f"{label}: source anchor not found"
+                  )
+
+              p.write_text(
+                  s.replace(
+                      old,
+                      new,
+                      1,
+                  )
+              )
+
+          one(
+              "app/src/main/java/com/duoopen/DuoApplication.kt",
+              "        DuoSettings.init(this)",
+              "        com.duoopen.debug.DuoDiagnostics.init(this)\n        DuoSettings.init(this)",
+              "DuoApplication",
+          )
+
           p = Path(
-              "app/src/main/java/com/duoopen/DualScreen.kt"
+              "app/src/main/java/com/duoopen/fold/HingeAngleSource.kt"
           )
 
           s = p.read_text()
 
-          def replace_once(old, new, label):
-              global s
-              if old not in s:
-                  raise SystemExit(
-                      f"{label}: expected source not found"
-                  )
-              s = s.replace(
-                  old,
-                  new,
-                  1,
+          anchor = (
+              "        if (others.isNotEmpty()) {\n"
+              "            appendLine(\"other fold-related sensors (not angle candidates):\")\n"
+              "            for (s in others) {\n"
+              "                appendLine(\"- ${s.name} type=${s.type} (${s.stringType}) range=${s.maximumRange} wakeUp=${s.isWakeUpSensor}\")\n"
+              "            }\n"
+              "        }\n"
+              "    }\n"
+          )
+
+          replacement = (
+              "        if (others.isNotEmpty()) {\n"
+              "            appendLine(\"other fold-related sensors (not angle candidates):\")\n"
+              "            for (s in others) {\n"
+              "                appendLine(\"- ${s.name} type=${s.type} (${s.stringType}) range=${s.maximumRange} wakeUp=${s.isWakeUpSensor}\")\n"
+              "            }\n"
+              "        }\n"
+              "        appendLine()\n"
+              "        append(com.duoopen.debug.DuoDiagnostics.report())\n"
+              "    }\n"
+          )
+
+          if anchor not in s:
+              raise SystemExit(
+                  "HingeAngleSource report anchor not found"
               )
 
-          def block(lines):
-              return "\n".join(lines)
-
-          replace_once(
-              "import androidx.window.core.ExperimentalWindowApi\n",
-              "import androidx.window.core.ExperimentalWindowApi\nimport com.duoopen.diagnostics.DuoDiagnostics\n",
-              "diagnostic import",
-          )
-
-          old = block([
-              "    private var timeoutJob:",
-              "        Job? = null",
-              "",
-              "    init {",
-          ])
-
-          new = block([
-              "    private var timeoutJob:",
-              "        Job? = null",
-              "",
-              "    private var requestCount = 0",
-              "    private var sessionStartCount = 0",
-              "    private var sessionEndCount = 0",
-              "    private var visibilityCount = 0",
-              "    private var retryCount = 0",
-              "    private var timeoutCount = 0",
-              "",
-              "    private fun capabilityStatus(): Any? =",
-              "        rearInfo?.getCapability(",
-              "            WindowAreaCapability.Operation",
-              "                .OPERATION_PRESENT_ON_AREA,",
-              "        )?.status",
-              "",
-              "    private fun stateSummary(): String =",
-              "        \"desired=$desired \" +",
-              "            \"switch=${_active.value} \" +",
-              "            \"presenter=${presenter != null} \" +",
-              "            \"inFlight=$requestInFlight \" +",
-              "            \"generation=$generation \" +",
-              "            \"cap=${capabilityStatus()} \" +",
-              "            \"lifecycle=${activity.lifecycle.currentState} \" +",
-              "            \"counts=req:$requestCount/start:$sessionStartCount/end:$sessionEndCount/retry:$retryCount/timeout:$timeoutCount/visibility:$visibilityCount\"",
-              "",
-              "    private fun diag(",
-              "        event: String,",
-              "    ) {",
-              "        DuoDiagnostics.record(",
-              "            activity,",
-              "            \"DUAL\",",
-              "            \"$event | ${stateSummary()}\",",
-              "        )",
-              "    }",
-              "",
-              "    fun diagnosticReport(): String =",
-              "        buildString {",
-              "            append(",
-              "                DuoDiagnostics.report(",
-              "                    activity,",
-              "                )",
-              "            )",
-              "            appendLine()",
-              "            appendLine()",
-              "            appendLine(",
-              "                \"DualScreen live instance:\"",
-              "            )",
-              "            appendLine(",
-              "                stateSummary()",
-              "            )",
-              "        }",
-              "",
-              "    fun clearDiagnostics() {",
-              "        DuoDiagnostics.clear(",
-              "            activity,",
-              "        )",
-              "        diag(",
-              "            \"clearDiagnostics complete\",",
-              "        )",
-              "    }",
-              "",
-              "    init {",
-          ])
-
-          replace_once(
-              old,
-              new,
-              "diagnostic fields",
-          )
-
-          replace_once(
-              "        activity.lifecycle.addObserver(this)\n\n        activity.lifecycleScope.launch {",
-              block([
-                  "        activity.lifecycle.addObserver(this)",
-                  "",
-                  "        diag(",
-                  "            \"DualScreen init\",",
-                  "        )",
-                  "",
-                  "        activity.lifecycleScope.launch {",
-              ]),
-              "init log",
-          )
-
-          replace_once(
-              block([
-                  "                    rearInfo =",
-                  "                        infos.firstOrNull {",
-                  "                            it.type ==",
-                  "                                WindowAreaInfo.Type",
-                  "                                    .TYPE_REAR_FACING",
-                  "                        }",
-                  "",
-                  "                    refreshStatus()",
-              ]),
-              block([
-                  "                    rearInfo =",
-                  "                        infos.firstOrNull {",
-                  "                            it.type ==",
-                  "                                WindowAreaInfo.Type",
-                  "                                    .TYPE_REAR_FACING",
-                  "                        }",
-                  "",
-                  "                    DuoDiagnostics.record(",
-                  "                        activity,",
-                  "                        \"WINDOW_AREA\",",
-                  "                        \"infos=\" +",
-                  "                            infos.joinToString {",
-                  "                                val present =",
-                  "                                    it.getCapability(",
-                  "                                        WindowAreaCapability.Operation",
-                  "                                            .OPERATION_PRESENT_ON_AREA,",
-                  "                                    )?.status",
-                  "",
-                  "                                \"${it.type}:${it.metrics.bounds}:present=$present\"",
-                  "                            },",
-                  "                    )",
-                  "",
-                  "                    refreshStatus()",
-              ]),
-              "window area log",
-          )
-
-          replace_once(
-              block([
-                  "    override fun onStart(",
-                  "        owner: LifecycleOwner,",
-                  "    ) {",
-                  "        if (desired) {",
-              ]),
-              block([
-                  "    override fun onStart(",
-                  "        owner: LifecycleOwner,",
-                  "    ) {",
-                  "        diag(",
-                  "            \"activity onStart\",",
-                  "        )",
-                  "",
-                  "        if (desired) {",
-              ]),
-              "onStart log",
-          )
-
-          replace_once(
-              block([
-                  "    override fun onResume(",
-                  "        owner: LifecycleOwner,",
-                  "    ) {",
-                  "        if (desired) {",
-              ]),
-              block([
-                  "    override fun onResume(",
-                  "        owner: LifecycleOwner,",
-                  "    ) {",
-                  "        diag(",
-                  "            \"activity onResume\",",
-                  "        )",
-                  "",
-                  "        if (desired) {",
-              ]),
-              "onResume log",
-          )
-
-          replace_once(
-              block([
-                  "    override fun onDestroy(",
-                  "        owner: LifecycleOwner,",
-                  "    ) {",
-              ]),
-              block([
-                  "    override fun onPause(",
-                  "        owner: LifecycleOwner,",
-                  "    ) {",
-                  "        diag(",
-                  "            \"activity onPause\",",
-                  "        )",
-                  "    }",
-                  "",
-                  "    override fun onStop(",
-                  "        owner: LifecycleOwner,",
-                  "    ) {",
-                  "        diag(",
-                  "            \"activity onStop\",",
-                  "        )",
-                  "    }",
-                  "",
-                  "    override fun onDestroy(",
-                  "        owner: LifecycleOwner,",
-                  "    ) {",
-                  "        diag(",
-                  "            \"activity onDestroy\",",
-                  "        )",
-              ]),
-              "pause stop destroy logs",
-          )
-
-          replace_once(
-              "    fun start() {\n        desired =\n            true",
-              block([
-                  "    fun start() {",
-                  "        diag(",
-                  "            \"user requested ENABLE\",",
-                  "        )",
-                  "",
-                  "        desired =",
-                  "            true",
-              ]),
-              "start log",
-          )
-
-          replace_once(
-              "    fun stop() {\n        desired =\n            false",
-              block([
-                  "    fun stop() {",
-                  "        diag(",
-                  "            \"user requested DISABLE\",",
-                  "        )",
-                  "",
-                  "        desired =",
-                  "            false",
-              ]),
-              "stop log",
-          )
-
-          replace_once(
-              "        requestInFlight =\n            true\n\n        val myGeneration =",
-              block([
-                  "        requestInFlight =",
-                  "            true",
-                  "",
-                  "        requestCount++",
-                  "",
-                  "        val myGeneration =",
-              ]),
-              "request counter",
-          )
-
-          replace_once(
-              block([
-                  "        Log.i(",
-                  "            TAG,",
-                  "            \"request dual screen \" +",
-                  "                \"gen=$myGeneration \" +",
-                  "                \"reason=$reason\",",
-                  "        )",
-              ]),
-              block([
-                  "        Log.i(",
-                  "            TAG,",
-                  "            \"request dual screen \" +",
-                  "                \"gen=$myGeneration \" +",
-                  "                \"reason=$reason\",",
-                  "        )",
-                  "",
-                  "        diag(",
-                  "            \"REQUEST gen=$myGeneration reason=$reason\",",
-                  "        )",
-              ]),
-              "request log",
-          )
-
-          replace_once(
-              block([
-                  "                override fun onSessionStarted(",
-                  "                    session:",
-                  "                        WindowAreaSessionPresenter,",
-                  "                ) {",
-                  "                    if (",
-              ]),
-              block([
-                  "                override fun onSessionStarted(",
-                  "                    session:",
-                  "                        WindowAreaSessionPresenter,",
-                  "                ) {",
-                  "                    sessionStartCount++",
-                  "",
-                  "                    diag(",
-                  "                        \"SESSION_STARTED callback gen=$myGeneration\",",
-                  "                    )",
-                  "",
-                  "                    if (",
-              ]),
-              "session start log",
-          )
-
-          replace_once(
-              block([
-                  "                override fun onSessionEnded(",
-                  "                    t: Throwable?,",
-                  "                ) {",
-                  "                    if (",
-              ]),
-              block([
-                  "                override fun onSessionEnded(",
-                  "                    t: Throwable?,",
-                  "                ) {",
-                  "                    sessionEndCount++",
-                  "",
-                  "                    diag(",
-                  "                        \"SESSION_ENDED callback gen=$myGeneration throwable=${t?.javaClass?.name}:${t?.message}\",",
-                  "                    )",
-                  "",
-                  "                    if (",
-              ]),
-              "session end log",
-          )
-
-          replace_once(
-              block([
-                  "                override fun onContainerVisibilityChanged(",
-                  "                    isVisible: Boolean,",
-                  "                ) {",
-                  "                    if (",
-              ]),
-              block([
-                  "                override fun onContainerVisibilityChanged(",
-                  "                    isVisible: Boolean,",
-                  "                ) {",
-                  "                    visibilityCount++",
-                  "",
-                  "                    diag(",
-                  "                        \"VISIBILITY gen=$myGeneration visible=$isVisible\",",
-                  "                    )",
-                  "",
-                  "                    if (",
-              ]),
-              "visibility log",
-          )
-
-          replace_once(
-              block([
-                  "            requestInFlight =",
-                  "                false",
-                  "",
-                  "            Log.w(",
-                  "                TAG,",
-                  "                \"presentContentOnWindowArea failed\",",
-              ]),
-              block([
-                  "            requestInFlight =",
-                  "                false",
-                  "",
-                  "            diag(",
-                  "                \"REQUEST_FAILED gen=$myGeneration error=${result.exceptionOrNull()?.javaClass?.name}:${result.exceptionOrNull()?.message}\",",
-                  "            )",
-                  "",
-                  "            Log.w(",
-                  "                TAG,",
-                  "                \"presentContentOnWindowArea failed\",",
-              ]),
-              "request failure log",
-          )
-
-          replace_once(
-              block([
-                  "                    Log.w(",
-                  "                        TAG,",
-                  "                        \"dual-screen request timed out \" +",
-                  "                            \"gen=$myGeneration\",",
-                  "                    )",
-                  "",
-                  "                    requestInFlight =",
-              ]),
-              block([
-                  "                    timeoutCount++",
-                  "",
-                  "                    diag(",
-                  "                        \"REQUEST_TIMEOUT gen=$myGeneration\",",
-                  "                    )",
-                  "",
-                  "                    Log.w(",
-                  "                        TAG,",
-                  "                        \"dual-screen request timed out \" +",
-                  "                            \"gen=$myGeneration\",",
-                  "                    )",
-                  "",
-                  "                    requestInFlight =",
-              ]),
-              "timeout log",
-          )
-
-          replace_once(
-              block([
-                  "        if (!desired) return",
-                  "",
-                  "        retryJob?.cancel()",
-              ]),
-              block([
-                  "        if (!desired) return",
-                  "",
-                  "        retryCount++",
-                  "",
-                  "        diag(",
-                  "            \"scheduleRetry delay=${delayMs}ms reason=$reason\",",
-                  "        )",
-                  "",
-                  "        retryJob?.cancel()",
-              ]),
-              "retry log",
-          )
-
           p.write_text(
-              s
+              s.replace(
+                  anchor,
+                  replacement,
+                  1,
+              )
           )
-
-          print(
-              "DualScreen diagnostics instrumentation applied."
-          )
-          PY
-
-      - name: Add Copy diagnostics controls
-        run: |
-          python3 <<'PY'
-          from pathlib import Path
 
           p = Path(
               "app/src/main/java/com/duoopen/ui/ControlSheet.kt"
@@ -959,175 +758,1158 @@ jobs:
 
           s = p.read_text()
 
-          def block(lines):
-              return "\n".join(lines)
-
-          old = block([
-              "    dualActive: Boolean,",
-              "    onDualChange: (Boolean) -> Unit,",
-              "    shizukuAvailable: Boolean,",
-          ])
-
-          new = block([
-              "    dualActive: Boolean,",
-              "    onDualChange: (Boolean) -> Unit,",
-              "    diagnosticReport: () -> String,",
-              "    onClearDiagnostics: () -> Unit,",
-              "    shizukuAvailable: Boolean,",
-          ])
-
-          if old not in s:
-              raise SystemExit(
-                  "ControlSheet signature anchor not found"
+          if (
+              "import com.duoopen.debug.DuoDiagnostics"
+              not in s
+          ):
+              s = s.replace(
+                  "import com.duoopen.fold.HingeAngleSource\n",
+                  "import com.duoopen.debug.DuoDiagnostics\n" +
+                      "import com.duoopen.fold.HingeAngleSource\n",
+                  1,
               )
 
-          s = s.replace(
-              old,
-              new,
-              1,
+          anchor = (
+              "            Row(verticalAlignment = Alignment.CenterVertically) {\n"
+              "                Hint(dualStatus, modifier = Modifier.weight(1f))\n"
+              "                Switch(checked = dualActive, onCheckedChange = onDualChange, enabled = dualStatus.startsWith(\"Available\") || dualActive)\n"
+              "            }\n"
           )
 
-          old = block([
-              "            Row(verticalAlignment = Alignment.CenterVertically) {",
-              "                Hint(dualStatus, modifier = Modifier.weight(1f))",
-              "                Switch(checked = dualActive, onCheckedChange = onDualChange, enabled = dualStatus.startsWith(\"Available\") || dualActive)",
-              "            }",
-              "",
-              "            // 7. Hinge sensor",
-          ])
+          replacement = (
+              anchor +
+              "            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {\n"
+              "                TextButton(\n"
+              "                    onClick = {\n"
+              "                        clipboard.setText(AnnotatedString(DuoDiagnostics.report()))\n"
+              "                    },\n"
+              "                ) { Text(\"Copy diagnostics\") }\n"
+              "                TextButton(onClick = DuoDiagnostics::clear) {\n"
+              "                    Text(\"Clear diagnostics\")\n"
+              "                }\n"
+              "            }\n"
+          )
 
-          new = block([
-              "            Row(verticalAlignment = Alignment.CenterVertically) {",
-              "                Hint(dualStatus, modifier = Modifier.weight(1f))",
-              "                Switch(checked = dualActive, onCheckedChange = onDualChange, enabled = dualStatus.startsWith(\"Available\") || dualActive)",
-              "            }",
-              "            Spacer(Modifier.height(8.dp))",
-              "            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {",
-              "                OutlinedButton(",
-              "                    onClick = {",
-              "                        clipboard.setText(",
-              "                            AnnotatedString(",
-              "                                buildString {",
-              "                                    append(",
-              "                                        diagnosticReport()",
-              "                                    )",
-              "                                    appendLine()",
-              "                                    appendLine()",
-              "                                    append(",
-              "                                        hinge.report()",
-              "                                    )",
-              "                                },",
-              "                            ),",
-              "                        )",
-              "                    },",
-              "                    modifier = Modifier.weight(1f),",
-              "                ) {",
-              "                    Text(\"Copy diagnostics\")",
-              "                }",
-              "                OutlinedButton(",
-              "                    onClick = onClearDiagnostics,",
-              "                    modifier = Modifier.weight(1f),",
-              "                ) {",
-              "                    Text(\"Clear diagnostics\")",
-              "                }",
-              "            }",
-              "            Hint(",
-              "                \"The field log records Duo Open lifecycle, display and dual-screen state only. Clear it, reproduce the problem, then copy it here.\",",
-              "            )",
-              "",
-              "            // 7. Hinge sensor",
-          ])
-
-          if old not in s:
+          if anchor not in s:
               raise SystemExit(
-                  "ControlSheet dual-screen UI anchor not found"
+                  "ControlSheet dual-screen anchor not found"
               )
-
-          s = s.replace(
-              old,
-              new,
-              1,
-          )
 
           p.write_text(
-              s
+              s.replace(
+                  anchor,
+                  replacement,
+                  1,
+              )
           )
-
-          print(
-              "ControlSheet diagnostic controls applied."
-          )
-          PY
-
-      - name: Wire diagnostic report into UI
-        run: |
-          python3 <<'PY'
-          from pathlib import Path
 
           p = Path(
-              "app/src/main/java/com/duoopen/ui/DuoApp.kt"
+              "app/src/main/java/com/duoopen/DualScreen.kt"
           )
 
           s = p.read_text()
 
-          def block(lines):
-              return "\n".join(lines)
+          if (
+              "import com.duoopen.debug.DuoDiagnostics"
+              not in s
+          ):
+              s = s.replace(
+                  "import androidx.window.core.ExperimentalWindowApi\n",
+                  "import androidx.window.core.ExperimentalWindowApi\n" +
+                      "import com.duoopen.debug.DuoDiagnostics\n",
+                  1,
+              )
 
-          old = block([
-              "                dualActive = dualActive,",
-              "                onDualChange = { on -> if (on) dualScreen?.start() else dualScreen?.stop() },",
-              "                onEnableOverlay = { openAccessibilitySettings(context) },",
-          ])
+          patches = [
+              (
+                  "    init {\n        activity.lifecycle.addObserver(this)\n",
+                  "    init {\n"
+                  "        activity.lifecycle.addObserver(this)\n"
+                  "        DuoDiagnostics.event(\"dual\", \"created desired=$desired lifecycle=${activity.lifecycle.currentState}\")\n",
+              ),
+              (
+                  "                    refreshStatus()\n                    if (desired) maybeStart(\"window-area update\")",
+                  "                    val diagnosticCap = rearInfo?.getCapability(\n"
+                  "                        WindowAreaCapability.Operation.OPERATION_PRESENT_ON_AREA,\n"
+                  "                    )?.status\n"
+                  "                    DuoDiagnostics.event(\n"
+                  "                        \"dual\",\n"
+                  "                        \"windowAreas count=${infos.size} cap=$diagnosticCap desired=$desired \" +\n"
+                  "                            \"presenter=${presenter != null} inFlight=$requestInFlight\",\n"
+                  "                    )\n"
+                  "                    refreshStatus()\n"
+                  "                    if (desired) maybeStart(\"window-area update\")",
+              ),
+              (
+                  "    override fun onStart(owner: LifecycleOwner) {\n        if (desired) scheduleRetry(0L, \"activity started\")\n    }",
+                  "    override fun onStart(owner: LifecycleOwner) {\n"
+                  "        DuoDiagnostics.event(\"dual\", \"lifecycle onStart desired=$desired\")\n"
+                  "        if (desired) scheduleRetry(0L, \"activity started\")\n"
+                  "    }",
+              ),
+              (
+                  "    override fun onResume(owner: LifecycleOwner) {\n        if (desired) scheduleRetry(120L, \"activity resumed\")\n    }",
+                  "    override fun onResume(owner: LifecycleOwner) {\n"
+                  "        DuoDiagnostics.event(\"dual\", \"lifecycle onResume desired=$desired\")\n"
+                  "        if (desired) scheduleRetry(120L, \"activity resumed\")\n"
+                  "    }",
+              ),
+              (
+                  "    override fun onDestroy(owner: LifecycleOwner) {\n",
+                  "    override fun onPause(owner: LifecycleOwner) {\n"
+                  "        DuoDiagnostics.event(\"dual\", \"lifecycle onPause desired=$desired presenter=${presenter != null} inFlight=$requestInFlight\")\n"
+                  "    }\n\n"
+                  "    override fun onStop(owner: LifecycleOwner) {\n"
+                  "        DuoDiagnostics.event(\"dual\", \"lifecycle onStop desired=$desired presenter=${presenter != null} inFlight=$requestInFlight\")\n"
+                  "    }\n\n"
+                  "    override fun onDestroy(owner: LifecycleOwner) {\n"
+                  "        DuoDiagnostics.event(\"dual\", \"lifecycle onDestroy desired=$desired\")\n",
+              ),
+              (
+                  "    fun start() {\n        desired = true",
+                  "    fun start() {\n"
+                  "        DuoDiagnostics.event(\"dual\", \"user enabled\")\n"
+                  "        desired = true",
+              ),
+              (
+                  "    fun stop() {\n        desired = false",
+                  "    fun stop() {\n"
+                  "        DuoDiagnostics.event(\"dual\", \"user disabled\")\n"
+                  "        desired = false",
+              ),
+              (
+                  "    private fun maybeStart(reason: String) {\n        if (!desired || presenter != null || requestInFlight) return",
+                  "    private fun maybeStart(reason: String) {\n"
+                  "        val diagnosticCap = rearInfo?.getCapability(\n"
+                  "            WindowAreaCapability.Operation.OPERATION_PRESENT_ON_AREA,\n"
+                  "        )?.status\n"
+                  "        DuoDiagnostics.event(\n"
+                  "            \"dual\",\n"
+                  "            \"maybeStart reason=$reason desired=$desired cap=$diagnosticCap \" +\n"
+                  "                \"presenter=${presenter != null} inFlight=$requestInFlight \" +\n"
+                  "                \"lifecycle=${activity.lifecycle.currentState}\",\n"
+                  "        )\n"
+                  "        if (!desired || presenter != null || requestInFlight) return",
+              ),
+              (
+                  "        Log.i(TAG, \"request dual screen gen=$myGeneration reason=$reason\")",
+                  "        Log.i(TAG, \"request dual screen gen=$myGeneration reason=$reason\")\n"
+                  "        DuoDiagnostics.event(\"dual\", \"request gen=$myGeneration reason=$reason\")",
+              ),
+              (
+                  "                Log.i(TAG, \"dual-screen session started gen=$myGeneration\")",
+                  "                Log.i(TAG, \"dual-screen session started gen=$myGeneration\")\n"
+                  "                DuoDiagnostics.event(\"dual\", \"sessionStarted gen=$myGeneration\")",
+              ),
+              (
+                  "                Log.i(TAG, \"dual-screen session ended gen=$myGeneration reason=${t?.message}\")",
+                  "                Log.i(TAG, \"dual-screen session ended gen=$myGeneration reason=${t?.message}\")\n"
+                  "                DuoDiagnostics.event(\"dual\", \"sessionEnded gen=$myGeneration desired=$desired message=${t?.message}\", t)",
+              ),
+              (
+                  "            override fun onContainerVisibilityChanged(isVisible: Boolean) {\n                if (myGeneration != generation || !desired || presenter == null) return",
+                  "            override fun onContainerVisibilityChanged(isVisible: Boolean) {\n"
+                  "                DuoDiagnostics.event(\n"
+                  "                    \"dual\",\n"
+                  "                    \"visibility gen=$myGeneration visible=$isVisible currentGen=$generation \" +\n"
+                  "                        \"desired=$desired presenter=${presenter != null}\",\n"
+                  "                )\n"
+                  "                if (myGeneration != generation || !desired || presenter == null) return",
+              ),
+              (
+                  "            Log.w(TAG, \"presentContentOnWindowArea failed\", result.exceptionOrNull())",
+                  "            Log.w(TAG, \"presentContentOnWindowArea failed\", result.exceptionOrNull())\n"
+                  "            DuoDiagnostics.event(\"dual\", \"requestFailed gen=$myGeneration\", result.exceptionOrNull())",
+              ),
+              (
+                  "                Log.w(TAG, \"dual-screen request timed out gen=$myGeneration\")",
+                  "                Log.w(TAG, \"dual-screen request timed out gen=$myGeneration\")\n"
+                  "                DuoDiagnostics.event(\"dual\", \"requestTimeout gen=$myGeneration\")",
+              ),
+              (
+                  "    private fun scheduleRetry(delayMs: Long, reason: String) {\n        if (!desired) return",
+                  "    private fun scheduleRetry(delayMs: Long, reason: String) {\n"
+                  "        DuoDiagnostics.event(\"dual\", \"scheduleRetry delayMs=$delayMs reason=$reason desired=$desired\")\n"
+                  "        if (!desired) return",
+              ),
+          ]
 
-          new = block([
-              "                dualActive = dualActive,",
-              "                onDualChange = { on -> if (on) dualScreen?.start() else dualScreen?.stop() },",
-              "                diagnosticReport = {",
-              "                    buildString {",
-              "                        append(",
-              "                            dualScreen?.diagnosticReport()",
-              "                                ?: \"Dual-screen controller unavailable\"",
-              "                        )",
-              "                        appendLine()",
-              "                        appendLine()",
-              "                        appendLine(",
-              "                            \"Shizuku:\"",
-              "                        )",
-              "                        appendLine(",
-              "                            OverlayFeature.shizukuStatus.value",
-              "                        )",
-              "                        appendLine(",
-              "                            \"angleFeed=${OverlayFeature.angleFeedStatus()}\"",
-              "                        )",
-              "                    }",
-              "                },",
-              "                onClearDiagnostics = {",
-              "                    dualScreen?.clearDiagnostics()",
-              "                },",
-              "                onEnableOverlay = { openAccessibilitySettings(context) },",
-          ])
+          for old, new in patches:
+              if old not in s:
+                  raise SystemExit(
+                      "DualScreen diagnostics anchor missing: " +
+                      old[:80]
+                  )
 
-          if old not in s:
+              s = s.replace(
+                  old,
+                  new,
+                  1,
+              )
+
+          p.write_text(s)
+
+          p = Path(
+              "app/build.gradle.kts"
+          )
+
+          s = p.read_text()
+
+          if (
+              "versionCode = 6" not in s or
+              'versionName = "1.3.2-zfold7-dual-persist"' not in s
+          ):
               raise SystemExit(
-                  "DuoApp diagnostic wiring anchor not found"
+                  "Expected dual-persist version was not found"
               )
 
           s = s.replace(
-              old,
-              new,
+              "versionCode = 6",
+              "versionCode = 7",
               1,
           )
 
-          p.write_text(
-              s
+          s = s.replace(
+              'versionName = "1.3.2-zfold7-dual-persist"',
+              'versionName = "1.3.3-zfold7-fielddiag"',
+              1,
           )
 
-          print(
-              "DuoApp diagnostic wiring applied."
-          )
+          p.write_text(s)
           PY
 
-      - name: Set diagnostic build version
+      - name: Stabilize dual-screen recovery state machine
         run: |
+          cat > app/src/main/java/com/duoopen/DualScreen.kt <<'KOTLIN'
+          package com.duoopen
+
+          import android.content.Context
+          import android.graphics.Color
+          import android.graphics.drawable.GradientDrawable
+          import android.util.Log
+          import android.view.Gravity
+          import android.view.View
+          import android.widget.FrameLayout
+          import android.widget.TextView
+          import androidx.activity.ComponentActivity
+          import androidx.core.content.ContextCompat
+          import androidx.lifecycle.DefaultLifecycleObserver
+          import androidx.lifecycle.Lifecycle
+          import androidx.lifecycle.LifecycleOwner
+          import androidx.lifecycle.lifecycleScope
+          import androidx.lifecycle.repeatOnLifecycle
+          import androidx.window.area.WindowAreaCapability
+          import androidx.window.area.WindowAreaController
+          import androidx.window.area.WindowAreaInfo
+          import androidx.window.area.WindowAreaPresentationSessionCallback
+          import androidx.window.area.WindowAreaSessionPresenter
+          import androidx.window.core.ExperimentalWindowApi
+          import com.duoopen.debug.DuoDiagnostics
+          import kotlinx.coroutines.Job
+          import kotlinx.coroutines.delay
+          import kotlinx.coroutines.flow.MutableStateFlow
+          import kotlinx.coroutines.flow.StateFlow
+          import kotlinx.coroutines.launch
+
+          /**
+           * Keeps "Both screens at once" armed across Samsung fold/unfold transitions.
+           *
+           * Samsung legitimately terminates the Window Area presentation when the
+           * host Activity leaves the foreground. Treat that as suspension rather
+           * than an error. Recovery is attempted only after the Activity is fully
+           * RESUMED and has remained stable briefly.
+           */
+          @OptIn(ExperimentalWindowApi::class)
+          class DualScreen(
+              private val activity: ComponentActivity,
+          ) : DefaultLifecycleObserver {
+
+              private val controller =
+                  WindowAreaController.getOrCreate()
+
+              private val prefs =
+                  activity.getSharedPreferences(
+                      PREFS_NAME,
+                      Context.MODE_PRIVATE,
+                  )
+
+              private val _status =
+                  MutableStateFlow(
+                      "Checking…"
+                  )
+
+              val status: StateFlow<String> =
+                  _status
+
+              private val _active =
+                  MutableStateFlow(
+                      prefs.getBoolean(
+                          PREF_ENABLED,
+                          false,
+                      )
+                  )
+
+              val active: StateFlow<Boolean> =
+                  _active
+
+              val supported: Boolean
+                  get() =
+                      rearInfo != null
+
+              private var desired =
+                  _active.value
+
+              private var rearInfo:
+                  WindowAreaInfo? = null
+
+              private var presenter:
+                  WindowAreaSessionPresenter? = null
+
+              private var requestInFlight =
+                  false
+
+              private var generation =
+                  0L
+
+              private var retryJob:
+                  Job? = null
+
+              private var timeoutJob:
+                  Job? = null
+
+              private var suspended =
+                  false
+
+              init {
+                  activity.lifecycle.addObserver(
+                      this
+                  )
+
+                  DuoDiagnostics.event(
+                      "dual",
+                      "created desired=$desired lifecycle=${activity.lifecycle.currentState}",
+                  )
+
+                  activity.lifecycleScope.launch {
+                      activity.repeatOnLifecycle(
+                          Lifecycle.State.STARTED
+                      ) {
+                          controller.windowAreaInfos.collect { infos ->
+
+                              Log.i(
+                                  TAG,
+                                  "window areas: " +
+                                      infos.joinToString { info ->
+
+                                          val present =
+                                              info.getCapability(
+                                                  WindowAreaCapability.Operation
+                                                      .OPERATION_PRESENT_ON_AREA,
+                                              )?.status
+
+                                          val transfer =
+                                              info.getCapability(
+                                                  WindowAreaCapability.Operation
+                                                      .OPERATION_TRANSFER_ACTIVITY_TO_AREA,
+                                              )?.status
+
+                                          "${info.type} ${info.metrics.bounds} " +
+                                              "present=$present transfer=$transfer"
+                                      }.ifEmpty {
+                                          "(none)"
+                                      },
+                              )
+
+                              rearInfo =
+                                  infos.firstOrNull {
+                                      it.type ==
+                                          WindowAreaInfo.Type
+                                              .TYPE_REAR_FACING
+                                  }
+
+                              val diagnosticCap =
+                                  rearInfo?.getCapability(
+                                      WindowAreaCapability.Operation
+                                          .OPERATION_PRESENT_ON_AREA,
+                                  )?.status
+
+                              DuoDiagnostics.event(
+                                  "dual",
+                                  "windowAreas count=${infos.size} cap=$diagnosticCap desired=$desired " +
+                                      "presenter=${presenter != null} inFlight=$requestInFlight",
+                              )
+
+                              refreshStatus()
+
+                              /*
+                               * IMPORTANT:
+                               *
+                               * Capability updates are observational only.
+                               *
+                               * The previous implementation started/restarted a
+                               * presentation directly from this callback. On Samsung,
+                               * AVAILABLE can be reported while MainActivity is still
+                               * moving through the fold/background transition.
+                               *
+                               * Starting here could therefore re-enter the Window Area
+                               * API immediately after Samsung had deliberately ended
+                               * the previous session.
+                               */
+                          }
+                      }
+                  }
+              }
+
+              override fun onStart(
+                  owner: LifecycleOwner,
+              ) {
+                  DuoDiagnostics.event(
+                      "dual",
+                      "lifecycle onStart desired=$desired",
+                  )
+
+                  /*
+                   * Do not start from STARTED.
+                   *
+                   * Wait until RESUMED, then give the Samsung display state time to
+                   * stabilize before making exactly one recovery request.
+                   */
+              }
+
+              override fun onResume(
+                  owner: LifecycleOwner,
+              ) {
+                  DuoDiagnostics.event(
+                      "dual",
+                      "lifecycle onResume desired=$desired suspended=$suspended",
+                  )
+
+                  if (
+                      desired &&
+                      presenter == null &&
+                      !requestInFlight
+                  ) {
+                      scheduleRetry(
+                          RECOVERY_DELAY_MS,
+                          "stable activity resume",
+                      )
+                  }
+              }
+
+              override fun onPause(
+                  owner: LifecycleOwner,
+              ) {
+                  DuoDiagnostics.event(
+                      "dual",
+                      "lifecycle onPause desired=$desired " +
+                          "presenter=${presenter != null} " +
+                          "inFlight=$requestInFlight",
+                  )
+
+                  /*
+                   * If Samsung begins taking this Activity out of the foreground,
+                   * prevent a delayed recovery from firing during that transition.
+                   */
+                  retryJob?.cancel()
+
+                  retryJob =
+                      null
+              }
+
+              override fun onStop(
+                  owner: LifecycleOwner,
+              ) {
+                  DuoDiagnostics.event(
+                      "dual",
+                      "lifecycle onStop desired=$desired " +
+                          "presenter=${presenter != null} " +
+                          "inFlight=$requestInFlight",
+                  )
+              }
+
+              override fun onDestroy(
+                  owner: LifecycleOwner,
+              ) {
+                  DuoDiagnostics.event(
+                      "dual",
+                      "lifecycle onDestroy desired=$desired",
+                  )
+
+                  retryJob?.cancel()
+                  timeoutJob?.cancel()
+
+                  generation++
+
+                  requestInFlight =
+                      false
+
+                  val old =
+                      presenter
+
+                  presenter =
+                      null
+
+                  runCatching {
+                      old?.close()
+                  }
+
+                  activity.lifecycle.removeObserver(
+                      this
+                  )
+              }
+
+              fun start() {
+                  DuoDiagnostics.event(
+                      "dual",
+                      "user enabled",
+                  )
+
+                  desired =
+                      true
+
+                  suspended =
+                      false
+
+                  _active.value =
+                      true
+
+                  prefs.edit()
+                      .putBoolean(
+                          PREF_ENABLED,
+                          true,
+                      )
+                      .apply()
+
+                  _status.value =
+                      "Both screens armed — starting when Samsung exposes the cover display."
+
+                  scheduleRetry(
+                      0L,
+                      "user enabled",
+                  )
+              }
+
+              fun stop() {
+                  DuoDiagnostics.event(
+                      "dual",
+                      "user disabled",
+                  )
+
+                  desired =
+                      false
+
+                  suspended =
+                      false
+
+                  _active.value =
+                      false
+
+                  prefs.edit()
+                      .putBoolean(
+                          PREF_ENABLED,
+                          false,
+                      )
+                      .apply()
+
+                  retryJob?.cancel()
+                  timeoutJob?.cancel()
+
+                  generation++
+
+                  requestInFlight =
+                      false
+
+                  val old =
+                      presenter
+
+                  presenter =
+                      null
+
+                  runCatching {
+                      old?.close()
+                  }.onFailure {
+                      Log.w(
+                          TAG,
+                          "closing dual-screen session failed",
+                          it,
+                      )
+                  }
+
+                  refreshStatus()
+              }
+
+              private fun maybeStart(
+                  reason: String,
+              ) {
+                  val diagnosticCap =
+                      rearInfo?.getCapability(
+                          WindowAreaCapability.Operation
+                              .OPERATION_PRESENT_ON_AREA,
+                      )?.status
+
+                  DuoDiagnostics.event(
+                      "dual",
+                      "maybeStart reason=$reason desired=$desired cap=$diagnosticCap " +
+                          "presenter=${presenter != null} " +
+                          "inFlight=$requestInFlight " +
+                          "lifecycle=${activity.lifecycle.currentState}",
+                  )
+
+                  if (
+                      !desired ||
+                      presenter != null ||
+                      requestInFlight
+                  ) {
+                      return
+                  }
+
+                  if (
+                      !activity.lifecycle.currentState
+                          .isAtLeast(
+                              Lifecycle.State.RESUMED
+                          )
+                  ) {
+                      _status.value =
+                          "Both screens armed — waiting for Duo Open to be fully resumed."
+
+                      DuoDiagnostics.event(
+                          "dual",
+                          "start suppressed because lifecycle is ${activity.lifecycle.currentState}",
+                      )
+
+                      return
+                  }
+
+                  val info =
+                      rearInfo ?: run {
+
+                          _status.value =
+                              "Both screens armed — waiting for Samsung's second-screen capability."
+
+                          return
+                      }
+
+                  val cap =
+                      info.getCapability(
+                          WindowAreaCapability.Operation
+                              .OPERATION_PRESENT_ON_AREA,
+                      )
+
+                  when (
+                      cap?.status
+                  ) {
+                      WindowAreaCapability.Status
+                          .WINDOW_AREA_STATUS_AVAILABLE -> {
+                          beginSession(
+                              info,
+                              reason,
+                          )
+                      }
+
+                      WindowAreaCapability.Status
+                          .WINDOW_AREA_STATUS_ACTIVE -> {
+                          _status.value =
+                              "Both screens armed — Samsung reports the second screen active."
+                      }
+
+                      WindowAreaCapability.Status
+                          .WINDOW_AREA_STATUS_UNAVAILABLE -> {
+                          _status.value =
+                              "Both screens armed — temporarily unavailable while the phone changes display state."
+                      }
+
+                      else -> {
+                          _status.value =
+                              "Both screens armed — waiting for a usable second-screen session."
+                      }
+                  }
+              }
+
+              private fun beginSession(
+                  info: WindowAreaInfo,
+                  reason: String,
+              ) {
+                  if (
+                      !desired ||
+                      requestInFlight ||
+                      presenter != null
+                  ) {
+                      return
+                  }
+
+                  requestInFlight =
+                      true
+
+                  val myGeneration =
+                      ++generation
+
+                  _status.value =
+                      "Starting both screens…"
+
+                  Log.i(
+                      TAG,
+                      "request dual screen gen=$myGeneration reason=$reason",
+                  )
+
+                  DuoDiagnostics.event(
+                      "dual",
+                      "request gen=$myGeneration reason=$reason",
+                  )
+
+                  val callback =
+                      object :
+                          WindowAreaPresentationSessionCallback {
+
+                          override fun onSessionStarted(
+                              session:
+                                  WindowAreaSessionPresenter,
+                          ) {
+                              if (
+                                  myGeneration != generation ||
+                                  !desired
+                              ) {
+                                  runCatching {
+                                      session.close()
+                                  }
+
+                                  return
+                              }
+
+                              timeoutJob?.cancel()
+
+                              requestInFlight =
+                                  false
+
+                              presenter =
+                                  session
+
+                              suspended =
+                                  false
+
+                              val attached =
+                                  runCatching {
+                                      session.setContentView(
+                                          placeholder(
+                                              session.context
+                                          )
+                                      )
+                                  }
+
+                              if (
+                                  attached.isFailure
+                              ) {
+                                  Log.w(
+                                      TAG,
+                                      "dual-screen content attach failed",
+                                      attached.exceptionOrNull(),
+                                  )
+
+                                  presenter =
+                                      null
+
+                                  runCatching {
+                                      session.close()
+                                  }
+
+                                  suspended =
+                                      true
+
+                                  _status.value =
+                                      "Dual screen couldn't attach content. It will retry after the next stable resume."
+
+                                  DuoDiagnostics.event(
+                                      "dual",
+                                      "contentAttachFailed gen=$myGeneration",
+                                  )
+
+                                  return
+                              }
+
+                              Log.i(
+                                  TAG,
+                                  "dual-screen session started gen=$myGeneration",
+                              )
+
+                              DuoDiagnostics.event(
+                                  "dual",
+                                  "sessionStarted gen=$myGeneration",
+                              )
+
+                              _status.value =
+                                  "Both screens are on."
+                          }
+
+                          override fun onSessionEnded(
+                              t: Throwable?,
+                          ) {
+                              if (
+                                  myGeneration != generation
+                              ) {
+                                  return
+                              }
+
+                              timeoutJob?.cancel()
+
+                              requestInFlight =
+                                  false
+
+                              presenter =
+                                  null
+
+                              Log.i(
+                                  TAG,
+                                  "dual-screen session ended gen=$myGeneration reason=${t?.message}",
+                              )
+
+                              DuoDiagnostics.event(
+                                  "dual",
+                                  "sessionEnded gen=$myGeneration desired=$desired message=${t?.message}",
+                                  t,
+                              )
+
+                              if (
+                                  !desired
+                              ) {
+                                  refreshStatus()
+                                  return
+                              }
+
+                              suspended =
+                                  true
+
+                              _status.value =
+                                  "Dual screen paused by Samsung. It will make one recovery attempt after Duo Open is stably resumed."
+
+                              DuoDiagnostics.event(
+                                  "dual",
+                                  "session suspended gen=$myGeneration; no immediate retry",
+                              )
+
+                              /*
+                               * No immediate retry.
+                               *
+                               * Samsung has explicitly ended this Activity's
+                               * presentation session. Recovery belongs to the next
+                               * stable onResume, not to this callback.
+                               */
+                          }
+
+                          override fun onContainerVisibilityChanged(
+                              isVisible: Boolean,
+                          ) {
+                              DuoDiagnostics.event(
+                                  "dual",
+                                  "visibility gen=$myGeneration visible=$isVisible " +
+                                      "currentGen=$generation " +
+                                      "desired=$desired " +
+                                      "presenter=${presenter != null}",
+                              )
+
+                              if (
+                                  myGeneration != generation ||
+                                  !desired ||
+                                  presenter == null
+                              ) {
+                                  return
+                              }
+
+                              _status.value =
+                                  if (
+                                      isVisible
+                                  ) {
+                                      "Both screens are on."
+                                  } else {
+                                      "Both screens armed — cover presentation is temporarily hidden."
+                                  }
+                          }
+                      }
+
+                  val result =
+                      runCatching {
+                          controller.presentContentOnWindowArea(
+                              info.token,
+                              activity,
+                              ContextCompat.getMainExecutor(
+                                  activity
+                              ),
+                              callback,
+                          )
+                      }
+
+                  if (
+                      result.isFailure
+                  ) {
+                      requestInFlight =
+                          false
+
+                      Log.w(
+                          TAG,
+                          "presentContentOnWindowArea failed",
+                          result.exceptionOrNull(),
+                      )
+
+                      DuoDiagnostics.event(
+                          "dual",
+                          "requestFailed gen=$myGeneration",
+                          result.exceptionOrNull(),
+                      )
+
+                      suspended =
+                          true
+
+                      _status.value =
+                          "Couldn't start dual screen. It will retry after the next stable resume."
+
+                      DuoDiagnostics.event(
+                          "dual",
+                          "request failure suspended gen=$myGeneration",
+                      )
+
+                      /*
+                       * Again, no loop here. A failed request remains suspended
+                       * until a later foreground transition.
+                       */
+                      return
+                  }
+
+                  timeoutJob?.cancel()
+
+                  timeoutJob =
+                      activity.lifecycleScope.launch {
+
+                          delay(
+                              2_500L
+                          )
+
+                          if (
+                              desired &&
+                              myGeneration == generation &&
+                              requestInFlight &&
+                              presenter == null
+                          ) {
+                              Log.w(
+                                  TAG,
+                                  "dual-screen request timed out gen=$myGeneration",
+                              )
+
+                              DuoDiagnostics.event(
+                                  "dual",
+                                  "requestTimeout gen=$myGeneration",
+                              )
+
+                              requestInFlight =
+                                  false
+
+                              suspended =
+                                  true
+
+                              _status.value =
+                                  "Dual-screen start timed out. It will retry after the next stable resume."
+
+                              DuoDiagnostics.event(
+                                  "dual",
+                                  "timeout suspended gen=$myGeneration",
+                              )
+                          }
+                      }
+              }
+
+              private fun scheduleRetry(
+                  delayMs: Long,
+                  reason: String,
+              ) {
+                  DuoDiagnostics.event(
+                      "dual",
+                      "scheduleRetry delayMs=$delayMs reason=$reason desired=$desired",
+                  )
+
+                  if (
+                      !desired
+                  ) {
+                      return
+                  }
+
+                  retryJob?.cancel()
+
+                  retryJob =
+                      activity.lifecycleScope.launch {
+
+                          if (
+                              delayMs > 0L
+                          ) {
+                              delay(
+                                  delayMs
+                              )
+                          }
+
+                          if (
+                              !desired
+                          ) {
+                              return@launch
+                          }
+
+                          if (
+                              !activity.lifecycle.currentState
+                                  .isAtLeast(
+                                      Lifecycle.State.RESUMED
+                                  )
+                          ) {
+                              DuoDiagnostics.event(
+                                  "dual",
+                                  "recovery cancelled reason=$reason lifecycle=${activity.lifecycle.currentState}",
+                              )
+
+                              return@launch
+                          }
+
+                          maybeStart(
+                              reason
+                          )
+                      }
+              }
+
+              private fun refreshStatus() {
+                  if (
+                      presenter != null
+                  ) {
+                      _status.value =
+                          "Both screens are on."
+
+                      return
+                  }
+
+                  val info =
+                      rearInfo
+
+                  val cap =
+                      info?.getCapability(
+                          WindowAreaCapability.Operation
+                              .OPERATION_PRESENT_ON_AREA,
+                      )
+
+                  _status.value =
+                      if (
+                          desired
+                      ) {
+                          when {
+                              suspended -> {
+                                  "Both screens armed — paused by Samsung; waiting for a stable resume."
+                              }
+
+                              info == null -> {
+                                  "Both screens armed — waiting for Samsung's second-screen capability."
+                              }
+
+                              cap?.status ==
+                                  WindowAreaCapability.Status
+                                      .WINDOW_AREA_STATUS_AVAILABLE -> {
+                                  "Both screens armed — cover display available."
+                              }
+
+                              cap?.status ==
+                                  WindowAreaCapability.Status
+                                      .WINDOW_AREA_STATUS_ACTIVE -> {
+                                  "Both screens armed — Samsung reports the second screen active."
+                              }
+
+                              cap?.status ==
+                                  WindowAreaCapability.Status
+                                      .WINDOW_AREA_STATUS_UNAVAILABLE -> {
+                                  "Both screens armed — temporarily unavailable while the phone changes display state."
+                              }
+
+                              else -> {
+                                  "Both screens armed — waiting for the second display."
+                              }
+                          }
+                      } else {
+                          when {
+                              info == null -> {
+                                  "This phone doesn't offer its second screen to apps."
+                              }
+
+                              cap?.status ==
+                                  WindowAreaCapability.Status
+                                      .WINDOW_AREA_STATUS_ACTIVE -> {
+                                  "Both screens are already active."
+                              }
+
+                              cap?.status ==
+                                  WindowAreaCapability.Status
+                                      .WINDOW_AREA_STATUS_AVAILABLE -> {
+                                  "Available: the cover screen can be lit while the inner screen is in use."
+                              }
+
+                              cap?.status ==
+                                  WindowAreaCapability.Status
+                                      .WINDOW_AREA_STATUS_UNAVAILABLE -> {
+                                  "Not available right now — open the phone fully and try again."
+                              }
+
+                              else -> {
+                                  "This phone doesn't support lighting both screens for apps."
+                              }
+                          }
+                      }
+              }
+
+              private fun placeholder(
+                  context: Context,
+              ): View =
+                  FrameLayout(context).apply {
+
+                      background =
+                          GradientDrawable(
+                              GradientDrawable.Orientation.TL_BR,
+                              intArrayOf(
+                                  0xFF7B5CFF.toInt(),
+                                  0xFFC44EDD.toInt(),
+                                  0xFFF0564A.toInt(),
+                              ),
+                          )
+
+                      addView(
+                          TextView(context).apply {
+                              text =
+                                  "Duo Open\n\nBoth screens are on.\nFold the phone."
+
+                              setTextColor(
+                                  Color.WHITE
+                              )
+
+                              textSize =
+                                  26f
+
+                              gravity =
+                                  Gravity.CENTER
+                          },
+                          FrameLayout.LayoutParams(
+                              FrameLayout.LayoutParams.MATCH_PARENT,
+                              FrameLayout.LayoutParams.MATCH_PARENT,
+                          ),
+                      )
+                  }
+
+              private companion object {
+                  const val TAG =
+                      "DuoDual"
+
+                  const val PREFS_NAME =
+                      "duo_open"
+
+                  const val PREF_ENABLED =
+                      "dual_screen_experimental_enabled"
+
+                  /*
+                   * Long enough for Samsung's display topology and Activity state
+                   * to settle, short enough not to feel like a manual restart.
+                   */
+                  const val RECOVERY_DELAY_MS =
+                      700L
+              }
+          }
+          KOTLIN
+
           python3 <<'PY'
           from pathlib import Path
 
@@ -1137,43 +1919,46 @@ jobs:
 
           s = p.read_text()
 
-          if "versionCode = 5" not in s:
+          if (
+              "versionCode = 7"
+              not in s
+          ):
               raise SystemExit(
-                  "Expected smoothness versionCode 5 after base patch."
+                  "Expected field-diagnostics versionCode 7 was not found."
               )
 
-          if 'versionName = "1.3.1-zfold7-smooth"' not in s:
+          if (
+              'versionName = "1.3.3-zfold7-fielddiag"'
+              not in s
+          ):
               raise SystemExit(
-                  "Expected smoothness versionName after base patch."
+                  "Expected field-diagnostics versionName was not found."
               )
 
           s = s.replace(
-              "versionCode = 5",
               "versionCode = 7",
+              "versionCode = 8",
               1,
           )
 
           s = s.replace(
-              'versionName = "1.3.1-zfold7-smooth"',
               'versionName = "1.3.3-zfold7-fielddiag"',
+              'versionName = "1.3.4-zfold7-dual-stable"',
               1,
           )
 
-          p.write_text(
-              s
-          )
+          p.write_text(s)
           PY
 
-      - name: Validate diagnostic pass
+      - name: Validate combined pass
         run: |
           git diff --check
           git diff --stat
 
-          mkdir -p \
-            zfold7-artifacts
+          mkdir -p zfold7-artifacts
 
           git diff \
-            > zfold7-artifacts/zfold7-fielddiag.patch
+            > zfold7-artifacts/zfold7-dual-stable.patch
 
       - name: Compile, unit test, and build
         run: |
@@ -1199,15 +1984,17 @@ jobs:
 
           cp \
             "$APK" \
-            zfold7-artifacts/DuoOpen-ZFold7-fielddiag-debug.apk
+            zfold7-artifacts/DuoOpen-ZFold7-dual-stable-debug.apk
 
           {
             echo "commit=${GITHUB_SHA}"
             echo "built=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "pass=field-diagnostics"
+            echo "pass=dual-screen-stable-recovery+field-diagnostics"
             echo
+
             sha256sum \
-              zfold7-artifacts/DuoOpen-ZFold7-fielddiag-debug.apk
+              zfold7-artifacts/DuoOpen-ZFold7-dual-stable-debug.apk
+
           } > zfold7-artifacts/BUILD-INFO.txt
 
           cat \
@@ -1216,11 +2003,11 @@ jobs:
       - name: Upload field-test artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: DuoOpen-ZFold7-fielddiag
+          name: DuoOpen-ZFold7-dual-stable
 
           path: |
-            zfold7-artifacts/DuoOpen-ZFold7-fielddiag-debug.apk
-            zfold7-artifacts/zfold7-fielddiag.patch
+            zfold7-artifacts/DuoOpen-ZFold7-dual-stable-debug.apk
+            zfold7-artifacts/zfold7-dual-stable.patch
             zfold7-artifacts/BUILD-INFO.txt
 
           if-no-files-found: error
