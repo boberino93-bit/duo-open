@@ -1,4 +1,4 @@
-name: Build Z Fold 7 Pane Container Continuity
+name: Build Z Fold 7 Pane Container Continuity Fix
 
 on:
   workflow_dispatch:
@@ -544,10 +544,27 @@ jobs:
 
                   val created =
                       runCatching {
-                          SurfaceControl.Builder()
-                              .setName("DuoOpenLeftPaneCrop")
-                              .setContainerLayer()
-                              .build()
+                          runCatching {
+                              org.lsposed.hiddenapibypass.HiddenApiBypass
+                                  .addHiddenApiExemptions(
+                                      "Landroid/view/SurfaceControl\\$Builder;"
+                                  )
+                          }
+
+                          val builder =
+                              SurfaceControl.Builder()
+                                  .setName("DuoOpenLeftPaneCrop")
+
+                          val method =
+                              builder.javaClass.getDeclaredMethod(
+                                  "setContainerLayer"
+                              ).apply {
+                                  isAccessible = true
+                              }
+
+                          method.invoke(builder)
+
+                          builder.build()
                       }.getOrElse { error ->
                           com.duoopen.debug.DuoDiagnostics.event(
                               "live-mirror",
