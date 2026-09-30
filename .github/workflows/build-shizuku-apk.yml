@@ -1,4 +1,4 @@
-name: Build Z Fold 7 Smoothness Field Test
+name: Build Z Fold 7 Dual Screen Persistence
 
 on:
   workflow_dispatch:
@@ -24,763 +24,765 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x gradlew
 
-      - name: Apply Fold 7 smoothness patch
+      - name: Conflict guard
         run: |
-          python3 <<'PY'
-          from pathlib import Path
-          import re
+          check_blob() {
+            path="$1"
+            expected="$2"
+            actual="$(git hash-object "$path")"
 
-          def read(path):
-              return Path(path).read_text()
+            if [ "$actual" != "$expected" ]; then
+              echo "::error file=$path::Source changed since this pass was designed. Expected $expected but found $actual. Stopping instead of overwriting a newer commit."
+              exit 1
+            fi
+          }
 
-          def write(path, text):
-              Path(path).write_text(text)
+          check_blob "app/src/main/java/com/duoopen/fold/HingeAngleSource.kt" "da3fe9abda7795bfd714d4b5074acf90a1b91c48"
+          check_blob "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt" "7610633d11dc8bdb3667e2670cace595305f853e"
+          check_blob "app/src/full/java/com/duoopen/shell/ShizukuBridge.kt" "4600ea293222c94cca02310734850a78e6cc62bd"
+          check_blob "app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt" "fdc4f607ed8e8e7d03df4223bd79dac36be93952"
+          check_blob "app/src/full/java/com/duoopen/overlay/PanelEngine.kt" "a1285f81ffe5e1f7d7e0f46e86b4e7bef747e5ae"
+          check_blob "app/build.gradle.kts" "dcbfbaf660fd2efd4f625569affc1db738e52ec8"
+          check_blob "app/src/main/java/com/duoopen/DualScreen.kt" "5c89b33a4970ee87a08671f47b1edebaf57c5d90"
 
-          def replace_once(path, old, new, label):
-              s = read(path)
-              if old not in s:
-                  raise SystemExit(
-                      f"{label}: expected source not found in {path}"
+          echo "Conflict guard passed."
+
+      - name: Reapply proven Fold 7 smoothness pass
+        run: |
+          printf '%s' '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' | base64 -d | gzip -d > /tmp/zfold7-smoothness.patch
+
+          git apply --check /tmp/zfold7-smoothness.patch
+          git apply /tmp/zfold7-smoothness.patch
+
+      - name: Install persistent dual-screen lifecycle
+        run: |
+          cat > app/src/main/java/com/duoopen/DualScreen.kt <<'KOTLIN'
+          package com.duoopen
+
+          import android.content.Context
+          import android.graphics.Color
+          import android.graphics.drawable.GradientDrawable
+          import android.util.Log
+          import android.view.Gravity
+          import android.view.View
+          import android.widget.FrameLayout
+          import android.widget.TextView
+          import androidx.activity.ComponentActivity
+          import androidx.core.content.ContextCompat
+          import androidx.lifecycle.DefaultLifecycleObserver
+          import androidx.lifecycle.Lifecycle
+          import androidx.lifecycle.LifecycleOwner
+          import androidx.lifecycle.lifecycleScope
+          import androidx.lifecycle.repeatOnLifecycle
+          import androidx.window.area.WindowAreaCapability
+          import androidx.window.area.WindowAreaController
+          import androidx.window.area.WindowAreaInfo
+          import androidx.window.area.WindowAreaPresentationSessionCallback
+          import androidx.window.area.WindowAreaSessionPresenter
+          import androidx.window.core.ExperimentalWindowApi
+          import kotlinx.coroutines.Job
+          import kotlinx.coroutines.delay
+          import kotlinx.coroutines.flow.MutableStateFlow
+          import kotlinx.coroutines.flow.StateFlow
+          import kotlinx.coroutines.launch
+
+          /**
+           * Keeps "Both screens at once" armed across Samsung fold/unfold transitions.
+           * Android may legitimately end a rear-display presentation while the phone
+           * closes, changes active panels, locks, or temporarily backgrounds the host.
+           * The user's preference therefore lives separately from the current session.
+           */
+          @OptIn(ExperimentalWindowApi::class)
+          class DualScreen(
+              private val activity: ComponentActivity,
+          ) : DefaultLifecycleObserver {
+
+              private val controller =
+                  WindowAreaController.getOrCreate()
+
+              private val prefs =
+                  activity.getSharedPreferences(
+                      PREFS_NAME,
+                      Context.MODE_PRIVATE,
                   )
-              write(path, s.replace(old, new, 1))
 
-          def regex_once(path, pattern, replacement, label):
-              s = read(path)
-              out, n = re.subn(
-                  pattern,
-                  replacement,
-                  s,
-                  count=1,
-                  flags=re.S,
-              )
+              private val _status =
+                  MutableStateFlow("Checking…")
 
-              if n != 1:
-                  raise SystemExit(
-                      f"{label}: expected 1 match in {path}, got {n}"
+              val status: StateFlow<String> =
+                  _status
+
+              /**
+               * True means the feature is armed even during temporary
+               * Window Area session loss.
+               */
+              private val _active =
+                  MutableStateFlow(
+                      prefs.getBoolean(
+                          PREF_ENABLED,
+                          false,
+                      ),
                   )
 
-              write(path, out)
+              val active: StateFlow<Boolean> =
+                  _active
 
+              val supported: Boolean
+                  get() = rearInfo != null
 
-          # ================================================================
-          # 1. HingeAngleSource
-          #
-          # Samsung's Fold Interactive wallpaper can repeatedly return the
-          # same hinge angle.
-          #
-          # Those repeated values are useful as a heartbeat, but they are NOT
-          # real movement and should not keep driving the animation/render
-          # pipeline.
-          # ================================================================
+              private var desired =
+                  _active.value
 
-          p = "app/src/main/java/com/duoopen/fold/HingeAngleSource.kt"
+              private var rearInfo:
+                  WindowAreaInfo? = null
 
-          regex_once(
-              p,
-              r'''    fun feedExternal\(angle: Float\) \{.*?\n    \}\n\n    fun clearExternal''',
-              '''    fun feedExternal(angle: Float) {
-                  if (!angle.isFinite()) return
+              private var presenter:
+                  WindowAreaSessionPresenter? = null
 
-                  val now = SystemClock.uptimeMillis()
-                  val next = angle.coerceIn(0f, 180f)
+              private var requestInFlight =
+                  false
 
-                  externalActive = true
-                  externalLastUptime = now
+              private var generation =
+                  0L
 
-                  // Keep source freshness/rate diagnostics alive, but only
-                  // animate when the physical angle actually changed.
-                  tickRate(now)
-                  lastEventUptime = now
+              private var retryJob:
+                  Job? = null
 
-                  val changed =
-                      lastAngle.isNaN() ||
-                          abs(next - lastAngle) >= EXTERNAL_CHANGE_EPS
+              private var timeoutJob:
+                  Job? = null
 
-                  lastAngle = next
+              init {
+                  activity.lifecycle.addObserver(this)
 
-                  if (changed) {
-                      onAngle(next)
-                  }
-              }
-
-              fun clearExternal''',
-              "HingeAngleSource.feedExternal",
-          )
-
-          replace_once(
-              p,
-              "        val now = SystemClock.uptimeMillis()\n"
-              "        lastEventUptime = now\n"
-              "        tickRate(now)\n"
-              "        lastAngle = value.coerceIn(0f, 180f)",
-              "        val now = SystemClock.uptimeMillis()\n"
-              "        tickRate(now)\n"
-              "        lastEventUptime = now\n"
-              "        lastAngle = value.coerceIn(0f, 180f)",
-              "HingeAngleSource rate ordering",
-          )
-
-          replace_once(
-              p,
-              "        const val EXTERNAL_STALE_MS = 3_000L\n"
-              "        val STOPS = intArrayOf(0, 90, 180)",
-              "        const val EXTERNAL_STALE_MS = 3_000L\n"
-              "\n"
-              "        // Ignore tiny Samsung wallpaper jitter / duplicates.\n"
-              "        const val EXTERNAL_CHANGE_EPS = 0.10f\n"
-              "\n"
-              "        val STOPS = intArrayOf(0, 90, 180)",
-              "HingeAngleSource epsilon",
-          )
-
-
-          # ================================================================
-          # 2. FoldOverlayService
-          #
-          # IMPORTANT PERFORMANCE FIX
-          #
-          # The existing code calls syncDisplays() on EVERY hinge event.
-          #
-          # When Shizuku is delivering continuous angles, that means repeated
-          # DisplayManager enumeration while we're also trying to animate.
-          #
-          # DisplayManager already tells us when a display changes, appears or
-          # disappears. So remove this work from the high-frequency hinge path.
-          # ================================================================
-
-          p = "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
-
-          replace_once(
-              p,
-              "    private fun onHinge(angle: Float) {\n"
-              "        syncDisplays()\n"
-              "        for (e in engines.values.toList()) e.onHinge(angle)\n"
-              "    }",
-              "    private fun onHinge(angle: Float) {\n"
-              "        // DisplayManager callbacks own panel topology.\n"
-              "        // Keep the high-frequency hinge path render-only.\n"
-              "        for (e in engines.values.toList()) {\n"
-              "            e.onHinge(angle)\n"
-              "        }\n"
-              "    }",
-              "FoldOverlayService.onHinge",
-          )
-
-
-          # ================================================================
-          # 3. ShizukuBridge
-          #
-          # Samsung's shell-side angle reader ALREADY sends the original
-          # timestamp with every angle.
-          #
-          # The app currently throws that timestamp away.
-          #
-          # Keep it so we can measure actual end-to-end Shizuku delivery
-          # latency on the Fold 7.
-          #
-          # Also periodically record how long Shizuku screen capture takes.
-          # ================================================================
-
-          p = "app/src/full/java/com/duoopen/shell/ShizukuBridge.kt"
-
-          replace_once(
-              p,
-              "import android.os.Parcel\n"
-              "import android.util.Log",
-              "import android.os.Parcel\n"
-              "import android.os.SystemClock\n"
-              "import android.util.Log",
-              "ShizukuBridge SystemClock import",
-          )
-
-          replace_once(
-              p,
-              "    private var binding = false\n"
-              "    private lateinit var appContext: Context",
-              "    private var binding = false\n"
-              "    private lateinit var appContext: Context\n"
-              "\n"
-              "    private val captureSeq =\n"
-              "        java.util.concurrent.atomic.AtomicLong()",
-              "ShizukuBridge capture counter",
-          )
-
-          regex_once(
-              p,
-              r'''    /\*\* Receives angles from the shell-side wallpaper log reader\. \*/\n    private class AngleCallback.*?\n    fun startAngles\(action: String, onAngle: \(Float\) -> Unit\): Boolean \{\n        val cb = AngleCallback\(onAngle\)''',
-              '''    /** Receives angles from the shell-side wallpaper log reader. */
-              private class AngleCallback(
-                  private val onAngle: (Float, Long) -> Unit,
-              ) : Binder() {
-
-                  init {
-                      attachInterface(
-                          null,
-                          ShellProtocol.CALLBACK_TOKEN,
-                      )
-                  }
-
-                  override fun onTransact(
-                      code: Int,
-                      data: Parcel,
-                      reply: Parcel?,
-                      flags: Int,
-                  ): Boolean {
-
-                      if (code != ShellProtocol.CB_ANGLE) {
-                          return super.onTransact(
-                              code,
-                              data,
-                              reply,
-                              flags,
-                          )
-                      }
-
-                      data.enforceInterface(
-                          ShellProtocol.CALLBACK_TOKEN,
-                      )
-
-                      val angle = data.readFloat()
-
-                      val sourceUptime =
-                          if (
-                              data.dataAvail() >=
-                              Long.SIZE_BYTES
-                          ) {
-                              data.readLong()
-                          } else {
-                              SystemClock.uptimeMillis()
-                          }
-
-                      onAngle(
-                          angle,
-                          sourceUptime,
-                      )
-
-                      return true
-                  }
-              }
-
-              private var angleCallback:
-                  AngleCallback? = null
-
-              fun startAngles(
-                  action: String,
-                  onAngle: (Float, Long) -> Unit,
-              ): Boolean {
-
-                  val cb =
-                      AngleCallback(onAngle)''',
-              "ShizukuBridge angle callback",
-          )
-
-          replace_once(
-              p,
-              "        if (!b.getBoolean(\"ok\")) {\n"
-              "            Log.w(TAG, \"shell capture failed: ${b.getString(\"error\")}\")\n"
-              "            return null\n"
-              "        }\n"
-              "        if (b.getBoolean(\"secure\")) return null",
-              "        if (!b.getBoolean(\"ok\")) {\n"
-              "            Log.w(\n"
-              "                TAG,\n"
-              "                \"shell capture failed: ${b.getString(\"error\")}\",\n"
-              "            )\n"
-              "            return null\n"
-              "        }\n"
-              "\n"
-              "        val seq =\n"
-              "            captureSeq.incrementAndGet()\n"
-              "\n"
-              "        val captureMs =\n"
-              "            b.getLong(\"ms\")\n"
-              "\n"
-              "        if (\n"
-              "            seq == 1L ||\n"
-              "            seq % 20L == 0L\n"
-              "        ) {\n"
-              "            Log.i(\n"
-              "                TAG,\n"
-              "                \"capture display=$displayId \" +\n"
-              "                    \"scale=$scale ${captureMs}ms\",\n"
-              "            )\n"
-              "        }\n"
-              "\n"
-              "        if (b.getBoolean(\"secure\")) {\n"
-              "            return null\n"
-              "        }",
-              "ShizukuBridge capture timing log",
-          )
-
-
-          # ================================================================
-          # 4. WallpaperAngleFeed
-          #
-          # CURRENT BEHAVIOUR:
-          #     33 ms polling at all times
-          #
-          # NEW BEHAVIOUR:
-          #
-          #     idle:
-          #         33 ms (~30 Hz)
-          #
-          #     while actual hinge movement is detected:
-          #         8 ms target (~125 Hz)
-          #
-          # It returns to the lower idle rate shortly after movement stops.
-          #
-          # We also expose:
-          #
-          # - current Shizuku delivery latency
-          # - worst delivery latency
-          # - current poll interval
-          # - duplicate Samsung angle count
-          #
-          # This makes the Fold 7 itself our field-test rig.
-          # ================================================================
-
-          p = "app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt"
-
-          replace_once(
-              p,
-              "import com.duoopen.fold.HingeAngleSource",
-              "import com.duoopen.fold.HingeAngleSource\n"
-              "import kotlin.math.abs",
-              "WallpaperAngleFeed abs import",
-          )
-
-          replace_once(
-              p,
-              "wallpaper through it at [POLL_MS], and let the Shizuku-side log reader",
-              "wallpaper through it at an adaptive cadence, and let the Shizuku-side log reader",
-              "WallpaperAngleFeed documentation",
-          )
-
-          replace_once(
-              p,
-              "    private var lastCallbackUptime = 0L",
-              "    private var lastCallbackUptime = 0L\n"
-              "\n"
-              "    private var lastDeliveryLagMs = -1L\n"
-              "    private var maxDeliveryLagMs = 0L\n"
-              "\n"
-              "    private var lastAngleSeen = Float.NaN\n"
-              "    private var lastAngleChangeUptime = 0L\n"
-              "\n"
-              "    private var duplicateAngles = 0L",
-              "WallpaperAngleFeed fields",
-          )
-
-          replace_once(
-              p,
-              "            handler.postDelayed(this, POLL_MS)",
-              "            handler.postDelayed(\n"
-              "                this,\n"
-              "                pollInterval(\n"
-              "                    SystemClock.uptimeMillis(),\n"
-              "                ),\n"
-              "            )",
-              "WallpaperAngleFeed adaptive polling",
-          )
-
-          replace_once(
-              p,
-              "            status = if (b == null) \"Reader unreachable\" else\n"
-              "                \"Reader ${b.getString(\"state\")}: ${b.getInt(\"parsed\")} angles / ${b.getInt(\"lines\")} lines\" +\n"
-              "                    (if (age >= 0) \" · last ${age} ms ago\" else \" · nothing received yet\")",
-              "            status =\n"
-              "                if (b == null) {\n"
-              "                    \"Reader unreachable\"\n"
-              "                } else {\n"
-              "                    \"Reader ${b.getString(\"state\")}: \" +\n"
-              "                        \"${b.getInt(\"parsed\")} angles / \" +\n"
-              "                        \"${b.getInt(\"lines\")} lines\" +\n"
-              "                        (\n"
-              "                            if (age >= 0) {\n"
-              "                                \" · last ${age} ms ago\"\n"
-              "                            } else {\n"
-              "                                \" · nothing received yet\"\n"
-              "                            }\n"
-              "                        ) +\n"
-              "                        (\n"
-              "                            if (lastDeliveryLagMs >= 0) {\n"
-              "                                \" · delivery ${lastDeliveryLagMs} ms \" +\n"
-              "                                    \"(max ${maxDeliveryLagMs})\"\n"
-              "                            } else {\n"
-              "                                \"\"\n"
-              "                            }\n"
-              "                        ) +\n"
-              "                        \" · poll ${pollInterval(SystemClock.uptimeMillis())} ms\" +\n"
-              "                        \" · dup $duplicateAngles\"\n"
-              "                }",
-              "WallpaperAngleFeed status",
-          )
-
-          replace_once(
-              p,
-              "        if (!ShizukuBridge.startAngles(action) { angle -> handler.post { onAngle(angle) } }) {",
-              "        if (\n"
-              "            !ShizukuBridge.startAngles(\n"
-              "                action,\n"
-              "            ) { angle, sourceUptime ->\n"
-              "                handler.post {\n"
-              "                    onAngle(\n"
-              "                        angle,\n"
-              "                        sourceUptime,\n"
-              "                    )\n"
-              "                }\n"
-              "            }\n"
-              "        ) {",
-              "WallpaperAngleFeed callback",
-          )
-
-          replace_once(
-              p,
-              "        running = true\n"
-              "        startedAt = SystemClock.uptimeMillis()\n"
-              "        status = \"Starting\"",
-              "        running = true\n"
-              "        startedAt =\n"
-              "            SystemClock.uptimeMillis()\n"
-              "\n"
-              "        lastCallbackUptime = 0L\n"
-              "        lastDeliveryLagMs = -1L\n"
-              "        maxDeliveryLagMs = 0L\n"
-              "\n"
-              "        lastAngleSeen = Float.NaN\n"
-              "        lastAngleChangeUptime = 0L\n"
-              "\n"
-              "        duplicateAngles = 0L\n"
-              "\n"
-              "        status = \"Starting\"",
-              "WallpaperAngleFeed reset",
-          )
-
-          regex_once(
-              p,
-              r'''    private fun onAngle\(angle: Float\) \{.*?\n    \}\n\n    private fun displayKey''',
-              '''    private fun onAngle(
-                  angle: Float,
-                  sourceUptime: Long,
-              ) {
-                  if (!running) return
-
-                  val now =
-                      SystemClock.uptimeMillis()
-
-                  lastCallbackUptime =
-                      now
-
-                  lastDeliveryLagMs =
-                      (now - sourceUptime)
-                          .coerceAtLeast(0L)
-
-                  if (
-                      lastDeliveryLagMs >
-                      maxDeliveryLagMs
-                  ) {
-                      maxDeliveryLagMs =
-                          lastDeliveryLagMs
-                  }
-
-                  if (
-                      lastAngleSeen.isNaN() ||
-                      abs(
-                          angle -
-                              lastAngleSeen,
-                      ) >= ANGLE_CHANGE_EPS
-                  ) {
-                      lastAngleSeen =
-                          angle
-
-                      lastAngleChangeUptime =
-                          now
-                  } else {
-                      duplicateAngles++
-                  }
-
-                  hinge.feedExternal(angle)
-              }
-
-              private fun pollInterval(
-                  now: Long,
-              ): Long {
-
-                  val moving =
-                      lastAngleChangeUptime != 0L &&
-                          now -
-                          lastAngleChangeUptime <=
-                          ACTIVE_BURST_MS
-
-                  return if (moving) {
-                      ACTIVE_POLL_MS
-                  } else {
-                      IDLE_POLL_MS
-                  }
-              }
-
-              private fun displayKey''',
-              "WallpaperAngleFeed onAngle",
-          )
-
-          replace_once(
-              p,
-              "        const val POLL_MS = 33L\n"
-              "        private const val STALE_MS = 2_500L",
-              "        // Low overhead while the phone is stationary.\n"
-              "        const val IDLE_POLL_MS = 33L\n"
-              "\n"
-              "        // Near-display-refresh polling while moving.\n"
-              "        const val ACTIVE_POLL_MS = 8L\n"
-              "\n"
-              "        // Remain in fast mode briefly after the last movement.\n"
-              "        const val ACTIVE_BURST_MS = 900L\n"
-              "\n"
-              "        const val ANGLE_CHANGE_EPS = 0.10f\n"
-              "\n"
-              "        private const val STALE_MS = 2_500L",
-              "WallpaperAngleFeed constants",
-          )
-
-
-          # ================================================================
-          # 5. PanelEngine
-          #
-          # TWO MAJOR SMOOTHNESS FIXES
-          #
-          # A)
-          # Samsung's real continuous hinge angle deserves a tighter follower
-          # than the public coarse sensor.
-          #
-          # B)
-          # The old live-capture loop effectively did:
-          #
-          #       capture (~50 ms)
-          #       +
-          #       wait 80 ms
-          #
-          # That can mean only ~7-8 screen-image updates per second.
-          #
-          # The new loop schedules the next capture relative to the START of
-          # the previous capture.
-          #
-          # This removes the unnecessary extra delay.
-          # ================================================================
-
-          p = "app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
-
-          replace_once(
-              p,
-              "        }.also { it.snap(startTilt) }",
-              "        }.also {\n"
-              "            it.snap(startTilt)\n"
-              "\n"
-              "            if (\n"
-              "                hinge.externalActive &&\n"
-              "                easeTo == null\n"
-              "            ) {\n"
-              "                it.tauS =\n"
-              "                    SAMSUNG_LIVE_TAU_S\n"
-              "            }\n"
-              "        }",
-              "PanelEngine follower",
-          )
-
-          regex_once(
-              p,
-              r'''    private fun startLiveLoop\(\) \{.*?\n    \}\n\n    private fun clearOverlayState''',
-              '''    private fun startLiveLoop() {
-                  if (liveLoop) return
-
-                  liveLoop = true
-
-                  val myGen =
-                      captureGen
-
-                  var frames = 0
-
-                  fun tick() {
-                      if (
-                          !liveLoop ||
-                          phase != Phase.SHOWING ||
-                          myGen != captureGen
+                  activity.lifecycleScope.launch {
+                      activity.repeatOnLifecycle(
+                          Lifecycle.State.STARTED,
                       ) {
-                          liveLoop = false
-                          return
-                      }
+                          controller.windowAreaInfos.collect { infos ->
 
-                      val s =
-                          surface as?
-                              SnapshotSurface
+                              Log.i(
+                                  TAG,
+                                  "window areas: " +
+                                      infos.joinToString { info ->
 
-                      if (
-                          s == null ||
-                          s.tilt <
-                          DuoShader.FLAT_EPSILON
-                      ) {
-                          handler.postDelayed(
-                              { tick() },
-                              LIVE_RETRY_MS,
-                          )
-                          return
-                      }
+                                          val present =
+                                              info.getCapability(
+                                                  WindowAreaCapability.Operation
+                                                      .OPERATION_PRESENT_ON_AREA,
+                                              )?.status
 
-                      val excluded =
-                          excludedLayers()
+                                          val transfer =
+                                              info.getCapability(
+                                                  WindowAreaCapability.Operation
+                                                      .OPERATION_TRANSFER_ACTIVITY_TO_AREA,
+                                              )?.status
 
-                      if (excluded.isEmpty()) {
-                          handler.postDelayed(
-                              { tick() },
-                              LIVE_RETRY_MS,
-                          )
-                          return
-                      }
-
-                      val frameStarted =
-                          SystemClock.uptimeMillis()
-
-                      scope.launch {
-                          val frame =
-                              withContext(
-                                  Dispatchers.IO,
-                              ) {
-                                  ShizukuBridge.capture(
-                                      displayId,
-                                      excluded,
-                                      LIVE_SHELL_SCALE,
-                                  )
-                              }
-
-                          if (
-                              liveLoop &&
-                              phase ==
-                              Phase.SHOWING &&
-                              myGen ==
-                              captureGen &&
-                              frame != null &&
-                              !bridging
-                          ) {
-                              (
-                                  surface as?
-                                      SnapshotSurface
-                              )?.replaceSnapshot(
-                                  frame,
+                                          "${info.type} " +
+                                              "${info.metrics.bounds} " +
+                                              "present=$present " +
+                                              "transfer=$transfer"
+                                      }.ifEmpty {
+                                          "(none)"
+                                      },
                               )
 
-                              frames++
+                              rearInfo =
+                                  infos.firstOrNull {
+                                      it.type ==
+                                          WindowAreaInfo.Type
+                                              .TYPE_REAR_FACING
+                                  }
 
-                              if (
-                                  frames == 1 ||
-                                  frames % 25 == 0
-                              ) {
-                                  Log.i(
-                                      TAG,
-                                      "display $displayId: " +
-                                          "live frame $frames " +
-                                          "(${frame.width}x${frame.height})",
+                              refreshStatus()
+
+                              if (desired) {
+                                  maybeStart(
+                                      "window-area update",
                                   )
                               }
                           }
-
-                          val nextDelay =
-                              if (frame == null) {
-                                  LIVE_RETRY_MS
-                              } else {
-                                  (
-                                      frameStarted +
-                                          LIVE_FRAME_PERIOD_MS -
-                                          SystemClock.uptimeMillis()
-                                      )
-                                      .coerceAtLeast(
-                                          0L,
-                                      )
-                              }
-
-                          handler.postDelayed(
-                              { tick() },
-                              nextDelay,
-                          )
                       }
                   }
+              }
 
-                  handler.postDelayed(
-                      { tick() },
-                      LIVE_START_DELAY_MS,
+              override fun onStart(
+                  owner: LifecycleOwner,
+              ) {
+                  if (desired) {
+                      scheduleRetry(
+                          0L,
+                          "activity started",
+                      )
+                  }
+              }
+
+              override fun onResume(
+                  owner: LifecycleOwner,
+              ) {
+                  if (desired) {
+                      scheduleRetry(
+                          120L,
+                          "activity resumed",
+                      )
+                  }
+              }
+
+              override fun onDestroy(
+                  owner: LifecycleOwner,
+              ) {
+                  retryJob?.cancel()
+                  timeoutJob?.cancel()
+
+                  generation++
+                  requestInFlight = false
+
+                  val old =
+                      presenter
+
+                  presenter =
+                      null
+
+                  runCatching {
+                      old?.close()
+                  }
+
+                  activity.lifecycle.removeObserver(this)
+              }
+
+              fun start() {
+                  desired =
+                      true
+
+                  _active.value =
+                      true
+
+                  prefs.edit()
+                      .putBoolean(
+                          PREF_ENABLED,
+                          true,
+                      )
+                      .apply()
+
+                  _status.value =
+                      "Both screens armed — starting when Samsung exposes the cover display."
+
+                  scheduleRetry(
+                      0L,
+                      "user enabled",
                   )
               }
 
-              private fun clearOverlayState''',
-              "PanelEngine live loop",
-          )
+              fun stop() {
+                  desired =
+                      false
 
-          replace_once(
-              p,
-              "        const val REST_LEAVE_TILT = 3f",
-              "        const val REST_LEAVE_TILT = 2f",
-              "PanelEngine rest threshold",
-          )
+                  _active.value =
+                      false
 
-          replace_once(
-              p,
-              "        /** Shizuku capture: full-size first frame, half-size live frames at ~12 fps. */\n"
-              "        const val INITIAL_SHELL_SCALE = 1f\n"
-              "        const val LIVE_SHELL_SCALE = 0.5f\n"
-              "        const val LIVE_INTERVAL_MS = 80L\n"
-              "        const val SHELL_RETRY_MS = 60L",
-              "        /**\n"
-              "         * Full resolution for the initial frame.\n"
-              "         *\n"
-              "         * Live frames trade some resolution for latency because\n"
-              "         * they are visible only briefly under the fold shader.\n"
-              "         */\n"
-              "        const val INITIAL_SHELL_SCALE = 1f\n"
-              "\n"
-              "        const val LIVE_SHELL_SCALE = 0.40f\n"
-              "\n"
-              "        // Target roughly 20 fps. Actual cadence naturally falls\n"
-              "        // back to capture speed if the device cannot sustain it.\n"
-              "        const val LIVE_FRAME_PERIOD_MS = 48L\n"
-              "\n"
-              "        const val LIVE_START_DELAY_MS = 12L\n"
-              "\n"
-              "        const val LIVE_RETRY_MS = 80L\n"
-              "\n"
-              "        // Lower latency tracking for Samsung continuous angles.\n"
-              "        const val SAMSUNG_LIVE_TAU_S = 0.028f\n"
-              "\n"
-              "        const val SHELL_RETRY_MS = 60L",
-              "PanelEngine live constants",
-          )
+                  prefs.edit()
+                      .putBoolean(
+                          PREF_ENABLED,
+                          false,
+                      )
+                      .apply()
 
+                  retryJob?.cancel()
+                  timeoutJob?.cancel()
 
-          # ================================================================
-          # 6. Version
-          # ================================================================
+                  generation++
+                  requestInFlight = false
 
-          p = "app/build.gradle.kts"
+                  val old =
+                      presenter
 
-          replace_once(
-              p,
-              "versionCode = 4",
+                  presenter =
+                      null
+
+                  runCatching {
+                      old?.close()
+                  }.onFailure {
+                      Log.w(
+                          TAG,
+                          "closing dual-screen session failed",
+                          it,
+                      )
+                  }
+
+                  refreshStatus()
+              }
+
+              private fun maybeStart(
+                  reason: String,
+              ) {
+                  if (!desired) return
+                  if (presenter != null) return
+                  if (requestInFlight) return
+
+                  if (
+                      !activity.lifecycle.currentState
+                          .isAtLeast(
+                              Lifecycle.State.STARTED,
+                          )
+                  ) {
+                      _status.value =
+                          "Both screens armed — waiting for Duo Open to return to the foreground."
+
+                      return
+                  }
+
+                  val info =
+                      rearInfo ?: run {
+                          _status.value =
+                              "Both screens armed — waiting for Samsung's second-screen capability."
+
+                          return
+                      }
+
+                  val capability =
+                      info.getCapability(
+                          WindowAreaCapability.Operation
+                              .OPERATION_PRESENT_ON_AREA,
+                      )
+
+                  when (capability?.status) {
+
+                      WindowAreaCapability.Status
+                          .WINDOW_AREA_STATUS_AVAILABLE -> {
+                          beginSession(
+                              info,
+                              reason,
+                          )
+                      }
+
+                      WindowAreaCapability.Status
+                          .WINDOW_AREA_STATUS_ACTIVE -> {
+                          _status.value =
+                              "Both screens armed — Samsung reports the second screen active."
+                      }
+
+                      WindowAreaCapability.Status
+                          .WINDOW_AREA_STATUS_UNAVAILABLE -> {
+                          _status.value =
+                              "Both screens armed — temporarily unavailable while the phone changes display state."
+                      }
+
+                      else -> {
+                          _status.value =
+                              "Both screens armed — waiting for a usable second-screen session."
+                      }
+                  }
+              }
+
+              private fun beginSession(
+                  info: WindowAreaInfo,
+                  reason: String,
+              ) {
+                  if (!desired) return
+                  if (requestInFlight) return
+                  if (presenter != null) return
+
+                  requestInFlight =
+                      true
+
+                  val myGeneration =
+                      ++generation
+
+                  _status.value =
+                      "Starting both screens…"
+
+                  Log.i(
+                      TAG,
+                      "request dual screen " +
+                          "gen=$myGeneration " +
+                          "reason=$reason",
+                  )
+
+                  val callback =
+                      object :
+                          WindowAreaPresentationSessionCallback {
+
+                          override fun onSessionStarted(
+                              session:
+                                  WindowAreaSessionPresenter,
+                          ) {
+                              if (
+                                  myGeneration != generation ||
+                                  !desired
+                              ) {
+                                  runCatching {
+                                      session.close()
+                                  }
+
+                                  return
+                              }
+
+                              timeoutJob?.cancel()
+
+                              requestInFlight =
+                                  false
+
+                              presenter =
+                                  session
+
+                              val attached =
+                                  runCatching {
+                                      session.setContentView(
+                                          placeholder(
+                                              session.context,
+                                          ),
+                                      )
+                                  }
+
+                              if (attached.isFailure) {
+
+                                  Log.w(
+                                      TAG,
+                                      "dual-screen content attach failed",
+                                      attached.exceptionOrNull(),
+                                  )
+
+                                  presenter =
+                                      null
+
+                                  runCatching {
+                                      session.close()
+                                  }
+
+                                  _status.value =
+                                      "Dual screen couldn't attach content — retrying."
+
+                                  scheduleRetry(
+                                      500L,
+                                      "content attach failed",
+                                  )
+
+                                  return
+                              }
+
+                              Log.i(
+                                  TAG,
+                                  "dual-screen session started " +
+                                      "gen=$myGeneration",
+                              )
+
+                              _status.value =
+                                  "Both screens are on."
+                          }
+
+                          override fun onSessionEnded(
+                              t: Throwable?,
+                          ) {
+                              if (
+                                  myGeneration != generation
+                              ) {
+                                  return
+                              }
+
+                              timeoutJob?.cancel()
+
+                              requestInFlight =
+                                  false
+
+                              presenter =
+                                  null
+
+                              Log.i(
+                                  TAG,
+                                  "dual-screen session ended " +
+                                      "gen=$myGeneration " +
+                                      "reason=${t?.message}",
+                              )
+
+                              if (!desired) {
+                                  refreshStatus()
+                                  return
+                              }
+
+                              _status.value =
+                                  "Dual screen paused during the fold transition — waiting to restore."
+
+                              scheduleRetry(
+                                  300L,
+                                  "session ended",
+                              )
+                          }
+
+                          override fun onContainerVisibilityChanged(
+                              isVisible: Boolean,
+                          ) {
+                              if (
+                                  myGeneration != generation ||
+                                  !desired ||
+                                  presenter == null
+                              ) {
+                                  return
+                              }
+
+                              _status.value =
+                                  if (isVisible) {
+                                      "Both screens are on."
+                                  } else {
+                                      "Both screens armed — cover presentation is temporarily hidden."
+                                  }
+                          }
+                      }
+
+                  val result =
+                      runCatching {
+                          controller.presentContentOnWindowArea(
+                              info.token,
+                              activity,
+                              ContextCompat
+                                  .getMainExecutor(activity),
+                              callback,
+                          )
+                      }
+
+                  if (result.isFailure) {
+
+                      requestInFlight =
+                          false
+
+                      Log.w(
+                          TAG,
+                          "presentContentOnWindowArea failed",
+                          result.exceptionOrNull(),
+                      )
+
+                      _status.value =
+                          "Couldn't start dual screen — retrying when the display is ready."
+
+                      scheduleRetry(
+                          500L,
+                          "request failed",
+                      )
+
+                      return
+                  }
+
+                  timeoutJob?.cancel()
+
+                  timeoutJob =
+                      activity.lifecycleScope.launch {
+
+                          delay(
+                              2_500L,
+                          )
+
+                          if (
+                              desired &&
+                              myGeneration == generation &&
+                              requestInFlight &&
+                              presenter == null
+                          ) {
+                              Log.w(
+                                  TAG,
+                                  "dual-screen request timed out " +
+                                      "gen=$myGeneration",
+                              )
+
+                              requestInFlight =
+                                  false
+
+                              _status.value =
+                                  "Dual-screen start timed out — waiting to retry."
+
+                              scheduleRetry(
+                                  500L,
+                                  "request timeout",
+                              )
+                          }
+                      }
+              }
+
+              private fun scheduleRetry(
+                  delayMs: Long,
+                  reason: String,
+              ) {
+                  if (!desired) return
+
+                  retryJob?.cancel()
+
+                  retryJob =
+                      activity.lifecycleScope.launch {
+
+                          if (delayMs > 0L) {
+                              delay(delayMs)
+                          }
+
+                          if (desired) {
+                              maybeStart(reason)
+                          }
+                      }
+              }
+
+              private fun refreshStatus() {
+
+                  if (presenter != null) {
+                      _status.value =
+                          "Both screens are on."
+
+                      return
+                  }
+
+                  val info =
+                      rearInfo
+
+                  val capability =
+                      info?.getCapability(
+                          WindowAreaCapability.Operation
+                              .OPERATION_PRESENT_ON_AREA,
+                      )
+
+                  _status.value =
+                      if (desired) {
+
+                          when {
+
+                              info == null -> {
+                                  "Both screens armed — waiting for Samsung's second-screen capability."
+                              }
+
+                              capability?.status ==
+                                  WindowAreaCapability.Status
+                                      .WINDOW_AREA_STATUS_AVAILABLE -> {
+                                  "Both screens armed — cover display available."
+                              }
+
+                              capability?.status ==
+                                  WindowAreaCapability.Status
+                                      .WINDOW_AREA_STATUS_ACTIVE -> {
+                                  "Both screens armed — Samsung reports the second screen active."
+                              }
+
+                              capability?.status ==
+                                  WindowAreaCapability.Status
+                                      .WINDOW_AREA_STATUS_UNAVAILABLE -> {
+                                  "Both screens armed — temporarily unavailable while the phone changes display state."
+                              }
+
+                              else -> {
+                                  "Both screens armed — waiting for the second display."
+                              }
+                          }
+
+                      } else {
+
+                          when {
+
+                              info == null -> {
+                                  "This phone doesn't offer its second screen to apps."
+                              }
+
+                              capability?.status ==
+                                  WindowAreaCapability.Status
+                                      .WINDOW_AREA_STATUS_ACTIVE -> {
+                                  "Both screens are already active."
+                              }
+
+                              capability?.status ==
+                                  WindowAreaCapability.Status
+                                      .WINDOW_AREA_STATUS_AVAILABLE -> {
+                                  "Available: the cover screen can be lit while the inner screen is in use."
+                              }
+
+                              capability?.status ==
+                                  WindowAreaCapability.Status
+                                      .WINDOW_AREA_STATUS_UNAVAILABLE -> {
+                                  "Not available right now — open the phone fully and try again."
+                              }
+
+                              else -> {
+                                  "This phone doesn't support lighting both screens for apps."
+                              }
+                          }
+                      }
+              }
+
+              private fun placeholder(
+                  context: Context,
+              ): View =
+                  FrameLayout(context).apply {
+
+                      background =
+                          GradientDrawable(
+                              GradientDrawable.Orientation.TL_BR,
+                              intArrayOf(
+                                  0xFF7B5CFF.toInt(),
+                                  0xFFC44EDD.toInt(),
+                                  0xFFF0564A.toInt(),
+                              ),
+                          )
+
+                      addView(
+                          TextView(context).apply {
+
+                              text =
+                                  "Duo Open\n\nBoth screens are on.\nFold the phone."
+
+                              setTextColor(
+                                  Color.WHITE,
+                              )
+
+                              textSize =
+                                  26f
+
+                              gravity =
+                                  Gravity.CENTER
+                          },
+                          FrameLayout.LayoutParams(
+                              FrameLayout.LayoutParams.MATCH_PARENT,
+                              FrameLayout.LayoutParams.MATCH_PARENT,
+                          ),
+                      )
+                  }
+
+              private companion object {
+
+                  const val TAG =
+                      "DuoDual"
+
+                  const val PREFS_NAME =
+                      "duo_open"
+
+                  const val PREF_ENABLED =
+                      "dual_screen_experimental_enabled"
+              }
+          }
+          KOTLIN
+
+          python3 <<'PY'
+          from pathlib import Path
+
+          p = Path("app/build.gradle.kts")
+          s = p.read_text()
+
+          if "versionCode = 5" not in s:
+              raise SystemExit(
+                  "Expected smooth versionCode was not found."
+              )
+
+          if 'versionName = "1.3.1-zfold7-smooth"' not in s:
+              raise SystemExit(
+                  "Expected smooth versionName was not found."
+              )
+
+          s = s.replace(
               "versionCode = 5",
-              "versionCode",
+              "versionCode = 6",
+              1,
           )
 
-          replace_once(
-              p,
-              'versionName = "1.3.0"',
+          s = s.replace(
               'versionName = "1.3.1-zfold7-smooth"',
-              "versionName",
+              'versionName = "1.3.2-zfold7-dual-persist"',
+              1,
           )
 
-          print(
-              "Fold 7 smoothness + Shizuku field-test patch applied."
-          )
-
+          p.write_text(s)
           PY
 
-
-      - name: Validate patch
+      - name: Validate combined pass
         run: |
           git diff --check
           git diff --stat
@@ -788,8 +790,7 @@ jobs:
           mkdir -p zfold7-artifacts
 
           git diff \
-            > zfold7-artifacts/zfold7-smoothness.patch
-
+            > zfold7-artifacts/zfold7-dual-persist.patch
 
       - name: Compile, unit test, and build
         run: |
@@ -797,7 +798,6 @@ jobs:
             testFullDebugUnitTest \
             assembleFullDebug \
             --stacktrace
-
 
       - name: Prepare APK
         run: |
@@ -816,33 +816,31 @@ jobs:
 
           cp \
             "$APK" \
-            zfold7-artifacts/DuoOpen-ZFold7-smooth-debug.apk
+            zfold7-artifacts/DuoOpen-ZFold7-dual-persist-debug.apk
 
           {
             echo "commit=${GITHUB_SHA}"
             echo "built=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "pass=dual-screen-persistence"
             echo
 
             sha256sum \
-              zfold7-artifacts/DuoOpen-ZFold7-smooth-debug.apk
+              zfold7-artifacts/DuoOpen-ZFold7-dual-persist-debug.apk
 
           } > zfold7-artifacts/BUILD-INFO.txt
 
           cat \
             zfold7-artifacts/BUILD-INFO.txt
 
-
       - name: Upload field-test artifacts
         uses: actions/upload-artifact@v4
-
         with:
-          name: DuoOpen-ZFold7-smooth
+          name: DuoOpen-ZFold7-dual-persist
 
           path: |
-            zfold7-artifacts/DuoOpen-ZFold7-smooth-debug.apk
-            zfold7-artifacts/zfold7-smoothness.patch
+            zfold7-artifacts/DuoOpen-ZFold7-dual-persist-debug.apk
+            zfold7-artifacts/zfold7-dual-persist.patch
             zfold7-artifacts/BUILD-INFO.txt
 
           if-no-files-found: error
-
           retention-days: 30
