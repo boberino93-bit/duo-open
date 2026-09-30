@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import com.duoopen.debug.DuoDiagnostics
 import com.duoopen.fold.HingeAngleSource
 import com.duoopen.settings.DuoConfig
 import com.duoopen.settings.DuoSettings
@@ -64,8 +65,11 @@ fun ControlSheet(
     overlayEnabled: Boolean,
     liveBlurSupported: Boolean,
     dualStatus: String,
+    serviceDualStatus: String,
     dualActive: Boolean,
     onDualChange: (Boolean) -> Unit,
+    onServiceDualEnable: () -> Unit,
+    onServiceDualReset: () -> Unit,
     shizukuAvailable: Boolean,
     shizukuStatus: String,
     shizukuReady: Boolean,
@@ -88,6 +92,22 @@ fun ControlSheet(
             value = hinge.statusText()
         }
     }
+
+    val liveAngleStatus by produceState(
+        angleFeedStatus(),
+        angleFeedStatus,
+    ) {
+        while (true) {
+            delay(250)
+            value = angleFeedStatus()
+        }
+    }
+
+    val liveAngleHealthy =
+        liveAngleStatus.contains(
+            "source live"
+        )
+
     var showGuide by remember { mutableStateOf(false) }
     if (showGuide) {
         SetupGuide(
@@ -291,15 +311,68 @@ fun ControlSheet(
                         Column(Modifier.weight(1f)) {
                             Text("Continuous hinge angle (Samsung)", style = MaterialTheme.typography.titleSmall)
                             Hint(
-                                if (foldWallpaperActive) "Samsung's Fold interactive wallpaper is set — the real angle is read from it. " + angleFeedStatus()
-                                else "Needs Samsung's built-in “Fold interactive” wallpaper as the home wallpaper (it's what receives the real angle). Set it, then come back.",
-                                warn = !foldWallpaperActive,
+                                when {
+                                    config.shizukuAngle &&
+                                        liveAngleHealthy -> {
+                                        "Continuous angle is live. " +
+                                            liveAngleStatus +
+                                            if (!foldWallpaperActive) {
+                                                " · Samsung reports the cover wallpaper separately; Duo Open keeps the reader active."
+                                            } else {
+                                                ""
+                                            }
+                                    }
+
+                                    config.shizukuAngle -> {
+                                        "Trying Samsung's continuous hinge source. " +
+                                            liveAngleStatus +
+                                            if (!foldWallpaperActive) {
+                                                " · Cover-screen wallpaper metadata is not used as a kill switch."
+                                            } else {
+                                                ""
+                                            }
+                                    }
+
+                                    foldWallpaperActive -> {
+                                        "Samsung Fold interactive is detected. Enable this to use the continuous angle source."
+                                    }
+
+                                    else -> {
+                                        "Enable this to try Samsung's continuous hinge source. The Fold7 may report the cover wallpaper as Video, so live callbacks are used as the authority."
+                                    }
+                                },
+                                warn =
+                                    config.shizukuAngle &&
+                                        !liveAngleHealthy &&
+                                        liveAngleStatus.contains(
+                                            "stale"
+                                        ),
                             )
                         }
-                        Switch(checked = config.shizukuAngle, onCheckedChange = { v -> DuoSettings.update { it.copy(shizukuAngle = v) } })
+
+                        Switch(
+                            checked = config.shizukuAngle,
+                            onCheckedChange = { value ->
+                                DuoSettings.update {
+                                    it.copy(
+                                        shizukuAngle = value
+                                    )
+                                }
+                            },
+                        )
                     }
-                    if (!foldWallpaperActive) {
-                        TextButton(onClick = onOpenWallpaperSettings) { Text("Open wallpaper settings") }
+
+                    if (
+                        !foldWallpaperActive &&
+                        !liveAngleHealthy
+                    ) {
+                        TextButton(
+                            onClick = onOpenWallpaperSettings
+                        ) {
+                            Text(
+                                "Open wallpaper settings"
+                            )
+                        }
                     }
                 }
             }
@@ -311,9 +384,83 @@ fun ControlSheet(
                 "Some foldables can light the cover screen while the inner screen is in use. " +
                     "Turn this on with the phone open, then fold it: the whole-screen fold runs on both panels with no gap.",
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Hint(dualStatus, modifier = Modifier.weight(1f))
-                Switch(checked = dualActive, onCheckedChange = onDualChange, enabled = dualStatus.startsWith("Available") || dualActive)
+            Row(
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
+                Column(
+                    Modifier.weight(1f)
+                ) {
+                    Text(
+                        "Legacy Activity presentation",
+                        style =
+                            MaterialTheme.typography.titleSmall,
+                    )
+                    Hint(
+                        "Disabled for this field build. " +
+                            dualStatus,
+                    )
+                }
+
+                Switch(
+                    checked = false,
+                    onCheckedChange = onDualChange,
+                    enabled = false,
+                )
+            }
+
+            Spacer(
+                Modifier.height(12.dp)
+            )
+
+            Text(
+                "Persistent service / Shizuku test",
+                style =
+                    MaterialTheme.typography.titleSmall,
+            )
+
+            Hint(
+                serviceDualStatus
+            )
+
+            Row(
+                horizontalArrangement =
+                    Arrangement.spacedBy(12.dp)
+            ) {
+                TextButton(
+                    onClick = onServiceDualEnable,
+                    enabled =
+                        shizukuReady &&
+                            overlayEnabled,
+                ) {
+                    Text("Arm geometry continuity (4°)")
+                }
+
+                TextButton(
+                    onClick = onServiceDualReset,
+                    enabled =
+                        shizukuReady &&
+                            overlayEnabled,
+                ) {
+                    Text("Stop mirror / release")
+                }
+            }
+
+            Hint(
+                "Fold7 motion-gated continuity: while fully open the physical cover remains off. " +
+                    "After 4° of deliberate closing travel, Duo Open wakes the 1080×2520 cover, maps the LEFT " +
+                    "half of the inner display into it, and holds cover power through Samsung's topology transition. " +
+                    "Returning flat or reaching native closed-cover topology releases power control back to Samsung.",
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                TextButton(
+                    onClick = {
+                        clipboard.setText(AnnotatedString(DuoDiagnostics.report()))
+                    },
+                ) { Text("Copy diagnostics") }
+                TextButton(onClick = DuoDiagnostics::clear) {
+                    Text("Clear diagnostics")
+                }
             }
 
             // 7. Hinge sensor -------------------------------------------------

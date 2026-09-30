@@ -9,6 +9,8 @@ import android.view.Display
 import android.view.WindowManager
 import com.duoopen.fold.DuoShader
 import com.duoopen.fold.HingeAngleSource
+import com.duoopen.fold.HingeTravel
+import com.duoopen.fold.HingeTravelEstimator
 import com.duoopen.fold.TiltFollower
 import com.duoopen.fold.isInnerPanel
 import com.duoopen.settings.DuoSettings
@@ -89,6 +91,17 @@ class PanelEngine(
     /** Live re-capture loop (Shizuku mode) is scheduled. */
     private var liveLoop = false
 
+    /** Stable opening/closing state, resistant to tiny hinge jitter. */
+    private val travelEstimator =
+        HingeTravelEstimator()
+
+    private var travel =
+        HingeTravel.UNKNOWN
+
+    /** Last raw hinge sample, used only to detect meaningful resumed motion. */
+    private var lastRawHingeAngle =
+        Float.NaN
+
     val showing: Boolean get() = phase == Phase.SHOWING
 
     private val settleCheck = object : Runnable {
@@ -133,24 +146,98 @@ class PanelEngine(
     private fun currentTilt(): Float = tiltFor(hinge.lastAngle)
 
     fun onHinge(angle: Float) {
-        lastHingeMoveMs = SystemClock.uptimeMillis()
+        val previousRaw =
+            lastRawHingeAngle
+
+        lastRawHingeAngle =
+            angle
+
+        val previousTravel =
+            travel
+
+        travel =
+            travelEstimator.update(
+                angle
+            )
+
+        lastHingeMoveMs =
+            SystemClock.uptimeMillis()
+
         evaluate()
-        val tilt = tiltFor(angle)
-        if (tilt < DuoShader.FLAT_EPSILON && phase == Phase.SHOWING && !demoRunning) {
-            val f = follower
-            if (timedResolve && hinge.isCoarse && f != null && f.current > DuoShader.FLAT_EPSILON) {
-                // Stops-only sensor: the rest stop (180° / 0°) is the first news
-                // that the fold has finished, so clear from here — the frost
-                // was held meanwhile. The follower dismisses at flat.
-                handler.removeCallbacks(peakHold)
-                f.tauS = COARSE_CLEAR_TAU_S
-                f.setTarget(0f)
+
+        val tilt =
+            tiltFor(
+                angle
+            )
+
+        /*
+         * If a partial fold paused long enough for the overlay to settle away,
+         * meaningful resumed motion should re-enter the effect from the current
+         * physical hinge position. This also makes an OPENING→CLOSING reversal
+         * feel like the same physical pane running backward rather than a new
+         * canned animation.
+         */
+        val resumedMidFold =
+            phase == Phase.IDLE &&
+                !demoRunning &&
+                !restArmed &&
+                !panelSwitched &&
+                tilt >= REST_LEAVE_TILT &&
+                !previousRaw.isNaN() &&
+                kotlin.math.abs(
+                    angle -
+                        previousRaw
+                ) >= RESUME_MOTION_DEG &&
+                travel != HingeTravel.UNKNOWN
+
+        if (resumedMidFold) {
+            Log.i(
+                TAG,
+                "display $displayId: resumed mid-fold " +
+                    "travel=$travel previousTravel=$previousTravel " +
+                    "hinge=$angle tilt=$tilt"
+            )
+
+            startEffect(
+                afterSwap = false,
+                startTilt = tilt,
+            )
+        }
+
+        if (
+            tilt < DuoShader.FLAT_EPSILON &&
+            phase == Phase.SHOWING &&
+            !demoRunning
+        ) {
+            val f =
+                follower
+
+            if (
+                timedResolve &&
+                hinge.isCoarse &&
+                f != null &&
+                f.current > DuoShader.FLAT_EPSILON
+            ) {
+                handler.removeCallbacks(
+                    peakHold
+                )
+
+                f.tauS =
+                    COARSE_CLEAR_TAU_S
+
+                f.setTarget(
+                    0f
+                )
             } else {
-                // At rest: drop the overlay now rather than easing the last degrees.
-                dismiss(fadeMs = FADE_OUT_FLAT_MS)
+                dismiss(
+                    fadeMs =
+                        FADE_OUT_FLAT_MS
+                )
             }
         } else if (!timedResolve) {
-            follower?.setTarget(tilt)
+            follower?.setTarget(
+                tilt
+            )
         }
     }
 
@@ -458,7 +545,17 @@ class PanelEngine(
         follower = TiltFollower { t ->
             created.tilt = t
             if (t < DuoShader.FLAT_EPSILON && !demoRunning) dismiss(fadeMs = FADE_OUT_FLAT_MS)
-        }.also { it.snap(startTilt) }
+        }.also {
+            it.snap(startTilt)
+
+            if (
+                hinge.externalActive &&
+                easeTo == null
+            ) {
+                it.tauS =
+                    SAMSUNG_LIVE_TAU_S
+            }
+        }
         lastHingeMoveMs = SystemClock.uptimeMillis()
         timedResolve = easeTo != null
         if (easeTo != null) {
@@ -493,26 +590,122 @@ class PanelEngine(
      */
     private fun startLiveLoop() {
         if (liveLoop) return
+
         liveLoop = true
-        val myGen = captureGen
+
+        val myGen =
+            captureGen
+
         var frames = 0
+
         fun tick() {
-            if (!liveLoop || phase != Phase.SHOWING || myGen != captureGen) { liveLoop = false; return }
-            val s = surface as? SnapshotSurface
-            if (s == null || s.tilt < DuoShader.FLAT_EPSILON) { handler.postDelayed({ tick() }, LIVE_INTERVAL_MS); return }
-            val excluded = excludedLayers()
-            if (excluded.isEmpty()) { handler.postDelayed({ tick() }, LIVE_INTERVAL_MS); return }
+            if (
+                !liveLoop ||
+                phase != Phase.SHOWING ||
+                myGen != captureGen
+            ) {
+                liveLoop = false
+                return
+            }
+
+            val s =
+                surface as?
+                    SnapshotSurface
+
+            if (
+                s == null ||
+                s.tilt <
+                DuoShader.FLAT_EPSILON
+            ) {
+                handler.postDelayed(
+                    { tick() },
+                    LIVE_RETRY_MS,
+                )
+                return
+            }
+
+            val excluded =
+                excludedLayers()
+
+            if (excluded.isEmpty()) {
+                handler.postDelayed(
+                    { tick() },
+                    LIVE_RETRY_MS,
+                )
+                return
+            }
+
+            val frameStarted =
+                SystemClock.uptimeMillis()
+
             scope.launch {
-                val frame = withContext(Dispatchers.IO) { ShizukuBridge.capture(displayId, excluded, LIVE_SHELL_SCALE) }
-                if (liveLoop && phase == Phase.SHOWING && myGen == captureGen && frame != null && !bridging) {
-                    (surface as? SnapshotSurface)?.replaceSnapshot(frame)
+                val frame =
+                    withContext(
+                        Dispatchers.IO,
+                    ) {
+                        ShizukuBridge.capture(
+                            displayId,
+                            excluded,
+                            LIVE_SHELL_SCALE,
+                        )
+                    }
+
+                if (
+                    liveLoop &&
+                    phase ==
+                    Phase.SHOWING &&
+                    myGen ==
+                    captureGen &&
+                    frame != null &&
+                    !bridging
+                ) {
+                    (
+                        surface as?
+                            SnapshotSurface
+                    )?.replaceSnapshot(
+                        frame,
+                    )
+
                     frames++
-                    if (frames == 1 || frames % 25 == 0) Log.i(TAG, "display $displayId: live frame $frames (${frame.width}x${frame.height})")
+
+                    if (
+                        frames == 1 ||
+                        frames % 25 == 0
+                    ) {
+                        Log.i(
+                            TAG,
+                            "display $displayId: " +
+                                "live frame $frames " +
+                                "(${frame.width}x${frame.height})",
+                        )
+                    }
                 }
-                handler.postDelayed({ tick() }, LIVE_INTERVAL_MS)
+
+                val nextDelay =
+                    if (frame == null) {
+                        LIVE_RETRY_MS
+                    } else {
+                        (
+                            frameStarted +
+                                LIVE_FRAME_PERIOD_MS -
+                                SystemClock.uptimeMillis()
+                            )
+                            .coerceAtLeast(
+                                0L,
+                            )
+                    }
+
+                handler.postDelayed(
+                    { tick() },
+                    nextDelay,
+                )
             }
         }
-        handler.postDelayed({ tick() }, LIVE_INTERVAL_MS)
+
+        handler.postDelayed(
+            { tick() },
+            LIVE_START_DELAY_MS,
+        )
     }
 
     private fun clearOverlayState() {
@@ -592,7 +785,7 @@ class PanelEngine(
         /** Stops-only sensors: hold the frost between stops, but not forever (flex mode). */
         const val COARSE_PEAK_HOLD_MS = 2_500L
         /** Tilt hysteresis for leaving a rest pose, so hinge jitter doesn't fire. */
-        const val REST_LEAVE_TILT = 3f
+        const val REST_LEAVE_TILT = 2f
         /** After a swap, don't bother if the fold is nearly finished by capture time. */
         const val SKIP_INNER_ABOVE_HINGE = 135f
         const val SKIP_COVER_BELOW_HINGE = 10f
@@ -600,11 +793,30 @@ class PanelEngine(
         const val FADE_IN_MS = 140L
         const val FADE_OUT_FLAT_MS = 120L
         const val FADE_OUT_STALLED_MS = 300L
-        /** Shizuku capture: full-size first frame, half-size live frames at ~12 fps. */
+        /**
+         * Full resolution for the initial frame.
+         *
+         * Live frames trade some resolution for latency because
+         * they are visible only briefly under the fold shader.
+         */
         const val INITIAL_SHELL_SCALE = 1f
-        const val LIVE_SHELL_SCALE = 0.5f
-        const val LIVE_INTERVAL_MS = 80L
+
+        const val LIVE_SHELL_SCALE = 0.40f
+
+        // Target roughly 20 fps. Actual cadence naturally falls
+        // back to capture speed if the device cannot sustain it.
+        const val LIVE_FRAME_PERIOD_MS = 48L
+
+        const val LIVE_START_DELAY_MS = 12L
+
+        const val LIVE_RETRY_MS = 80L
+
+        // Lower latency tracking for Samsung continuous angles.
+        const val SAMSUNG_LIVE_TAU_S = 0.028f
+
         const val SHELL_RETRY_MS = 60L
+        /** Minimum real hinge motion before a settled mid-fold effect resumes. */
+        const val RESUME_MOTION_DEG = 0.75f
 
         /**
          * The window's root layer (hidden `ViewRootImpl.getSurfaceControl`),

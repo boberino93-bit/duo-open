@@ -100,6 +100,7 @@ fun DuoApp(foldLineFlow: StateFlow<FoldLine?>, dualScreen: DualScreen? = null) {
     val foldWallpaper = remember(resumeTick) { OverlayFeature.foldWallpaperActive(context) }
     val dualStatus by (dualScreen?.status ?: kotlinx.coroutines.flow.MutableStateFlow("")).collectAsStateWithLifecycle()
     val dualActive by (dualScreen?.active ?: kotlinx.coroutines.flow.MutableStateFlow(false)).collectAsStateWithLifecycle()
+    val serviceDualStatus by OverlayFeature.secondaryDisplayStatus.collectAsStateWithLifecycle()
 
     val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
@@ -151,6 +152,7 @@ fun DuoApp(foldLineFlow: StateFlow<FoldLine?>, dualScreen: DualScreen? = null) {
                 overlayEnabled = overlayEnabled,
                 liveBlurSupported = liveBlurSupported,
                 dualStatus = dualStatus,
+                serviceDualStatus = serviceDualStatus,
                 shizukuAvailable = OverlayFeature.SHIZUKU_AVAILABLE,
                 shizukuStatus = shizukuStatus,
                 shizukuReady = OverlayFeature.shizukuReady(),
@@ -161,7 +163,33 @@ fun DuoApp(foldLineFlow: StateFlow<FoldLine?>, dualScreen: DualScreen? = null) {
                 angleFeedStatus = { OverlayFeature.angleFeedStatus() },
                 onOpenWallpaperSettings = { openWallpaperSettings(context) },
                 dualActive = dualActive,
-                onDualChange = { on -> if (on) dualScreen?.start() else dualScreen?.stop() },
+                onDualChange = {
+                    // Intentionally disabled in this field build.
+                },
+                onServiceDualEnable = {
+                    dualScreen?.stop()
+
+                    scope.launch {
+                        kotlinx.coroutines.delay(900L)
+
+                        if (
+                            !OverlayFeature.testSecondaryDisplay(
+                                true
+                            )
+                        ) {
+                            Toast.makeText(
+                                context,
+                                "The accessibility service isn't connected",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    }
+                },
+                onServiceDualReset = {
+                    OverlayFeature.testSecondaryDisplay(
+                        false
+                    )
+                },
                 onEnableOverlay = { openAccessibilitySettings(context) },
                 onTestOverlay = {
                     showSheet = false

@@ -44,7 +44,7 @@ half4 main(float2 fragCoord) {
     if (resolution.x <= 1.0 || resolution.y <= 1.0) {
         return content.eval(fragCoord);
     }
-    float tilt = radians(clamp(tiltDegrees, 0.0, 60.0));
+    float tilt = radians(clamp(tiltDegrees, 0.0, 89.5));
     if (tilt < 1e-4) {
         return content.eval(fragCoord);
     }

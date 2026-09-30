@@ -44,6 +44,13 @@ class MainActivity : ComponentActivity() {
         }
 
         dualScreen = DualScreen(this)
+
+        /*
+         * Field build: keep Samsung's Activity-owned WindowArea path disabled
+         * so it cannot race the persistent Shizuku display experiment.
+         */
+        dualScreen.stop()
+
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
                 DuoApp(foldLine, dualScreen)

@@ -21,7 +21,7 @@ data class FoldLine(
 /** Shared glue for res/raw/duo_unfold.agsl — used by the app, wallpaper and overlay. */
 object DuoShader {
     /** Pane tilt cap; beyond this the kernel is mostly black anyway. */
-    const val MAX_TILT = 45f
+    const val MAX_TILT = 89.5f
 
     /** Pane tilts below this draw the plain image (effect visually off). */
     const val FLAT_EPSILON = 0.05f
@@ -142,6 +142,6 @@ object DuoShader {
         shader.setFloatUniform("blurSpread", config.blurSpread)
         // Blur radius is in device px; renormalize the per-px darkening from the
         // original's ~6 px/mm so dense panels don't crush to black.
-        shader.setFloatUniform("darkening", config.darkening * REFERENCE_PX_PER_MM / pxPerMm)
+        shader.setFloatUniform("darkening", 0f)
     }
 }

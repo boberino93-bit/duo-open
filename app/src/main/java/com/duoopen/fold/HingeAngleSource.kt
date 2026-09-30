@@ -96,13 +96,27 @@ class HingeAngleSource(
 
     fun feedExternal(angle: Float) {
         if (!angle.isFinite()) return
+
         val now = SystemClock.uptimeMillis()
+        val next = angle.coerceIn(0f, 180f)
+
         externalActive = true
         externalLastUptime = now
-        lastEventUptime = now
+
+        // Keep source freshness/rate diagnostics alive, but only
+        // animate when the physical angle actually changed.
         tickRate(now)
-        lastAngle = angle.coerceIn(0f, 180f)
-        onAngle(lastAngle)
+        lastEventUptime = now
+
+        val changed =
+            lastAngle.isNaN() ||
+                abs(next - lastAngle) >= EXTERNAL_CHANGE_EPS
+
+        lastAngle = next
+
+        if (changed) {
+            onAngle(next)
+        }
     }
 
     fun clearExternal() {
@@ -154,6 +168,8 @@ class HingeAngleSource(
                 appendLine("- ${s.name} type=${s.type} (${s.stringType}) range=${s.maximumRange} wakeUp=${s.isWakeUpSensor}")
             }
         }
+        appendLine()
+        append(com.duoopen.debug.DuoDiagnostics.report())
     }
 
     fun start() {
@@ -200,8 +216,8 @@ class HingeAngleSource(
         if (choose() !== stats) return
 
         val now = SystemClock.uptimeMillis()
-        lastEventUptime = now
         tickRate(now)
+        lastEventUptime = now
         lastAngle = value.coerceIn(0f, 180f)
         onAngle(lastAngle)
     }
@@ -276,6 +292,10 @@ class HingeAngleSource(
         const val COARSE_MIN_EVENTS = 6
         const val MAX_DISTINCT = 8
         const val EXTERNAL_STALE_MS = 3_000L
+
+        // Ignore tiny Samsung wallpaper jitter / duplicates.
+        const val EXTERNAL_CHANGE_EPS = 0.10f
+
         val STOPS = intArrayOf(0, 90, 180)
     }
 }

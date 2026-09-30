@@ -9,6 +9,7 @@ import android.os.Binder
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Parcel
+import android.os.SystemClock
 import android.util.Log
 import android.view.SurfaceControl
 import com.duoopen.BuildConfig
@@ -45,6 +46,9 @@ object ShizukuBridge {
         private set
     private var binding = false
     private lateinit var appContext: Context
+
+    private val captureSeq =
+        java.util.concurrent.atomic.AtomicLong()
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
@@ -159,29 +163,100 @@ object ShizukuBridge {
             p.writeFloat(scale)
         } ?: return null
         if (!b.getBoolean("ok")) {
-            Log.w(TAG, "shell capture failed: ${b.getString("error")}")
+            Log.w(
+                TAG,
+                "shell capture failed: ${b.getString("error")}",
+            )
             return null
         }
-        if (b.getBoolean("secure")) return null
+
+        val seq =
+            captureSeq.incrementAndGet()
+
+        val captureMs =
+            b.getLong("ms")
+
+        if (
+            seq == 1L ||
+            seq % 20L == 0L
+        ) {
+            Log.i(
+                TAG,
+                "capture display=$displayId " +
+                    "scale=$scale ${captureMs}ms",
+            )
+        }
+
+        if (b.getBoolean("secure")) {
+            return null
+        }
         @Suppress("DEPRECATION")
         return b.getParcelable("bitmap")
     }
 
     /** Receives angles from the shell-side wallpaper log reader. */
-    private class AngleCallback(private val onAngle: (Float) -> Unit) : Binder() {
-        init { attachInterface(null, ShellProtocol.CALLBACK_TOKEN) }
-        override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
-            if (code != ShellProtocol.CB_ANGLE) return super.onTransact(code, data, reply, flags)
-            data.enforceInterface(ShellProtocol.CALLBACK_TOKEN)
-            onAngle(data.readFloat())
+    private class AngleCallback(
+        private val onAngle: (Float, Long) -> Unit,
+    ) : Binder() {
+
+        init {
+            attachInterface(
+                null,
+                ShellProtocol.CALLBACK_TOKEN,
+            )
+        }
+
+        override fun onTransact(
+            code: Int,
+            data: Parcel,
+            reply: Parcel?,
+            flags: Int,
+        ): Boolean {
+
+            if (code != ShellProtocol.CB_ANGLE) {
+                return super.onTransact(
+                    code,
+                    data,
+                    reply,
+                    flags,
+                )
+            }
+
+            data.enforceInterface(
+                ShellProtocol.CALLBACK_TOKEN,
+            )
+
+            val angle = data.readFloat()
+
+            val sourceUptime =
+                if (
+                    data.dataAvail() >=
+                    Long.SIZE_BYTES
+                ) {
+                    data.readLong()
+                } else {
+                    SystemClock.uptimeMillis()
+                }
+
+            onAngle(
+                angle,
+                sourceUptime,
+            )
+
             return true
         }
     }
 
-    private var angleCallback: AngleCallback? = null
+    private var angleCallback:
+        AngleCallback? = null
 
-    fun startAngles(action: String, onAngle: (Float) -> Unit): Boolean {
-        val cb = AngleCallback(onAngle)
+    fun startAngles(
+        action: String,
+        onAngle: (Float, Long) -> Unit,
+    ): Boolean {
+
+        val cb =
+            AngleCallback(onAngle)
         angleCallback = cb
         return call(ShellProtocol.START_ANGLES) { p ->
             p.writeString(action)
@@ -195,4 +270,59 @@ object ShizukuBridge {
     }
 
     fun angleStatus(): Bundle? = call(ShellProtocol.ANGLE_STATUS)
+
+    /**
+     * Executes the read-only display probe as Shizuku's shell user.
+     * This is blocking and must be called off the main thread.
+     */
+    fun displayProbe(): Bundle? =
+        call(
+            ShellProtocol.DISPLAY_PROBE
+        )
+
+    /** Blocking; call off the main thread. */
+    fun enableSecondaryDisplay(): Bundle? =
+        call(
+            ShellProtocol.ENABLE_SECONDARY_DISPLAY
+        )
+
+    /** Blocking; call off the main thread. */
+    fun resetSecondaryDisplay(): Bundle? =
+        call(
+            ShellProtocol.RESET_SECONDARY_DISPLAY
+        )
+
+    fun startDisplayMirror(
+        sourceDisplayId: Int,
+    ): Bundle? =
+        call(
+            ShellProtocol.MIRROR_DISPLAY
+        ) { parcel ->
+            parcel.writeInt(1)
+            parcel.writeInt(
+                sourceDisplayId
+            )
+        }
+
+    fun stopDisplayMirror(): Bundle? =
+        call(
+            ShellProtocol.MIRROR_DISPLAY
+        ) { parcel ->
+            parcel.writeInt(0)
+        }
+
+    fun requestDisplayPower(
+        displayId: Int,
+        requestedState: Int,
+    ): Bundle? =
+        call(
+            ShellProtocol.REQUEST_DISPLAY_POWER
+        ) { parcel ->
+            parcel.writeInt(
+                displayId
+            )
+            parcel.writeInt(
+                requestedState
+            )
+        }
 }

@@ -58,5 +58,18 @@ object OverlayFeature {
     fun foldWallpaperActive(context: Context): Boolean = WallpaperAngleFeed.foldWallpaperActive(context)
 
     /** Status of the continuous-angle reader, from the running service. */
-    fun angleFeedStatus(): String = FoldOverlayService.instance?.angleFeedStatus() ?: "Service not running"
+    fun angleFeedStatus(): String =
+        FoldOverlayService.instance?.angleFeedStatus()
+            ?: "Service not running"
+
+    val secondaryDisplayStatus:
+        StateFlow<String> =
+            FoldOverlayService.secondaryDisplayStatus
+
+    fun testSecondaryDisplay(
+        enable: Boolean,
+    ): Boolean =
+        FoldOverlayService.testSecondaryDisplay(
+            enable
+        )
 }

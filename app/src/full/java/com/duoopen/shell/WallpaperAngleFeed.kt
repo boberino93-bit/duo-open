@@ -14,13 +14,14 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import com.duoopen.fold.HingeAngleSource
+import kotlin.math.abs
 
 /**
  * Continuous hinge angle on Samsung foldables, where the public sensor only
  * reports 0/90/180: Samsung's own "Fold interactive" home wallpaper receives
  * the real angle, and logs it (`mCurrentAngle=…`) whenever it's sent a
  * wallpaper command. So: keep a 1×1 wallpaper-showing anchor window, ping the
- * wallpaper through it at [POLL_MS], and let the Shizuku-side log reader
+ * wallpaper through it at an adaptive cadence, and let the Shizuku-side log reader
  * ([DuoShellService]) call back with each value, which is fed into
  * [HingeAngleSource] as the live angle.
  *
@@ -38,6 +39,20 @@ class WallpaperAngleFeed(
     private var anchorWm: WindowManager? = null
     private var anchorKey = ""
     private var lastCallbackUptime = 0L
+
+    private var lastDeliveryLagMs = -1L
+    private var maxDeliveryLagMs = 0L
+
+    private var lastAngleSeen = Float.NaN
+    private var lastAngleChangeUptime = 0L
+
+    private var duplicateAngles = 0L
+
+    private var lastWallpaperIdentity =
+        ""
+
+    private var lastFreshState:
+        Boolean? = null
 
     /** One line for the UI. */
     @Volatile
@@ -59,36 +74,191 @@ class WallpaperAngleFeed(
                     }.onFailure { status = "Wallpaper command failed: ${it.message}" }
                 }
             }
-            handler.postDelayed(this, POLL_MS)
+            handler.postDelayed(
+                this,
+                pollInterval(
+                    SystemClock.uptimeMillis(),
+                ),
+            )
         }
     }
 
     private val statusTick = object : Runnable {
         override fun run() {
             if (!running) return
-            val b = ShizukuBridge.angleStatus()
-            val age = if (lastCallbackUptime == 0L) -1 else SystemClock.uptimeMillis() - lastCallbackUptime
-            status = if (b == null) "Reader unreachable" else
-                "Reader ${b.getString("state")}: ${b.getInt("parsed")} angles / ${b.getInt("lines")} lines" +
-                    (if (age >= 0) " · last ${age} ms ago" else " · nothing received yet")
-            if (age > STALE_MS || (age < 0 && SystemClock.uptimeMillis() - startedAt > STALE_MS)) hinge.clearExternal()
-            handler.postDelayed(this, 1_000)
+
+            val now =
+                SystemClock.uptimeMillis()
+
+            val b =
+                ShizukuBridge.angleStatus()
+
+            val age =
+                if (
+                    lastCallbackUptime == 0L
+                ) {
+                    -1L
+                } else {
+                    now -
+                        lastCallbackUptime
+                }
+
+            val fresh =
+                age in 0..STALE_MS ||
+                    (
+                        age < 0L &&
+                            now - startedAt <=
+                            STALE_MS
+                        )
+
+            val wallpaper =
+                wallpaperIdentity(
+                    context
+                )
+
+            if (
+                wallpaper !=
+                lastWallpaperIdentity
+            ) {
+                com.duoopen.debug.DuoDiagnostics.event(
+                    "angle-source",
+                    "wallpaper changed from=" +
+                        "${lastWallpaperIdentity.ifEmpty { "(initial)" }} " +
+                        "to=$wallpaper " +
+                        "readerFresh=$fresh ageMs=$age",
+                )
+
+                lastWallpaperIdentity =
+                    wallpaper
+            }
+
+            if (
+                lastFreshState != fresh
+            ) {
+                com.duoopen.debug.DuoDiagnostics.event(
+                    "angle-source",
+                    "readerFresh=$fresh ageMs=$age " +
+                        "wallpaper=$wallpaper",
+                )
+
+                lastFreshState =
+                    fresh
+            }
+
+            status =
+                if (
+                    b == null
+                ) {
+                    "Reader unreachable · wallpaper $wallpaper"
+                } else {
+                    "Reader ${b.getString("state")}: " +
+                        "${b.getInt("parsed")} angles / " +
+                        "${b.getInt("lines")} lines" +
+                        (
+                            if (
+                                age >= 0
+                            ) {
+                                " · last ${age} ms ago"
+                            } else {
+                                " · waiting for first angle"
+                            }
+                        ) +
+                        (
+                            if (
+                                lastDeliveryLagMs >= 0
+                            ) {
+                                " · delivery ${lastDeliveryLagMs} ms " +
+                                    "(max ${maxDeliveryLagMs})"
+                            } else {
+                                ""
+                            }
+                        ) +
+                        " · poll ${pollInterval(now)} ms" +
+                        " · dup $duplicateAngles" +
+                        " · source " +
+                        (
+                            if (
+                                fresh
+                            ) {
+                                "live"
+                            } else {
+                                "stale"
+                            }
+                        ) +
+                        " · wallpaper $wallpaper"
+                }
+
+            if (
+                !fresh &&
+                (
+                    age > STALE_MS ||
+                        (
+                            age < 0 &&
+                                now - startedAt >
+                                STALE_MS
+                            )
+                    )
+            ) {
+                hinge.clearExternal()
+            }
+
+            handler.postDelayed(
+                this,
+                1_000
+            )
         }
     }
     private var startedAt = 0L
 
     fun start() {
         if (running) return
-        if (!ShizukuBridge.ready) { status = "Shizuku not ready"; return }
-        if (!foldWallpaperActive(context)) { status = "Samsung's Fold interactive wallpaper isn't the home wallpaper"; return }
+        if (!ShizukuBridge.ready) {
+            status = "Shizuku not ready"
+            return
+        }
+
+        /*
+         * Samsung exposes different wallpaper metadata on the Fold7 cover
+         * display. Always attempt the reader and let fresh/stale callbacks
+         * determine whether the continuous source is usable.
+         */
         action = "com.duoopen.angle.READ_${SystemClock.elapsedRealtime()}"
-        if (!ShizukuBridge.startAngles(action) { angle -> handler.post { onAngle(angle) } }) {
+        if (
+            !ShizukuBridge.startAngles(
+                action,
+            ) { angle, sourceUptime ->
+                handler.post {
+                    onAngle(
+                        angle,
+                        sourceUptime,
+                    )
+                }
+            }
+        ) {
             status = "Couldn't start the log reader"
             return
         }
         running = true
-        startedAt = SystemClock.uptimeMillis()
-        status = "Starting"
+        startedAt =
+            SystemClock.uptimeMillis()
+
+        lastCallbackUptime = 0L
+        lastDeliveryLagMs = -1L
+        maxDeliveryLagMs = 0L
+
+        lastAngleSeen = Float.NaN
+        lastAngleChangeUptime = 0L
+
+        duplicateAngles = 0L
+
+        lastWallpaperIdentity =
+            ""
+
+        lastFreshState =
+            null
+
+        status =
+            "Starting live Samsung hinge reader"
         Log.i(TAG, "wallpaper angle feed started ($action)")
         handler.post(poll)
         handler.postDelayed(statusTick, 1_000)
@@ -111,10 +281,64 @@ class WallpaperAngleFeed(
         if (running) runCatching { ensureAnchor() }
     }
 
-    private fun onAngle(angle: Float) {
+    private fun onAngle(
+        angle: Float,
+        sourceUptime: Long,
+    ) {
         if (!running) return
-        lastCallbackUptime = SystemClock.uptimeMillis()
+
+        val now =
+            SystemClock.uptimeMillis()
+
+        lastCallbackUptime =
+            now
+
+        lastDeliveryLagMs =
+            (now - sourceUptime)
+                .coerceAtLeast(0L)
+
+        if (
+            lastDeliveryLagMs >
+            maxDeliveryLagMs
+        ) {
+            maxDeliveryLagMs =
+                lastDeliveryLagMs
+        }
+
+        if (
+            lastAngleSeen.isNaN() ||
+            abs(
+                angle -
+                    lastAngleSeen,
+            ) >= ANGLE_CHANGE_EPS
+        ) {
+            lastAngleSeen =
+                angle
+
+            lastAngleChangeUptime =
+                now
+        } else {
+            duplicateAngles++
+        }
+
         hinge.feedExternal(angle)
+    }
+
+    private fun pollInterval(
+        now: Long,
+    ): Long {
+
+        val moving =
+            lastAngleChangeUptime != 0L &&
+                now -
+                lastAngleChangeUptime <=
+                ACTIVE_BURST_MS
+
+        return if (moving) {
+            ACTIVE_POLL_MS
+        } else {
+            IDLE_POLL_MS
+        }
     }
 
     private fun displayKey(d: Display): String {
@@ -164,18 +388,78 @@ class WallpaperAngleFeed(
 
     companion object {
         private const val TAG = "DuoAngleFeed"
-        const val POLL_MS = 33L
+        // Low overhead while the phone is stationary.
+        const val IDLE_POLL_MS = 33L
+
+        // Near-display-refresh polling while moving.
+        const val ACTIVE_POLL_MS = 8L
+
+        // Remain in fast mode briefly after the last movement.
+        const val ACTIVE_BURST_MS = 900L
+
+        const val ANGLE_CHANGE_EPS = 0.10f
+
         private const val STALE_MS = 2_500L
         val FOLD_WALLPAPER = ComponentName(
             "com.samsung.android.wallpaper.live",
             "com.samsung.android.wallpaper.live.fold.FoldInteractive",
         )
 
-        /** Whether Samsung's fold-reactive wallpaper is the current home wallpaper. */
-        fun foldWallpaperActive(context: Context): Boolean {
-            val info = runCatching { WallpaperManager.getInstance(context).wallpaperInfo }.getOrNull() ?: return false
-            return info.packageName == FOLD_WALLPAPER.packageName &&
-                (info.serviceName == FOLD_WALLPAPER.className || info.serviceName.contains("FoldInteractive"))
+        /**
+         * WallpaperManager metadata is diagnostic only.
+         *
+         * Samsung may report FoldInteractive on the inner display and a Video
+         * wallpaper on the cover display even during the same physical fold
+         * session, so this must never be used as the live-angle kill switch.
+         */
+        fun foldWallpaperActive(
+            context: Context,
+        ): Boolean {
+            val info =
+                runCatching {
+                    WallpaperManager.getInstance(
+                        context
+                    ).wallpaperInfo
+                }.getOrNull()
+                    ?: return false
+
+            return (
+                info.packageName ==
+                    FOLD_WALLPAPER.packageName &&
+                    (
+                        info.serviceName ==
+                            FOLD_WALLPAPER.className ||
+                            info.serviceName.contains(
+                                "FoldInteractive"
+                            )
+                        )
+                )
+        }
+
+        fun wallpaperIdentity(
+            context: Context,
+        ): String {
+            val info =
+                runCatching {
+                    WallpaperManager.getInstance(
+                        context
+                    ).wallpaperInfo
+                }.getOrNull()
+                    ?: return "none"
+
+            val service =
+                info.serviceName
+                    .substringAfterLast(
+                        '.'
+                    )
+                    .ifEmpty {
+                        "unknown"
+                    }
+
+            return (
+                "${info.packageName.substringAfterLast('.')}/" +
+                    service
+                )
         }
     }
 }

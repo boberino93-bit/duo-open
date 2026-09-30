@@ -46,6 +46,8 @@ class DuoShellService : Binder() {
     private var captureApi: CaptureApi? = null
     private var reader: AngleReader? = null
 
+    private var liveMirror: SurfaceControl? = null
+
     init {
         attachInterface(null, ShellProtocol.TOKEN)
     }
@@ -57,6 +59,7 @@ class DuoShellService : Binder() {
         }
         if (code == SHIZUKU_DESTROY) {
             reader?.stop()
+            stopLiveMirror()
             System.exit(0)
             return true
         }
@@ -109,9 +112,610 @@ class DuoShellService : Binder() {
                 out.writeNoException()
                 out.writeBundle(reader?.status() ?: Bundle().apply { putString("state", "not started") })
             }
+            ShellProtocol.DISPLAY_PROBE -> {
+                val identity = clearCallingIdentity()
+                val result = try {
+                    displayProbe()
+                } catch (t: Throwable) {
+                    Bundle().apply {
+                        putString(
+                            "error",
+                            "${t.javaClass.simpleName}: ${t.message}",
+                        )
+                    }
+                } finally {
+                    restoreCallingIdentity(identity)
+                }
+
+                out.writeNoException()
+                out.writeBundle(result)
+            }
+            ShellProtocol.ENABLE_SECONDARY_DISPLAY -> {
+                val identity = clearCallingIdentity()
+
+                val result = try {
+                    secondaryDisplayCommand(
+                        enable = true
+                    )
+                } catch (t: Throwable) {
+                    Bundle().apply {
+                        putBoolean("ok", false)
+                        putString(
+                            "error",
+                            "${t.javaClass.simpleName}: ${t.message}",
+                        )
+                    }
+                } finally {
+                    restoreCallingIdentity(identity)
+                }
+
+                out.writeNoException()
+                out.writeBundle(result)
+            }
+
+            ShellProtocol.RESET_SECONDARY_DISPLAY -> {
+                val identity = clearCallingIdentity()
+
+                val result = try {
+                    secondaryDisplayCommand(
+                        enable = false
+                    )
+                } catch (t: Throwable) {
+                    Bundle().apply {
+                        putBoolean("ok", false)
+                        putString(
+                            "error",
+                            "${t.javaClass.simpleName}: ${t.message}",
+                        )
+                    }
+                } finally {
+                    restoreCallingIdentity(identity)
+                }
+
+                out.writeNoException()
+                out.writeBundle(result)
+            }
+
+            ShellProtocol.MIRROR_DISPLAY -> {
+                val enable = data.readInt() != 0
+                val identity = clearCallingIdentity()
+
+                val result = try {
+                    if (!enable) {
+                        stopLiveMirror()
+
+                        Bundle().apply {
+                            putBoolean("ok", true)
+                            putBoolean("enabled", false)
+                        }
+                    } else {
+                        val sourceDisplayId =
+                            data.readInt()
+
+                        createLiveMirror(
+                            sourceDisplayId =
+                                sourceDisplayId,
+                        )
+                    }
+                } catch (t: Throwable) {
+                    var root: Throwable = t
+
+                    while (root.cause != null) {
+                        root = root.cause!!
+                    }
+
+                    Bundle().apply {
+                        putBoolean("ok", false)
+                        putBoolean("enabled", enable)
+                        putString(
+                            "error",
+                            "${root.javaClass.simpleName}: ${root.message}",
+                        )
+                    }
+                } finally {
+                    restoreCallingIdentity(identity)
+                }
+
+                out.writeNoException()
+                out.writeBundle(result)
+            }
+
+            ShellProtocol.REQUEST_DISPLAY_POWER -> {
+                val displayId =
+                    data.readInt()
+
+                val requestedState =
+                    data.readInt()
+
+                val identity =
+                    clearCallingIdentity()
+
+                val result =
+                    try {
+                        val routeEnabled =
+                            if (
+                                requestedState ==
+                                    android.view.Display.STATE_ON
+                            ) {
+                                runCatching {
+                                    enableConnectedDisplayInternal(
+                                        displayId
+                                    )
+                                }.isSuccess
+                            } else {
+                                false
+                            }
+
+                        val powered =
+                            requestDisplayPowerInternal(
+                                displayId,
+                                requestedState,
+                            )
+
+                        Bundle().apply {
+                            putBoolean(
+                                "ok",
+                                powered,
+                            )
+                            putBoolean(
+                                "routeEnabled",
+                                routeEnabled,
+                            )
+                            putInt(
+                                "displayId",
+                                displayId,
+                            )
+                            putInt(
+                                "requestedState",
+                                requestedState,
+                            )
+                        }
+                    } catch (t: Throwable) {
+                        var root: Throwable = t
+
+                        while (root.cause != null) {
+                            root =
+                                root.cause!!
+                        }
+
+                        Bundle().apply {
+                            putBoolean(
+                                "ok",
+                                false,
+                            )
+                            putInt(
+                                "displayId",
+                                displayId,
+                            )
+                            putInt(
+                                "requestedState",
+                                requestedState,
+                            )
+                            putString(
+                                "error",
+                                "${root.javaClass.simpleName}: ${root.message}",
+                            )
+                        }
+                    } finally {
+                        restoreCallingIdentity(
+                            identity
+                        )
+                    }
+
+                out.writeNoException()
+                out.writeBundle(result)
+            }
+
             else -> return super.onTransact(code, data, reply, flags)
         }
         return true
+    }
+
+    // ---- read-only display probe -------------------------------------------
+
+    private fun displayProbe(): Bundle =
+        Bundle().apply {
+
+            putInt(
+                "uid",
+                Process.myUid(),
+            )
+
+            putInt(
+                "pid",
+                Process.myPid(),
+            )
+
+            putString(
+                "identity",
+                runProbe(
+                    "id"
+                ),
+            )
+
+            putString(
+                "cmd_display",
+                runProbe(
+                    "cmd display get-displays"
+                ),
+            )
+
+            putString(
+                "cmd_display_help",
+                runProbe(
+                    "cmd display help"
+                ),
+            )
+
+            putString(
+                "surfaceflinger",
+                runProbe(
+                    "dumpsys SurfaceFlinger --display-id"
+                ),
+            )
+
+            putString(
+                "display_filtered",
+                runProbe(
+                    "dumpsys display | " +
+                        "grep -E -i " +
+                        "'DisplayDeviceInfo|LogicalDisplay|uniqueId=|" +
+                        "displayId|mDisplayId|state=|type=|address=|" +
+                        "modeId|supportedModes|Built-in|fold|rear' | " +
+                        "head -n 300"
+                ),
+            )
+
+            putString(
+                "window_displays",
+                runProbe(
+                    "dumpsys window displays | head -n 250"
+                ),
+            )
+        }
+
+    private fun runProbe(
+        command: String,
+    ): String {
+
+        val process =
+            ProcessBuilder(
+                "sh",
+                "-c",
+                "$command 2>&1",
+            ).start()
+
+        val output =
+            process.inputStream
+                .bufferedReader()
+                .use {
+                    it.readText()
+                }
+
+        val finished =
+            process.waitFor(
+                3,
+                java.util.concurrent.TimeUnit.SECONDS,
+            )
+
+        if (
+            !finished
+        ) {
+            process.destroyForcibly()
+
+            return (
+                "timeout after 3000ms\n" +
+                    output.take(
+                        PROBE_OUTPUT_LIMIT
+                    )
+                )
+        }
+
+        return (
+            "exit=${process.exitValue()}\n" +
+                output.take(
+                    PROBE_OUTPUT_LIMIT
+                )
+            )
+    }
+
+    // ---- one-shot Fold7 secondary display experiment -----------------------
+
+    private fun secondaryDisplayCommand(
+        enable: Boolean,
+    ): Bundle {
+        val windowDisplays =
+            runProbe(
+                "dumpsys window displays | " +
+                    "grep -E '^[[:space:]]*Display: mDisplayId=|^[[:space:]]*init='"
+            )
+
+        val foldDisplays =
+            Regex(
+                "Display: mDisplayId=(\\d+).*?init=(\\d+)x(\\d+)",
+                setOf(RegexOption.DOT_MATCHES_ALL),
+            ).findAll(
+                windowDisplays
+            ).mapNotNull { match ->
+                val id =
+                    match.groupValues[1]
+                        .toIntOrNull()
+                        ?: return@mapNotNull null
+
+                val width =
+                    match.groupValues[2]
+                        .toIntOrNull()
+                        ?: return@mapNotNull null
+
+                val height =
+                    match.groupValues[3]
+                        .toIntOrNull()
+                        ?: return@mapNotNull null
+
+                Triple(id, width, height)
+            }.filter { (_, width, height) ->
+                (
+                    width == 1080 &&
+                        height == 2520
+                    ) ||
+                    (
+                        width == 1968 &&
+                            height == 2184
+                    )
+            }.toList()
+
+                  val target =
+            foldDisplays.firstOrNull { (_, width, height) ->
+                width == 1080 &&
+                    height == 2520
+            }
+
+        if (target == null) {
+            return Bundle().apply {
+                putBoolean("ok", false)
+                putInt("targetDisplayId", -1)
+                putString(
+                    "error",
+                    "The physical Fold7 cover route (1080x2520) was not found.",
+                )
+                putString(
+                    "windowDisplays",
+                    windowDisplays,
+                )
+            }
+        }
+
+        val targetId =
+            target.first
+
+        val command =
+            if (enable) {
+                "cmd display enable-display $targetId"
+            } else {
+                /*
+                 * Return control to Samsung instead of forcing the display off.
+                 */
+                "cmd display power-reset $targetId"
+            }
+
+                  val commandOutput =
+            runProbe(command)
+
+        val immediatePowerOn =
+            if (enable) {
+                Thread.sleep(40L)
+
+                runCatching {
+                    requestDisplayPowerInternal(
+                        targetId,
+                        android.view.Display.STATE_ON,
+                    )
+                }.getOrDefault(false)
+            } else {
+                false
+            }
+
+        Thread.sleep(600L)
+
+        val afterDisplays =
+            runProbe(
+                "cmd display get-displays"
+            )
+
+        val afterPhysical =
+            runProbe(
+                "dumpsys display | " +
+                    "grep -E -i " +
+                    "'DisplayDeviceInfo|mDisplayId=|mState=|" +
+                    "mCommittedState=|mPhysicalDisplayId=|" +
+                    "uniqueId=|state ON|state OFF' | " +
+                    "head -n 220"
+            )
+
+        val visibleAfter =
+            afterDisplays.contains(
+                "Display id $targetId:"
+            )
+
+        val commandFailed =
+            commandOutput.contains(
+                "Exception",
+                ignoreCase = true,
+            ) ||
+                commandOutput.contains(
+                    "error",
+                    ignoreCase = true,
+                ) ||
+                commandOutput.contains(
+                    "not possible",
+                    ignoreCase = true,
+                )
+
+        return Bundle().apply {
+            putBoolean("ok", !commandFailed)
+            putBoolean("enable", enable)
+            putInt("targetDisplayId", targetId)
+            putInt("targetWidth", target.second)
+            putInt("targetHeight", target.third)
+                      putBoolean("visibleAfter", visibleAfter)
+            putBoolean("immediatePowerOn", immediatePowerOn)
+            putString("command", command)
+            putString("commandOutput", commandOutput)
+            putString("windowDisplays", windowDisplays)
+            putString("afterDisplays", afterDisplays)
+            putString("afterPhysical", afterPhysical)
+        }
+    }
+
+    // ---- live logical-display mirror ---------------------------------------
+
+    private fun stopLiveMirror() {
+        val current =
+            liveMirror
+                ?: return
+
+        liveMirror =
+            null
+
+        runCatching {
+            SurfaceControl.Transaction().use { tx ->
+                tx.reparent(
+                    current,
+                    null,
+                )
+                tx.apply()
+            }
+        }
+
+        runCatching {
+            current.release()
+        }
+    }
+
+    private fun createLiveMirror(
+        sourceDisplayId: Int,
+    ): Bundle {
+        stopLiveMirror()
+
+        val wm =
+            systemService(
+                "window",
+                "android.view.IWindowManager\$Stub",
+            )
+
+        runCatching {
+            org.lsposed.hiddenapibypass.HiddenApiBypass
+                .addHiddenApiExemptions(
+                    "Landroid/view/SurfaceControl;"
+                )
+        }
+
+        val mirror =
+            SurfaceControl::class.java
+                .getDeclaredConstructor()
+                .let { constructor ->
+                    constructor.isAccessible =
+                        true
+
+                    constructor.newInstance()
+                }
+
+        val mirrored =
+            Class.forName(
+                "android.view.IWindowManager"
+            ).getMethod(
+                "mirrorDisplay",
+                Integer.TYPE,
+                SurfaceControl::class.java,
+            ).invoke(
+                wm,
+                sourceDisplayId,
+                mirror,
+            ) as? Boolean
+                ?: false
+
+        if (
+            !mirrored ||
+            !mirror.isValid
+        ) {
+            runCatching {
+                mirror.release()
+            }
+
+            throw IllegalStateException(
+                "WindowManager mirrorDisplay($sourceDisplayId) returned no valid surface"
+            )
+        }
+
+        liveMirror =
+            mirror
+
+        return Bundle().apply {
+            putBoolean("ok", true)
+            putBoolean("enabled", true)
+            putInt(
+                "sourceDisplayId",
+                sourceDisplayId,
+            )
+
+            /*
+             * SurfaceControl is Parcelable. This duplicates the handle into the
+             * normal app process, which can then attach it to its own window
+             * using AttachedSurfaceControl.buildReparentTransaction().
+             */
+            putParcelable(
+                "mirrorSurface",
+                mirror,
+            )
+        }
+    }
+
+    private fun displayManagerService(): Any =
+        systemService(
+            "display",
+            "android.hardware.display.IDisplayManager\$Stub",
+        )
+
+    private fun enableConnectedDisplayInternal(
+        displayId: Int,
+    ) {
+        val dm =
+            displayManagerService()
+
+        Class.forName(
+            "android.hardware.display.IDisplayManager"
+        ).getMethod(
+            "enableConnectedDisplay",
+            Integer.TYPE,
+        ).invoke(
+            dm,
+            displayId,
+        )
+    }
+
+    private fun requestDisplayPowerInternal(
+        displayId: Int,
+        requestedState: Int,
+    ): Boolean {
+        val dm =
+            displayManagerService()
+
+        val method =
+            Class.forName(
+                "android.hardware.display.IDisplayManager"
+            ).getMethod(
+                "requestDisplayPower",
+                Integer.TYPE,
+                Integer.TYPE,
+            )
+
+        return (
+            method.invoke(
+                dm,
+                displayId,
+                requestedState,
+            ) as? Boolean
+            ) == true
     }
 
     // ---- capture -----------------------------------------------------------
@@ -324,6 +928,10 @@ class DuoShellService : Binder() {
     private companion object {
         /** Shizuku asks user services to exit with this code. */
         const val SHIZUKU_DESTROY = 16777115
+
+        const val PROBE_OUTPUT_LIMIT =
+            16_000
+
         val FAMILIES = listOf("android.window.ScreenCaptureInternal", "android.window.ScreenCapture")
     }
 }
