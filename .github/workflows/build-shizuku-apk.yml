@@ -1,4 +1,4 @@
-name: Build Z Fold 7 Left Pane Continuity
+name: Build Z Fold 7 Pane Container Continuity
 
 on:
   workflow_dispatch:
@@ -26,7 +26,7 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x gradlew
 
-      - name: Replay proven 1.3.10 root-mirror build
+      - name: Replay proven 1.3.11 continuity build
         run: |
           python3 <<'PY'
           from pathlib import Path
@@ -34,7 +34,7 @@ jobs:
           import subprocess
           import textwrap
 
-          previous_commit = "fcec434b09f055a7277ed4414cdb5cce39d7a07c"
+          previous_commit = "c9721560c1b6da09e5608e82beeb0e4ed91edbd8"
 
           previous_workflow = subprocess.check_output(
               [
@@ -48,8 +48,8 @@ jobs:
           lines = previous_workflow.splitlines()
 
           wanted_steps = [
-              "Replay proven 1.3.9 live-mirror build",
-              "Move mirror to destination window root",
+              "Replay proven 1.3.10 root-mirror build",
+              "Consolidate left-pane continuity and topology handling",
           ]
 
           def extract_run_block(step_name: str) -> str:
@@ -130,7 +130,7 @@ jobs:
               )
           PY
 
-      - name: Consolidate left-pane continuity and topology handling
+      - name: Replace mirror crop with owned pane container
         run: |
           python3 <<'PY'
           from pathlib import Path
@@ -147,15 +147,6 @@ jobs:
               if old not in text:
                   raise SystemExit(f"{label}: expected source not found in {path}")
               save(path, text.replace(old, new, 1))
-
-          def regex_replace_once(path, pattern, replacement, label, flags=re.S):
-              text = load(path)
-              new_text, count = re.subn(pattern, replacement, text, count=1, flags=flags)
-              if count != 1:
-                  raise SystemExit(
-                      f"{label}: expected one regex match in {path}, got {count}"
-                  )
-              save(path, new_text)
 
           mirror_host_path = Path(
               "app/src/full/java/com/duoopen/overlay/"
@@ -181,16 +172,30 @@ jobs:
           import kotlinx.coroutines.Dispatchers
           import kotlinx.coroutines.launch
 
+          /**
+           * Fold7 continuity host.
+           *
+           * ViewRoot
+           *   └── cropContainer
+           *         └── live WindowManager display mirror
+           *
+           * Cropping is applied to an app-owned parent container. SurfaceControl
+           * children inherit parent crop and transforms, so the right half of the
+           * full WMS display mirror is clipped out before the pane is scaled to cover.
+           */
           class DisplayMirrorHost(
               private val service: AccessibilityService,
               val display: Display,
               private val scope: CoroutineScope,
               private val onStatus: (String) -> Unit,
           ) {
-              val displayId: Int = display.displayId
+              val displayId: Int =
+                  display.displayId
 
               private val displayManager =
-                  service.getSystemService(DisplayManager::class.java)
+                  service.getSystemService(
+                      DisplayManager::class.java
+                  )
 
               private val context =
                   service
@@ -201,12 +206,15 @@ jobs:
                       )
 
               private val windowManager =
-                  context.getSystemService(WindowManager::class.java)
+                  context.getSystemService(
+                      WindowManager::class.java
+                  )
 
               private var attached = false
               private var generation = 0
               private var mirrorSourceKey: String? = null
               private var appMirror: SurfaceControl? = null
+              private var cropContainer: SurfaceControl? = null
               private var latestHingeAngle = Float.NaN
               private var lastLoggedAngleBucket = Int.MIN_VALUE
 
@@ -227,11 +235,11 @@ jobs:
                               override fun onViewDetachedFromWindow(v: View) {
                                   generation++
                                   mirrorSourceKey = null
-                                  releaseAppMirror()
+                                  releaseSurfaceTree()
 
                                   com.duoopen.debug.DuoDiagnostics.event(
                                       "live-mirror",
-                                      "left-pane host detached display=$displayId",
+                                      "pane-container host detached display=$displayId",
                                   )
                               }
                           }
@@ -290,7 +298,7 @@ jobs:
                           layoutInDisplayCutoutMode =
                               WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
                           fitInsetsTypes = 0
-                          title = "DuoOpenLeftPaneMirror"
+                          title = "DuoOpenLeftPaneContainer"
                       }
 
                   attached =
@@ -298,12 +306,12 @@ jobs:
                           windowManager.addView(hostView, params)
                       }.onFailure { error ->
                           onStatus(
-                              "Could not attach left-pane mirror window: ${error.message}"
+                              "Could not attach left-pane container: ${error.message}"
                           )
 
                           com.duoopen.debug.DuoDiagnostics.event(
                               "live-mirror",
-                              "left-pane host add failed display=$displayId " +
+                              "pane-container host add failed display=$displayId " +
                                   "error=${error.javaClass.simpleName}:${error.message}",
                           )
                       }.isSuccess
@@ -332,7 +340,8 @@ jobs:
                       com.duoopen.debug.DuoDiagnostics.event(
                           "live-mirror",
                           "hinge angle=$angle display=$displayId " +
-                              "mirrorValid=${appMirror?.isValid == true}",
+                              "mirrorValid=${appMirror?.isValid == true} " +
+                              "containerValid=${cropContainer?.isValid == true}",
                       )
                   }
               }
@@ -351,23 +360,34 @@ jobs:
 
                   if (root == null) {
                       onStatus(
-                          "Left-pane mirror window is attached, but its root SurfaceControl is not ready."
+                          "Left-pane window is attached, but its root SurfaceControl is not ready."
                       )
                       return
                   }
 
-                  val source =
-                      findInnerDisplay()
+                  val source = findInnerDisplay()
 
                   if (source == null) {
                       onStatus(
-                          "Waiting for the Fold7 inner display before binding the left pane."
+                          "Waiting for the Fold7 inner display."
                       )
 
                       com.duoopen.debug.DuoDiagnostics.event(
                           "live-mirror",
                           "inner source missing reason=$reason " +
                               "destination=$displayId hinge=$latestHingeAngle",
+                      )
+                      return
+                  }
+
+                  if (source.displayId == displayId) {
+                      onStatus(
+                          "Mirror source and cover destination resolved to the same logical display; refusing to bind."
+                      )
+
+                      com.duoopen.debug.DuoDiagnostics.event(
+                          "live-mirror",
+                          "same-display guard source=${source.displayId} destination=$displayId reason=$reason",
                       )
                       return
                   }
@@ -380,19 +400,23 @@ jobs:
                       "inner=${source.displayId}:${sourceWidth}x$sourceHeight;" +
                           "cover=$displayId"
 
-                  val current = appMirror
+                  val currentMirror = appMirror
+                  val currentContainer = cropContainer
 
                   if (
                       mirrorSourceKey == sourceKey &&
-                      current != null &&
-                      current.isValid
+                      currentMirror != null &&
+                      currentMirror.isValid &&
+                      currentContainer != null &&
+                      currentContainer.isValid
                   ) {
                       applyGeometry(
-                          mirror = current,
+                          mirror = currentMirror,
+                          container = currentContainer,
                           sourceWidth = sourceWidth,
                           sourceHeight = sourceHeight,
                           reason = "reuse:$reason",
-                          initialReparent = false,
+                          initialAttach = false,
                       )
                       return
                   }
@@ -401,10 +425,10 @@ jobs:
                   mirrorSourceKey = null
 
                   onStatus(
-                      "Creating live left-pane mirror: " +
-                          "display ${source.displayId} " +
+                      "Creating live left-pane container: " +
+                          "inner ${source.displayId} " +
                           "${sourceWidth}×$sourceHeight → " +
-                          "cover display $displayId…"
+                          "cover $displayId…"
                   )
 
                   scope.launch(Dispatchers.IO) {
@@ -448,19 +472,39 @@ jobs:
                                       ?: "shell returned no valid mirror SurfaceControl"
 
                               onStatus(
-                                  "Left-pane live mirror failed: $detail"
+                                  "Left-pane mirror failed: $detail"
                               )
 
                               com.duoopen.debug.DuoDiagnostics.event(
                                   "live-mirror",
-                                  "left-pane bind failed reason=$reason " +
+                                  "pane-container bind failed reason=$reason " +
                                       "source=${source.displayId} " +
                                       "destination=$displayId error=$detail",
                               )
                               return@post
                           }
 
-                          releaseAppMirror()
+                          val container =
+                              ensureCropContainer()
+
+                          if (
+                              container == null ||
+                              !container.isValid
+                          ) {
+                              mirror.release()
+
+                              onStatus(
+                                  "Could not create the left-pane crop container."
+                              )
+
+                              com.duoopen.debug.DuoDiagnostics.event(
+                                  "live-mirror",
+                                  "pane-container create failed reason=$reason",
+                              )
+                              return@post
+                          }
+
+                          releaseAppMirrorOnly()
 
                           appMirror = mirror
                           mirrorSourceKey = sourceKey
@@ -468,31 +512,63 @@ jobs:
                           val applied =
                               applyGeometry(
                                   mirror = mirror,
+                                  container = container,
                                   sourceWidth = sourceWidth,
                                   sourceHeight = sourceHeight,
                                   reason = "new:$reason",
-                                  initialReparent = true,
+                                  initialAttach = true,
                               )
 
                           if (!applied) {
-                              releaseAppMirror()
+                              releaseAppMirrorOnly()
                               mirrorSourceKey = null
                               return@post
                           }
 
                           onStatus(
-                              "LEFT PANE LIVE: inner display ${source.displayId} → cover display $displayId."
+                              "LEFT PANE CONTAINER LIVE: inner ${source.displayId} → cover $displayId."
                           )
                       }
                   }
               }
 
+              private fun ensureCropContainer(): SurfaceControl? {
+                  val existing = cropContainer
+
+                  if (
+                      existing != null &&
+                      existing.isValid
+                  ) {
+                      return existing
+                  }
+
+                  val created =
+                      runCatching {
+                          SurfaceControl.Builder()
+                              .setName("DuoOpenLeftPaneCrop")
+                              .setContainerLayer()
+                              .build()
+                      }.getOrElse { error ->
+                          com.duoopen.debug.DuoDiagnostics.event(
+                              "live-mirror",
+                              "pane-container builder failed " +
+                                  "error=${error.javaClass.simpleName}:${error.message}",
+                          )
+
+                          return null
+                      }
+
+                  cropContainer = created
+                  return created
+              }
+
               private fun applyGeometry(
                   mirror: SurfaceControl,
+                  container: SurfaceControl,
                   sourceWidth: Int,
                   sourceHeight: Int,
                   reason: String,
-                  initialReparent: Boolean,
+                  initialAttach: Boolean,
               ): Boolean {
                   val root =
                       hostView.rootSurfaceControl
@@ -514,34 +590,37 @@ jobs:
                       destinationWidth <= 0 ||
                       destinationHeight <= 0
                   ) {
-                      onStatus("Waiting for non-zero cover bounds.")
+                      onStatus(
+                          "Waiting for non-zero cover bounds."
+                      )
                       return false
                   }
 
-                  val sourceCropWidth =
-                      (sourceWidth / 2).coerceAtLeast(1)
+                  val paneWidth =
+                      (sourceWidth / 2)
+                          .coerceAtLeast(1)
 
-                  val sourceCrop =
+                  val paneHeight =
+                      sourceHeight
+
+                  val containerCrop =
                       Rect(
                           0,
                           0,
-                          sourceCropWidth,
-                          sourceHeight,
+                          paneWidth,
+                          paneHeight,
                       )
 
                   val scale =
                       maxOf(
                           destinationWidth.toFloat() /
-                              sourceCropWidth.toFloat(),
+                              paneWidth.toFloat(),
                           destinationHeight.toFloat() /
-                              sourceHeight.toFloat(),
+                              paneHeight.toFloat(),
                       )
 
-                  val drawnWidth =
-                      sourceCropWidth * scale
-
-                  val drawnHeight =
-                      sourceHeight * scale
+                  val drawnWidth = paneWidth * scale
+                  val drawnHeight = paneHeight * scale
 
                   val x =
                       (destinationWidth - drawnWidth) * 0.5f
@@ -550,45 +629,70 @@ jobs:
                       (destinationHeight - drawnHeight) * 0.5f
 
                   val transaction =
-                      if (initialReparent) {
-                          root.buildReparentTransaction(mirror)
+                      if (initialAttach) {
+                          root.buildReparentTransaction(container)
                       } else {
                           SurfaceControl.Transaction()
                       }
 
                   if (transaction == null) {
                       onStatus(
-                          "Android could not create the mirror transaction."
+                          "Android could not create the pane-container transaction."
                       )
                       return false
                   }
 
                   return try {
+                      if (initialAttach) {
+                          transaction
+                              .reparent(
+                                  mirror,
+                                  container,
+                              )
+                              .setPosition(
+                                  mirror,
+                                  0f,
+                                  0f,
+                              )
+                              .setLayer(
+                                  mirror,
+                                  0,
+                              )
+                              .setAlpha(
+                                  mirror,
+                                  1f,
+                              )
+                              .setVisibility(
+                                  mirror,
+                                  true,
+                              )
+                      }
+
                       transaction
                           .setCrop(
-                              mirror,
-                              sourceCrop,
+                              container,
+                              containerCrop,
                           )
                           .setScale(
-                              mirror,
+                              container,
                               scale,
                               scale,
                           )
                           .setPosition(
-                              mirror,
+                              container,
                               x,
                               y,
                           )
                           .setLayer(
-                              mirror,
+                              container,
                               10_000,
                           )
                           .setAlpha(
-                              mirror,
+                              container,
                               1f,
                           )
                           .setVisibility(
-                              mirror,
+                              container,
                               true,
                           )
 
@@ -601,12 +705,13 @@ jobs:
 
                       com.duoopen.debug.DuoDiagnostics.event(
                           "live-mirror",
-                          "left-pane geometry ok reason=$reason " +
+                          "pane-container geometry ok reason=$reason " +
                               "source=${sourceWidth}x$sourceHeight " +
-                              "crop=0,0-${sourceCropWidth},${sourceHeight} " +
+                              "containerCrop=0,0-${paneWidth},${paneHeight} " +
                               "destination=${destinationWidth}x$destinationHeight " +
                               "scale=$scale x=$x y=$y " +
-                              "queuedOnDraw=$queued hinge=$latestHingeAngle",
+                              "mirrorChild=true queuedOnDraw=$queued " +
+                              "hinge=$latestHingeAngle",
                       )
 
                       true
@@ -619,19 +724,19 @@ jobs:
                           "${t.javaClass.simpleName}: ${t.message}"
 
                       onStatus(
-                          "Left-pane geometry failed: $detail"
+                          "Pane-container geometry failed: $detail"
                       )
 
                       com.duoopen.debug.DuoDiagnostics.event(
                           "live-mirror",
-                          "left-pane geometry exception reason=$reason error=$detail",
+                          "pane-container geometry exception reason=$reason error=$detail",
                       )
 
                       false
                   }
               }
 
-              private fun releaseAppMirror() {
+              private fun releaseAppMirrorOnly() {
                   val current =
                       appMirror
                           ?: return
@@ -643,10 +748,33 @@ jobs:
                   }
               }
 
+              private fun releaseSurfaceTree() {
+                  releaseAppMirrorOnly()
+
+                  val container = cropContainer
+                  cropContainer = null
+
+                  if (container != null) {
+                      runCatching {
+                          SurfaceControl.Transaction()
+                              .reparent(
+                                  container,
+                                  null,
+                              )
+                              .apply()
+                      }
+
+                      runCatching {
+                          container.release()
+                      }
+                  }
+              }
+
               fun detach() {
                   generation++
                   mirrorSourceKey = null
-                  releaseAppMirror()
+
+                  releaseSurfaceTree()
 
                   if (!attached) {
                       return
@@ -660,7 +788,7 @@ jobs:
 
                   com.duoopen.debug.DuoDiagnostics.event(
                       "live-mirror",
-                      "left-pane host removed display=$displayId",
+                      "pane-container host removed display=$displayId",
                   )
               }
 
@@ -677,68 +805,9 @@ jobs:
               "FoldOverlayService.kt"
           )
 
-          replace_once(
-              service_path,
-              '''    private fun onHinge(angle: Float) {
-                  if (mirrorRequested) {
-                      return
-                  }
+          service = load(service_path)
 
-                  // DisplayManager callbacks own panel topology.
-                  // Keep the high-frequency hinge path render-only.
-                  for (e in engines.values.toList()) {
-                      e.onHinge(angle)
-                  }
-              }
-          ''',
-              '''    private fun onHinge(angle: Float) {
-                  if (mirrorRequested) {
-                      mirrorHost?.onHinge(
-                          angle
-                      )
-                      return
-                  }
-
-                  // DisplayManager callbacks own panel topology.
-                  // Keep the high-frequency hinge path render-only.
-                  for (e in engines.values.toList()) {
-                      e.onHinge(angle)
-                  }
-              }
-          ''',
-              "FoldOverlayService hinge feed to mirror",
-          )
-
-          regex_replace_once(
-              service_path,
-              r'''    private fun syncMirrorHost\(
-                  reason: String,
-              \) \{
-          .*?
-              \}
-
-              private fun safeToReleaseSecondaryPanel\(\): Boolean \{''',
-              '''    private fun syncMirrorHost(
-                  reason: String,
-              ) {
-                  if (!mirrorRequested) {
-                      return
-                  }
-
-                  val primary =
-                      displayManager.getDisplay(
-                          Display.DEFAULT_DISPLAY
-                      )
-
-                  if (primary == null) {
-                      _secondaryDisplayStatus.value =
-                          "Waiting for Android's default display."
-                      return
-                  }
-
-                  val primaryMode = primary.mode
-
-                  val coverIsNativePrimary =
+          old_primary = '''        val coverIsNativePrimary =
                       (
                           primaryMode.physicalWidth == 1080 &&
                               primaryMode.physicalHeight == 2520
@@ -747,62 +816,25 @@ jobs:
                               primaryMode.physicalWidth == 822 &&
                                   primaryMode.physicalHeight == 1918
                           )
+          '''
 
-                  if (coverIsNativePrimary) {
-                      mirrorHost?.detach()
-                      mirrorHost = null
+          new_primary = '''        val coverIsNativePrimary =
+                      primaryMode.physicalWidth == 1080 &&
+                          primaryMode.physicalHeight == 2520
+          '''
 
-                      scope.launch(
-                          Dispatchers.IO
-                      ) {
-                          ShizukuBridge.stopDisplayMirror()
-                      }
+          if old_primary not in service:
+              raise SystemExit(
+                  "Expected speculative native-cover geometry block was not found."
+              )
 
-                      _secondaryDisplayStatus.value =
-                          "Native cover is primary; temporary left-pane mirror released."
+          service = service.replace(
+              old_primary,
+              new_primary,
+              1,
+          )
 
-                      com.duoopen.debug.DuoDiagnostics.event(
-                          "live-mirror",
-                          "native-cover-handoff reason=$reason " +
-                              "primary=${primary.displayId} " +
-                              "mode=${primaryMode.physicalWidth}x${primaryMode.physicalHeight}",
-                      )
-                      return
-                  }
-
-                  val innerIsPrimary =
-                      primaryMode.physicalWidth == 1968 &&
-                          primaryMode.physicalHeight == 2184
-
-                  if (!innerIsPrimary) {
-                      _secondaryDisplayStatus.value =
-                          "Waiting for a known Fold7 inner/cover topology."
-
-                      com.duoopen.debug.DuoDiagnostics.event(
-                          "live-mirror",
-                          "unknown primary topology reason=$reason " +
-                              "primary=${primary.displayId} " +
-                              "mode=${primaryMode.physicalWidth}x${primaryMode.physicalHeight}",
-                      )
-                      return
-                  }
-
-                  val cover =
-                      displayManager.displays
-                          .firstOrNull { candidate ->
-                              if (
-                                  candidate.displayId ==
-                                      Display.DEFAULT_DISPLAY ||
-                                  candidate.state ==
-                                      Display.STATE_OFF ||
-                                  candidate.state ==
-                                      Display.STATE_UNKNOWN
-                              ) {
-                                  false
-                              } else {
-                                  val mode = candidate.mode
-
-                                  (
+          old_cover = '''                        (
                                       mode.physicalWidth == 1080 &&
                                           mode.physicalHeight == 2520
                                   ) ||
@@ -810,58 +842,26 @@ jobs:
                                           mode.physicalWidth == 822 &&
                                               mode.physicalHeight == 1918
                                       )
-                              }
-                          }
+          '''
 
-                  if (cover == null) {
-                      _secondaryDisplayStatus.value =
-                          "Live mirror is waiting for the Fold7 cover display."
+          new_cover = '''                        mode.physicalWidth == 1080 &&
+                                      mode.physicalHeight == 2520
+          '''
 
-                      mirrorHost?.detach()
-                      mirrorHost = null
+          if old_cover not in service:
+              raise SystemExit(
+                  "Expected speculative cover lookup geometry block was not found."
+              )
 
-                      com.duoopen.debug.DuoDiagnostics.event(
-                          "live-mirror",
-                          "cover logical display missing reason=$reason",
-                      )
-                      return
-                  }
+          service = service.replace(
+              old_cover,
+              new_cover,
+              1,
+          )
 
-                  val current = mirrorHost
-
-                  if (
-                      current == null ||
-                      current.displayId != cover.displayId
-                  ) {
-                      current?.detach()
-
-                      mirrorHost =
-                          DisplayMirrorHost(
-                              service = this,
-                              display = cover,
-                              scope = scope,
-                              onStatus = { message ->
-                                  _secondaryDisplayStatus.value =
-                                      message
-                              },
-                          ).also {
-                              it.attach()
-                          }
-
-                      com.duoopen.debug.DuoDiagnostics.event(
-                          "live-mirror",
-                          "left-pane host created reason=$reason " +
-                              "cover=${cover.displayId} " +
-                              "mode=${cover.mode.physicalWidth}x${cover.mode.physicalHeight}",
-                      )
-                      return
-                  }
-
-                  current.refresh(reason)
-              }
-
-              private fun safeToReleaseSecondaryPanel(): Boolean {''',
-              "FoldOverlayService Fold7 topology-aware mirror host",
+          save(
+              service_path,
+              service,
           )
 
           sheet_path = (
@@ -871,24 +871,23 @@ jobs:
 
           replace_once(
               sheet_path,
-              '"Start root mirror"',
               '"Start left-pane continuity"',
-              "ControlSheet left-pane label",
+              '"Start pane-container continuity"',
+              "ControlSheet pane-container label",
           )
 
           replace_once(
               sheet_path,
-              '''"Root-mirror probe: WindowManager creates the live display mirror in the " +
-                              "Shizuku shell process, then Duo Open attaches that mirror directly to the " +
-                              "secondary overlay window root. Repeated display callbacks reuse the same " +
-                              "mirror unless Samsung actually changes display geometry. Test an open app " +
-                              "and the launcher before moving the hinge."''',
               '''"Fold7 continuity probe: only the LEFT half of the live inner display is " +
                               "carried onto the cover, matching the pane that physically moves across the crease. " +
                               "The mirror fills the cover with a small centered overscan, updates geometry without " +
                               "recreating the mirror, tracks Samsung topology changes, and releases itself when the " +
                               "cover becomes Android's native primary display."''',
-              "ControlSheet left-pane explanation",
+              '''"Fold7 pane-container probe: the full live display mirror is parented inside " +
+                              "an owned SurfaceControl container whose bounds clip it to the LEFT half of the inner " +
+                              "display. The cropped parent then fills the cover. This avoids relying on crop semantics " +
+                              "of the special WindowManager display-mirror layer while preserving live launcher and app content."''',
+              "ControlSheet pane-container explanation",
           )
 
           gradle_path = Path(
@@ -897,28 +896,28 @@ jobs:
 
           gradle = gradle_path.read_text()
 
-          if "versionCode = 14" not in gradle:
+          if "versionCode = 15" not in gradle:
               raise SystemExit(
-                  "Expected root-mirror versionCode 14 was not found."
+                  "Expected left-pane versionCode 15 was not found."
               )
 
           if (
-              'versionName = "1.3.10-zfold7-root-mirror-probe"'
+              'versionName = "1.3.11-zfold7-left-pane-continuity"'
               not in gradle
           ):
               raise SystemExit(
-                  "Expected root-mirror versionName was not found."
+                  "Expected left-pane versionName was not found."
               )
 
           gradle = gradle.replace(
-              "versionCode = 14",
               "versionCode = 15",
+              "versionCode = 16",
               1,
           )
 
           gradle = gradle.replace(
-              'versionName = "1.3.10-zfold7-root-mirror-probe"',
               'versionName = "1.3.11-zfold7-left-pane-continuity"',
+              'versionName = "1.3.12-zfold7-pane-container"',
               1,
           )
 
@@ -927,20 +926,24 @@ jobs:
           )
           PY
 
-      - name: Validate consolidated continuity pass
+      - name: Validate pane-container pass
         run: |
           git diff --check
           git diff --stat
 
-          grep -R "setCrop" app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
-          grep -R "sourceWidth / 2" app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
-          grep -R "left-pane geometry ok" app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
-          grep -R "native-cover-handoff" app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
-          grep -R "Start left-pane continuity" app/src/main/java/com/duoopen/ui/ControlSheet.kt
-          grep -R "1.3.11-zfold7-left-pane-continuity" app/build.gradle.kts
+          grep -R "setContainerLayer" app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+          grep -R "pane-container geometry ok" app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+          grep -R "same-display guard" app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+          grep -R "Start pane-container continuity" app/src/main/java/com/duoopen/ui/ControlSheet.kt
+          grep -R "1.3.12-zfold7-pane-container" app/build.gradle.kts
+
+          if grep -R "822" app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt; then
+            echo "Unexpected speculative cover geometry remains."
+            exit 1
+          fi
 
           mkdir -p zfold7-artifacts
-          git diff > zfold7-artifacts/zfold7-left-pane-continuity.patch
+          git diff > zfold7-artifacts/zfold7-pane-container.patch
 
       - name: Compile, unit test, and build
         run: |
@@ -966,16 +969,16 @@ jobs:
 
           cp \
             "$APK" \
-            zfold7-artifacts/DuoOpen-ZFold7-left-pane-continuity-debug.apk
+            zfold7-artifacts/DuoOpen-ZFold7-pane-container-debug.apk
 
           {
             echo "commit=${GITHUB_SHA}"
             echo "built=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "pass=left-pane-crop+cover-fill+stable-reuse+layout-refresh+physical-topology+native-handoff+hinge-diagnostics"
+            echo "pass=root-mirror+owned-crop-container+left-pane-clip+cover-fill+mirror-reuse+topology-guard"
             echo
 
             sha256sum \
-              zfold7-artifacts/DuoOpen-ZFold7-left-pane-continuity-debug.apk
+              zfold7-artifacts/DuoOpen-ZFold7-pane-container-debug.apk
 
           } > zfold7-artifacts/BUILD-INFO.txt
 
@@ -984,10 +987,10 @@ jobs:
       - name: Upload field-test artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: DuoOpen-ZFold7-left-pane-continuity
+          name: DuoOpen-ZFold7-pane-container
           path: |
-            zfold7-artifacts/DuoOpen-ZFold7-left-pane-continuity-debug.apk
-            zfold7-artifacts/zfold7-left-pane-continuity.patch
+            zfold7-artifacts/DuoOpen-ZFold7-pane-container-debug.apk
+            zfold7-artifacts/zfold7-pane-container.patch
             zfold7-artifacts/BUILD-INFO.txt
           if-no-files-found: error
           retention-days: 30
