@@ -1,19 +1,35 @@
-name: Build Z Fold 7 Motion-Gated Cover Power 1.3.16
+name: Materialize Fold7 1.3.16 Generated Baseline
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
+    inputs:
+      output_branch:
+        description: Branch to create with the fully generated 1.3.16 source tree
+        required: true
+        default: generated/fold7-1.3.16-baseline
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: materialize-fold7-1.3.16
+  cancel-in-progress: false
 
 jobs:
-  build:
+  materialize:
     runs-on: ubuntu-latest
 
+    env:
+      BASELINE_SHA: 1a8787c5727be47f40d77ca9258e1cadb56fa1a4
+      BASELINE_VERSION: 1.3.16-zfold7-motion-power
+      BASELINE_VERSION_CODE: "20"
+
     steps:
-      - name: Checkout source and history
+      - name: Checkout trusted baseline and full history
         uses: actions/checkout@v4
         with:
+          ref: ${{ env.BASELINE_SHA }}
           fetch-depth: 0
 
       - name: Set up Java 17
@@ -26,42 +42,41 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x gradlew
 
-      - name: Replay last successful Fold7 geometry build
+      - name: Reconstruct exact generated 1.3.16 source
+        shell: bash
         run: |
           set -euo pipefail
 
           python3 <<'PY'
           from pathlib import Path
+          import os
           import re
           import subprocess
           import textwrap
 
-          previous_commit = "fc41750970a5270274ea1f9ce6502921d40c2581"
+          baseline = os.environ["BASELINE_SHA"]
+          workflow_path = ".github/workflows/build-shizuku-apk.yml"
 
-          previous_workflow = subprocess.check_output(
-              [
-                  "git",
-                  "show",
-                  f"{previous_commit}:.github/workflows/build-shizuku-apk.yml",
-              ],
+          workflow = subprocess.check_output(
+              ["git", "show", f"{baseline}:{workflow_path}"],
               text=True,
           )
 
-          lines = previous_workflow.splitlines()
+          lines = workflow.splitlines()
 
+          # These are the baseline workflow's source-generation/validation passes.
+          # Deliberately exclude its compile/package/upload steps; this workflow
+          # performs fresh validation after the generated source has been materialized.
           wanted_steps = [
-              "Replay proven 1.3.11 continuity build",
-              "Replace mirror crop with owned pane container",
-              "Validate pane-container pass",
-              "Switch to AOSP setGeometry and restore bidirectional fold animation",
-              "Validate 1.3.13 geometry continuity pass",
-              "Graft zfoldduo glass and bidirectional motion behavior",
-              "Validate revised 1.3.13 graft",
+              "Replay last successful Fold7 geometry build",
+              "Fix Fold7 physical panel handoff",
+              "Validate Fold7 physical handoff source",
+              "Add motion-gated cover power hold",
+              "Validate motion-gated cover power source",
           ]
 
           def extract_run_block(step_name: str) -> str:
               step_start = None
-
               for index, line in enumerate(lines):
                   if line.strip() == f"- name: {step_name}":
                       step_start = index
@@ -69,1476 +84,129 @@ jobs:
 
               if step_start is None:
                   raise SystemExit(
-                      f"Previous workflow step not found: {step_name}"
+                      f"Baseline workflow step not found: {step_name}"
                   )
 
               run_line = None
-
               for index in range(step_start + 1, len(lines)):
                   line = lines[index]
-
                   if line.startswith("      - name:"):
                       break
-
                   if line.strip() == "run: |":
                       run_line = index
                       break
 
               if run_line is None:
                   raise SystemExit(
-                      f"run: | block not found for: {step_name}"
+                      f"run: | block not found for baseline step: {step_name}"
                   )
 
               block = []
-
               for index in range(run_line + 1, len(lines)):
                   line = lines[index]
-
                   if line.startswith("      - name:"):
                       break
-
                   block.append(line)
 
-              return textwrap.dedent(
-                  "\n".join(block)
-              )
+              return textwrap.dedent("\n".join(block))
 
-          for step_name in wanted_steps:
-              script = extract_run_block(
-                  step_name
-              )
+          for ordinal, step_name in enumerate(wanted_steps, start=1):
+              script = extract_run_block(step_name)
+              safe_name = re.sub(r"[^A-Za-z0-9]+", "-", step_name).strip("-")
+              script_path = Path(f"/tmp/fold7-baseline-{ordinal:02d}-{safe_name}.sh")
+              script_path.write_text("set -euo pipefail\n" + script + "\n")
 
-              script_path = Path(
-                  "/tmp/" +
-                  re.sub(
-                      r"[^A-Za-z0-9]+",
-                      "-",
-                      step_name,
-                  ).strip("-") +
-                  ".sh"
-              )
+              print(f"=== Replaying baseline step: {step_name} ===")
+              subprocess.run(["bash", str(script_path)], check=True)
 
-              script_path.write_text(
-                  "set -euo pipefail\n" +
-                  script +
-                  "\n"
-              )
-
-              print(
-                  f"Replaying proven step: {step_name}"
-              )
-
-              subprocess.run(
-                  [
-                      "bash",
-                      str(script_path),
-                  ],
-                  check=True,
-              )
+          print("=== Baseline generation complete ===")
           PY
 
-      - name: Fix Fold7 physical panel handoff
+      - name: Verify materialized source identity
+        shell: bash
         run: |
           set -euo pipefail
 
-          python3 <<'PY'
-          from pathlib import Path
-          import re
-
-          def load(path):
-              return Path(path).read_text()
-
-          def save(path, text):
-              Path(path).write_text(text)
-
-          def regex_replace_once(
-              path,
-              pattern,
-              replacement,
-              label,
-          ):
-              text = load(path)
-
-              updated, count = re.subn(
-                  pattern,
-                  replacement,
-                  text,
-                  count=1,
-                  flags=re.S,
-              )
-
-              if count != 1:
-                  raise SystemExit(
-                      f"{label}: expected exactly one match "
-                      f"in {path}; got {count}"
-                  )
-
-              save(
-                  path,
-                  updated,
-              )
-
-          service_path = (
-              "app/src/full/java/com/duoopen/overlay/"
-              "FoldOverlayService.kt"
-          )
-
-          regex_replace_once(
-              service_path,
-              r'''    private fun syncMirrorHost\(
-                  reason: String,
-              \) \{
-          .*?
-              \}
-
-              private fun safeToReleaseSecondaryPanel\(\): Boolean \{''',
-              '''    private fun syncMirrorHost(
-                  reason: String,
-              ) {
-                  if (!mirrorRequested) {
-                      return
-                  }
-
-                  val displays =
-                      displayManager.displays.toList()
-
-                  fun isActive(
-                      candidate: Display,
-                  ): Boolean =
-                      candidate.state != Display.STATE_OFF &&
-                          candidate.state != Display.STATE_UNKNOWN
-
-                  fun isInnerPanel(
-                      candidate: Display,
-                  ): Boolean {
-                      val mode =
-                          candidate.mode
-
-                      return mode.physicalWidth == 1968 &&
-                          mode.physicalHeight == 2184
-                  }
-
-                  fun isCoverPanel(
-                      candidate: Display,
-                  ): Boolean {
-                      val mode =
-                          candidate.mode
-
-                      return mode.physicalWidth == 1080 &&
-                          mode.physicalHeight == 2520
-                  }
-
-                  val inner =
-                      displays.firstOrNull(
-                          ::isInnerPanel
-                      )
-
-                  val cover =
-                      displays.firstOrNull(
-                          ::isCoverPanel
-                      )
-
-                  val activeInner =
-                      inner?.takeIf(
-                          ::isActive
-                      )
-
-                  val activeCover =
-                      cover?.takeIf(
-                          ::isActive
-                      )
-
-                  com.duoopen.debug.DuoDiagnostics.event(
-                      "live-mirror",
-                      "physical-resolve reason=$reason " +
-                          "innerLogical=${inner?.displayId} " +
-                          "innerMode=${inner?.mode?.physicalWidth}x" +
-                          "${inner?.mode?.physicalHeight} " +
-                          "innerState=${inner?.state} " +
-                          "coverLogical=${cover?.displayId} " +
-                          "coverMode=${cover?.mode?.physicalWidth}x" +
-                          "${cover?.mode?.physicalHeight} " +
-                          "coverState=${cover?.state} " +
-                          "defaultLogical=${Display.DEFAULT_DISPLAY} " +
-                          "hostLogical=${mirrorHost?.displayId} " +
-                          "hostUsable=${mirrorHost?.isUsable == true}",
-                  )
-
-                  if (activeCover == null) {
-                      _secondaryDisplayStatus.value =
-                          "Physical cover is transitioning; " +
-                              "retaining the continuity host."
-
-                      com.duoopen.debug.DuoDiagnostics.event(
-                          "live-mirror",
-                          "cover transition; host retained " +
-                              "reason=$reason " +
-                              "coverLogical=${cover?.displayId}",
-                      )
-
-                      return
-                  }
-
-                  if (activeInner == null) {
-                      _secondaryDisplayStatus.value =
-                          "Physical inner display is transitioning; " +
-                              "retaining the continuity host."
-
-                      com.duoopen.debug.DuoDiagnostics.event(
-                          "live-mirror",
-                          "inner transition; host retained " +
-                              "reason=$reason " +
-                              "innerLogical=${inner?.displayId}",
-                      )
-
-                      return
-                  }
-
-                  if (
-                      activeInner.displayId ==
-                          activeCover.displayId
-                  ) {
-                      _secondaryDisplayStatus.value =
-                          "Fold7 topology is remapping; " +
-                              "waiting for distinct panel routes."
-
-                      com.duoopen.debug.DuoDiagnostics.event(
-                          "live-mirror",
-                          "same-logical-id-after-physical-resolve " +
-                              "reason=$reason " +
-                              "logical=${activeCover.displayId}",
-                      )
-
-                      return
-                  }
-
-                  val current =
-                      mirrorHost
-
-                  if (
-                      current == null ||
-                      current.displayId != activeCover.displayId ||
-                      !current.isUsable
-                  ) {
-                      current?.detach()
-
-                      mirrorHost =
-                          DisplayMirrorHost(
-                              service = this,
-                              display = activeCover,
-                              scope = scope,
-                              onStatus = { message ->
-                                  _secondaryDisplayStatus.value =
-                                      message
-                              },
-                          ).also {
-                              it.attach()
-                          }
-
-                      com.duoopen.debug.DuoDiagnostics.event(
-                          "live-mirror",
-                          "physical cover host rebound " +
-                              "reason=$reason " +
-                              "innerLogical=${activeInner.displayId} " +
-                              "coverLogical=${activeCover.displayId} " +
-                              "coverIsDefault=" +
-                              (
-                                  activeCover.displayId ==
-                                      Display.DEFAULT_DISPLAY
-                              ),
-                      )
-
-                      return
-                  }
-
-                  current.refresh(
-                      "physical-stable:$reason"
-                  )
-              }
-
-              private fun safeToReleaseSecondaryPanel(): Boolean {''',
-              "FoldOverlayService physical Fold7 handoff",
-          )
-
-          gradle_path = Path(
-              "app/build.gradle.kts"
-          )
-
-          gradle = gradle_path.read_text()
-
-          if "versionCode = 18" not in gradle:
-              raise SystemExit(
-                  "Expected geometry-glass versionCode 18 was not found."
-              )
-
-          if (
-              'versionName = "1.3.13r-zfold7-geometry-glass"'
-              not in gradle
-          ):
-              raise SystemExit(
-                  "Expected geometry-glass versionName was not found."
-              )
-
-          gradle = gradle.replace(
-              "versionCode = 18",
-              "versionCode = 19",
-              1,
-          )
-
-          gradle = gradle.replace(
-              'versionName = "1.3.13r-zfold7-geometry-glass"',
-              'versionName = "1.3.15-zfold7-physical-handoff"',
-              1,
-          )
-
-          gradle_path.write_text(
-              gradle
-          )
-          PY
-
-      - name: Validate Fold7 physical handoff source
-        run: |
-          set -euo pipefail
-
+          GRADLE="app/build.gradle.kts"
           SERVICE="app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
           HOST="app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt"
-          GRADLE="app/build.gradle.kts"
+          PANEL="app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
+          SHADER="app/src/main/java/com/duoopen/fold/DuoShader.kt"
+
+          test -f "$GRADLE"
+          test -f "$SERVICE"
+          test -f "$HOST"
+          test -f "$PANEL"
+          test -f "$SHADER"
+
+          grep -F 'versionCode = 20' "$GRADLE"
+          grep -F 'versionName = "1.3.16-zfold7-motion-power"' "$GRADLE"
+
+          # Known 1.3.16 architecture markers.
+          grep -F 'COVER_WAKE_TRAVEL_DEG' "$SERVICE"
+          grep -F 'physical-resolve reason=' "$SERVICE"
+          grep -F 'mode.physicalWidth == INNER_WIDTH' "$HOST"
+          grep -F 'setGeometry' "$HOST"
+
+          # Guard the physical-panel rule that must survive all future work.
+          if grep -REn 'displayId[[:space:]]*==[[:space:]]*0.*inner|displayId[[:space:]]*==[[:space:]]*1.*cover' \
+              app/src/full/java app/src/main/java; then
+            echo "ERROR: found a direct logical-display-ID panel identity assumption."
+            exit 1
+          fi
 
           git diff --check
 
-          grep -F \
-            'physical-resolve reason=' \
-            "$SERVICE"
-
-          grep -F \
-            'physical cover host rebound' \
-            "$SERVICE"
-
-          grep -F \
-            'coverIsDefault=' \
-            "$SERVICE"
-
-          grep -F \
-            'mode.physicalWidth == INNER_WIDTH' \
-            "$HOST"
-
-          grep -F \
-            'mode.physicalHeight == INNER_HEIGHT' \
-            "$HOST"
-
-          grep -F \
-            '1.3.15-zfold7-physical-handoff' \
-            "$GRADLE"
-
-          if grep -F \
-            'coverIsNativePrimary' \
-            "$SERVICE"
-          then
-            echo \
-              "ERROR: old logical-default-display teardown path remains."
-            exit 1
-          fi
-
-          if grep -F \
-            'Native cover is primary; temporary geometry mirror released.' \
-            "$SERVICE"
-          then
-            echo \
-              "ERROR: old native-cover mirror teardown remains."
-            exit 1
-          fi
-
-          mkdir -p \
-            zfold7-artifacts
-
-          git diff > \
-            zfold7-artifacts/zfold7-physical-handoff.patch
-
-          git diff --stat
-
-
-      - name: Add motion-gated cover power hold
+      - name: Capture generated-source audit
+        shell: bash
         run: |
           set -euo pipefail
 
-          python3 <<'PY'
-          from pathlib import Path
-
-          def load(path):
-              return Path(path).read_text()
-
-          def save(path, text):
-              Path(path).write_text(text)
-
-          def replace_once(path, old, new, label):
-              text = load(path)
-              if old not in text:
-                  raise SystemExit(
-                      f"{label}: expected source not found in {path}"
-                  )
-              save(path, text.replace(old, new, 1))
-
-          def insert_before_once(path, marker, addition, label):
-              text = load(path)
-              if marker not in text:
-                  raise SystemExit(
-                      f"{label}: marker not found in {path}"
-                  )
-              save(path, text.replace(marker, addition + marker, 1))
-
-          protocol_path = (
-              "app/src/full/java/com/duoopen/shell/"
-              "ShellProtocol.kt"
-          )
-
-          replace_once(
-              protocol_path,
-              """    const val MIRROR_DISPLAY = 9
-          """,
-              """    const val MIRROR_DISPLAY = 9
-
-              /**
-               * Request an explicit power state for the current logical route
-               * to a physical display. Kept behind the Shizuku shell service
-               * because MANAGE_DISPLAYS is privileged.
-               */
-              const val REQUEST_DISPLAY_POWER = 10
-          """,
-              "ShellProtocol display power command",
-          )
-
-          shell_path = (
-              "app/src/full/java/com/duoopen/shell/"
-              "DuoShellService.kt"
-          )
-
-          insert_before_once(
-              shell_path,
-              """            else -> return super.onTransact(code, data, reply, flags)""",
-              """            ShellProtocol.REQUEST_DISPLAY_POWER -> {
-                          val displayId =
-                              data.readInt()
-
-                          val requestedState =
-                              data.readInt()
-
-                          val identity =
-                              clearCallingIdentity()
-
-                          val result =
-                              try {
-                                  val routeEnabled =
-                                      if (
-                                          requestedState ==
-                                              android.view.Display.STATE_ON
-                                      ) {
-                                          runCatching {
-                                              enableConnectedDisplayInternal(
-                                                  displayId
-                                              )
-                                          }.isSuccess
-                                      } else {
-                                          false
-                                      }
-
-                                  val powered =
-                                      requestDisplayPowerInternal(
-                                          displayId,
-                                          requestedState,
-                                      )
-
-                                  Bundle().apply {
-                                      putBoolean(
-                                          "ok",
-                                          powered,
-                                      )
-                                      putBoolean(
-                                          "routeEnabled",
-                                          routeEnabled,
-                                      )
-                                      putInt(
-                                          "displayId",
-                                          displayId,
-                                      )
-                                      putInt(
-                                          "requestedState",
-                                          requestedState,
-                                      )
-                                  }
-                              } catch (t: Throwable) {
-                                  var root: Throwable = t
-
-                                  while (root.cause != null) {
-                                      root =
-                                          root.cause!!
-                                  }
-
-                                  Bundle().apply {
-                                      putBoolean(
-                                          "ok",
-                                          false,
-                                      )
-                                      putInt(
-                                          "displayId",
-                                          displayId,
-                                      )
-                                      putInt(
-                                          "requestedState",
-                                          requestedState,
-                                      )
-                                      putString(
-                                          "error",
-                                          "${root.javaClass.simpleName}: ${root.message}",
-                                      )
-                                  }
-                              } finally {
-                                  restoreCallingIdentity(
-                                      identity
-                                  )
-                              }
-
-                          out.writeNoException()
-                          out.writeBundle(result)
-                      }
-
-          """,
-              "DuoShellService display power transaction",
-          )
-
-          insert_before_once(
-              shell_path,
-              """    // ---- capture -----------------------------------------------------------
-          """,
-              """    private fun displayManagerService(): Any =
-                  systemService(
-                      "display",
-                      "android.hardware.display.IDisplayManager\\$Stub",
-                  )
-
-              private fun enableConnectedDisplayInternal(
-                  displayId: Int,
-              ) {
-                  val dm =
-                      displayManagerService()
-
-                  Class.forName(
-                      "android.hardware.display.IDisplayManager"
-                  ).getMethod(
-                      "enableConnectedDisplay",
-                      Integer.TYPE,
-                  ).invoke(
-                      dm,
-                      displayId,
-                  )
-              }
-
-              private fun requestDisplayPowerInternal(
-                  displayId: Int,
-                  requestedState: Int,
-              ): Boolean {
-                  val dm =
-                      displayManagerService()
-
-                  val method =
-                      Class.forName(
-                          "android.hardware.display.IDisplayManager"
-                      ).getMethod(
-                          "requestDisplayPower",
-                          Integer.TYPE,
-                          Integer.TYPE,
-                      )
-
-                  return (
-                      method.invoke(
-                          dm,
-                          displayId,
-                          requestedState,
-                      ) as? Boolean
-                      ) == true
-              }
-
-          """,
-              "DuoShellService requestDisplayPower helper",
-          )
-
-          replace_once(
-              shell_path,
-              '        val target =\n            foldDisplays.firstOrNull { (id, _, _) ->\n                id != 0\n            }\n\n        if (target == null) {\n            return Bundle().apply {\n                putBoolean("ok", false)\n                putInt("targetDisplayId", -1)\n                putString(\n                    "error",\n                    "No non-zero Fold7 internal display was found.",\n                )\n',
-              """                  val target =
-                      foldDisplays.firstOrNull { (_, width, height) ->
-                          width == 1080 &&
-                              height == 2520
-                      }
-
-                  if (target == null) {
-                      return Bundle().apply {
-                          putBoolean("ok", false)
-                          putInt("targetDisplayId", -1)
-                          putString(
-                              "error",
-                              "The physical Fold7 cover route (1080x2520) was not found.",
-                          )
-          """,
-              "DuoShellService physical cover target",
-          )
-
-          replace_once(
-              shell_path,
-              '"cmd display disable-display $targetId"',
-              '"cmd display power-reset $targetId"',
-              "DuoShellService safe cover release",
-          )
-
-          replace_once(
-              shell_path,
-              '        val commandOutput =\n            runProbe(command)\n\n        Thread.sleep(600L)\n',
-              """                  val commandOutput =
-                      runProbe(command)
-
-                  val immediatePowerOn =
-                      if (enable) {
-                          Thread.sleep(40L)
-
-                          runCatching {
-                              requestDisplayPowerInternal(
-                                  targetId,
-                                  android.view.Display.STATE_ON,
-                              )
-                          }.getOrDefault(false)
-                      } else {
-                          false
-                      }
-
-                  Thread.sleep(600L)
-          """,
-              "DuoShellService immediate cover power assertion",
-          )
-
-          replace_once(
-              shell_path,
-              '            putBoolean("visibleAfter", visibleAfter)\n            putString("command", command)\n',
-              """                      putBoolean("visibleAfter", visibleAfter)
-                      putBoolean("immediatePowerOn", immediatePowerOn)
-                      putString("command", command)
-          """,
-              "DuoShellService immediate power telemetry",
-          )
-
-          bridge_path = (
-              "app/src/full/java/com/duoopen/shell/"
-              "ShizukuBridge.kt"
-          )
-
-          replace_once(
-              bridge_path,
-              """    fun stopDisplayMirror(): Bundle? =
-                  call(
-                      ShellProtocol.MIRROR_DISPLAY
-                  ) { parcel ->
-                      parcel.writeInt(0)
-                  }
-          """,
-              """    fun stopDisplayMirror(): Bundle? =
-                  call(
-                      ShellProtocol.MIRROR_DISPLAY
-                  ) { parcel ->
-                      parcel.writeInt(0)
-                  }
-
-              fun requestDisplayPower(
-                  displayId: Int,
-                  requestedState: Int,
-              ): Bundle? =
-                  call(
-                      ShellProtocol.REQUEST_DISPLAY_POWER
-                  ) { parcel ->
-                      parcel.writeInt(
-                          displayId
-                      )
-                      parcel.writeInt(
-                          requestedState
-                      )
-                  }
-          """,
-              "ShizukuBridge display power call",
-          )
-
-          service_path = (
-              "app/src/full/java/com/duoopen/overlay/"
-              "FoldOverlayService.kt"
-          )
-
-          replace_once(
-              service_path,
-              """    private var mirrorRequested =
-                  false
-
-              private var mirrorHost:
-                  DisplayMirrorHost? =
-                  null
-          """,
-              """    private var mirrorRequested =
-                  false
-
-              private var mirrorHost:
-                  DisplayMirrorHost? =
-                  null
-
-              private var continuityArmed =
-                  false
-
-              private var coverPowerHold =
-                  false
-
-              private var openReferenceAngle =
-                  Float.NaN
-
-              private var lastContinuityAngle =
-                  Float.NaN
-
-              private var lastPowerAssertMs =
-                  0L
-
-              private var powerAssertInFlight =
-                  false
-
-              private var lastCoverLogicalId =
-                  -1
-
-              private val coverPowerWatchdog =
-                  object : Runnable {
-                      override fun run() {
-                          if (!coverPowerHold) {
-                              return
-                          }
-
-                          assertCoverPower(
-                              reason =
-                                  "watchdog",
-                              force =
-                                  true,
-                          )
-
-                          handler.postDelayed(
-                              this,
-                              COVER_POWER_ASSERT_INTERVAL_MS,
-                          )
-                      }
-                  }
-          """,
-              "FoldOverlayService motion gate state",
-          )
-
-          insert_before_once(
-              service_path,
-              """    fun runSecondaryDisplayExperiment(
-          """,
-              """    private fun resolveCoverLogicalId(): Int {
-                  val cover =
-                      displayManager.displays
-                          .firstOrNull { candidate ->
-                              val mode =
-                                  candidate.mode
-
-                              mode.physicalWidth == 1080 &&
-                                  mode.physicalHeight == 2520
-                          }
-
-                  if (cover != null) {
-                      lastCoverLogicalId =
-                          cover.displayId
-                  }
-
-                  return lastCoverLogicalId
-              }
-
-              private fun assertCoverPower(
-                  reason: String,
-                  force: Boolean = false,
-              ) {
-                  if (!coverPowerHold) {
-                      return
-                  }
-
-                  val now =
-                      android.os.SystemClock.uptimeMillis()
-
-                  if (
-                      !force &&
-                      now - lastPowerAssertMs <
-                          COVER_POWER_ASSERT_INTERVAL_MS
-                  ) {
-                      return
-                  }
-
-                  if (powerAssertInFlight) {
-                      return
-                  }
-
-                  val target =
-                      resolveCoverLogicalId()
-
-                  if (target < 0) {
-                      com.duoopen.debug.DuoDiagnostics.event(
-                          "cover-power",
-                          "assert skipped reason=$reason; no cover logical route",
-                      )
-                      return
-                  }
-
-                  lastPowerAssertMs =
-                      now
-
-                  powerAssertInFlight =
-                      true
-
-                  scope.launch(
-                      Dispatchers.IO
-                  ) {
-                      val result =
-                          ShizukuBridge.requestDisplayPower(
-                              displayId =
-                                  target,
-                              requestedState =
-                                  Display.STATE_ON,
-                          )
-
-                      val ok =
-                          result?.getBoolean(
-                              "ok",
-                              false,
-                          ) == true
-
-                      val error =
-                          result?.getString(
-                              "error"
-                          )
-
-                      com.duoopen.debug.DuoDiagnostics.event(
-                          "cover-power",
-                          "assert-on reason=$reason target=$target " +
-                              "ok=$ok error=$error",
-                      )
-
-                      handler.post {
-                          powerAssertInFlight =
-                              false
-
-                          if (coverPowerHold) {
-                              scheduleMirrorRefresh(
-                                  "cover-power:$reason"
-                              )
-                          }
-                      }
-                  }
-              }
-
-              private fun releaseCoverPowerHold(
-                  reason: String,
-              ) {
-                  if (
-                      !coverPowerHold &&
-                      !mirrorRequested
-                  ) {
-                      openReferenceAngle =
-                          Float.NaN
-
-                      return
-                  }
-
-                  coverPowerHold =
-                      false
-
-                  mirrorRequested =
-                      false
-
-                  lastPowerAssertMs =
-                      0L
-
-                  handler.removeCallbacks(
-                      mirrorRefreshRunnable
-                  )
-
-                  handler.removeCallbacks(
-                      coverPowerWatchdog
-                  )
-
-                  mirrorHost?.detach()
-                  mirrorHost =
-                      null
-
-                  val releaseTarget =
-                      resolveCoverLogicalId()
-
-                  scope.launch(
-                      Dispatchers.IO
-                  ) {
-                      ShizukuBridge.stopDisplayMirror()
-
-                      if (releaseTarget >= 0) {
-                          ShizukuBridge.requestDisplayPower(
-                              displayId =
-                                  releaseTarget,
-                              requestedState =
-                                  Display.STATE_UNKNOWN,
-                          )
-                      }
-
-                      ShizukuBridge.resetSecondaryDisplay()
-                  }
-
-                  openReferenceAngle =
-                      Float.NaN
-
-                  _secondaryDisplayStatus.value =
-                      "Geometry continuity armed; cover returned to Samsung."
-
-                  com.duoopen.debug.DuoDiagnostics.event(
-                      "cover-power",
-                      "released reason=$reason target=$releaseTarget",
-                  )
-              }
-
-              private fun armGeometryContinuity() {
-                  continuityArmed =
-                      true
-
-                  coverPowerHold =
-                      false
-
-                  mirrorRequested =
-                      false
-
-                  openReferenceAngle =
-                      Float.NaN
-
-                  lastPowerAssertMs =
-                      0L
-
-                  powerAssertInFlight =
-                      false
-
-                  lastCoverLogicalId =
-                      -1
-
-                  handler.removeCallbacks(
-                      mirrorRefreshRunnable
-                  )
-
-                  handler.removeCallbacks(
-                      coverPowerWatchdog
-                  )
-
-                  handler.removeCallbacks(
-                      secondaryDisplaySafetyReset
-                  )
-
-                  mirrorHost?.detach()
-                  mirrorHost =
-                      null
-
-                  _secondaryDisplayStatus.value =
-                      "ARMED: cover stays off until 4° of deliberate closing travel."
-
-                  com.duoopen.debug.DuoDiagnostics.event(
-                      "cover-power",
-                      "armed triggerDeg=$COVER_WAKE_TRAVEL_DEG " +
-                          "releaseOpenDeg=$COVER_RELEASE_OPEN_DEG",
-                  )
-
-                  scope.launch(
-                      Dispatchers.IO
-                  ) {
-                      ShizukuBridge.stopDisplayMirror()
-                      ShizukuBridge.resetSecondaryDisplay()
-                  }
-              }
-
-              private fun handleContinuityHinge(
-                  angle: Float,
-              ) {
-                  val previous =
-                      lastContinuityAngle
-
-                  lastContinuityAngle =
-                      angle
-
-                  if (!continuityArmed) {
-                      return
-                  }
-
-                  if (openReferenceAngle.isNaN()) {
-                      openReferenceAngle =
-                          angle
-
-                      com.duoopen.debug.DuoDiagnostics.event(
-                          "cover-power",
-                          "open baseline=$angle",
-                      )
-                      return
-                  }
-
-                  if (!coverPowerHold) {
-                      if (
-                          angle >
-                          openReferenceAngle
-                      ) {
-                          openReferenceAngle =
-                              angle
-                      }
-
-                      val travel =
-                          openReferenceAngle -
-                              angle
-
-                      val closingSample =
-                          !previous.isNaN() &&
-                              previous - angle >=
-                                  COVER_SAMPLE_EPSILON_DEG
-
-                      if (
-                          travel >=
-                              COVER_WAKE_TRAVEL_DEG &&
-                          closingSample
-                      ) {
-                          coverPowerHold =
-                              true
-
-                          mirrorRequested =
-                              true
-
-                          _secondaryDisplayStatus.value =
-                              "4° fold detected: waking and holding the physical cover ON."
-
-                          com.duoopen.debug.DuoDiagnostics.event(
-                              "cover-power",
-                              "wake-trigger angle=$angle " +
-                                  "baseline=$openReferenceAngle " +
-                                  "travel=$travel",
-                          )
-
-                          runSecondaryDisplayExperiment(
-                              enable =
-                                  true,
-                              reason =
-                                  "4-degree-motion-trigger",
-                          )
-
-                          handler.removeCallbacks(
-                              coverPowerWatchdog
-                          )
-
-                          handler.postDelayed(
-                              coverPowerWatchdog,
-                              COVER_POWER_ASSERT_INTERVAL_MS,
-                          )
-
-                          scheduleMirrorRefresh(
-                              "4-degree-motion-trigger"
-                          )
-                      }
-
-                      return
-                  }
-
-                  assertCoverPower(
-                      reason =
-                          "hinge-${angle.toInt()}",
-                  )
-
-                  if (
-                      angle >=
-                          openReferenceAngle -
-                              COVER_RELEASE_OPEN_DEG
-                  ) {
-                      releaseCoverPowerHold(
-                          "returned-open"
-                      )
-                      return
-                  }
-
-                  val cover =
-                      displayManager.displays
-                          .firstOrNull { candidate ->
-                              val mode =
-                                  candidate.mode
-
-                              mode.physicalWidth == 1080 &&
-                                  mode.physicalHeight == 2520
-                          }
-
-                  val inner =
-                      displayManager.displays
-                          .firstOrNull { candidate ->
-                              val mode =
-                                  candidate.mode
-
-                              mode.physicalWidth == 1968 &&
-                                  mode.physicalHeight == 2184
-                          }
-
-                  val nativeCover =
-                      cover?.displayId ==
-                          Display.DEFAULT_DISPLAY &&
-                          cover.state !=
-                              Display.STATE_OFF &&
-                          cover.state !=
-                              Display.STATE_UNKNOWN &&
-                          (
-                              inner == null ||
-                                  inner.state ==
-                                      Display.STATE_OFF ||
-                                  inner.state ==
-                                      Display.STATE_UNKNOWN
-                              )
-
-                  if (
-                      nativeCover &&
-                      angle <=
-                          COVER_NATIVE_HANDOFF_MAX_DEG
-                  ) {
-                      releaseCoverPowerHold(
-                          "native-cover-handoff"
-                      )
-                  }
-              }
-
-          """,
-              "FoldOverlayService motion power controller",
-          )
-
-          replace_once(
-              service_path,
-              """    private fun onHinge(angle: Float) {
-                  // Mirror continuity and the original PanelEngine animations share the
-                  // same hinge clock. Mirroring must not suppress the inner/cover effect.
-                  if (mirrorRequested) {
-                      mirrorHost?.onHinge(
-                          angle
-                      )
-                  }
-
-                  for (e in engines.values.toList()) {
-                      e.onHinge(angle)
-                  }
-              }
-          """,
-              """    private fun onHinge(angle: Float) {
-                  handleContinuityHinge(
-                      angle
-                  )
-
-                  if (mirrorRequested) {
-                      mirrorHost?.onHinge(
-                          angle
-                      )
-                  }
-
-                  for (e in engines.values.toList()) {
-                      e.onHinge(angle)
-                  }
-              }
-          """,
-              "FoldOverlayService motion-gated hinge path",
-          )
-
-          replace_once(
-              service_path,
-              '        if (!enable) {\n            mirrorRequested =\n                false\n',
-              """                  if (!enable) {
-                      continuityArmed =
-                          false
-
-                      coverPowerHold =
-                          false
-
-                      openReferenceAngle =
-                          Float.NaN
-
-                      mirrorRequested =
-                          false
-          """,
-              "FoldOverlayService explicit stop resets gate",
-          )
-
-          replace_once(
-              service_path,
-              '            val target =\n                result.getInt(\n                    "targetDisplayId",\n                    -1,\n                )\n\n            val width =\n',
-              """                      val target =
-                          result.getInt(
-                              "targetDisplayId",
-                              -1,
-                          )
-
-                      if (
-                          enable &&
-                          target >= 0
-                      ) {
-                          lastCoverLogicalId =
-                              target
-
-                          if (coverPowerHold) {
-                              val powerResult =
-                                  ShizukuBridge.requestDisplayPower(
-                                      displayId =
-                                          target,
-                                      requestedState =
-                                          Display.STATE_ON,
-                                  )
-
-                              com.duoopen.debug.DuoDiagnostics.event(
-                                  "cover-power",
-                                  "post-enable target=$target " +
-                                      "ok=" +
-                                      (
-                                          powerResult?.getBoolean(
-                                              "ok",
-                                              false,
-                                          ) == true
-                                          ),
-                              )
-                          }
-                      }
-
-                      val width =
-          """,
-              "FoldOverlayService post-enable power hold",
-          )
-
-          replace_once(
-              service_path,
-              """            if (
-                          enable &&
-                          ok &&
-                          visibleAfter
-                      ) {
-                          handler.post {
-                              mirrorRequested =
-                                  true
-
-                              syncMirrorHost(
-                                  "secondary-enabled"
-                              )
-                          }
-
-                          handler.postDelayed(
-                              secondaryDisplaySafetyReset,
-                              SECONDARY_DISPLAY_SAFETY_RESET_MS,
-                          )
-                      }
-
-                      scheduleDisplayProbe(
-          """,
-              """            if (
-                          enable &&
-                          ok &&
-                          visibleAfter
-                      ) {
-                          handler.post {
-                              mirrorRequested =
-                                  true
-
-                              syncMirrorHost(
-                                  "secondary-enabled"
-                              )
-                          }
-                      }
-
-                      scheduleDisplayProbe(
-          """,
-              "FoldOverlayService remove 90-second motion shutdown",
-          )
-
-          replace_once(
-              service_path,
-              '            service.runSecondaryDisplayExperiment(\n                enable = enable,\n            )\n            return true\n',
-              """                      if (enable) {
-                          service.armGeometryContinuity()
-                      } else {
-                          service.runSecondaryDisplayExperiment(
-                              enable =
-                                  false,
-                              reason =
-                                  "user-stop",
-                          )
-                      }
-
-                      return true
-          """,
-              "FoldOverlayService UI arms instead of waking cover",
-          )
-
-          replace_once(
-              service_path,
-              """        private const val MIRROR_REBIND_DEBOUNCE_MS =
-                      80L
-          """,
-              """        private const val MIRROR_REBIND_DEBOUNCE_MS =
-                      80L
-
-                  private const val COVER_WAKE_TRAVEL_DEG =
-                      4.0f
-
-                  private const val COVER_SAMPLE_EPSILON_DEG =
-                      0.35f
-
-                  private const val COVER_POWER_ASSERT_INTERVAL_MS =
-                      100L
-
-                  private const val COVER_RELEASE_OPEN_DEG =
-                      1.5f
-
-                  private const val COVER_NATIVE_HANDOFF_MAX_DEG =
-                      12.0f
-          """,
-              "FoldOverlayService motion gate constants",
-          )
-
-          sheet_path = (
-              "app/src/main/java/com/duoopen/ui/"
-              "ControlSheet.kt"
-          )
-
-          replace_once(
-              sheet_path,
-              '"Start geometry continuity"',
-              '"Arm geometry continuity (4°)"',
-              "ControlSheet armed continuity label",
-          )
-
-          replace_once(
-              sheet_path,
-              """"Fold7 geometry continuity: Android's display mirror is mapped with an explicit " +
-                              "source rectangle selecting only the LEFT half of the inner display, then scaled to fill " +
-                              "the cover. The original fold animation continues to receive hinge updates at the same time, " +
-                              "so opening and folding back in reverse smoothly from the current hinge position.""",
-              """"Fold7 motion-gated continuity: while fully open the physical cover remains off. " +
-                              "After 4° of deliberate closing travel, Duo Open wakes the 1080×2520 cover, maps the LEFT " +
-                              "half of the inner display into it, and holds cover power through Samsung's topology transition. " +
-                              "Returning flat or reaching native closed-cover topology releases power control back to Samsung.""",
-              "ControlSheet motion power explanation",
-          )
-
-          gradle_path = Path(
-              "app/build.gradle.kts"
-          )
-
-          gradle = gradle_path.read_text()
-
-          if "versionCode = 19" not in gradle:
-              raise SystemExit(
-                  "Expected 1.3.15 versionCode 19 was not found."
-              )
-
-          if (
-              'versionName = "1.3.15-zfold7-physical-handoff"'
-              not in gradle
-          ):
-              raise SystemExit(
-                  "Expected 1.3.15 versionName was not found."
-              )
-
-          gradle = gradle.replace(
-              "versionCode = 19",
-              "versionCode = 20",
-              1,
-          )
-
-          gradle = gradle.replace(
-              'versionName = "1.3.15-zfold7-physical-handoff"',
-              'versionName = "1.3.16-zfold7-motion-power"',
-              1,
-          )
-
-          gradle_path.write_text(
-              gradle
-          )
-          PY
-
-      - name: Validate motion-gated cover power source
-        run: |
-          set -euo pipefail
-
-          PROTOCOL="app/src/full/java/com/duoopen/shell/ShellProtocol.kt"
-          SHELL="app/src/full/java/com/duoopen/shell/DuoShellService.kt"
-          BRIDGE="app/src/full/java/com/duoopen/shell/ShizukuBridge.kt"
-          SERVICE="app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
-          SHEET="app/src/main/java/com/duoopen/ui/ControlSheet.kt"
-          GRADLE="app/build.gradle.kts"
-
-          git diff --check
-
-          grep -F \
-            'REQUEST_DISPLAY_POWER = 10' \
-            "$PROTOCOL"
-
-          grep -F \
-            'requestDisplayPowerInternal' \
-            "$SHELL"
-
-          grep -F \
-            'The physical Fold7 cover route (1080x2520)' \
-            "$SHELL"
-
-          grep -F \
-            'fun requestDisplayPower(' \
-            "$BRIDGE"
-
-          grep -F \
-            'COVER_WAKE_TRAVEL_DEG' \
-            "$SERVICE"
-
-          grep -F \
-            '4.0f' \
-            "$SERVICE"
-
-          grep -F \
-            'COVER_POWER_ASSERT_INTERVAL_MS' \
-            "$SERVICE"
-
-          grep -F \
-            'Display.STATE_ON' \
-            "$SERVICE"
-
-          grep -F \
-            'Arm geometry continuity (4°)' \
-            "$SHEET"
-
-          grep -F \
-            '1.3.16-zfold7-motion-power' \
-            "$GRADLE"
-
-          grep -F \
-            'enableConnectedDisplayInternal' \
-            "$SHELL"
-
-          grep -F \
-            'coverPowerWatchdog' \
-            "$SERVICE"
-
-          if grep -F \
-            'COVER_WAKE_CONFIRM_MS' \
-            "$SERVICE"
-          then
-            echo "ERROR: delayed 4-degree trigger remains."
-            exit 1
-          fi
-
-          if grep -F \
-            '"cmd display disable-display $targetId"' \
-            "$SHELL"
-          then
-            echo "ERROR: unsafe cover disable path remains."
-            exit 1
-          fi
-
-          mkdir -p \
-            zfold7-artifacts
-
-          git diff > \
-            zfold7-artifacts/zfold7-motion-power.patch
-
-      - name: Compile, unit test, and build
+          mkdir -p zfold7-materialized
+
+          git diff --name-status -- \
+            app/build.gradle.kts \
+            app/src \
+            > zfold7-materialized/GENERATED-FILES-1.3.16.txt
+
+          git diff -- \
+            app/build.gradle.kts \
+            app/src \
+            > zfold7-materialized/GENERATED-SOURCE-1.3.16.patch
+
+          {
+            echo "Fold7 1.3.16 hot-path index"
+            echo "baseline=$BASELINE_SHA"
+            echo "version=$BASELINE_VERSION"
+            echo "versionCode=$BASELINE_VERSION_CODE"
+            echo
+            echo "--- capture / pacing / topology / rendering references ---"
+            grep -RInE \
+              'LIVE_INTERVAL_MS|LIVE_SHELL_SCALE|INITIAL_SHELL_SCALE|POLL_MS|postDelayed|Choreographer|ShizukuBridge\.capture|takeScreenshot|displayManager\.displays|values\.toList\(\)|SurfaceControl\.Transaction|setGeometry|applyTransactionOnDraw|mirrorDisplay|onHinge\(' \
+              app/src/full/java \
+              app/src/main/java \
+              || true
+          } > zfold7-materialized/HOTPATH-INDEX-1.3.16.txt
+
+          {
+            echo "Fold7 generated baseline inventory"
+            echo "baseline=$BASELINE_SHA"
+            echo "version=$BASELINE_VERSION"
+            echo "versionCode=$BASELINE_VERSION_CODE"
+            echo "innerPhysicalGeometry=1968x2184"
+            echo "coverPhysicalGeometry=1080x2520"
+            echo
+            echo "Generated/modified files relative to the checked-in baseline:"
+            cat zfold7-materialized/GENERATED-FILES-1.3.16.txt
+          } > zfold7-materialized/BASELINE-INFO-1.3.16.txt
+
+          tar -czf \
+            zfold7-materialized/DuoOpen-ZFold7-generated-source-1.3.16.tar.gz \
+            app/build.gradle.kts \
+            app/src
+
+      - name: Compile and run existing Full debug tests
+        shell: bash
         run: |
           set -euo pipefail
 
@@ -1547,12 +215,10 @@ jobs:
             assembleFullDebug \
             --stacktrace
 
-      - name: Prepare field-test APK
+      - name: Preserve rebuilt baseline APK
+        shell: bash
         run: |
           set -euo pipefail
-
-          mkdir -p \
-            zfold7-artifacts
 
           APK="$(
             find \
@@ -1563,53 +229,120 @@ jobs:
           )"
 
           if [ -z "$APK" ]; then
-            echo "Debug APK not found."
+            echo "Full debug APK not found."
             exit 1
           fi
 
-          OUTPUT_APK="zfold7-artifacts/DuoOpen-ZFold7-motion-power-1.3.16-debug.apk"
+          OUTPUT="zfold7-materialized/DuoOpen-ZFold7-1.3.16-materialized-debug.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" \
+            > zfold7-materialized/APK-SHA256-1.3.16.txt
 
-          cp \
-            "$APK" \
-            "$OUTPUT_APK"
+      - name: Write canonical generated-baseline note
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p docs
+
+          cat > docs/FOLD7-GENERATED-BASELINE.md <<'EOF'
+          # Samsung Galaxy Z Fold7 generated baseline
+
+          This branch materializes the source tree generated by the trusted Duo Open
+          `1.3.16-zfold7-motion-power` workflow from baseline commit
+          `1a8787c5727be47f40d77ca9258e1cadb56fa1a4`.
+
+          It exists so future engineering can work from ordinary source files instead
+          of repeatedly reasoning through the historical GitHub Actions patch stack.
+
+          ## Physically established target geometry
+
+          - Inner panel: `1968 x 2184`
+          - Cover panel: `1080 x 2520`
+          - Logical display IDs are not physical panel identities and may be remapped
+            by Samsung during a fold transition.
+
+          ## Preserved 1.3.16 architecture
+
+          - Live `SurfaceControl` display mirror.
+          - Explicit geometry mapping of the left pane of the inner panel to the cover.
+          - Existing glass/frost rendering architecture.
+          - Shizuku-assisted capture/mirroring.
+          - Existing 1.3.16 motion-gated cover-power behavior.
+
+          ## Important status
+
+          This branch is a source materialization only. It does not claim to improve
+          Fold7 performance or transition behavior. Any subsequent change must be
+          compiled/tested and then physically validated on the target Fold7 before it
+          is described as working hardware behavior.
+          EOF
+
+      - name: Create generated-source branch
+        shell: bash
+        env:
+          OUTPUT_BRANCH: ${{ inputs.output_branch }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$OUTPUT_BRANCH" ]; then
+            echo "output_branch cannot be empty"
+            exit 1
+          fi
+
+          if ! printf '%s' "$OUTPUT_BRANCH" | grep -Eq '^[A-Za-z0-9._/-]+$'; then
+            echo "output_branch contains unsupported characters: $OUTPUT_BRANCH"
+            exit 1
+          fi
+
+          git fetch origin --prune
+
+          if git ls-remote --exit-code --heads origin "refs/heads/$OUTPUT_BRANCH" >/dev/null 2>&1; then
+            echo "ERROR: remote branch already exists: $OUTPUT_BRANCH"
+            echo "Choose a different output_branch so this recovery workflow never overwrites prior work."
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git switch -c "$OUTPUT_BRANCH"
+
+          # Commit only the generated application source and its canonical note.
+          # Build outputs and temporary workflow artifacts remain Actions artifacts.
+          git add \
+            app/build.gradle.kts \
+            app/src \
+            docs/FOLD7-GENERATED-BASELINE.md
+
+          if git diff --cached --quiet; then
+            echo "ERROR: baseline replay produced no materialized source changes."
+            exit 1
+          fi
+
+          git commit -m "Materialize generated Fold7 1.3.16 baseline"
+          git push origin "HEAD:refs/heads/$OUTPUT_BRANCH"
+
+          MATERIALIZED_SHA="$(git rev-parse HEAD)"
 
           {
-            echo "commit=${GITHUB_SHA}"
-            echo "built=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "version=1.3.16-zfold7-motion-power"
-            echo "versionCode=20"
-            echo "target=Samsung Galaxy Z Fold7 SM-F966W"
-            echo "android=16"
-            echo "innerGeometry=1968x2184"
-            echo "coverGeometry=1080x2520"
-            echo "innerPhysicalId=local:4630946449689556883"
-            echo "innerPort=147"
-            echo "coverPhysicalId=local:4630946872173396372"
-            echo "coverPort=148"
-            echo "baseWorkflowCommit=fc41750970a5270274ea1f9ce6502921d40c2581"
-            echo "pass=4deg-motion-gate+cover-power-hold+physical-routing+logical-id-remap+setGeometry+89.5deg-glass+bidirectional-motion"
-            echo
+            echo "outputBranch=$OUTPUT_BRANCH"
+            echo "materializedCommit=$MATERIALIZED_SHA"
+            echo "baselineCommit=$BASELINE_SHA"
+          } | tee zfold7-materialized/MATERIALIZED-BRANCH.txt
 
-            sha256sum \
-              "$OUTPUT_APK"
-
-          } > \
-            zfold7-artifacts/BUILD-INFO-1.3.16.txt
-
-          cat \
-            zfold7-artifacts/BUILD-INFO-1.3.16.txt
-
-      - name: Upload field-test artifacts
+      - name: Upload reconstruction artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: DuoOpen-ZFold7-motion-power-1.3.16
+          name: DuoOpen-ZFold7-materialized-1.3.16
           path: |
-            zfold7-artifacts/DuoOpen-ZFold7-motion-power-1.3.16-debug.apk
-            zfold7-artifacts/zfold7-pane-container.patch
-            zfold7-artifacts/zfold7-geometry-continuity.patch
-            zfold7-artifacts/zfold7-geometry-continuity-revised.patch
-            zfold7-artifacts/zfold7-physical-handoff.patch
-            zfold7-artifacts/zfold7-motion-power.patch
-            zfold7-artifacts/BUILD-INFO-1.3.16.txt
+            zfold7-materialized/DuoOpen-ZFold7-generated-source-1.3.16.tar.gz
+            zfold7-materialized/DuoOpen-ZFold7-1.3.16-materialized-debug.apk
+            zfold7-materialized/APK-SHA256-1.3.16.txt
+            zfold7-materialized/BASELINE-INFO-1.3.16.txt
+            zfold7-materialized/GENERATED-FILES-1.3.16.txt
+            zfold7-materialized/GENERATED-SOURCE-1.3.16.patch
+            zfold7-materialized/HOTPATH-INDEX-1.3.16.txt
+            zfold7-materialized/MATERIALIZED-BRANCH.txt
           if-no-files-found: error
           retention-days: 30
