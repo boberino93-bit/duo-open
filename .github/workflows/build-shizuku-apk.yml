@@ -1,4 +1,4 @@
-name: Build Z Fold 7 Dual Power + OLED Idle Dim Fix 2
+name: Build Z Fold 7 Live Display Mirror Probe
 
 on:
   workflow_dispatch:
@@ -129,7 +129,7 @@ jobs:
               )
           PY
 
-      - name: Use disable-display and OLED idle dim
+      - name: Add live SurfaceControl display mirror probe
         run: |
           python3 <<'PY'
           from pathlib import Path
@@ -143,20 +143,14 @@ jobs:
           def replace_once(path, old, new, label):
               text = load(path)
               if old not in text:
-                  raise SystemExit(
-                      f"{label}: expected source not found in {path}"
-                  )
+                  raise SystemExit(f"{label}: expected source not found in {path}")
               save(path, text.replace(old, new, 1))
 
           def insert_before_once(path, marker, addition, label):
               text = load(path)
               if marker not in text:
-                  raise SystemExit(
-                      f"{label}: marker not found in {path}"
-                  )
+                  raise SystemExit(f"{label}: marker not found in {path}")
               save(path, text.replace(marker, addition + marker, 1))
-
-          # Shell protocol ---------------------------------------------------------
 
           protocol_path = (
               "app/src/full/java/com/duoopen/shell/"
@@ -165,19 +159,26 @@ jobs:
 
           replace_once(
               protocol_path,
-              """    const val ENABLE_SECONDARY_DISPLAY = 7
-              const val RESET_SECONDARY_DISPLAY = 8
-          """,
-              """    const val ENABLE_SECONDARY_DISPLAY = 7
-              const val RESET_SECONDARY_DISPLAY = 8
+              '''    const val RESET_SECONDARY_DISPLAY = 8
+          ''',
+              '''    const val RESET_SECONDARY_DISPLAY = 8
 
-              const val DIM_COVER_BRIGHTNESS = 9
-              const val RESTORE_COVER_BRIGHTNESS = 10
-          """,
-              "ShellProtocol brightness commands",
+              /**
+               * in:
+               *   boolean enable
+               *   if enable:
+               *     int sourceDisplayId
+               *     SurfaceControl destinationParent
+               *     int sourceWidth, sourceHeight
+               *     int destinationWidth, destinationHeight
+               *
+               * out:
+               *   Bundle{ok, error, sourceDisplayId, scale, x, y}
+               */
+              const val MIRROR_DISPLAY = 9
+          ''',
+              "ShellProtocol mirror command",
           )
-
-          # Shell service ----------------------------------------------------------
 
           shell_path = (
               "app/src/full/java/com/duoopen/shell/"
@@ -186,57 +187,95 @@ jobs:
 
           replace_once(
               shell_path,
-              """    private var captureApi: CaptureApi? = null
+              '''    private var captureApi: CaptureApi? = null
               private var reader: AngleReader? = null
-          """,
-              """    private var captureApi: CaptureApi? = null
+          ''',
+              '''    private var captureApi: CaptureApi? = null
               private var reader: AngleReader? = null
 
-              private var savedCoverBrightness: Float? =
-                  null
-          """,
-              "DuoShellService brightness state",
+              private var liveMirror: SurfaceControl? = null
+          ''',
+              "DuoShellService mirror state",
           )
 
           replace_once(
               shell_path,
-              """        if (code == SHIZUKU_DESTROY) {
+              '''        if (code == SHIZUKU_DESTROY) {
                       reader?.stop()
                       System.exit(0)
                       return true
-                  }""",
-              """        if (code == SHIZUKU_DESTROY) {
+                  }''',
+              '''        if (code == SHIZUKU_DESTROY) {
                       reader?.stop()
-
-                      runCatching {
-                          coverBrightnessCommand(
-                              dim = false
-                          )
-                      }
-
+                      stopLiveMirror()
                       System.exit(0)
                       return true
-                  }""",
-              "DuoShellService destroy restore",
+                  }''',
+              "DuoShellService mirror cleanup",
           )
 
           insert_before_once(
               shell_path,
-              """            else -> return super.onTransact(code, data, reply, flags)
-          """,
-              """            ShellProtocol.DIM_COVER_BRIGHTNESS -> {
+              '''            else -> return super.onTransact(code, data, reply, flags)''',
+              '''            ShellProtocol.MIRROR_DISPLAY -> {
+                          val enable = data.readInt() != 0
                           val identity = clearCallingIdentity()
 
                           val result = try {
-                              coverBrightnessCommand(
-                                  dim = true
-                              )
+                              if (!enable) {
+                                  stopLiveMirror()
+
+                                  Bundle().apply {
+                                      putBoolean("ok", true)
+                                      putBoolean("enabled", false)
+                                  }
+                              } else {
+                                  val sourceDisplayId = data.readInt()
+
+                                  val destinationParent =
+                                      data.readTypedObject(
+                                          SurfaceControl.CREATOR
+                                      ) ?: throw IllegalArgumentException(
+                                          "destinationParent"
+                                      )
+
+                                  val sourceWidth = data.readInt()
+                                  val sourceHeight = data.readInt()
+                                  val destinationWidth = data.readInt()
+                                  val destinationHeight = data.readInt()
+
+                                  try {
+                                      startLiveMirror(
+                                          sourceDisplayId =
+                                              sourceDisplayId,
+                                          destinationParent =
+                                              destinationParent,
+                                          sourceWidth =
+                                              sourceWidth,
+                                          sourceHeight =
+                                              sourceHeight,
+                                          destinationWidth =
+                                              destinationWidth,
+                                          destinationHeight =
+                                              destinationHeight,
+                                      )
+                                  } finally {
+                                      destinationParent.release()
+                                  }
+                              }
                           } catch (t: Throwable) {
+                              var root: Throwable = t
+
+                              while (root.cause != null) {
+                                  root = root.cause!!
+                              }
+
                               Bundle().apply {
                                   putBoolean("ok", false)
+                                  putBoolean("enabled", enable)
                                   putString(
                                       "error",
-                                      "${t.javaClass.simpleName}: ${t.message}",
+                                      "${root.javaClass.simpleName}: ${root.message}",
                                   )
                               }
                           } finally {
@@ -247,298 +286,212 @@ jobs:
                           out.writeBundle(result)
                       }
 
-                      ShellProtocol.RESTORE_COVER_BRIGHTNESS -> {
-                          val identity = clearCallingIdentity()
-
-                          val result = try {
-                              coverBrightnessCommand(
-                                  dim = false
-                              )
-                          } catch (t: Throwable) {
-                              Bundle().apply {
-                                  putBoolean("ok", false)
-                                  putString(
-                                      "error",
-                                      "${t.javaClass.simpleName}: ${t.message}",
-                                  )
-                              }
-                          } finally {
-                              restoreCallingIdentity(identity)
-                          }
-
-                          out.writeNoException()
-                          out.writeBundle(result)
-                      }
-
-          """,
-              "DuoShellService brightness transactions",
+          ''',
+              "DuoShellService mirror transaction",
           )
 
           replace_once(
               shell_path,
-              """        val command =
-                      if (enable) {
-                          "cmd display enable-display $targetId"
-                      } else {
-                          /*
-                           * Return control to Samsung instead of forcing the display off.
-                           */
-                          "cmd display power-reset $targetId"
-                      }
-
-                  val commandOutput =
-                      runProbe(command)
-          """,
-              """        if (!enable) {
-                      /*
-                       * Restore the exact brightness we saved before the display is
-                       * disabled. If Duo Open never dimmed the cover this is a no-op.
-                       */
-                      coverBrightnessCommand(
-                          dim = false
-                      )
-                  }
-
-                  val command =
-                      if (enable) {
-                          "cmd display enable-display $targetId"
-                      } else {
-                          /*
-                           * power-reset was proven to leave display 1 enabled.
-                           * Disable the logical secondary display instead.
-                           */
-                          "cmd display disable-display $targetId"
-                      }
-
-                  val commandOutput =
-                      runProbe(command)
-          """,
+              '"cmd display power-reset $targetId"',
+              '"cmd display disable-display $targetId"',
               "DuoShellService disable-display",
           )
 
           insert_before_once(
               shell_path,
-              """    // ---- capture -----------------------------------------------------------
-          """,
-              r"""    // ---- Fold7 cover OLED idle brightness ---------------------------------
+              '''    // ---- capture -----------------------------------------------------------
+          ''',
+              '''    // ---- live logical-display mirror ---------------------------------------
 
-              private fun activeCoverDisplayId(): Int? {
-                  val displays =
-                      runProbe(
-                          "cmd display get-displays"
-                      )
+              private fun stopLiveMirror() {
+                  val current =
+                      liveMirror
+                          ?: return
 
-                  val coverBlock =
-                      displays
-                          .split(
-                              Regex(
-                                  "(?=Display id \\d+:)"
-                              )
+                  liveMirror =
+                      null
+
+                  runCatching {
+                      SurfaceControl.Transaction().use { tx ->
+                          tx.reparent(
+                              current,
+                              null,
                           )
-                          .firstOrNull { block ->
-                              block.contains(
-                                  "real 1080 x 2520"
-                              )
-                          }
-                          ?: return null
+                          tx.apply()
+                      }
+                  }
 
-                  return Regex(
-                      "Display id (\\d+):"
-                  ).find(
-                      coverBlock
-                  )?.groupValues
-                      ?.getOrNull(1)
-                      ?.toIntOrNull()
+                  runCatching {
+                      current.release()
+                  }
               }
 
-              private fun probeSucceeded(
-                  output: String,
-              ): Boolean =
-                  output.startsWith(
-                      "exit=0\n"
-                  ) &&
-                      !output.contains(
-                          "Exception",
-                          ignoreCase = true,
-                      ) &&
-                      !output.contains(
-                          "not possible",
-                          ignoreCase = true,
+              private fun startLiveMirror(
+                  sourceDisplayId: Int,
+                  destinationParent: SurfaceControl,
+                  sourceWidth: Int,
+                  sourceHeight: Int,
+                  destinationWidth: Int,
+                  destinationHeight: Int,
+              ): Bundle {
+                  require(
+                      sourceWidth > 0 &&
+                          sourceHeight > 0 &&
+                          destinationWidth > 0 &&
+                          destinationHeight > 0
+                  ) {
+                      "invalid mirror geometry"
+                  }
+
+                  stopLiveMirror()
+
+                  val wm =
+                      systemService(
+                          "window",
+                          "android.view.IWindowManager\\$Stub",
                       )
 
-              private fun coverBrightnessCommand(
-                  dim: Boolean,
-              ): Bundle {
-                  val coverId =
-                      activeCoverDisplayId()
+                  val mirror =
+                      SurfaceControl()
 
-                  if (coverId == null) {
-                      return Bundle().apply {
-                          putBoolean("ok", false)
-                          putString(
-                              "error",
-                              "Active 1080x2520 Fold7 cover display not found.",
-                          )
+                  val mirrored =
+                      Class.forName(
+                          "android.view.IWindowManager"
+                      ).getMethod(
+                          "mirrorDisplay",
+                          Integer.TYPE,
+                          SurfaceControl::class.java,
+                      ).invoke(
+                          wm,
+                          sourceDisplayId,
+                          mirror,
+                      ) as? Boolean
+                          ?: false
+
+                  if (
+                      !mirrored ||
+                      !mirror.isValid
+                  ) {
+                      runCatching {
+                          mirror.release()
                       }
+
+                      throw IllegalStateException(
+                          "WindowManager mirrorDisplay($sourceDisplayId) returned no valid surface"
+                      )
                   }
 
-                  /*
-                   * Never dim logical display 0: when the phone is closed the cover is
-                   * the primary display and is the screen the user is actually using.
-                   */
-                  if (coverId == 0) {
-                      return Bundle().apply {
-                          putBoolean("ok", false)
-                          putInt(
-                              "coverDisplayId",
-                              coverId,
-                          )
-                          putString(
-                              "error",
-                              "Cover is primary; refusing to dim it.",
-                          )
-                      }
-                  }
+                  val scale =
+                      minOf(
+                          destinationWidth.toFloat() /
+                              sourceWidth.toFloat(),
+                          destinationHeight.toFloat() /
+                              sourceHeight.toFloat(),
+                      )
 
-                  if (dim) {
-                      val currentOutput =
-                          runProbe(
-                              "cmd display get-brightness --id $coverId"
-                          )
+                  val drawnWidth =
+                      sourceWidth *
+                          scale
 
-                      val current =
-                          Regex(
-                              "([0-9]+(?:\\.[0-9]+)?)"
-                          ).find(
-                              currentOutput.substringAfter(
-                                  '\n',
-                                  ""
-                              )
-                          )?.groupValues
-                              ?.getOrNull(1)
-                              ?.toFloatOrNull()
+                  val drawnHeight =
+                      sourceHeight *
+                          scale
 
-                      if (current == null) {
-                          return Bundle().apply {
-                              putBoolean("ok", false)
-                              putString(
-                                  "error",
-                                  "Could not parse cover brightness.",
-                              )
-                              putString(
-                                  "brightnessRead",
-                                  currentOutput,
-                              )
-                          }
-                      }
+                  val x =
+                      (
+                          destinationWidth -
+                              drawnWidth
+                          ) * 0.5f
 
-                      if (savedCoverBrightness == null) {
-                          savedCoverBrightness =
-                              current.coerceIn(
-                                  0f,
-                                  1f,
-                              )
-                      }
+                  val y =
+                      (
+                          destinationHeight -
+                              drawnHeight
+                          ) * 0.5f
 
-                      val commandOutput =
-                          runProbe(
-                              "cmd display set-brightness 0.01 --id $coverId"
+                  try {
+                      SurfaceControl.Transaction().use { tx ->
+                          tx.reparent(
+                              mirror,
+                              destinationParent,
                           )
 
-                      val ok =
-                          probeSucceeded(
-                              commandOutput
+                          tx.setScale(
+                              mirror,
+                              scale,
+                              scale,
                           )
 
-                      return Bundle().apply {
-                          putBoolean("ok", ok)
-                          putBoolean("dim", true)
-                          putInt(
-                              "coverDisplayId",
-                              coverId,
-                          )
-                          putFloat(
-                              "savedBrightness",
-                              savedCoverBrightness
-                                  ?: current,
-                          )
-                          putString(
-                              "commandOutput",
-                              commandOutput,
+                          tx.setPosition(
+                              mirror,
+                              x,
+                              y,
                           )
 
-                          if (!ok) {
-                              putString(
-                                  "error",
-                                  "Setting cover brightness to 1% failed.",
-                              )
-                          }
-                      }
-                  }
-
-                  val restore =
-                      savedCoverBrightness
-
-                  if (restore == null) {
-                      return Bundle().apply {
-                          putBoolean("ok", true)
-                          putBoolean("dim", false)
-                          putInt(
-                              "coverDisplayId",
-                              coverId,
+                          tx.setLayer(
+                              mirror,
+                              10_000,
                           )
-                          putBoolean(
-                              "nothingToRestore",
+
+                          tx.setVisibility(
+                              mirror,
                               true,
                           )
+
+                          tx.apply()
                       }
+                  } catch (t: Throwable) {
+                      runCatching {
+                          mirror.release()
+                      }
+
+                      throw t
                   }
 
-                  val commandOutput =
-                      runProbe(
-                          "cmd display set-brightness $restore --id $coverId"
-                      )
-
-                  val ok =
-                      probeSucceeded(
-                          commandOutput
-                      )
-
-                  if (ok) {
-                      savedCoverBrightness =
-                          null
-                  }
+                  liveMirror =
+                      mirror
 
                   return Bundle().apply {
-                      putBoolean("ok", ok)
-                      putBoolean("dim", false)
+                      putBoolean("ok", true)
+                      putBoolean("enabled", true)
                       putInt(
-                          "coverDisplayId",
-                          coverId,
+                          "sourceDisplayId",
+                          sourceDisplayId,
+                      )
+                      putInt(
+                          "sourceWidth",
+                          sourceWidth,
+                      )
+                      putInt(
+                          "sourceHeight",
+                          sourceHeight,
+                      )
+                      putInt(
+                          "destinationWidth",
+                          destinationWidth,
+                      )
+                      putInt(
+                          "destinationHeight",
+                          destinationHeight,
                       )
                       putFloat(
-                          "restoredBrightness",
-                          restore,
+                          "scale",
+                          scale,
                       )
-                      putString(
-                          "commandOutput",
-                          commandOutput,
+                      putFloat(
+                          "x",
+                          x,
                       )
-
-                      if (!ok) {
-                          putString(
-                              "error",
-                              "Restoring previous cover brightness failed.",
-                          )
-                      }
+                      putFloat(
+                          "y",
+                          y,
+                      )
                   }
               }
 
-          """,
-              "DuoShellService brightness implementation",
+          ''',
+              "DuoShellService live mirror implementation",
           )
-
-          # Shizuku bridge ---------------------------------------------------------
 
           bridge_path = (
               "app/src/full/java/com/duoopen/shell/"
@@ -547,323 +500,321 @@ jobs:
 
           replace_once(
               bridge_path,
-              """    fun resetSecondaryDisplay(): Bundle? =
+              '''    fun resetSecondaryDisplay(): Bundle? =
                   call(
                       ShellProtocol.RESET_SECONDARY_DISPLAY
                   )
-          """,
-              """    fun resetSecondaryDisplay(): Bundle? =
+          ''',
+              '''    fun resetSecondaryDisplay(): Bundle? =
                   call(
                       ShellProtocol.RESET_SECONDARY_DISPLAY
                   )
 
-              /** Blocking; call off the main thread. */
-              fun dimCoverBrightness(): Bundle? =
+              fun startDisplayMirror(
+                  sourceDisplayId: Int,
+                  destinationParent: SurfaceControl,
+                  sourceWidth: Int,
+                  sourceHeight: Int,
+                  destinationWidth: Int,
+                  destinationHeight: Int,
+              ): Bundle? =
                   call(
-                      ShellProtocol.DIM_COVER_BRIGHTNESS
-                  )
+                      ShellProtocol.MIRROR_DISPLAY
+                  ) { parcel ->
+                      parcel.writeInt(1)
+                      parcel.writeInt(
+                          sourceDisplayId
+                      )
+                      parcel.writeTypedObject(
+                          destinationParent,
+                          0,
+                      )
+                      parcel.writeInt(
+                          sourceWidth
+                      )
+                      parcel.writeInt(
+                          sourceHeight
+                      )
+                      parcel.writeInt(
+                          destinationWidth
+                      )
+                      parcel.writeInt(
+                          destinationHeight
+                      )
+                  }
 
-              /** Blocking; call off the main thread. */
-              fun restoreCoverBrightness(): Bundle? =
+              fun stopDisplayMirror(): Bundle? =
                   call(
-                      ShellProtocol.RESTORE_COVER_BRIGHTNESS
-                  )
-          """,
-              "ShizukuBridge brightness calls",
+                      ShellProtocol.MIRROR_DISPLAY
+                  ) { parcel ->
+                      parcel.writeInt(0)
+                  }
+          ''',
+              "ShizukuBridge live mirror calls",
           )
 
-          # Persistent service ----------------------------------------------------
-
-          service_path = (
+          mirror_host_path = Path(
               "app/src/full/java/com/duoopen/overlay/"
-              "FoldOverlayService.kt"
+              "DisplayMirrorHost.kt"
           )
 
-          replace_once(
-              service_path,
-              """import kotlinx.coroutines.flow.asStateFlow
-          """,
-              """import kotlinx.coroutines.flow.asStateFlow
-          import kotlin.math.abs
-          """,
-              "FoldOverlayService abs import",
-          )
+          mirror_host_path.write_text(
+              r'''package com.duoopen.overlay
 
-          insert_before_once(
-              service_path,
-              """    private val displayListener =
-          """,
-              """    private var dualPanelEnabledByUs =
-                  false
+          import android.accessibilityservice.AccessibilityService
+          import android.graphics.Color
+          import android.graphics.PixelFormat
+          import android.hardware.display.DisplayManager
+          import android.os.Handler
+          import android.view.Display
+          import android.view.Gravity
+          import android.view.SurfaceHolder
+          import android.view.SurfaceView
+          import android.view.WindowManager
+          import com.duoopen.shell.ShizukuBridge
+          import kotlinx.coroutines.CoroutineScope
+          import kotlinx.coroutines.Dispatchers
+          import kotlinx.coroutines.launch
 
-              private var coverBrightnessDesiredDim =
-                  false
+          class DisplayMirrorHost(
+              private val service: AccessibilityService,
+              val display: Display,
+              private val handler: Handler,
+              private val scope: CoroutineScope,
+              private val onStatus: (String) -> Unit,
+          ) {
+              val displayId: Int =
+                  display.displayId
 
-              private var coverBrightnessActualDim =
-                  false
-
-              private var coverBrightnessBusy =
-                  false
-
-              private var lastHingeAngleForCover =
-                  Float.NaN
-
-              private var dimmedAtHingeAngle =
-                  Float.NaN
-
-              private var coverIdleDimArmed =
-                  false
-
-              private val coverIdleDimRunnable =
-                  Runnable {
-                      if (
-                          dualPanelEnabledByUs &&
-                          coverIdleDimArmed &&
-                          !lastHingeAngleForCover.isNaN() &&
-                          lastHingeAngleForCover >=
-                              COVER_IDLE_DIM_REARM_ANGLE
-                      ) {
-                          dimmedAtHingeAngle =
-                              lastHingeAngleForCover
-
-                          requestCoverBrightness(
-                              dim = true,
-                              reason = "fully-open idle",
-                          )
-                      }
-                  }
-
-          """,
-              "FoldOverlayService brightness state",
-          )
-
-          replace_once(
-              service_path,
-              """        handler.removeCallbacks(
-                      secondaryDisplaySafetyReset
+              private val displayManager =
+                  service.getSystemService(
+                      DisplayManager::class.java
                   )
 
-                  angleFeed?.stop()
-          """,
-              """        handler.removeCallbacks(
-                      secondaryDisplaySafetyReset
-                  )
-
-                  handler.removeCallbacks(
-                      coverIdleDimRunnable
-                  )
-
-                  angleFeed?.stop()
-          """,
-              "FoldOverlayService brightness cleanup",
-          )
-
-          replace_once(
-              service_path,
-              """    private fun onHinge(angle: Float) {
-                  // DisplayManager callbacks own panel topology.
-                  // Keep the high-frequency hinge path render-only.
-                  for (e in engines.values.toList()) {
-                      e.onHinge(angle)
-                  }
-              }
-          """,
-              """    private fun onHinge(angle: Float) {
-                  lastHingeAngleForCover =
-                      angle
-
-                  if (dualPanelEnabledByUs) {
-                      handler.removeCallbacks(
-                          coverIdleDimRunnable
+              private val context =
+                  service
+                      .createDisplayContext(
+                          display
+                      )
+                      .createWindowContext(
+                          WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                          null,
                       )
 
-                      if (
-                          coverBrightnessActualDim &&
-                          (
-                              dimmedAtHingeAngle.isNaN() ||
-                                  abs(
-                                      angle -
-                                          dimmedAtHingeAngle
-                                  ) >=
-                                      COVER_HINGE_WAKE_DEGREES
-                              )
-                      ) {
-                          coverIdleDimArmed =
-                              false
+              private val windowManager =
+                  context.getSystemService(
+                      WindowManager::class.java
+                  )
 
-                          requestCoverBrightness(
-                              dim = false,
-                              reason = "hinge movement",
-                          )
-                      }
+              private var attached =
+                  false
 
-                      /*
-                       * Do not re-dim while partly folded. It only rearms once the phone
-                       * is essentially flat/open again and has remained settled.
-                       */
-                      if (
-                          angle >=
-                          COVER_IDLE_DIM_REARM_ANGLE
-                      ) {
-                          coverIdleDimArmed =
-                              true
+              private var generation =
+                  0
 
-                          handler.postDelayed(
-                              coverIdleDimRunnable,
-                              COVER_IDLE_DIM_DELAY_MS,
-                          )
-                      }
-                  }
+              private val surfaceView =
+                  SurfaceView(
+                      context
+                  ).apply {
+                      setBackgroundColor(
+                          Color.BLACK
+                      )
 
-                  // DisplayManager callbacks own panel topology.
-                  // Keep the high-frequency hinge path render-only.
-                  for (e in engines.values.toList()) {
-                      e.onHinge(angle)
-                  }
-              }
-          """,
-              "FoldOverlayService hinge brightness behavior",
-          )
+                      holder.setFormat(
+                          PixelFormat.OPAQUE
+                      )
 
-          replace_once(
-              service_path,
-              """        _secondaryDisplayStatus.value =
-                      if (enable) {
-                          "Requesting the inactive Fold7 panel from the persistent service…"
-                      } else {
-                          "Returning the secondary panel to Samsung's normal power state…"
-                      }
-          """,
-              """        _secondaryDisplayStatus.value =
-                      if (enable) {
-                          "Requesting the inactive Fold7 panel from the persistent service…"
-                      } else {
-                          "Disabling Duo Open's secondary Fold7 panel…"
-                      }
-          """,
-              "FoldOverlayService disable status",
-          )
+                      holder.addCallback(
+                          object :
+                              SurfaceHolder.Callback {
 
-          replace_once(
-              service_path,
-              '"Secondary panel power was returned to Samsung."',
-              """if (!visibleAfter) {
-                                  "Success: display $target is disabled and Samsung can " +
-                                      "resume normal one-panel fold behavior."
-                              } else {
-                                  "The disable command returned without an error, but " +
-                                      "display $target is still exposed."
-                              }""",
-              "FoldOverlayService disable result",
-          )
-
-          replace_once(
-              service_path,
-              """            if (enable && ok) {
-                          handler.postDelayed(
-                              secondaryDisplaySafetyReset,
-                              SECONDARY_DISPLAY_SAFETY_RESET_MS,
-                          )
-                      }
-
-                      scheduleDisplayProbe(
-          """,
-              """            handler.post {
-                          if (
-                              enable &&
-                              ok &&
-                              visibleAfter
-                          ) {
-                              dualPanelEnabledByUs =
-                                  true
-
-                              coverIdleDimArmed =
-                                  !lastHingeAngleForCover.isNaN() &&
-                                      lastHingeAngleForCover >=
-                                          COVER_IDLE_DIM_REARM_ANGLE
-
-                              if (coverIdleDimArmed) {
-                                  handler.removeCallbacks(
-                                      coverIdleDimRunnable
-                                  )
-
-                                  handler.postDelayed(
-                                      coverIdleDimRunnable,
-                                      COVER_IDLE_DIM_DELAY_MS,
+                              override fun surfaceCreated(
+                                  holder: SurfaceHolder,
+                              ) {
+                                  bind(
+                                      "surface-created"
                                   )
                               }
-                          } else if (
-                              !enable &&
-                              ok &&
-                              !visibleAfter
-                          ) {
-                              dualPanelEnabledByUs =
-                                  false
 
-                              coverIdleDimArmed =
-                                  false
+                              override fun surfaceChanged(
+                                  holder: SurfaceHolder,
+                                  format: Int,
+                                  width: Int,
+                                  height: Int,
+                              ) {
+                                  bind(
+                                      "surface-changed ${width}x$height"
+                                  )
+                              }
 
-                              coverBrightnessDesiredDim =
-                                  false
+                              override fun surfaceDestroyed(
+                                  holder: SurfaceHolder,
+                              ) {
+                                  generation++
 
-                              coverBrightnessActualDim =
-                                  false
+                                  onStatus(
+                                      "Mirror host surface was destroyed; waiting for the display to return."
+                                  )
 
-                              dimmedAtHingeAngle =
-                                  Float.NaN
-
-                              handler.removeCallbacks(
-                                  coverIdleDimRunnable
-                              )
+                                  DuoDiagnostics.event(
+                                      "live-mirror",
+                                      "host surface destroyed display=$displayId",
+                                  )
+                              }
                           }
-                      }
+                      )
+                  }
 
-                      if (
-                          enable &&
-                          ok &&
-                          visibleAfter
-                      ) {
-                          handler.postDelayed(
-                              secondaryDisplaySafetyReset,
-                              SECONDARY_DISPLAY_SAFETY_RESET_MS,
-                          )
-                      }
-
-                      scheduleDisplayProbe(
-          """,
-              "FoldOverlayService track dual ownership",
-          )
-
-          insert_before_once(
-              service_path,
-              """    private fun updateRunning() {
-          """,
-              """    private fun requestCoverBrightness(
-                  dim: Boolean,
-                  reason: String,
-              ) {
-                  coverBrightnessDesiredDim =
-                      dim
-
-                  if (coverBrightnessBusy) {
+              fun attach() {
+                  if (attached) {
+                      refresh(
+                          "already-attached"
+                      )
                       return
                   }
 
-                  coverBrightnessBusy =
-                      true
+                  val params =
+                      WindowManager.LayoutParams(
+                          WindowManager.LayoutParams.MATCH_PARENT,
+                          WindowManager.LayoutParams.MATCH_PARENT,
+                          WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                          WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                              WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                              WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                              WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                              WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                          PixelFormat.OPAQUE,
+                      ).apply {
+                          gravity =
+                              Gravity.TOP or
+                                  Gravity.START
+
+                          layoutInDisplayCutoutMode =
+                              WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+
+                          fitInsetsTypes =
+                              0
+
+                          title =
+                              "DuoOpenLiveMirror"
+                      }
+
+                  attached =
+                      runCatching {
+                          windowManager.addView(
+                              surfaceView,
+                              params,
+                          )
+                      }.onFailure { error ->
+                          onStatus(
+                              "Could not attach the live-mirror host: ${error.message}"
+                          )
+
+                          DuoDiagnostics.event(
+                              "live-mirror",
+                              "host add failed display=$displayId error=${error.javaClass.simpleName}:${error.message}",
+                          )
+                      }.isSuccess
+              }
+
+              fun refresh(
+                  reason: String,
+              ) {
+                  if (
+                      !attached ||
+                      !surfaceView.holder.surface.isValid
+                  ) {
+                      return
+                  }
+
+                  bind(
+                      reason
+                  )
+              }
+
+              private fun bind(
+                  reason: String,
+              ) {
+                  val parent =
+                      runCatching {
+                          surfaceView.surfaceControl
+                      }.getOrNull()
+
+                  if (
+                      parent == null ||
+                      !parent.isValid
+                  ) {
+                      onStatus(
+                          "Mirror host exists, but its SurfaceControl isn't ready yet."
+                      )
+                      return
+                  }
+
+                  val source =
+                      displayManager.getDisplay(
+                          Display.DEFAULT_DISPLAY
+                      )
+
+                  if (source == null) {
+                      onStatus(
+                          "Default display is unavailable; waiting to rebind mirror."
+                      )
+                      return
+                  }
+
+                  val sourceMode =
+                      source.mode
+
+                  val destinationMode =
+                      display.mode
+
+                  val sourceWidth =
+                      sourceMode.physicalWidth
+
+                  val sourceHeight =
+                      sourceMode.physicalHeight
+
+                  val destinationWidth =
+                      destinationMode.physicalWidth
+
+                  val destinationHeight =
+                      destinationMode.physicalHeight
+
+                  val localGeneration =
+                      ++generation
+
+                  onStatus(
+                      "Binding live display 0 " +
+                          "${sourceWidth}×$sourceHeight → " +
+                          "display $displayId " +
+                          "${destinationWidth}×$destinationHeight…"
+                  )
 
                   scope.launch(
                       Dispatchers.IO
                   ) {
-                      val requested =
-                          coverBrightnessDesiredDim
-
                       val result =
-                          if (requested) {
-                              ShizukuBridge.dimCoverBrightness()
-                          } else {
-                              ShizukuBridge.restoreCoverBrightness()
-                          }
+                          ShizukuBridge.startDisplayMirror(
+                              sourceDisplayId =
+                                  Display.DEFAULT_DISPLAY,
+                              destinationParent =
+                                  parent,
+                              sourceWidth =
+                                  sourceWidth,
+                              sourceHeight =
+                                  sourceHeight,
+                              destinationWidth =
+                                  destinationWidth,
+                              destinationHeight =
+                                  destinationHeight,
+                          )
+
+                      if (
+                          localGeneration !=
+                          generation
+                      ) {
+                          return@launch
+                      }
 
                       val ok =
                           result?.getBoolean(
@@ -876,74 +827,430 @@ jobs:
                               "error"
                           )
 
-                      val coverId =
-                          result?.getInt(
-                              "coverDisplayId",
-                              -1,
-                          ) ?: -1
+                      val scale =
+                          result?.getFloat(
+                              "scale",
+                              Float.NaN,
+                          ) ?: Float.NaN
 
                       DuoDiagnostics.event(
-                          "cover-brightness",
-                          "dim=$requested ok=$ok reason=$reason " +
-                              "coverId=$coverId error=$error",
+                          "live-mirror",
+                          "bind reason=$reason ok=$ok source=0 " +
+                              "sourceSize=${sourceWidth}x$sourceHeight " +
+                              "destination=$displayId " +
+                              "destinationSize=${destinationWidth}x$destinationHeight " +
+                              "scale=$scale error=$error",
                       )
 
                       handler.post {
-                          coverBrightnessBusy =
-                              false
-
-                          if (ok) {
-                              coverBrightnessActualDim =
-                                  requested
-                          } else if (!requested) {
-                              /*
-                               * Fail safe: do not keep automatically dimming if restoring
-                               * the user's previous cover brightness did not succeed.
-                               */
-                              coverBrightnessActualDim =
-                                  false
-
-                              coverIdleDimArmed =
-                                  false
-                          }
-
                           if (
-                              coverBrightnessDesiredDim !=
-                              coverBrightnessActualDim
+                              localGeneration !=
+                              generation
                           ) {
-                              requestCoverBrightness(
-                                  dim =
-                                      coverBrightnessDesiredDim,
-                                  reason =
-                                      "reconcile",
-                              )
+                              return@post
                           }
+
+                          onStatus(
+                              if (ok) {
+                                  "LIVE MIRROR ACTIVE: display 0 → display $displayId. " +
+                                      "Open another app and move the hinge."
+                              } else {
+                                  "Live mirror failed" +
+                                      (
+                                          error?.let {
+                                              ": $it"
+                                          } ?: "."
+                                          )
+                              }
+                          )
                       }
                   }
               }
 
-          """,
-              "FoldOverlayService brightness worker",
+              fun detach() {
+                  generation++
+
+                  if (!attached) {
+                      return
+                  }
+
+                  attached =
+                      false
+
+                  runCatching {
+                      windowManager.removeViewImmediate(
+                          surfaceView
+                      )
+                  }
+
+                  DuoDiagnostics.event(
+                      "live-mirror",
+                      "host detached display=$displayId",
+                  )
+              }
+          }
+          '''
+          )
+
+          service_path = (
+              "app/src/full/java/com/duoopen/overlay/"
+              "FoldOverlayService.kt"
           )
 
           insert_before_once(
               service_path,
-              """        /** How old a panel's last picture may be and still bridge the next fold. */
-          """,
-              """        private const val COVER_HINGE_WAKE_DEGREES =
-                      2.0f
+              '''    private val secondaryDisplaySafetyReset =
+          ''',
+              '''    private var mirrorRequested =
+                  false
 
-                  private const val COVER_IDLE_DIM_REARM_ANGLE =
-                      179.0f
+              private var mirrorHost:
+                  DisplayMirrorHost? =
+                  null
 
-                  private const val COVER_IDLE_DIM_DELAY_MS =
-                      700L
+              private val mirrorRefreshRunnable =
+                  Runnable {
+                      syncMirrorHost(
+                          "display-topology-change"
+                      )
+                  }
 
-          """,
-              "FoldOverlayService brightness constants",
+          ''',
+              "FoldOverlayService mirror state",
           )
 
-          # UI --------------------------------------------------------------------
+          replace_once(
+              service_path,
+              '''    private val secondaryDisplaySafetyReset =
+                  Runnable {
+                      runSecondaryDisplayExperiment(
+                          enable = false,
+                          reason = "90-second safety reset",
+                      )
+                  }
+          ''',
+              '''    private val secondaryDisplaySafetyReset =
+                  Runnable {
+                      if (safeToReleaseSecondaryPanel()) {
+                          runSecondaryDisplayExperiment(
+                              enable = false,
+                              reason = "90-second safety release",
+                          )
+                      } else {
+                          _secondaryDisplayStatus.value =
+                              "Safety release is waiting until the phone is fully open."
+
+                          handler.postDelayed(
+                              secondaryDisplaySafetyReset,
+                              2_000L,
+                          )
+                      }
+                  }
+          ''',
+              "FoldOverlayService safe safety reset",
+          )
+
+          insert_before_once(
+              service_path,
+              '''        handler.removeCallbacks(
+                      secondaryDisplaySafetyReset
+                  )
+          ''',
+              '''        handler.removeCallbacks(
+                      mirrorRefreshRunnable
+                  )
+
+                  mirrorRequested =
+                      false
+
+                  mirrorHost?.detach()
+                  mirrorHost =
+                      null
+
+                  runCatching {
+                      ShizukuBridge.stopDisplayMirror()
+                  }
+
+          ''',
+              "FoldOverlayService mirror destroy cleanup",
+          )
+
+          replace_once(
+              service_path,
+              '''    private fun onHinge(angle: Float) {
+                  // DisplayManager callbacks own panel topology.
+                  // Keep the high-frequency hinge path render-only.
+                  for (e in engines.values.toList()) {
+                      e.onHinge(angle)
+                  }
+              }
+          ''',
+              '''    private fun onHinge(angle: Float) {
+                  if (mirrorRequested) {
+                      return
+                  }
+
+                  // DisplayManager callbacks own panel topology.
+                  // Keep the high-frequency hinge path render-only.
+                  for (e in engines.values.toList()) {
+                      e.onHinge(angle)
+                  }
+              }
+          ''',
+              "FoldOverlayService isolate mirror from fold effect",
+          )
+
+          replace_once(
+              service_path,
+              '''        for (e in engines.values.toList()) e.evaluate()
+                  angleFeed?.onDisplayChanged()
+          ''',
+              '''        if (!mirrorRequested) {
+                      for (e in engines.values.toList()) {
+                          e.evaluate()
+                      }
+                  }
+
+                  angleFeed?.onDisplayChanged()
+
+                  scheduleMirrorRefresh(
+                      "sync-displays"
+                  )
+          ''',
+              "FoldOverlayService mirror refresh after topology sync",
+          )
+
+          replace_once(
+              service_path,
+              '''        DuoDiagnostics.event(
+                      "dual-shell",
+                      "begin enable=$enable reason=$reason",
+                  )
+
+                  scope.launch(Dispatchers.IO) {
+                      val result =
+                          if (enable) {
+                              ShizukuBridge.enableSecondaryDisplay()
+                          } else {
+                              ShizukuBridge.resetSecondaryDisplay()
+                          }
+          ''',
+              '''        DuoDiagnostics.event(
+                      "dual-shell",
+                      "begin enable=$enable reason=$reason",
+                  )
+
+                  if (!enable) {
+                      mirrorRequested =
+                          false
+
+                      handler.removeCallbacks(
+                          mirrorRefreshRunnable
+                      )
+
+                      mirrorHost?.detach()
+                      mirrorHost =
+                          null
+                  }
+
+                  scope.launch(Dispatchers.IO) {
+                      if (!enable) {
+                          ShizukuBridge.stopDisplayMirror()
+                      }
+
+                      val result =
+                          if (enable) {
+                              ShizukuBridge.enableSecondaryDisplay()
+                          } else {
+                              ShizukuBridge.resetSecondaryDisplay()
+                          }
+          ''',
+              "FoldOverlayService mirror release ordering",
+          )
+
+          replace_once(
+              service_path,
+              '''            if (enable && ok) {
+                          handler.postDelayed(
+                              secondaryDisplaySafetyReset,
+                              SECONDARY_DISPLAY_SAFETY_RESET_MS,
+                          )
+                      }
+
+                      scheduleDisplayProbe(
+          ''',
+              '''            if (
+                          enable &&
+                          ok &&
+                          visibleAfter
+                      ) {
+                          handler.post {
+                              mirrorRequested =
+                                  true
+
+                              syncMirrorHost(
+                                  "secondary-enabled"
+                              )
+                          }
+
+                          handler.postDelayed(
+                              secondaryDisplaySafetyReset,
+                              SECONDARY_DISPLAY_SAFETY_RESET_MS,
+                          )
+                      }
+
+                      scheduleDisplayProbe(
+          ''',
+              "FoldOverlayService start mirror after enable",
+          )
+
+          insert_before_once(
+              service_path,
+              '''    private fun updateRunning() {
+          ''',
+              '''    private fun scheduleMirrorRefresh(
+                  reason: String,
+              ) {
+                  if (!mirrorRequested) {
+                      return
+                  }
+
+                  handler.removeCallbacks(
+                      mirrorRefreshRunnable
+                  )
+
+                  handler.postDelayed(
+                      mirrorRefreshRunnable,
+                      MIRROR_REBIND_DEBOUNCE_MS,
+                  )
+
+                  DuoDiagnostics.event(
+                      "live-mirror",
+                      "refresh scheduled reason=$reason",
+                  )
+              }
+
+              private fun syncMirrorHost(
+                  reason: String,
+              ) {
+                  if (!mirrorRequested) {
+                      return
+                  }
+
+                  val secondary =
+                      displayManager.displays
+                          .firstOrNull { display ->
+                              display.displayId !=
+                                  Display.DEFAULT_DISPLAY &&
+                                  display.state !=
+                                      Display.STATE_OFF &&
+                                  display.state !=
+                                      Display.STATE_UNKNOWN
+                          }
+
+                  if (secondary == null) {
+                      _secondaryDisplayStatus.value =
+                          "Live mirror is waiting for Samsung's secondary logical display."
+
+                      mirrorHost?.detach()
+                      mirrorHost =
+                          null
+
+                      DuoDiagnostics.event(
+                          "live-mirror",
+                          "secondary logical display missing reason=$reason",
+                      )
+                      return
+                  }
+
+                  val current =
+                      mirrorHost
+
+                  if (
+                      current == null ||
+                      current.displayId !=
+                          secondary.displayId
+                  ) {
+                      current?.detach()
+
+                      mirrorHost =
+                          DisplayMirrorHost(
+                              service = this,
+                              display = secondary,
+                              handler = handler,
+                              scope = scope,
+                              onStatus = { message ->
+                                  _secondaryDisplayStatus.value =
+                                      message
+                              },
+                          ).also {
+                              it.attach()
+                          }
+
+                      DuoDiagnostics.event(
+                          "live-mirror",
+                          "host created reason=$reason display=${secondary.displayId} " +
+                              "mode=${secondary.mode.physicalWidth}x${secondary.mode.physicalHeight}",
+                      )
+                      return
+                  }
+
+                  current.refresh(
+                      reason
+                  )
+              }
+
+              private fun safeToReleaseSecondaryPanel(): Boolean {
+                  val primary =
+                      displayManager.getDisplay(
+                          Display.DEFAULT_DISPLAY
+                      ) ?: return false
+
+                  val primaryMode =
+                      primary.mode
+
+                  val innerIsPrimary =
+                      primaryMode.physicalWidth ==
+                          1968 &&
+                          primaryMode.physicalHeight ==
+                              2184
+
+                  val coverSecondary =
+                      displayManager.displays.any { display ->
+                          if (
+                              display.displayId ==
+                              Display.DEFAULT_DISPLAY
+                          ) {
+                              false
+                          } else {
+                              val mode =
+                                  display.mode
+
+                              mode.physicalWidth ==
+                                  1080 &&
+                                  mode.physicalHeight ==
+                                      2520
+                          }
+                      }
+
+                  return innerIsPrimary &&
+                      coverSecondary
+              }
+
+          ''',
+              "FoldOverlayService mirror orchestration",
+          )
+
+          insert_before_once(
+              service_path,
+              '''        /** How old a panel's last picture may be and still bridge the next fold. */
+          ''',
+              '''        private const val MIRROR_REBIND_DEBOUNCE_MS =
+                      80L
+
+          ''',
+              "FoldOverlayService mirror debounce constant",
+          )
 
           sheet_path = (
               "app/src/main/java/com/duoopen/ui/"
@@ -952,9 +1259,16 @@ jobs:
 
           replace_once(
               sheet_path,
+              '"Enable inactive panel"',
+              '"Start persistent mirror"',
+              "ControlSheet mirror start label",
+          )
+
+          replace_once(
+              sheet_path,
               '"Reset panel power"',
-              '"Disable secondary panel"',
-              "ControlSheet disable label",
+              '"Stop mirror / release"',
+              "ControlSheet mirror stop label",
           )
 
           replace_once(
@@ -962,15 +1276,14 @@ jobs:
               '''"One-shot Fold7 test. There is no retry loop. " +
                               "The secondary panel is automatically power-reset " +
                               "after 90 seconds."''',
-              '''"Field-test mode: enable-display keeps the second panel alive " +
-                              "without Samsung's presentation popup. While fully open and " +
-                              "idle, the cover OLED is set to 1%; its previous brightness " +
-                              "returns after about 2° of hinge movement. The secondary " +
-                              "display auto-disables after 90 seconds in this build."''',
-              "ControlSheet power explanation",
+              '''"Live-mirror probe: the running app on logical display 0 is mirrored " +
+                              "into the secondary Fold7 display. Open Chrome, Settings, the launcher, " +
+                              "or another ordinary app and move the hinge. The screenshot/frost effect " +
+                              "is disabled during this probe so we can isolate application continuity. " +
+                              "After 90 seconds the release waits until the phone is fully open before " +
+                              "disabling the secondary panel."''',
+              "ControlSheet mirror explanation",
           )
-
-          # Version ----------------------------------------------------------------
 
           gradle_path = Path(
               "app/build.gradle.kts"
@@ -980,7 +1293,7 @@ jobs:
 
           if "versionCode = 11" not in gradle:
               raise SystemExit(
-                  "Expected versionCode 11 was not found."
+                  "Expected service-dual versionCode 11 was not found."
               )
 
           if (
@@ -988,18 +1301,18 @@ jobs:
               not in gradle
           ):
               raise SystemExit(
-                  "Expected 1.3.7 versionName was not found."
+                  "Expected service-dual versionName was not found."
               )
 
           gradle = gradle.replace(
               "versionCode = 11",
-              "versionCode = 12",
+              "versionCode = 13",
               1,
           )
 
           gradle = gradle.replace(
               'versionName = "1.3.7-zfold7-service-dual-probe"',
-              'versionName = "1.3.8-zfold7-dual-power-oled"',
+              'versionName = "1.3.9-zfold7-live-mirror-probe"',
               1,
           )
 
@@ -1008,19 +1321,20 @@ jobs:
           )
           PY
 
-      - name: Validate dual power + OLED pass
+      - name: Validate live mirror pass
         run: |
           git diff --check
           git diff --stat
 
+          grep -R "MIRROR_DISPLAY = 9" app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+          grep -R "mirrorDisplay" app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -R "DisplayMirrorHost" app/src/full/java/com/duoopen/overlay
           grep -R "cmd display disable-display" app/src/full/java/com/duoopen/shell/DuoShellService.kt
-          grep -R "cmd display set-brightness 0.01" app/src/full/java/com/duoopen/shell/DuoShellService.kt
-          grep -R "COVER_HINGE_WAKE_DEGREES" app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
-          grep -R "Disable secondary panel" app/src/main/java/com/duoopen/ui/ControlSheet.kt
-          grep -R "1.3.8-zfold7-dual-power-oled" app/build.gradle.kts
+          grep -R "Start persistent mirror" app/src/main/java/com/duoopen/ui/ControlSheet.kt
+          grep -R "1.3.9-zfold7-live-mirror-probe" app/build.gradle.kts
 
           mkdir -p zfold7-artifacts
-          git diff > zfold7-artifacts/zfold7-dual-power-oled.patch
+          git diff > zfold7-artifacts/zfold7-live-mirror-probe.patch
 
       - name: Compile, unit test, and build
         run: |
@@ -1046,16 +1360,16 @@ jobs:
 
           cp \
             "$APK" \
-            zfold7-artifacts/DuoOpen-ZFold7-dual-power-oled-debug.apk
+            zfold7-artifacts/DuoOpen-ZFold7-live-mirror-probe-debug.apk
 
           {
             echo "commit=${GITHUB_SHA}"
             echo "built=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "pass=disable-display+cover-oled-idle-dim+angle-resilience"
+            echo "pass=service-dual+live-display-mirror+safe-disable+angle-resilience"
             echo
 
             sha256sum \
-              zfold7-artifacts/DuoOpen-ZFold7-dual-power-oled-debug.apk
+              zfold7-artifacts/DuoOpen-ZFold7-live-mirror-probe-debug.apk
 
           } > zfold7-artifacts/BUILD-INFO.txt
 
@@ -1064,10 +1378,10 @@ jobs:
       - name: Upload field-test artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: DuoOpen-ZFold7-dual-power-oled
+          name: DuoOpen-ZFold7-live-mirror-probe
           path: |
-            zfold7-artifacts/DuoOpen-ZFold7-dual-power-oled-debug.apk
-            zfold7-artifacts/zfold7-dual-power-oled.patch
+            zfold7-artifacts/DuoOpen-ZFold7-live-mirror-probe-debug.apk
+            zfold7-artifacts/zfold7-live-mirror-probe.patch
             zfold7-artifacts/BUILD-INFO.txt
           if-no-files-found: error
           retention-days: 30
