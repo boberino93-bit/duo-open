@@ -36,7 +36,6 @@ jobs:
           import subprocess
           import textwrap
 
-          # Known-good CI base: run 38 / 1.3.13r geometry-glass.
           previous_commit = "fc41750970a5270274ea1f9ce6502921d40c2581"
 
           previous_workflow = subprocess.check_output(
@@ -100,10 +99,14 @@ jobs:
 
                   block.append(line)
 
-              return textwrap.dedent("\n".join(block))
+              return textwrap.dedent(
+                  "\n".join(block)
+              )
 
           for step_name in wanted_steps:
-              script = extract_run_block(step_name)
+              script = extract_run_block(
+                  step_name
+              )
 
               script_path = Path(
                   "/tmp/" +
@@ -121,10 +124,15 @@ jobs:
                   "\n"
               )
 
-              print(f"Replaying proven step: {step_name}")
+              print(
+                  f"Replaying proven step: {step_name}"
+              )
 
               subprocess.run(
-                  ["bash", str(script_path)],
+                  [
+                      "bash",
+                      str(script_path),
+                  ],
                   check=True,
               )
           PY
@@ -142,19 +150,6 @@ jobs:
 
           def save(path, text):
               Path(path).write_text(text)
-
-          def replace_once(path, old, new, label):
-              text = load(path)
-
-              if old not in text:
-                  raise SystemExit(
-                      f"{label}: expected source not found in {path}"
-                  )
-
-              save(
-                  path,
-                  text.replace(old, new, 1),
-              )
 
           def regex_replace_once(
               path,
@@ -178,31 +173,15 @@ jobs:
                       f"in {path}; got {count}"
                   )
 
-              save(path, updated)
+              save(
+                  path,
+                  updated,
+              )
 
           service_path = (
               "app/src/full/java/com/duoopen/overlay/"
               "FoldOverlayService.kt"
           )
-
-          # -----------------------------------------------------------------
-          # Replace the logical-default-display topology assumption.
-          #
-          # Fold7 physical identities verified in field diagnostics:
-          #
-          # INNER
-          #   geometry: 1968 x 2184
-          #   unique id: local:4630946449689556883
-          #   physical port: 147
-          #
-          # COVER
-          #   geometry: 1080 x 2520
-          #   unique id: local:4630946872173396372
-          #   physical port: 148
-          #
-          # Samsung may remap Android logical display IDs while folding.
-          # Therefore Display.DEFAULT_DISPLAY is a role, not a panel identity.
-          # -----------------------------------------------------------------
 
           regex_replace_once(
               service_path,
@@ -223,57 +202,40 @@ jobs:
                   val displays =
                       displayManager.displays.toList()
 
-                  fun uniqueId(
-                      candidate: Display,
-                  ): String? =
-                      runCatching {
-                          candidate.javaClass
-                              .getDeclaredMethod(
-                                  "getUniqueId"
-                              )
-                              .apply {
-                                  isAccessible = true
-                              }
-                              .invoke(candidate)
-                              as? String
-                      }.getOrNull()
-
                   fun isActive(
                       candidate: Display,
                   ): Boolean =
                       candidate.state != Display.STATE_OFF &&
                           candidate.state != Display.STATE_UNKNOWN
 
-                  fun hasInnerGeometry(
+                  fun isInnerPanel(
                       candidate: Display,
                   ): Boolean {
-                      val mode = candidate.mode
+                      val mode =
+                          candidate.mode
 
-                      return mode.physicalWidth == FOLD7_INNER_WIDTH &&
-                          mode.physicalHeight == FOLD7_INNER_HEIGHT
+                      return mode.physicalWidth == 1968 &&
+                          mode.physicalHeight == 2184
                   }
 
-                  fun hasCoverGeometry(
+                  fun isCoverPanel(
                       candidate: Display,
                   ): Boolean {
-                      val mode = candidate.mode
+                      val mode =
+                          candidate.mode
 
-                      return mode.physicalWidth == FOLD7_COVER_WIDTH &&
-                          mode.physicalHeight == FOLD7_COVER_HEIGHT
+                      return mode.physicalWidth == 1080 &&
+                          mode.physicalHeight == 2520
                   }
 
                   val inner =
-                      displays.firstOrNull { candidate ->
-                          uniqueId(candidate) == FOLD7_INNER_UNIQUE_ID
-                      } ?: displays.firstOrNull(
-                          ::hasInnerGeometry
+                      displays.firstOrNull(
+                          ::isInnerPanel
                       )
 
                   val cover =
-                      displays.firstOrNull { candidate ->
-                          uniqueId(candidate) == FOLD7_COVER_UNIQUE_ID
-                      } ?: displays.firstOrNull(
-                          ::hasCoverGeometry
+                      displays.firstOrNull(
+                          ::isCoverPanel
                       )
 
                   val activeInner =
@@ -289,33 +251,29 @@ jobs:
                   com.duoopen.debug.DuoDiagnostics.event(
                       "live-mirror",
                       "physical-resolve reason=$reason " +
-                          "inner=${inner?.displayId}:" +
-                          "${inner?.let(::uniqueId)}:" +
-                          "${inner?.state} " +
-                          "cover=${cover?.displayId}:" +
-                          "${cover?.let(::uniqueId)}:" +
-                          "${cover?.state} " +
+                          "innerLogical=${inner?.displayId} " +
+                          "innerMode=${inner?.mode?.physicalWidth}x" +
+                          "${inner?.mode?.physicalHeight} " +
+                          "innerState=${inner?.state} " +
+                          "coverLogical=${cover?.displayId} " +
+                          "coverMode=${cover?.mode?.physicalWidth}x" +
+                          "${cover?.mode?.physicalHeight} " +
+                          "coverState=${cover?.state} " +
                           "defaultLogical=${Display.DEFAULT_DISPLAY} " +
-                          "host=${mirrorHost?.displayId} " +
-                          "usable=${mirrorHost?.isUsable == true}",
+                          "hostLogical=${mirrorHost?.displayId} " +
+                          "hostUsable=${mirrorHost?.isUsable == true}",
                   )
 
-                  /*
-                   * A missing/inactive panel can be a transient state while
-                   * Samsung is remapping logical displays. Do not destroy a
-                   * working host merely because a DisplayManager callback
-                   * arrived in the middle of that transition.
-                   */
                   if (activeCover == null) {
                       _secondaryDisplayStatus.value =
-                          "Cover topology is transitioning; " +
+                          "Physical cover is transitioning; " +
                               "retaining the continuity host."
 
                       com.duoopen.debug.DuoDiagnostics.event(
                           "live-mirror",
-                          "physical cover unavailable; host retained " +
+                          "cover transition; host retained " +
                               "reason=$reason " +
-                              "knownCover=${cover?.displayId}",
+                              "coverLogical=${cover?.displayId}",
                       )
 
                       return
@@ -323,14 +281,14 @@ jobs:
 
                   if (activeInner == null) {
                       _secondaryDisplayStatus.value =
-                          "Inner topology is transitioning; " +
+                          "Physical inner display is transitioning; " +
                               "retaining the continuity host."
 
                       com.duoopen.debug.DuoDiagnostics.event(
                           "live-mirror",
-                          "physical inner unavailable; host retained " +
+                          "inner transition; host retained " +
                               "reason=$reason " +
-                              "knownInner=${inner?.displayId}",
+                              "innerLogical=${inner?.displayId}",
                       )
 
                       return
@@ -341,14 +299,14 @@ jobs:
                           activeCover.displayId
                   ) {
                       _secondaryDisplayStatus.value =
-                          "Fold7 panel identities temporarily share one " +
-                              "logical display; waiting for remap."
+                          "Fold7 topology is remapping; " +
+                              "waiting for distinct panel routes."
 
                       com.duoopen.debug.DuoDiagnostics.event(
                           "live-mirror",
                           "same-logical-id-after-physical-resolve " +
                               "reason=$reason " +
-                              "id=${activeCover.displayId}",
+                              "logical=${activeCover.displayId}",
                       )
 
                       return
@@ -357,12 +315,6 @@ jobs:
                   val current =
                       mirrorHost
 
-                  /*
-                   * Important: activeCover.displayId is allowed to be
-                   * Display.DEFAULT_DISPLAY. If Samsung remaps the physical
-                   * cover to logical display 0, rebuild the host on that new
-                   * logical Display object instead of tearing the mirror down.
-                   */
                   if (
                       current == null ||
                       current.displayId != activeCover.displayId ||
@@ -387,10 +339,8 @@ jobs:
                           "live-mirror",
                           "physical cover host rebound " +
                               "reason=$reason " +
-                              "coverLogical=${activeCover.displayId} " +
-                              "coverUnique=${uniqueId(activeCover)} " +
                               "innerLogical=${activeInner.displayId} " +
-                              "innerUnique=${uniqueId(activeInner)} " +
+                              "coverLogical=${activeCover.displayId} " +
                               "coverIsDefault=" +
                               (
                                   activeCover.displayId ==
@@ -409,121 +359,6 @@ jobs:
               private fun safeToReleaseSecondaryPanel(): Boolean {''',
               "FoldOverlayService physical Fold7 handoff",
           )
-
-          # -----------------------------------------------------------------
-          # Add Fold7 physical constants to the service.
-          # These are never logical display IDs.
-          # -----------------------------------------------------------------
-
-          regex_replace_once(
-              service_path,
-              r'''    companion object \{''',
-              '''    companion object {
-                  const val FOLD7_INNER_WIDTH = 1968
-                  const val FOLD7_INNER_HEIGHT = 2184
-                  const val FOLD7_COVER_WIDTH = 1080
-                  const val FOLD7_COVER_HEIGHT = 2520
-
-                  const val FOLD7_INNER_UNIQUE_ID =
-                      "local:4630946449689556883"
-
-                  const val FOLD7_COVER_UNIQUE_ID =
-                      "local:4630946872173396372"
-          ''',
-              "FoldOverlayService physical constants",
-          )
-
-          mirror_path = (
-              "app/src/full/java/com/duoopen/overlay/"
-              "DisplayMirrorHost.kt"
-          )
-
-          # -----------------------------------------------------------------
-          # Resolve the mirror source by physical inner-panel identity first.
-          # getUniqueId() is hidden/Test API, so reflection is best-effort.
-          # If Samsung/hidden-API enforcement rejects reflection, the known
-          # Fold7 physical geometry remains the deterministic fallback.
-          # -----------------------------------------------------------------
-
-          regex_replace_once(
-              mirror_path,
-              r'''              private fun findInnerDisplay\(\): Display\? =
-                  displayManager\.displays
-                      \.firstOrNull \{ candidate ->
-          .*?
-                      \}
-
-              private fun bind\(reason: String\) \{''',
-              '''              private fun findInnerDisplay(): Display? {
-                  val displays =
-                      displayManager.displays.toList()
-
-                  fun uniqueId(
-                      candidate: Display,
-                  ): String? =
-                      runCatching {
-                          candidate.javaClass
-                              .getDeclaredMethod(
-                                  "getUniqueId"
-                              )
-                              .apply {
-                                  isAccessible = true
-                              }
-                              .invoke(candidate)
-                              as? String
-                      }.getOrNull()
-
-                  fun isActive(
-                      candidate: Display,
-                  ): Boolean =
-                      candidate.state != Display.STATE_OFF &&
-                          candidate.state != Display.STATE_UNKNOWN
-
-                  val exact =
-                      displays.firstOrNull { candidate ->
-                          isActive(candidate) &&
-                              uniqueId(candidate) == INNER_UNIQUE_ID
-                      }
-
-                  if (exact != null) {
-                      return exact
-                  }
-
-                  return displays.firstOrNull { candidate ->
-                      if (!isActive(candidate)) {
-                          false
-                      } else {
-                          val mode = candidate.mode
-
-                          mode.physicalWidth == INNER_WIDTH &&
-                              mode.physicalHeight == INNER_HEIGHT
-                      }
-                  }
-              }
-
-              private fun bind(reason: String) {''',
-              "DisplayMirrorHost physical inner resolution",
-          )
-
-          replace_once(
-              mirror_path,
-              '''              private companion object {
-                  const val INNER_WIDTH = 1968
-                  const val INNER_HEIGHT = 2184
-              }''',
-              '''              private companion object {
-                  const val INNER_WIDTH = 1968
-                  const val INNER_HEIGHT = 2184
-
-                  const val INNER_UNIQUE_ID =
-                      "local:4630946449689556883"
-              }''',
-              "DisplayMirrorHost physical inner constant",
-          )
-
-          # -----------------------------------------------------------------
-          # Version this isolated physical-handoff build.
-          # -----------------------------------------------------------------
 
           gradle_path = Path(
               "app/build.gradle.kts"
@@ -565,18 +400,14 @@ jobs:
         run: |
           set -euo pipefail
 
-          git diff --check
-
           SERVICE="app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
           HOST="app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt"
           GRADLE="app/build.gradle.kts"
 
-          grep -F \
-            'local:4630946449689556883' \
-            "$SERVICE"
+          git diff --check
 
           grep -F \
-            'local:4630946872173396372' \
+            'physical-resolve reason=' \
             "$SERVICE"
 
           grep -F \
@@ -588,21 +419,23 @@ jobs:
             "$SERVICE"
 
           grep -F \
-            'INNER_UNIQUE_ID' \
+            'mode.physicalWidth == INNER_WIDTH' \
+            "$HOST"
+
+          grep -F \
+            'mode.physicalHeight == INNER_HEIGHT' \
             "$HOST"
 
           grep -F \
             '1.3.15-zfold7-physical-handoff' \
             "$GRADLE"
 
-          # Regression guard: the previous build explicitly destroyed the
-          # mirror when the physical cover became Android's default display.
           if grep -F \
             'coverIsNativePrimary' \
             "$SERVICE"
           then
             echo \
-              'ERROR: old logical-default-display teardown path remains.'
+              "ERROR: old logical-default-display teardown path remains."
             exit 1
           fi
 
@@ -611,7 +444,7 @@ jobs:
             "$SERVICE"
           then
             echo \
-              'ERROR: old native-cover release behavior remains.'
+              "ERROR: old native-cover mirror teardown remains."
             exit 1
           fi
 
@@ -672,7 +505,7 @@ jobs:
             echo "coverPhysicalId=local:4630946872173396372"
             echo "coverPort=148"
             echo "baseWorkflowCommit=fc41750970a5270274ea1f9ce6502921d40c2581"
-            echo "pass=physical-panel-identity+logical-id-remap+geometry-continuity+89.5deg-glass+bidirectional-motion"
+            echo "pass=geometry-physical-routing+logical-id-remap+setGeometry+89.5deg-glass+bidirectional-motion"
             echo
 
             sha256sum \
