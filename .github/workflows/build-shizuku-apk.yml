@@ -1,4 +1,4 @@
-name: Build Z Fold 7 Service-Owned Dual Screen Probe
+name: Build Z Fold 7 Service-Owned Dual Screen Probe Fix
 
 on:
   workflow_dispatch:
@@ -669,7 +669,25 @@ jobs:
                   ),
               )
 
-          # 1. Add two explicit Shizuku transactions.
+          def insert_before_once(path, marker, addition, label):
+              text = load(path)
+              if marker not in text:
+                  raise SystemExit(
+                      f"{label}: marker not found in {path}"
+                  )
+              save(
+                  path,
+                  text.replace(
+                      marker,
+                      addition + marker,
+                      1,
+                  ),
+              )
+
+          # ------------------------------------------------------------------
+          # Shizuku protocol and shell service.
+          # ------------------------------------------------------------------
+
           protocol_path = (
               "app/src/full/java/com/duoopen/shell/"
               "ShellProtocol.kt"
@@ -678,18 +696,14 @@ jobs:
           replace_once(
               protocol_path,
               """    const val DISPLAY_PROBE = 6
-
-              /** callback: float angle, long uptimeMs */""",
+          """,
               """    const val DISPLAY_PROBE = 6
 
-              /**
-               * One-shot Fold7 service-owned display experiment.
-               */
+              /** One-shot Fold7 service-owned secondary-panel experiment. */
               const val ENABLE_SECONDARY_DISPLAY = 7
               const val RESET_SECONDARY_DISPLAY = 8
-
-              /** callback: float angle, long uptimeMs */""",
-              "ShellProtocol secondary display commands",
+          """,
+              "ShellProtocol display commands",
           )
 
           shell_path = (
@@ -709,26 +723,18 @@ jobs:
                               )
                           } catch (t: Throwable) {
                               Bundle().apply {
-                                  putBoolean(
-                                      "ok",
-                                      false,
-                                  )
-
+                                  putBoolean("ok", false)
                                   putString(
                                       "error",
                                       "${t.javaClass.simpleName}: ${t.message}",
                                   )
                               }
                           } finally {
-                              restoreCallingIdentity(
-                                  identity
-                              )
+                              restoreCallingIdentity(identity)
                           }
 
                           out.writeNoException()
-                          out.writeBundle(
-                              result
-                          )
+                          out.writeBundle(result)
                       }
 
                       ShellProtocol.RESET_SECONDARY_DISPLAY -> {
@@ -740,33 +746,25 @@ jobs:
                               )
                           } catch (t: Throwable) {
                               Bundle().apply {
-                                  putBoolean(
-                                      "ok",
-                                      false,
-                                  )
-
+                                  putBoolean("ok", false)
                                   putString(
                                       "error",
                                       "${t.javaClass.simpleName}: ${t.message}",
                                   )
                               }
                           } finally {
-                              restoreCallingIdentity(
-                                  identity
-                              )
+                              restoreCallingIdentity(identity)
                           }
 
                           out.writeNoException()
-                          out.writeBundle(
-                              result
-                          )
+                          out.writeBundle(result)
                       }
 
                       else -> return super.onTransact(code, data, reply, flags)""",
-              "DuoShellService secondary display transactions",
+              "DuoShellService display transactions",
           )
 
-          replace_once(
+          insert_before_once(
               shell_path,
               """    // ---- capture -----------------------------------------------------------
           """,
@@ -775,7 +773,6 @@ jobs:
               private fun secondaryDisplayCommand(
                   enable: Boolean,
               ): Bundle {
-
                   val windowDisplays =
                       runProbe(
                           "dumpsys window displays | " +
@@ -785,13 +782,10 @@ jobs:
                   val foldDisplays =
                       Regex(
                           "Display: mDisplayId=(\\\\d+).*?init=(\\\\d+)x(\\\\d+)",
-                          setOf(
-                              RegexOption.DOT_MATCHES_ALL
-                          ),
+                          setOf(RegexOption.DOT_MATCHES_ALL),
                       ).findAll(
                           windowDisplays
                       ).mapNotNull { match ->
-
                           val id =
                               match.groupValues[1]
                                   .toIntOrNull()
@@ -807,11 +801,7 @@ jobs:
                                   .toIntOrNull()
                                   ?: return@mapNotNull null
 
-                          Triple(
-                              id,
-                              width,
-                              height,
-                          )
+                          Triple(id, width, height)
                       }.filter { (_, width, height) ->
                           (
                               width == 1080 &&
@@ -828,25 +818,14 @@ jobs:
                           id != 0
                       }
 
-                  if (
-                      target == null
-                  ) {
+                  if (target == null) {
                       return Bundle().apply {
-                          putBoolean(
-                              "ok",
-                              false,
-                          )
-
-                          putInt(
-                              "targetDisplayId",
-                              -1,
-                          )
-
+                          putBoolean("ok", false)
+                          putInt("targetDisplayId", -1)
                           putString(
                               "error",
                               "No non-zero Fold7 internal display was found.",
                           )
-
                           putString(
                               "windowDisplays",
                               windowDisplays,
@@ -858,22 +837,19 @@ jobs:
                       target.first
 
                   val command =
-                      if (
-                          enable
-                      ) {
+                      if (enable) {
                           "cmd display enable-display $targetId"
                       } else {
+                          /*
+                           * Return control to Samsung instead of forcing the display off.
+                           */
                           "cmd display power-reset $targetId"
                       }
 
                   val commandOutput =
-                      runProbe(
-                          command
-                      )
+                      runProbe(command)
 
-                  Thread.sleep(
-                      600L
-                  )
+                  Thread.sleep(600L)
 
                   val afterDisplays =
                       runProbe(
@@ -910,81 +886,44 @@ jobs:
                           )
 
                   return Bundle().apply {
-                      putBoolean(
-                          "ok",
-                          !commandFailed
-                      )
-
-                      putBoolean(
-                          "enable",
-                          enable,
-                      )
-
-                      putInt(
-                          "targetDisplayId",
-                          targetId,
-                      )
-
-                      putInt(
-                          "targetWidth",
-                          target.second,
-                      )
-
-                      putInt(
-                          "targetHeight",
-                          target.third,
-                      )
-
-                      putBoolean(
-                          "visibleAfter",
-                          visibleAfter,
-                      )
-
-                      putString(
-                          "command",
-                          command,
-                      )
-
-                      putString(
-                          "commandOutput",
-                          commandOutput,
-                      )
-
-                      putString(
-                          "windowDisplays",
-                          windowDisplays,
-                      )
-
-                      putString(
-                          "afterDisplays",
-                          afterDisplays,
-                      )
-
-                      putString(
-                          "afterPhysical",
-                          afterPhysical,
-                      )
+                      putBoolean("ok", !commandFailed)
+                      putBoolean("enable", enable)
+                      putInt("targetDisplayId", targetId)
+                      putInt("targetWidth", target.second)
+                      putInt("targetHeight", target.third)
+                      putBoolean("visibleAfter", visibleAfter)
+                      putString("command", command)
+                      putString("commandOutput", commandOutput)
+                      putString("windowDisplays", windowDisplays)
+                      putString("afterDisplays", afterDisplays)
+                      putString("afterPhysical", afterPhysical)
                   }
               }
 
-              // ---- capture -----------------------------------------------------------
           """,
               "DuoShellService secondary display implementation",
           )
+
+          # ------------------------------------------------------------------
+          # App-side Shizuku bridge.
+          # ------------------------------------------------------------------
 
           bridge_path = (
               "app/src/full/java/com/duoopen/shell/"
               "ShizukuBridge.kt"
           )
 
+          bridge_anchor = """    fun displayProbe(): Bundle? =
+                  call(
+                      ShellProtocol.DISPLAY_PROBE
+                  )
+          """
+
           replace_once(
               bridge_path,
-              """    fun displayProbe(): Bundle? =
-                  call(ShellProtocol.DISPLAY_PROBE)
-          }""",
-              """    fun displayProbe(): Bundle? =
-                  call(ShellProtocol.DISPLAY_PROBE)
-
+              bridge_anchor,
+              bridge_anchor +
+              """
               /** Blocking; call off the main thread. */
               fun enableSecondaryDisplay(): Bundle? =
                   call(
@@ -996,11 +935,14 @@ jobs:
                   call(
                       ShellProtocol.RESET_SECONDARY_DISPLAY
                   )
-          }""",
+          """,
               "ShizukuBridge secondary display commands",
           )
 
-          # 2. FoldOverlayService owns the experiment.
+          # ------------------------------------------------------------------
+          # Persistent accessibility service owns the experiment.
+          # ------------------------------------------------------------------
+
           service_path = (
               "app/src/full/java/com/duoopen/overlay/"
               "FoldOverlayService.kt"
@@ -1011,29 +953,24 @@ jobs:
               """import kotlinx.coroutines.Dispatchers
           import kotlinx.coroutines.launch
           import kotlinx.coroutines.MainScope
-          import kotlinx.coroutines.cancel""",
+          import kotlinx.coroutines.cancel
+          """,
               """import kotlinx.coroutines.Dispatchers
           import kotlinx.coroutines.launch
           import kotlinx.coroutines.MainScope
           import kotlinx.coroutines.cancel
           import kotlinx.coroutines.flow.MutableStateFlow
           import kotlinx.coroutines.flow.StateFlow
-          import kotlinx.coroutines.flow.asStateFlow""",
-              "FoldOverlayService state-flow imports",
+          import kotlinx.coroutines.flow.asStateFlow
+          """,
+              "FoldOverlayService state imports",
           )
 
-          replace_once(
+          insert_before_once(
               service_path,
-              """    private val displayProbeRunnable = Runnable {
-                  runDisplayProbe(pendingProbeReason)
-              }
-
-              private val displayListener = object : DisplayManager.DisplayListener {""",
-              """    private val displayProbeRunnable = Runnable {
-                  runDisplayProbe(pendingProbeReason)
-              }
-
-              private val secondaryDisplaySafetyReset =
+              """    private val displayListener =
+          """,
+              """    private val secondaryDisplaySafetyReset =
                   Runnable {
                       runSecondaryDisplayExperiment(
                           enable = false,
@@ -1041,30 +978,31 @@ jobs:
                       )
                   }
 
-              private val displayListener = object : DisplayManager.DisplayListener {""",
+          """,
               "FoldOverlayService safety reset",
           )
 
-          replace_once(
+          insert_before_once(
               service_path,
-              """        handler.removeCallbacks(displayProbeRunnable)
-                  angleFeed?.stop()""",
-              """        handler.removeCallbacks(displayProbeRunnable)
-                  handler.removeCallbacks(secondaryDisplaySafetyReset)
-                  angleFeed?.stop()""",
-              "FoldOverlayService reset cleanup",
+              """        angleFeed?.stop()
+          """,
+              """        handler.removeCallbacks(
+                      secondaryDisplaySafetyReset
+                  )
+
+          """,
+              "FoldOverlayService cleanup",
           )
 
-          replace_once(
+          insert_before_once(
               service_path,
-              """    private fun updateRunning() {""",
+              """    private fun updateRunning() {
+          """,
               """    fun runSecondaryDisplayExperiment(
                   enable: Boolean,
                   reason: String = "user",
               ) {
-                  if (
-                      !ShizukuBridge.ready
-                  ) {
+                  if (!ShizukuBridge.ready) {
                       _secondaryDisplayStatus.value =
                           "Shizuku isn't ready."
 
@@ -1072,7 +1010,6 @@ jobs:
                           "dual-shell",
                           "refused enable=$enable reason=$reason; Shizuku not ready",
                       )
-
                       return
                   }
 
@@ -1081,9 +1018,7 @@ jobs:
                   )
 
                   _secondaryDisplayStatus.value =
-                      if (
-                          enable
-                      ) {
+                      if (enable) {
                           "Requesting the inactive Fold7 panel from the persistent service…"
                       } else {
                           "Returning the secondary panel to Samsung's normal power state…"
@@ -1094,21 +1029,15 @@ jobs:
                       "begin enable=$enable reason=$reason",
                   )
 
-                  scope.launch(
-                      Dispatchers.IO
-                  ) {
+                  scope.launch(Dispatchers.IO) {
                       val result =
-                          if (
-                              enable
-                          ) {
+                          if (enable) {
                               ShizukuBridge.enableSecondaryDisplay()
                           } else {
                               ShizukuBridge.resetSecondaryDisplay()
                           }
 
-                      if (
-                          result == null
-                      ) {
+                      if (result == null) {
                           _secondaryDisplayStatus.value =
                               "No response from the Shizuku display service."
 
@@ -1116,7 +1045,6 @@ jobs:
                               "dual-shell",
                               "no binder response enable=$enable reason=$reason",
                           )
-
                           return@launch
                       }
 
@@ -1151,14 +1079,10 @@ jobs:
                           )
 
                       val error =
-                          result.getString(
-                              "error"
-                          )
+                          result.getString("error")
 
                       val command =
-                          result.getString(
-                              "command"
-                          )
+                          result.getString("command")
 
                       val commandOutput =
                           result.getString(
@@ -1167,29 +1091,20 @@ jobs:
 
                       _secondaryDisplayStatus.value =
                           when {
-                              !ok -> {
+                              !ok ->
                                   "Shell command did not succeed" +
-                                      (
-                                          error?.let {
-                                              ": $it"
-                                          } ?: "."
-                                          )
-                              }
+                                      (error?.let { ": $it" } ?: ".")
 
-                              enable &&
-                                  visibleAfter -> {
-                                  "Success: Android now exposes Fold7 display $target " +
-                                      "($width×$height) to apps. Leave Duo Open and test it."
-                              }
+                              enable && visibleAfter ->
+                                  "Success: Android exposes Fold7 display $target " +
+                                      "($width×$height). Leave Duo Open and test it."
 
-                              enable -> {
-                                  "The enable command returned without an error, but display " +
-                                      "$target is not yet exposed as an active logical display."
-                              }
+                              enable ->
+                                  "The enable command returned without an error, but " +
+                                      "display $target is not exposed as active yet."
 
-                              else -> {
+                              else ->
                                   "Secondary panel power was returned to Samsung."
-                              }
                           }
 
                       DuoDiagnostics.event(
@@ -1209,7 +1124,7 @@ jobs:
                                   result.getString(
                                       "afterDisplays"
                                   ) ?: "(missing)"
-                                  )
+                              )
                                   .replace("\\r", "")
                                   .replace("\\n", "\\\\n"),
                       )
@@ -1221,15 +1136,12 @@ jobs:
                                   result.getString(
                                       "afterPhysical"
                                   ) ?: "(missing)"
-                                  )
+                              )
                                   .replace("\\r", "")
                                   .replace("\\n", "\\\\n"),
                       )
 
-                      if (
-                          enable &&
-                          ok
-                      ) {
+                      if (enable && ok) {
                           handler.postDelayed(
                               secondaryDisplaySafetyReset,
                               SECONDARY_DISPLAY_SAFETY_RESET_MS,
@@ -1237,9 +1149,7 @@ jobs:
                       }
 
                       scheduleDisplayProbe(
-                          if (
-                              enable
-                          ) {
+                          if (enable) {
                               "service-dual-enable"
                           } else {
                               "service-dual-reset"
@@ -1249,18 +1159,15 @@ jobs:
                   }
               }
 
-              private fun updateRunning() {""",
-              "FoldOverlayService service-owned experiment",
+          """,
+              "FoldOverlayService service display method",
           )
 
-          replace_once(
+          insert_before_once(
               service_path,
-              """        private const val DISPLAY_PROBE_MIN_GAP_MS = 1_500L
-
-                  /** How old a panel's last picture may be and still bridge the next fold. */""",
-              """        private const val DISPLAY_PROBE_MIN_GAP_MS = 1_500L
-
-                  private const val SECONDARY_DISPLAY_SAFETY_RESET_MS =
+              """        /** How old a panel's last picture may be and still bridge the next fold. */
+          """,
+              """        private const val SECONDARY_DISPLAY_SAFETY_RESET_MS =
                       90_000L
 
                   private val _secondaryDisplayStatus =
@@ -1280,22 +1187,23 @@ jobs:
                               ?: run {
                                   _secondaryDisplayStatus.value =
                                       "The Duo Open accessibility service isn't connected."
-
                                   return false
                               }
 
                       service.runSecondaryDisplayExperiment(
                           enable = enable,
                       )
-
                       return true
                   }
 
-                  /** How old a panel's last picture may be and still bridge the next fold. */""",
-              "FoldOverlayService companion state",
+          """,
+              "FoldOverlayService companion display state",
           )
 
-          # 3. Surface the service-owned control through OverlayFeature.
+          # ------------------------------------------------------------------
+          # Overlay feature facade.
+          # ------------------------------------------------------------------
+
           feature_path = (
               "app/src/full/java/com/duoopen/overlay/"
               "OverlayFeature.kt"
@@ -1322,10 +1230,13 @@ jobs:
                       enable
                   )
           }""",
-              "OverlayFeature service-owned display API",
+              "OverlayFeature secondary display API",
           )
 
-          # 4. Disable the legacy Activity-owned WindowArea path for this probe.
+          # ------------------------------------------------------------------
+          # Keep the old Activity WindowArea session out of this experiment.
+          # ------------------------------------------------------------------
+
           main_path = (
               "app/src/main/java/com/duoopen/"
               "MainActivity.kt"
@@ -1338,16 +1249,19 @@ jobs:
               """        dualScreen = DualScreen(this)
 
                   /*
-                   * This field build deliberately disables the legacy Activity-owned
-                   * WindowArea presentation so it cannot race the service-owned probe.
+                   * Field build: keep Samsung's Activity-owned WindowArea path disabled
+                   * so it cannot race the persistent Shizuku display experiment.
                    */
                   dualScreen.stop()
 
                   setContent {""",
-              "MainActivity legacy dual disable",
+              "MainActivity disable legacy dual session",
           )
 
-          # 5. UI controls.
+          # ------------------------------------------------------------------
+          # App/UI.
+          # ------------------------------------------------------------------
+
           app_path = (
               "app/src/main/java/com/duoopen/ui/"
               "DuoApp.kt"
@@ -1357,15 +1271,14 @@ jobs:
               app_path,
               """    val dualStatus by (dualScreen?.status ?: kotlinx.coroutines.flow.MutableStateFlow("")).collectAsStateWithLifecycle()
               val dualActive by (dualScreen?.active ?: kotlinx.coroutines.flow.MutableStateFlow(false)).collectAsStateWithLifecycle()
+
           """,
               """    val dualStatus by (dualScreen?.status ?: kotlinx.coroutines.flow.MutableStateFlow("")).collectAsStateWithLifecycle()
               val dualActive by (dualScreen?.active ?: kotlinx.coroutines.flow.MutableStateFlow(false)).collectAsStateWithLifecycle()
+              val serviceDualStatus by OverlayFeature.secondaryDisplayStatus.collectAsStateWithLifecycle()
 
-              val serviceDualStatus by
-                  OverlayFeature.secondaryDisplayStatus
-                      .collectAsStateWithLifecycle()
           """,
-              "DuoApp service dual status",
+              "DuoApp secondary display status",
           )
 
           replace_once(
@@ -1375,7 +1288,7 @@ jobs:
               """                dualStatus = dualStatus,
                           serviceDualStatus = serviceDualStatus,
                           shizukuAvailable = OverlayFeature.SHIZUKU_AVAILABLE,""",
-              "DuoApp service dual status parameter",
+              "DuoApp secondary status parameter",
           )
 
           replace_once(
@@ -1385,15 +1298,13 @@ jobs:
                           onEnableOverlay = { openAccessibilitySettings(context) },""",
               """                dualActive = dualActive,
                           onDualChange = {
-                              // Disabled in this service-owned probe build.
+                              // Intentionally disabled in this field build.
                           },
                           onServiceDualEnable = {
                               dualScreen?.stop()
 
                               scope.launch {
-                                  kotlinx.coroutines.delay(
-                                      900L
-                                  )
+                                  kotlinx.coroutines.delay(900L)
 
                                   if (
                                       !OverlayFeature.testSecondaryDisplay(
@@ -1414,7 +1325,7 @@ jobs:
                               )
                           },
                           onEnableOverlay = { openAccessibilitySettings(context) },""",
-              "DuoApp service dual callbacks",
+              "DuoApp secondary display actions",
           )
 
           sheet_path = (
@@ -1435,29 +1346,29 @@ jobs:
               onServiceDualEnable: () -> Unit,
               onServiceDualReset: () -> Unit,
               shizukuAvailable: Boolean,""",
-              "ControlSheet service dual parameters",
+              "ControlSheet secondary display parameters",
           )
 
-          old_section = """            Row(verticalAlignment = Alignment.CenterVertically) {
+          replace_once(
+              sheet_path,
+              """            Row(verticalAlignment = Alignment.CenterVertically) {
                           Hint(dualStatus, modifier = Modifier.weight(1f))
                           Switch(checked = dualActive, onCheckedChange = onDualChange, enabled = dualStatus.startsWith("Available") || dualActive)
-                      }"""
-
-          new_section = """            Row(verticalAlignment = Alignment.CenterVertically) {
+                      }""",
+              """            Row(
+                          verticalAlignment =
+                              Alignment.CenterVertically
+                      ) {
                           Column(
-                              Modifier.weight(
-                                  1f
-                              )
+                              Modifier.weight(1f)
                           ) {
                               Text(
                                   "Legacy Activity presentation",
                                   style =
                                       MaterialTheme.typography.titleSmall,
                               )
-
                               Hint(
-                                  "Disabled for this field build so Samsung's Window Area " +
-                                      "session can't race the persistent service test. " +
+                                  "Disabled for this field build. " +
                                       dualStatus,
                               )
                           }
@@ -1470,9 +1381,7 @@ jobs:
                       }
 
                       Spacer(
-                          Modifier.height(
-                              12.dp
-                          )
+                          Modifier.height(12.dp)
                       )
 
                       Text(
@@ -1487,59 +1396,46 @@ jobs:
 
                       Row(
                           horizontalArrangement =
-                              Arrangement.spacedBy(
-                                  12.dp
-                              )
+                              Arrangement.spacedBy(12.dp)
                       ) {
                           TextButton(
-                              onClick =
-                                  onServiceDualEnable,
+                              onClick = onServiceDualEnable,
                               enabled =
                                   shizukuReady &&
                                       overlayEnabled,
                           ) {
-                              Text(
-                                  "Enable inactive panel"
-                              )
+                              Text("Enable inactive panel")
                           }
 
                           TextButton(
-                              onClick =
-                                  onServiceDualReset,
+                              onClick = onServiceDualReset,
                               enabled =
                                   shizukuReady &&
                                       overlayEnabled,
                           ) {
-                              Text(
-                                  "Reset panel power"
-                              )
+                              Text("Reset panel power")
                           }
                       }
 
                       Hint(
-                          "This is a one-shot Fold7 test. There is no retry loop, and " +
-                              "Duo Open automatically power-resets the secondary panel " +
-                              "after 90 seconds as a safety measure.",
-                      )"""
-
-          replace_once(
-              sheet_path,
-              old_section,
-              new_section,
-              "ControlSheet service dual controls",
+                          "One-shot Fold7 test. There is no retry loop. " +
+                              "The secondary panel is automatically power-reset " +
+                              "after 90 seconds.",
+                      )""",
+              "ControlSheet secondary display UI",
           )
 
-          # 6. Version.
+          # ------------------------------------------------------------------
+          # Version.
+          # ------------------------------------------------------------------
+
           gradle_path = Path(
               "app/build.gradle.kts"
           )
 
           gradle = gradle_path.read_text()
 
-          if (
-              "versionCode = 10"
-              not in gradle
-          ):
+          if "versionCode = 10" not in gradle:
               raise SystemExit(
                   "Expected angle-resilient versionCode 10 was not found."
               )
@@ -1564,9 +1460,7 @@ jobs:
               1,
           )
 
-          gradle_path.write_text(
-              gradle
-          )
+          gradle_path.write_text(gradle)
           PY
 
       - name: Validate service-dual probe
