@@ -1,0 +1,13 @@
+Verified locally with kotlinc on 2026-10-01.
+
+EarlyWakeIngressModel:
+- 8 / 8 deterministic adversarial tests passed.
+
+Fold7AnglePipelineGen2:
+- 6 / 6 deterministic ownership/backpressure tests passed.
+
+Total verified pure-model tests: 14 / 14 passed.
+
+These are JVM/pure-Kotlin model tests. They do NOT prove Android integration,
+Samsung DeviceState timing, Shizuku shell sensor permission, physical-panel wake
+latency, wallpaper command timing, or final Fold7 presentation behavior.
