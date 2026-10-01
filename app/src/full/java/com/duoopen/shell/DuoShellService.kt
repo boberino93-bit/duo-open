@@ -63,6 +63,12 @@ class DuoShellService : Binder() {
     private val coverPanelLease =
         Fold7CoverPanelLease()
 
+    private val shellSession =
+        (SystemClock.elapsedRealtimeNanos().takeIf { it > 0L } ?: 1L)
+
+    private val coverMutationRevision =
+        java.util.concurrent.atomic.AtomicLong(0L)
+
     private val coverMutationExecutor =
         Executors.newSingleThreadExecutor { runnable ->
             Thread(runnable, "duo-cover-lease-mutation").apply {
@@ -110,6 +116,7 @@ class DuoShellService : Binder() {
                 out.writeBundle(Bundle().apply {
                     putInt("uid", Process.myUid())
                     putInt("pid", Process.myPid())
+                    putLong("shellSession", shellSession)
                     putString("capture", runCatching { api().name }.getOrElse { "unavailable: ${it.message}" })
                 })
             }
@@ -363,6 +370,65 @@ class DuoShellService : Binder() {
                         }
                     } catch (t: Throwable) {
                         failureBundle("cover-lease-v2", t)
+                    } finally {
+                        restoreCallingIdentity(identity)
+                    }
+                out.writeNoException()
+                out.writeBundle(result)
+            }
+
+            ShellProtocol.COVER_PANEL_LEASE_V3 -> {
+                val operation = data.readInt()
+                val requestShellSession = data.readLong()
+                val requestLeaseId = data.readLong()
+                val requestLeaseEpoch = data.readLong()
+                val ownerGeneration = data.readLong()
+                val reason = data.readString() ?: "unspecified"
+                val identity = clearCallingIdentity()
+                val result =
+                    try {
+                        runCoverMutation {
+                            val base = when (operation) {
+                                1 -> prewarmCoverLeaseV2(ownerGeneration)
+                                2 -> {
+                                    val snapshot = coverPanelLease.snapshot()
+                                    if (!matchesCoverToken(requestShellSession, requestLeaseId, requestLeaseEpoch, ownerGeneration, snapshot)) {
+                                        coverLeaseBundle("release-v3-stale-token", false).apply { putBoolean("stale", true) }
+                                    } else {
+                                        releaseCoverLeaseV2(ownerGeneration, reason)
+                                    }
+                                }
+                                3 -> {
+                                    if (requestShellSession != 0L && requestShellSession != shellSession) {
+                                        coverLeaseBundle("reconcile-v3-stale-session", false).apply { putBoolean("stale", true) }
+                                    } else {
+                                        reconcileCoverLeaseV2(reason)
+                                    }
+                                }
+                                4 -> {
+                                    if (requestShellSession != 0L && requestShellSession != shellSession) {
+                                        coverLeaseBundle("status-v3-stale-session", false).apply { putBoolean("stale", true) }
+                                    } else {
+                                        coverLeaseBundle("status-v3", true)
+                                    }
+                                }
+                                5 -> {
+                                    val snapshot = coverPanelLease.snapshot()
+                                    if (!matchesCoverToken(requestShellSession, requestLeaseId, requestLeaseEpoch, ownerGeneration, snapshot)) {
+                                        coverLeaseBundle("ensure-v3-stale-token", false).apply { putBoolean("stale", true) }
+                                    } else {
+                                        ensureHeldCoverRouteV2(ownerGeneration, reason)
+                                    }
+                                }
+                                else -> Bundle().apply {
+                                    putBoolean("ok", false)
+                                    putString("error", "unknown cover lease V3 operation $operation")
+                                }
+                            }
+                            stampCoverLeaseV3(base)
+                        }
+                    } catch (t: Throwable) {
+                        stampCoverLeaseV3(failureBundle("cover-lease-v3", t))
                     } finally {
                         restoreCallingIdentity(identity)
                     }
@@ -1557,6 +1623,76 @@ class DuoShellService : Binder() {
         val actions = coverPanelLease.onTopology(coverLeaseTopology())
         val reset = executeCoverLeaseActions(actions)
         return coverLeaseBundle("reconcile:$reason", true, reset)
+    }
+
+    private fun matchesCoverToken(
+        requestShellSession: Long,
+        requestLeaseId: Long,
+        requestLeaseEpoch: Long,
+        ownerGeneration: Long,
+        snapshot: Fold7CoverPanelLease.Snapshot,
+    ): Boolean =
+        requestShellSession == shellSession &&
+            requestLeaseId == snapshot.leaseId &&
+            requestLeaseEpoch == snapshot.epoch &&
+            ownerGeneration == snapshot.ownerGeneration &&
+            snapshot.state != Fold7CoverPanelLease.State.IDLE
+
+    private fun stampCoverLeaseV3(
+        bundle: Bundle,
+        advanceRevision: Boolean = true,
+    ): Bundle {
+        val snapshot = coverPanelLease.snapshot()
+        val held =
+            snapshot.state != Fold7CoverPanelLease.State.IDLE &&
+                snapshot.physicalId != null
+
+        bundle.putLong("shellSession", shellSession)
+        bundle.putLong(
+            "shellRevision",
+            if (advanceRevision) {
+                coverMutationRevision.incrementAndGet()
+            } else {
+                coverMutationRevision.get()
+            },
+        )
+        bundle.putString("leaseState", snapshot.state.name)
+        bundle.putLong("leaseId", snapshot.leaseId)
+        bundle.putLong("leaseEpoch", snapshot.epoch)
+        bundle.putLong("ownerGeneration", snapshot.ownerGeneration)
+        bundle.putLong("physicalDisplayId", snapshot.physicalId ?: -1L)
+        bundle.putBoolean("physicalLeaseHeld", held)
+
+        val explicitRouteFact =
+            bundle.containsKey("routeStillCover")
+
+        val routeReady =
+            if (explicitRouteFact) {
+                bundle.getBoolean("routeStillCover", false) &&
+                    (
+                        bundle.getBoolean("routeEnabled", false) ||
+                            bundle.getBoolean("logicalPowered", false)
+                        )
+            } else if (held) {
+                val route =
+                    runCatching { directCoverRoute() }.getOrNull()
+                val innerDefault =
+                    directGeometry(Display.DEFAULT_DISPLAY) ==
+                        (1968 to 2184)
+                val observed =
+                    innerDefault &&
+                        route != null &&
+                        route.second == snapshot.physicalId
+                if (observed) {
+                    bundle.putInt("targetDisplayId", route!!.first)
+                }
+                observed
+            } else {
+                false
+            }
+
+        bundle.putBoolean("routeReady", routeReady)
+        return bundle
     }
 
     private fun secondaryDisplayCommand(

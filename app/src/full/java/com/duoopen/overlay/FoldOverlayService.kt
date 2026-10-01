@@ -7,9 +7,12 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Bitmap
 import android.hardware.display.DisplayManager
 import android.os.Handler
+import android.os.HandlerThread
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
 import android.view.Display
@@ -28,6 +31,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * System-wide fold effect. Accessibility services may screenshot any display
@@ -45,11 +49,19 @@ import kotlinx.coroutines.flow.asStateFlow
 class FoldOverlayService : AccessibilityService() {
 
     private val handler = Handler(Looper.getMainLooper())
+    private val controlThread = HandlerThread("duo-fold7-angle-control").apply { start() }
+    private val controlHandler = Handler(controlThread.looper)
+    private val hingeDeliveryPending = AtomicBoolean(false)
+    @Volatile private var latestControlAngle = Float.NaN
     private val scope = MainScope()
     private lateinit var hinge: HingeAngleSource
     private lateinit var displayManager: DisplayManager
     private val engines = LinkedHashMap<Int, PanelEngine>()
     private val snapshots = SnapshotCache(maxAgeMs = SNAPSHOT_MAX_AGE_MS)
+    private val serviceEpoch =
+        SystemClock.elapsedRealtimeNanos().takeIf { it > 0L } ?: 1L
+    private val gen2 =
+        Fold7Gen2Kernel<Bitmap>(serviceEpoch)
     private var angleFeed: WallpaperAngleFeed? = null
 
     private var deviceStateObserver:
@@ -127,6 +139,11 @@ class FoldOverlayService : AccessibilityService() {
             override fun onDisplayAdded(
                 displayId: Int,
             ) {
+                if (::continuity.isInitialized) {
+                    continuity.onTopologyFastLane(
+                        "display-added:$displayId"
+                    )
+                }
                 scheduleDisplaySync(
                     "display-added:$displayId"
                 )
@@ -135,6 +152,11 @@ class FoldOverlayService : AccessibilityService() {
             override fun onDisplayRemoved(
                 displayId: Int,
             ) {
+                if (::continuity.isInitialized) {
+                    continuity.onTopologyFastLane(
+                        "display-removed:$displayId"
+                    )
+                }
                 scheduleDisplaySync(
                     "display-removed:$displayId"
                 )
@@ -143,6 +165,11 @@ class FoldOverlayService : AccessibilityService() {
             override fun onDisplayChanged(
                 displayId: Int,
             ) {
+                if (::continuity.isInitialized) {
+                    continuity.onTopologyFastLane(
+                        "display-changed:$displayId"
+                    )
+                }
                 scheduleDisplaySync(
                     "display-changed:$displayId"
                 )
@@ -174,33 +201,23 @@ class FoldOverlayService : AccessibilityService() {
             handler = handler,
             scope = scope,
             currentHingeAngle = { hinge.lastAngle },
-            frozenInnerFrame = {
-                val age =
-                    snapshots.ageMs(
-                        true
-                    )
-
-                if (
-                    age != null &&
-                    age <=
-                        FOLD7_FROZEN_FRAME_MAX_AGE_MS
-                ) {
-                    snapshots.get(
-                        innerPanel = true,
-                        width = 1968,
-                        height = 2184,
-                    )
-                } else {
-                    null
-                }
-            },
+            gen2 = gen2,
             onStatus = { message -> _secondaryDisplayStatus.value = message },
         )
         displayManager.registerDisplayListener(displayListener, handler)
-        hinge = HingeAngleSource(this) { onHinge(it) }
+        hinge = HingeAngleSource(
+            context = this,
+            onAngle = ::enqueueHingeFromControl,
+            callbackHandler = controlHandler,
+        )
         hinge.start()
         ShizukuBridge.init(this)
-        angleFeed = WallpaperAngleFeed(this, handler, hinge)
+        angleFeed = WallpaperAngleFeed(
+            context = this,
+            mainHandler = handler,
+            controlHandler = controlHandler,
+            hinge = hinge,
+        )
 
         deviceStateObserver =
             Fold7DeviceStateObserver(
@@ -221,7 +238,7 @@ class FoldOverlayService : AccessibilityService() {
                 )
 
                 angleFeed
-                    ?.kickPreciseBurst(
+                    ?.kickBurst(
                         reason
                     )
 
@@ -316,11 +333,32 @@ class FoldOverlayService : AccessibilityService() {
         engines.clear()
         OverlayState.setRunning(false)
         scope.cancel()
+        controlThread.quitSafely()
         super.onDestroy()
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
     override fun onInterrupt() = Unit
+
+    /** Latest-only bridge from the serialized Fold7 control thread to main. */
+    private fun enqueueHingeFromControl(angle: Float) {
+        latestControlAngle = angle
+        if (!hingeDeliveryPending.compareAndSet(false, true)) return
+
+        handler.post {
+            while (true) {
+                val delivered = latestControlAngle
+                onHinge(delivered)
+                hingeDeliveryPending.set(false)
+
+                if (latestControlAngle == delivered ||
+                    !hingeDeliveryPending.compareAndSet(false, true)
+                ) {
+                    break
+                }
+            }
+        }
+    }
 
     private fun onHinge(angle: Float) {
         continuity.onHinge(angle)
@@ -363,6 +401,8 @@ class FoldOverlayService : AccessibilityService() {
                     hasLiveInnerElsewhere = { engines.values.any { it !== engines[id] && it.innerPanel } },
                     onShowingChanged = ::updateRunning,
                     cache = snapshots,
+                    continuityFrames = gen2.frames,
+                    activeCloseCycle = { gen2.activeCycle },
                 )
             }
         }

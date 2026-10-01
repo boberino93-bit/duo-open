@@ -22,8 +22,8 @@ android {
         // AGSL RuntimeShader needs API 33 (OnePlus Open ships Android 13+).
         minSdk = 33
         targetSdk = 35
-        versionCode = 34
-        versionName = "1.3.29-zfold7-deterministic-early-wake"
+        versionCode = 35
+        versionName = "2.0.0-zfold7-gen2-ownership"
     }
 
     // full: system-wide fold via the accessibility service (+ wallpaper).

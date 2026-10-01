@@ -26,7 +26,7 @@ internal class Fold7ContinuityCoordinator(
     private val handler: Handler,
     private val scope: CoroutineScope,
     private val currentHingeAngle: () -> Float,
-    private val frozenInnerFrame: () -> android.graphics.Bitmap?,
+    private val gen2: Fold7Gen2Kernel<android.graphics.Bitmap>,
     private val onStatus: (String) -> Unit,
 ) {
     private val controller =
@@ -45,6 +45,8 @@ internal class Fold7ContinuityCoordinator(
 
     @Volatile private var coverLeaseOwnerGeneration = -1L
     @Volatile private var coverRouteReassertInFlight = false
+    @Volatile private var prewarmInFlightGeneration = -1L
+    @Volatile private var prewarmInFlightConnectionEpoch = -1L
     @Volatile private var destroyed = false
 
     val visualMirrorActive: Boolean
@@ -56,6 +58,7 @@ internal class Fold7ContinuityCoordinator(
         get() = controller.state
 
     fun arm() {
+        gen2.cancelActiveCycle()
         destroyed = false
         ensureMirrorSession("arm")
 
@@ -133,7 +136,7 @@ internal class Fold7ContinuityCoordinator(
         apply(decision)
     }
 
-    fun onTopologyChanged(reason: String) {
+    fun onTopologyFastLane(reason: String) {
         val angle =
             currentHingeAngle()
                 .takeIf { it.isFinite() }
@@ -147,35 +150,34 @@ internal class Fold7ContinuityCoordinator(
             )
 
         apply(decision)
-        reconcileCoverLease("topology:$reason")
-
-        val currentTopology =
-            topology()
+        observeCoverReadiness("fast:$reason")
 
         if (
-            (
-                controller.state ==
-                    Fold7ContinuityController.State.COVER_READY_HIDDEN ||
-                controller.state ==
-                    Fold7ContinuityController.State.COVER_VISUAL
-                ) &&
-            currentTopology.innerActive &&
-            !currentTopology.coverActive
+            controller.state in setOf(
+                Fold7ContinuityController.State.COVER_PREWARMING,
+                Fold7ContinuityController.State.COVER_READY_HIDDEN,
+                Fold7ContinuityController.State.COVER_VISUAL,
+            ) &&
+            gen2.coverReadiness.state != Fold7CoverReadiness.State.READY
         ) {
-            ensureCoverRouteHeld(
-                "topology:$reason"
-            )
+            ensureCoverRouteHeld("fast:$reason")
         }
 
         if (visualMirrorActive) {
             syncMirrorHost(
-                reason = "topology:$reason",
+                reason = "fast:$reason",
                 generation = mirrorGeneration,
             )
         }
     }
 
+    fun onTopologyChanged(reason: String) {
+        onTopologyFastLane(reason)
+        reconcileCoverLease("topology:$reason")
+    }
+
     fun release(reason: String) {
+        gen2.cancelActiveCycle()
         val generation = controller.generation
 
         hideMirror(
@@ -194,21 +196,27 @@ internal class Fold7ContinuityCoordinator(
             reason = "destroy",
             stopShellMirror = true,
         )
-        val coverOwner = coverLeaseOwnerGeneration
+        val coverToken = gen2.coverAuthority.acceptedToken
+        val coverShellSession =
+            gen2.coverAuthority.acceptedSnapshot?.shellSession ?: 0L
         if (ShizukuBridge.ready) {
             Thread(
                 {
                     runCatching {
-                        if (coverOwner >= 0L) {
-                            ShizukuBridge.releaseSecondaryDisplayV2(coverOwner, "destroy")
+                        if (coverToken != null) {
+                            ShizukuBridge.releaseSecondaryDisplayV3(coverToken, "destroy")
                         } else {
-                            ShizukuBridge.reconcileSecondaryDisplayLeaseV2("destroy")
+                            ShizukuBridge.reconcileSecondaryDisplayLeaseV3(
+                                coverShellSession,
+                                "destroy",
+                            )
                         }
                     }
                 },
                 "duo-cover-lease-destroy",
             ).apply { isDaemon = true }.start()
         }
+        gen2.destroy()
 
         val session = mirrorSession
         if (session > 0L) {
@@ -229,8 +237,19 @@ internal class Fold7ContinuityCoordinator(
 
     fun onPrivilegedReady() {
         if (destroyed) return
+        gen2.coverAuthority.onConnectionEpoch(
+            ShizukuBridge.connectionEpoch
+        )
         ensureMirrorSession("shizuku-ready")
         reconcileCoverLease("shizuku-ready")
+
+        if (
+            controller.state ==
+                Fold7ContinuityController.State.COVER_PREWARMING &&
+            gen2.activeCycle != null
+        ) {
+            beginPrewarm(controller.generation)
+        }
     }
 
     fun onPrivilegedUnavailable() {
@@ -238,6 +257,12 @@ internal class Fold7ContinuityCoordinator(
         mirrorSessionOpening = false
         mirrorSequence.set(0L)
         coverRouteReassertInFlight = false
+        prewarmInFlightGeneration = -1L
+        prewarmInFlightConnectionEpoch = -1L
+        gen2.coverAuthority.onConnectionEpoch(
+            ShizukuBridge.connectionEpoch
+        )
+        gen2.coverReadiness.invalidate()
     }
 
     private fun apply(
@@ -302,7 +327,8 @@ internal class Fold7ContinuityCoordinator(
     ) {
         if (!controller.isGenerationCurrent(generation)) return
 
-        if (!ShizukuBridge.ready) {
+        val cycle = gen2.activeCycle
+        if (!ShizukuBridge.ready || cycle == null) {
             val decision =
                 controller.onPrewarmResult(
                     requestGeneration = generation,
@@ -314,73 +340,108 @@ internal class Fold7ContinuityCoordinator(
             return
         }
 
+        val requestConnectionEpoch = ShizukuBridge.connectionEpoch
+        if (
+            prewarmInFlightGeneration == generation &&
+            prewarmInFlightConnectionEpoch == requestConnectionEpoch
+        ) {
+            return
+        }
+        prewarmInFlightGeneration = generation
+        prewarmInFlightConnectionEpoch = requestConnectionEpoch
+
         onStatus("Fold7 cover prewarming; mirror remains hidden.")
 
         scope.launch(Dispatchers.IO) {
-            /*
-             * The state may have reversed while this coroutine waited for an
-             * IO thread. Never let an obsolete prewarm generation reach the
-             * privileged shell and wake/reset a panel for a newer transition.
-             */
             if (!controller.isGenerationCurrent(generation)) {
                 DuoDiagnostics.event(
                     "fold7-state",
                     "prewarm-stale-before-shell generation=$generation " +
                         "current=${controller.generation}",
                 )
+                handler.post {
+                    if (
+                        prewarmInFlightGeneration == generation &&
+                        prewarmInFlightConnectionEpoch == requestConnectionEpoch
+                    ) {
+                        prewarmInFlightGeneration = -1L
+                        prewarmInFlightConnectionEpoch = -1L
+                    }
+                }
                 return@launch
             }
 
             val result =
                 runCatching {
-                    ShizukuBridge.prewarmSecondaryDisplayV2(generation)
-                        ?: ShizukuBridge.enableSecondaryDisplay(-1)
+                    ShizukuBridge.prewarmSecondaryDisplayV3(generation)
                 }.getOrNull()
 
-            val ok =
-                result?.getBoolean(
-                    "ok",
-                    false,
-                ) == true
-
-            val target =
-                result?.getInt(
-                    "targetDisplayId",
-                    -1,
-                ) ?: -1
-
-            val physicalId =
-                result?.getLong(
-                    "physicalDisplayId",
-                    -1L,
-                ) ?: -1L
-
-            val leaseOwner =
-                result?.getLong(
-                    "ownerGeneration",
-                    -1L,
-                ) ?: -1L
-
-            if (leaseOwner >= 0L) {
-                coverLeaseOwnerGeneration = leaseOwner
-            }
-
-            DuoDiagnostics.event(
-                "fold7-state",
-                "prewarm-complete generation=$generation ok=$ok " +
-                    "logical=$target physical=$physicalId",
-            )
-
             handler.post {
-                val decision =
-                    controller.onPrewarmResult(
-                        requestGeneration = generation,
-                        ok = ok,
-                        nowMs = SystemClock.uptimeMillis(),
-                        topology = topology(),
+                if (
+                    prewarmInFlightGeneration == generation &&
+                    prewarmInFlightConnectionEpoch == requestConnectionEpoch
+                ) {
+                    prewarmInFlightGeneration = -1L
+                    prewarmInFlightConnectionEpoch = -1L
+                }
+
+                if (!controller.isGenerationCurrent(generation)) {
+                    return@post
+                }
+
+                val acceptance =
+                    acceptCoverLeaseSnapshot(
+                        result = result,
+                        connectionEpoch = requestConnectionEpoch,
+                        reason = "prewarm",
                     )
 
-                apply(decision)
+                val snapshot = acceptance.snapshot
+                val token = acceptance.token
+                val currentCycle = gen2.activeCycle
+
+                if (
+                    !acceptance.accepted ||
+                    snapshot == null ||
+                    token == null ||
+                    currentCycle == null ||
+                    currentCycle != cycle ||
+                    !snapshot.physicalLeaseHeld
+                ) {
+                    val decision =
+                        controller.onPrewarmResult(
+                            requestGeneration = generation,
+                            ok = false,
+                            nowMs = SystemClock.uptimeMillis(),
+                            topology = topology(),
+                        )
+                    apply(decision)
+                    return@post
+                }
+
+                val demand =
+                    Fold7CoverReadiness.Demand(
+                        serviceEpoch = currentCycle.serviceEpoch,
+                        closeCycleId = currentCycle.closeCycleId,
+                        transitionGeneration = generation,
+                        leaseToken = token,
+                        expectedLogicalId = snapshot.targetLogicalId,
+                    )
+
+                gen2.coverReadiness.begin(
+                    demand = demand,
+                    shellRouteReady = snapshot.routeReady,
+                )
+
+                observeCoverReadiness("prewarm-result")
+
+                if (
+                    controller.state ==
+                        Fold7ContinuityController.State.COVER_PREWARMING &&
+                    gen2.coverReadiness.state != Fold7CoverReadiness.State.READY
+                ) {
+                    scheduleReadinessWatchdog(currentCycle.closeCycleId)
+                }
             }
         }
     }
@@ -543,7 +604,18 @@ internal class Fold7ContinuityCoordinator(
                     mirrorSession = session,
                     mirrorLeaseId = mirrorLeaseCounter.incrementAndGet(),
                     nextMirrorSequence = { mirrorSequence.incrementAndGet() },
-                    frozenFrameProvider = frozenInnerFrame,
+                    frozenFrameProvider = { width, height ->
+                        gen2.activeCycle?.let { cycle ->
+                            gen2.frames.current(
+                                cycle = cycle,
+                                nowUptimeMs = SystemClock.uptimeMillis(),
+                                maxAgeMs = FROZEN_FRAME_MAX_AGE_MS,
+                                width = width,
+                                height = height,
+                            )
+                        }
+                    },
+                    currentCycle = { gen2.activeCycle },
                     onStatus = onStatus,
                 )
             }.onFailure { error ->
@@ -609,6 +681,7 @@ internal class Fold7ContinuityCoordinator(
         if (mirrorSession > 0L || mirrorSessionOpening) return
 
         mirrorSessionOpening = true
+        val requestConnectionEpoch = ShizukuBridge.connectionEpoch
         scope.launch(Dispatchers.IO) {
             val result =
                 runCatching {
@@ -619,6 +692,15 @@ internal class Fold7ContinuityCoordinator(
             handler.post {
                 mirrorSessionOpening = false
                 if (destroyed) return@post
+                if (requestConnectionEpoch != ShizukuBridge.connectionEpoch) {
+                    DuoDiagnostics.event(
+                        "live-mirror",
+                        "stale session-open result reason=$reason " +
+                            "requestConnection=$requestConnectionEpoch " +
+                            "currentConnection=${ShizukuBridge.connectionEpoch}",
+                    )
+                    return@post
+                }
                 if (session <= 0L) {
                     DuoDiagnostics.event(
                         "live-mirror",
@@ -644,23 +726,139 @@ internal class Fold7ContinuityCoordinator(
         }
     }
 
-    private fun updateCoverLeaseSnapshot(
+    private fun acceptCoverLeaseSnapshot(
         result: android.os.Bundle?,
+        connectionEpoch: Long,
         reason: String,
-    ) {
-        if (result == null) return
-        val state = result.getString("leaseState")
-        val owner = result.getLong("ownerGeneration", -1L)
+    ): Fold7CoverLeaseSnapshotGate.Acceptance {
+        if (result == null) {
+            return Fold7CoverLeaseSnapshotGate.Acceptance(
+                accepted = false,
+                reason = "null-result",
+                token = gen2.coverAuthority.acceptedToken,
+                snapshot = gen2.coverAuthority.acceptedSnapshot,
+            )
+        }
+
+        val snapshot =
+            Fold7CoverLeaseSnapshotGate.Snapshot(
+                connectionEpoch = connectionEpoch,
+                shellSession = result.getLong("shellSession", 0L),
+                shellRevision = result.getLong("shellRevision", 0L),
+                leaseState = result.getString("leaseState") ?: "UNKNOWN",
+                leaseId = result.getLong("leaseId", -1L),
+                leaseEpoch = result.getLong("leaseEpoch", -1L),
+                ownerGeneration = result.getLong("ownerGeneration", -1L),
+                physicalDisplayId = result.getLong("physicalDisplayId", -1L),
+                targetLogicalId = result.getInt("targetDisplayId", -1),
+                physicalLeaseHeld = result.getBoolean("physicalLeaseHeld", false),
+                routeReady = result.getBoolean("routeReady", false),
+                ok = result.getBoolean("ok", false),
+            )
+
+        val acceptance =
+            gen2.coverAuthority.accept(snapshot)
+
         coverLeaseOwnerGeneration =
-            if (state == "IDLE") -1L else owner
+            acceptance.token?.ownerGeneration ?: -1L
 
         DuoDiagnostics.event(
             "fold7-state",
-            "cover-lease reason=$reason state=$state " +
-                "owner=$owner lease=${result.getLong("leaseId", -1L)} " +
-                "epoch=${result.getLong("leaseEpoch", -1L)} " +
-                "pending=${result.getBoolean("releasePending", false)} " +
-                "released=${result.getBoolean("released", false)}",
+            "cover-lease-v3 reason=$reason accepted=${acceptance.accepted} " +
+                "decision=${acceptance.reason} state=${snapshot.leaseState} " +
+                "connection=${snapshot.connectionEpoch} shell=${snapshot.shellSession} " +
+                "revision=${snapshot.shellRevision} lease=${snapshot.leaseId} " +
+                "epoch=${snapshot.leaseEpoch} owner=${snapshot.ownerGeneration} " +
+                "physical=${snapshot.physicalDisplayId} logical=${snapshot.targetLogicalId} " +
+                "held=${snapshot.physicalLeaseHeld} routeReady=${snapshot.routeReady}",
+        )
+
+        if (acceptance.accepted) {
+            val demand = gen2.coverReadiness.currentDemand
+            val token = acceptance.token
+            if (
+                demand != null &&
+                token != null &&
+                demand.leaseToken == token
+            ) {
+                gen2.coverReadiness.updateShell(
+                    demand = demand,
+                    shellRouteReady = snapshot.routeReady,
+                    expectedLogicalId = snapshot.targetLogicalId,
+                )
+            }
+        }
+
+        return acceptance
+    }
+
+    private fun observeCoverReadiness(
+        reason: String,
+    ) {
+        val cycle = gen2.activeCycle ?: return
+        val demand = gen2.coverReadiness.currentDemand ?: return
+
+        val t = topology()
+        val result =
+            gen2.coverReadiness.observe(
+                serviceEpoch = cycle.serviceEpoch,
+                closeCycleId = cycle.closeCycleId,
+                topology =
+                    Fold7CoverReadiness.Topology(
+                        innerActive = t.innerActive,
+                        coverActive = t.coverActive,
+                        innerIsDefault = t.innerIsDefault,
+                        coverIsDefault = t.coverIsDefault,
+                        coverLogicalId = t.coverLogicalId,
+                    ),
+            )
+
+        DuoDiagnostics.event(
+            "fold7-readiness",
+            "reason=$reason state=${result.state} decision=${result.reason} " +
+                "serviceEpoch=${cycle.serviceEpoch} closeCycle=${cycle.closeCycleId} " +
+                "generation=${demand.transitionGeneration} expectedLogical=${demand.expectedLogicalId} " +
+                "coverLogical=${t.coverLogicalId} coverActive=${t.coverActive}",
+        )
+
+        if (
+            result.becameReady &&
+            controller.state == Fold7ContinuityController.State.COVER_PREWARMING &&
+            controller.isGenerationCurrent(demand.transitionGeneration)
+        ) {
+            val decision =
+                controller.onPrewarmResult(
+                    requestGeneration = demand.transitionGeneration,
+                    ok = true,
+                    nowMs = SystemClock.uptimeMillis(),
+                    topology = t,
+                )
+            apply(decision)
+        }
+    }
+
+    private fun scheduleReadinessWatchdog(
+        closeCycleId: Long,
+    ) {
+        handler.postDelayed(
+            {
+                val cycle = gen2.activeCycle
+                if (
+                    destroyed ||
+                    cycle == null ||
+                    cycle.closeCycleId != closeCycleId ||
+                    controller.state != Fold7ContinuityController.State.COVER_PREWARMING ||
+                    gen2.coverReadiness.state == Fold7CoverReadiness.State.READY
+                ) {
+                    return@postDelayed
+                }
+
+                observeCoverReadiness("watchdog")
+                if (gen2.coverReadiness.state != Fold7CoverReadiness.State.READY) {
+                    ensureCoverRouteHeld("readiness-watchdog")
+                }
+            },
+            READINESS_WATCHDOG_MS,
         )
     }
 
@@ -676,107 +874,64 @@ internal class Fold7ContinuityCoordinator(
         }
 
         if (
-            controller.state !=
-                Fold7ContinuityController.State.COVER_READY_HIDDEN &&
-            controller.state !=
-                Fold7ContinuityController.State.COVER_VISUAL
-        ) {
-            return
-        }
-
-        val owner =
-            coverLeaseOwnerGeneration
-
-        if (owner < 0L) {
-            DuoDiagnostics.event(
-                "fold7-state",
-                "cover-route-reassert skipped reason=$reason owner=none",
+            controller.state !in setOf(
+                Fold7ContinuityController.State.COVER_PREWARMING,
+                Fold7ContinuityController.State.COVER_READY_HIDDEN,
+                Fold7ContinuityController.State.COVER_VISUAL,
             )
+        ) {
             return
         }
 
-        val requestGeneration =
-            controller.generation
+        val token =
+            gen2.coverAuthority.acceptedToken
+                ?: run {
+                    DuoDiagnostics.event(
+                        "fold7-state",
+                        "cover-route-reassert skipped reason=$reason token=none",
+                    )
+                    return
+                }
 
-        coverRouteReassertInFlight =
-            true
+        val requestGeneration = controller.generation
+        val requestConnectionEpoch = ShizukuBridge.connectionEpoch
+        coverRouteReassertInFlight = true
 
-        DuoDiagnostics.event(
-            "fold7-state",
-            "cover-route-reassert begin reason=$reason " +
-                "generation=$requestGeneration owner=$owner",
-        )
-
-        scope.launch(
-            Dispatchers.IO
-        ) {
+        scope.launch(Dispatchers.IO) {
             val result =
                 runCatching {
-                    ShizukuBridge
-                        .ensureSecondaryDisplayHeldV2(
-                            ownerGeneration = owner,
-                            reason = reason,
-                        )
+                    ShizukuBridge.ensureSecondaryDisplayHeldV3(
+                        token = token,
+                        reason = reason,
+                    )
                 }.getOrNull()
 
             handler.post {
-                coverRouteReassertInFlight =
-                    false
+                coverRouteReassertInFlight = false
 
-                updateCoverLeaseSnapshot(
-                    result,
-                    "route-reassert:$reason",
-                )
+                if (
+                    destroyed ||
+                    requestConnectionEpoch != ShizukuBridge.connectionEpoch
+                ) {
+                    return@post
+                }
 
-                val ok =
-                    result?.getBoolean(
-                        "ok",
-                        false,
-                    ) == true
-
-                val target =
-                    result?.getInt(
-                        "targetDisplayId",
-                        -1,
-                    ) ?: -1
+                val acceptance =
+                    acceptCoverLeaseSnapshot(
+                        result = result,
+                        connectionEpoch = requestConnectionEpoch,
+                        reason = "route-reassert:$reason",
+                    )
 
                 DuoDiagnostics.event(
                     "fold7-state",
                     "cover-route-reassert complete reason=$reason " +
-                        "generation=$requestGeneration owner=$owner " +
-                        "currentGeneration=${controller.generation} " +
-                        "ok=$ok logical=$target " +
-                        "routeEnabled=${result?.getBoolean("routeEnabled", false) == true} " +
-                        "logicalPowered=${result?.getBoolean("logicalPowered", false) == true} " +
-                        "stale=${result?.getBoolean("stale", false) == true} " +
-                        "error=${result?.getString("error")}",
+                        "generation=$requestGeneration currentGeneration=${controller.generation} " +
+                        "accepted=${acceptance.accepted} decision=${acceptance.reason}",
                 )
 
-                if (
-                    !destroyed &&
-                    ok &&
-                    controller.isGenerationCurrent(
-                        requestGeneration
-                    ) &&
-                    controller.state ==
-                        Fold7ContinuityController.State.COVER_VISUAL
-                ) {
-                    handler.postDelayed(
-                        {
-                            if (
-                                !destroyed &&
-                                visualMirrorActive
-                            ) {
-                                syncMirrorHost(
-                                    reason =
-                                        "route-reassert:$reason",
-                                    generation =
-                                        mirrorGeneration,
-                                )
-                            }
-                        },
-                        COVER_ROUTE_REASSERT_SETTLE_MS,
-                    )
+                if (acceptance.accepted) {
+                    observeCoverReadiness("route-reassert:$reason")
                 }
             }
         }
@@ -786,17 +941,32 @@ internal class Fold7ContinuityCoordinator(
         reason: String,
     ) {
         if (!ShizukuBridge.ready) return
-        val owner = coverLeaseOwnerGeneration
+        val token = gen2.coverAuthority.acceptedToken
+        val shellSession =
+            gen2.coverAuthority.acceptedSnapshot?.shellSession ?: 0L
+        val requestConnectionEpoch = ShizukuBridge.connectionEpoch
+
         scope.launch(Dispatchers.IO) {
             val result =
-                if (owner >= 0L) {
-                    ShizukuBridge.releaseSecondaryDisplayV2(owner, reason)
-                        ?: ShizukuBridge.resetSecondaryDisplay(-1)
+                if (token != null) {
+                    ShizukuBridge.releaseSecondaryDisplayV3(token, reason)
                 } else {
-                    ShizukuBridge.reconcileSecondaryDisplayLeaseV2(reason)
-                        ?: ShizukuBridge.resetSecondaryDisplay(-1)
+                    ShizukuBridge.reconcileSecondaryDisplayLeaseV3(
+                        shellSession,
+                        reason,
+                    )
                 }
-            handler.post { updateCoverLeaseSnapshot(result, reason) }
+
+            handler.post {
+                if (requestConnectionEpoch != ShizukuBridge.connectionEpoch) {
+                    return@post
+                }
+                acceptCoverLeaseSnapshot(
+                    result = result,
+                    connectionEpoch = requestConnectionEpoch,
+                    reason = reason,
+                )
+            }
         }
     }
 
@@ -804,11 +974,32 @@ internal class Fold7ContinuityCoordinator(
         reason: String,
     ) {
         if (destroyed || !ShizukuBridge.ready) return
+        val shellSession =
+            gen2.coverAuthority.acceptedSnapshot?.shellSession ?: 0L
+        val requestConnectionEpoch = ShizukuBridge.connectionEpoch
+
         scope.launch(Dispatchers.IO) {
             val result =
-                ShizukuBridge.reconcileSecondaryDisplayLeaseV2(reason)
-                    ?: ShizukuBridge.secondaryDisplayLeaseStatusV2()
-            handler.post { updateCoverLeaseSnapshot(result, reason) }
+                ShizukuBridge.reconcileSecondaryDisplayLeaseV3(
+                    shellSession,
+                    reason,
+                )
+                    ?: ShizukuBridge.secondaryDisplayLeaseStatusV3(shellSession)
+
+            handler.post {
+                if (requestConnectionEpoch != ShizukuBridge.connectionEpoch) {
+                    return@post
+                }
+                val acceptance =
+                    acceptCoverLeaseSnapshot(
+                        result = result,
+                        connectionEpoch = requestConnectionEpoch,
+                        reason = reason,
+                    )
+                if (acceptance.accepted) {
+                    observeCoverReadiness("reconcile:$reason")
+                }
+            }
         }
     }
 
@@ -871,6 +1062,29 @@ internal class Fold7ContinuityCoordinator(
     private fun logTransition(
         transition: Fold7ContinuityController.Transition,
     ) {
+        val cycleChange =
+            gen2.onTransition(
+                from = transition.from,
+                to = transition.to,
+                nowUptimeMs = SystemClock.uptimeMillis(),
+            )
+
+        cycleChange.started?.let { cycle ->
+            DuoDiagnostics.event(
+                "fold7-cycle",
+                "START serviceEpoch=${cycle.serviceEpoch} " +
+                    "closeCycle=${cycle.closeCycleId} generation=${transition.generation}",
+            )
+        }
+        cycleChange.ended?.let { cycle ->
+            DuoDiagnostics.event(
+                "fold7-cycle",
+                "END serviceEpoch=${cycle.serviceEpoch} " +
+                    "closeCycle=${cycle.closeCycleId} generation=${transition.generation} " +
+                    "target=${transition.to}",
+            )
+        }
+
         val t = transition.topology
 
         DuoDiagnostics.event(
@@ -896,6 +1110,7 @@ internal class Fold7ContinuityCoordinator(
         const val INNER_HEIGHT = 2184
         const val COVER_WIDTH = 1080
         const val COVER_HEIGHT = 2520
-        const val COVER_ROUTE_REASSERT_SETTLE_MS = 32L
+        const val READINESS_WATCHDOG_MS = 80L
+        const val FROZEN_FRAME_MAX_AGE_MS = 10_000L
     }
 }

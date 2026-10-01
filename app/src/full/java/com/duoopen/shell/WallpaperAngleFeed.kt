@@ -13,229 +13,219 @@ import android.view.Display
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import com.duoopen.debug.DuoDiagnostics
 import com.duoopen.fold.HingeAngleSource
 import com.duoopen.lab.TransitionClock
 import com.duoopen.lab.TransitionLab
 import kotlin.math.abs
 
 /**
- * Continuous hinge angle on Samsung foldables, where the public sensor only
- * reports 0/90/180: Samsung's own "Fold interactive" home wallpaper receives
- * the real angle, and logs it (`mCurrentAngle=…`) whenever it's sent a
- * wallpaper command. So: keep a 1×1 wallpaper-showing anchor window, ping the
- * wallpaper through it at an adaptive cadence, and let the Shizuku-side log reader
- * ([DuoShellService]) call back with each value, which is fed into
- * [HingeAngleSource] as the live angle.
+ * Fold7 Gen-2 Samsung precise-angle acquisition.
  *
- * Technique from Duo Fold Live (github.com/joeconsorti/duo-fold-live, MIT).
- * Requires: Shizuku authorised, and that wallpaper set as the home wallpaper.
+ * The wallpaper command still has to originate from an attached window token,
+ * so anchor/window work remains on [mainHandler]. Scheduling, session ownership,
+ * response acceptance and HingeAngleSource delivery are serialized on
+ * [controlHandler].
+ *
+ * Invariants:
+ * - 8 ms target while interactive, including at rest;
+ * - at most one Samsung wallpaper poll in flight;
+ * - every reader lifetime and poll are explicitly identified;
+ * - a late old-session / old-poll callback is rejected;
+ * - next poll is scheduled only after response/timeout completion;
+ * - the precise Samsung angle remains authoritative geometry.
  */
 class WallpaperAngleFeed(
     private val context: Context,
-    private val handler: Handler,
+    private val mainHandler: Handler,
+    private val controlHandler: Handler,
     private val hinge: HingeAngleSource,
 ) {
+    @Volatile
     private var running = false
-    private var action = ""
+
+    @Volatile
+    private var readerSession = 0L
+
+    private var actionPrefix = ""
+
+    // Main-thread-owned window state.
     private var anchor: View? = null
     private var anchorWm: WindowManager? = null
     private var anchorKey = ""
-    private var lastCallbackUptime = 0L
 
+    // Control-thread-owned acquisition state.
+    private val pipeline =
+        Fold7AnglePipelineGen2(
+            targetPeriodMs = INTERACTIVE_POLL_MS,
+            minimumYieldMs = MINIMUM_YIELD_MS,
+        )
+
+    private var lastCallbackUptime = 0L
     private var lastDeliveryLagMs = -1L
     private var maxDeliveryLagMs = 0L
-
     private var lastAngleSeen = Float.NaN
     private var lastAngleChangeUptime = 0L
-
     private var endpointBridgeGeneration = 0L
-
     private var duplicateAngles = 0L
-
-    private var lastWallpaperIdentity =
-        ""
-
-    private var lastFreshState:
-        Boolean? = null
+    private var droppedSessionSamples = 0L
+    private var droppedPollSamples = 0L
+    private var timedOutPolls = 0L
+    private var lastWallpaperIdentity = ""
+    private var lastFreshState: Boolean? = null
+    private var startedAt = 0L
+    private var scheduledPollSession = -1L
 
     /** One line for the UI. */
     @Volatile
     var status: String = "Idle"
         private set
 
-    val active: Boolean get() = running
+    val active: Boolean
+        get() = running
 
-    private val poll = object : Runnable {
-        override fun run() {
-            if (!running) return
-            val pm = context.getSystemService(PowerManager::class.java)
-            if (pm?.isInteractive != false) {
-                runCatching { ensureAnchor() }.onFailure { status = "Anchor failed: ${it.message}" }
-                val a = anchor
-                if (a != null && a.windowToken != null) {
-                    runCatching {
-                        WallpaperManager.getInstance(a.context).sendWallpaperCommand(a.windowToken, action, 0, 0, 0, null)
-                    }.onFailure { status = "Wallpaper command failed: ${it.message}" }
-                }
+    private val pollRunnable =
+        Runnable {
+            val session = scheduledPollSession
+            if (!isCurrent(session)) {
+                return@Runnable
             }
-            handler.postDelayed(
-                this,
-                pollInterval(
-                    SystemClock.uptimeMillis(),
-                ),
-            )
+            startPoll(session)
         }
-    }
 
-    private val statusTick = object : Runnable {
-        override fun run() {
-            if (!running) return
+    private val statusTick =
+        object : Runnable {
+            override fun run() {
+                if (!running) return
 
-            val now =
-                SystemClock.uptimeMillis()
+                val now =
+                    SystemClock.uptimeMillis()
 
-            val b =
-                ShizukuBridge.angleStatus()
+                val b =
+                    ShizukuBridge.angleStatus()
 
-            val age =
-                if (
-                    lastCallbackUptime == 0L
-                ) {
-                    -1L
-                } else {
-                    now -
-                        lastCallbackUptime
-                }
+                val age =
+                    if (lastCallbackUptime == 0L) {
+                        -1L
+                    } else {
+                        now - lastCallbackUptime
+                    }
 
-            val fresh =
-                age in 0..STALE_MS ||
-                    (
-                        age < 0L &&
-                            now - startedAt <=
-                            STALE_MS
-                        )
-
-            val wallpaper =
-                wallpaperIdentity(
-                    context
-                )
-
-            if (
-                wallpaper !=
-                lastWallpaperIdentity
-            ) {
-                com.duoopen.debug.DuoDiagnostics.event(
-                    "angle-source",
-                    "wallpaper changed from=" +
-                        "${lastWallpaperIdentity.ifEmpty { "(initial)" }} " +
-                        "to=$wallpaper " +
-                        "readerFresh=$fresh ageMs=$age",
-                )
-
-                lastWallpaperIdentity =
-                    wallpaper
-            }
-
-            if (
-                lastFreshState != fresh
-            ) {
-                com.duoopen.debug.DuoDiagnostics.event(
-                    "angle-source",
-                    "readerFresh=$fresh ageMs=$age " +
-                        "wallpaper=$wallpaper",
-                )
-
-                lastFreshState =
-                    fresh
-            }
-
-            status =
-                if (
-                    b == null
-                ) {
-                    "Reader unreachable · wallpaper $wallpaper"
-                } else {
-                    "Reader ${b.getString("state")}: " +
-                        "${b.getInt("parsed")} angles / " +
-                        "${b.getInt("lines")} lines" +
+                val fresh =
+                    age in 0..STALE_MS ||
                         (
-                            if (
-                                age >= 0
-                            ) {
-                                " · last ${age} ms ago"
-                            } else {
-                                " · waiting for first angle"
-                            }
-                        ) +
-                        (
-                            if (
-                                lastDeliveryLagMs >= 0
-                            ) {
-                                " · delivery ${lastDeliveryLagMs} ms " +
-                                    "(max ${maxDeliveryLagMs})"
-                            } else {
-                                ""
-                            }
-                        ) +
-                        " · poll ${pollInterval(now)} ms" +
-                        " · dup $duplicateAngles" +
-                        " · source " +
-                        (
-                            if (
-                                fresh
-                            ) {
-                                "live"
-                            } else {
-                                "stale"
-                            }
-                        ) +
-                        " · wallpaper $wallpaper"
-                }
-
-            if (
-                !fresh &&
-                (
-                    age > STALE_MS ||
-                        (
-                            age < 0 &&
-                                now - startedAt >
-                                STALE_MS
+                            age < 0L &&
+                                now - startedAt <= STALE_MS
                             )
-                    )
-            ) {
-                hinge.clearExternal()
-            }
 
-            handler.postDelayed(
-                this,
-                1_000
-            )
+                val wallpaper =
+                    wallpaperIdentity(context)
+
+                if (wallpaper != lastWallpaperIdentity) {
+                    DuoDiagnostics.event(
+                        "angle-source",
+                        "wallpaper changed from=" +
+                            "${lastWallpaperIdentity.ifEmpty { "(initial)" }} " +
+                            "to=$wallpaper readerFresh=$fresh ageMs=$age",
+                    )
+
+                    lastWallpaperIdentity = wallpaper
+                }
+
+                if (lastFreshState != fresh) {
+                    DuoDiagnostics.event(
+                        "angle-source",
+                        "readerFresh=$fresh ageMs=$age wallpaper=$wallpaper",
+                    )
+                    lastFreshState = fresh
+                }
+
+                val inFlight =
+                    pipeline.inFlightPoll
+
+                status =
+                    if (b == null) {
+                        "Reader unreachable · wallpaper $wallpaper"
+                    } else {
+                        "Reader ${b.getString("state")}: " +
+                            "${b.getInt("parsed")} angles / ${b.getInt("lines")} lines" +
+                            (
+                                if (age >= 0L) {
+                                    " · last ${age} ms ago"
+                                } else {
+                                    " · waiting for first angle"
+                                }
+                            ) +
+                            (
+                                if (lastDeliveryLagMs >= 0L) {
+                                    " · delivery ${lastDeliveryLagMs} ms (max ${maxDeliveryLagMs})"
+                                } else {
+                                    ""
+                                }
+                            ) +
+                            " · target ${INTERACTIVE_POLL_MS} ms" +
+                            " · session $readerSession" +
+                            " · inFlight ${inFlight?.sequence ?: "none"}" +
+                            " · timeout $timedOutPolls" +
+                            " · drop ${droppedSessionSamples + droppedPollSamples}" +
+                            " · dup $duplicateAngles" +
+                            " · source ${if (fresh) "live" else "stale"}" +
+                            " · wallpaper $wallpaper"
+                    }
+
+                if (
+                    !fresh &&
+                    (
+                        age > STALE_MS ||
+                            (
+                                age < 0L &&
+                                    now - startedAt > STALE_MS
+                                )
+                        )
+                ) {
+                    controlHandler.post {
+                        if (running) {
+                            hinge.clearExternal()
+                        }
+                    }
+                }
+
+                mainHandler.postDelayed(
+                    this,
+                    STATUS_TICK_MS,
+                )
+            }
         }
-    }
-    private var startedAt = 0L
 
     fun start() {
         if (running) return
+
         if (!ShizukuBridge.ready) {
             status = "Shizuku not ready"
             return
         }
 
-        /*
-         * Samsung exposes different wallpaper metadata on the Fold7 cover
-         * display. Always attempt the reader and let fresh/stale callbacks
-         * determine whether the continuous source is usable.
-         */
-        action = "com.duoopen.angle.READ_${SystemClock.elapsedRealtime()}"
+        val session =
+            readerSession + 1L
+
+        readerSession = session
+        actionPrefix =
+            "com.duoopen.angle.READ_${SystemClock.elapsedRealtime()}_$session"
+
+        val prefix =
+            actionPrefix
+
         if (
-            !ShizukuBridge.startAngles(
-                action,
-            ) { angle, sourceUptime, binderArrivalTimeNs ->
-                handler.post {
+            !ShizukuBridge.startAnglesSequenced(
+                prefix,
+            ) { angle, sourceUptime, binderArrivalTimeNs, pollSequence ->
+                controlHandler.post {
                     onAngle(
-                        angle,
-                        sourceUptime,
-                        binderArrivalTimeNs,
+                        session = session,
+                        pollSequence = pollSequence,
+                        angle = angle,
+                        sourceUptime = sourceUptime,
+                        binderArrivalTimeNs = binderArrivalTimeNs,
                     )
                 }
             }
@@ -243,76 +233,344 @@ class WallpaperAngleFeed(
             status = "Couldn't start the log reader"
             return
         }
+
         running = true
-        startedAt =
-            SystemClock.uptimeMillis()
+        startedAt = SystemClock.uptimeMillis()
 
         lastCallbackUptime = 0L
         lastDeliveryLagMs = -1L
         maxDeliveryLagMs = 0L
-
         lastAngleSeen = Float.NaN
         lastAngleChangeUptime = 0L
-
+        endpointBridgeGeneration = 0L
         duplicateAngles = 0L
+        droppedSessionSamples = 0L
+        droppedPollSamples = 0L
+        timedOutPolls = 0L
+        lastWallpaperIdentity = ""
+        lastFreshState = null
 
-        lastWallpaperIdentity =
-            ""
+        status = "Starting Fold7 Gen-2 Samsung hinge reader"
 
-        lastFreshState =
-            null
+        mainHandler.post {
+            if (isCurrent(session)) {
+                runCatching {
+                    ensureAnchor()
+                }.onFailure {
+                    status =
+                        "Anchor failed: ${it.message}"
+                }
+            }
+        }
 
-        status =
-            "Starting live Samsung hinge reader"
-        Log.i(TAG, "wallpaper angle feed started ($action)")
-        handler.post(poll)
-        handler.postDelayed(statusTick, 1_000)
+        controlHandler.post {
+            if (!isCurrent(session)) {
+                return@post
+            }
+
+            pipeline.startSession()
+
+            TransitionLab.recordIngressStage(
+                type = "angle-session-start",
+                angleSession = session,
+                reason = "FoldInteractive Gen2 reader start",
+            )
+
+            schedulePoll(
+                session = session,
+                delayMs = 0L,
+            )
+        }
+
+        mainHandler.postDelayed(
+            statusTick,
+            STATUS_TICK_MS,
+        )
+
+        Log.i(
+            TAG,
+            "wallpaper angle feed Gen2 started ($prefix)",
+        )
     }
 
     fun stop() {
         if (!running) return
+
+        val oldSession =
+            readerSession
+
         running = false
-        handler.removeCallbacks(poll)
-        handler.removeCallbacks(statusTick)
+        readerSession = oldSession + 1L
+
+        controlHandler.removeCallbacks(
+            pollRunnable
+        )
+
+        controlHandler.post {
+            pipeline.invalidateSession()
+            hinge.clearExternal()
+
+            TransitionLab.recordIngressStage(
+                type = "angle-session-stop",
+                angleSession = oldSession,
+                reason = "FoldInteractive Gen2 reader stop",
+            )
+        }
+
+        mainHandler.removeCallbacks(
+            statusTick
+        )
+
         ShizukuBridge.stopAngles()
-        hinge.clearExternal()
-        removeAnchor()
+
+        mainHandler.post {
+            removeAnchor()
+        }
+
         status = "Stopped"
         Log.i(TAG, "wallpaper angle feed stopped")
     }
 
-    /** Re-check the anchor after a panel swap. */
-    fun onDisplayChanged() {
-        if (running) runCatching { ensureAnchor() }
-    }
-
     /**
-     * Device-state edges accelerate acquisition only. Force the adaptive
-     * poller into its 8 ms burst and request a wallpaper sample immediately.
+     * An independent opening edge can pull the next precise sample forward
+     * without inventing any visual angle.
      */
-    fun kickPreciseBurst(
+    fun kickBurst(
         reason: String,
     ) {
+        val session =
+            readerSession
+
+        controlHandler.post {
+            if (!isCurrent(session)) return@post
+
+            TransitionLab.recordIngressStage(
+                type = "poll-kick",
+                angleSession = session,
+                reason = reason,
+            )
+
+            if (pipeline.inFlightPoll == null) {
+                schedulePoll(
+                    session = session,
+                    delayMs = 0L,
+                )
+            }
+        }
+    }
+
+    /** Re-check the anchor after a panel swap. Main-thread entry. */
+    fun onDisplayChanged() {
         if (!running) return
 
-        lastAngleChangeUptime =
+        mainHandler.post {
+            if (running) {
+                runCatching {
+                    ensureAnchor()
+                }.onFailure {
+                    status =
+                        "Anchor failed: ${it.message}"
+                }
+            }
+        }
+    }
+
+    private fun startPoll(
+        session: Long,
+    ) {
+        if (!isCurrent(session)) return
+
+        val pm =
+            context.getSystemService(
+                PowerManager::class.java,
+            )
+
+        if (pm?.isInteractive == false) {
+            schedulePoll(
+                session = session,
+                delayMs = NON_INTERACTIVE_RECHECK_MS,
+            )
+            return
+        }
+
+        val now =
             SystemClock.uptimeMillis()
 
-        com.duoopen.debug.DuoDiagnostics.event(
-            "early-wake",
-            "precise-burst reason=$reason pollMs=$ACTIVE_POLL_MS",
+        val poll =
+            pipeline.tryStartPoll(now)
+                ?: return
+
+        TransitionLab.recordIngressStage(
+            type = "poll-due",
+            angleSession = session,
+            pollSequence = poll.sequence,
+            valueNs = now * TransitionClock.NS_PER_MS,
         )
 
-        handler.removeCallbacks(
-            poll
+        mainHandler.post {
+            if (!isCurrent(session)) {
+                controlHandler.post {
+                    completePollWithoutSample(
+                        session = session,
+                        poll = poll,
+                        reason = "session-invalid-before-command",
+                    )
+                }
+                return@post
+            }
+
+            val commandStartNs =
+                TransitionClock.nowNs()
+
+            TransitionLab.recordIngressStage(
+                type = "poll-command-start",
+                timeNs = commandStartNs,
+                angleSession = session,
+                pollSequence = poll.sequence,
+            )
+
+            val sent =
+                runCatching {
+                    ensureAnchor()
+
+                    val a =
+                        anchor
+
+                    if (
+                        a == null ||
+                        a.windowToken == null
+                    ) {
+                        false
+                    } else {
+                        val action =
+                            "$actionPrefix:${poll.sequence}"
+
+                        WallpaperManager
+                            .getInstance(a.context)
+                            .sendWallpaperCommand(
+                                a.windowToken,
+                                action,
+                                0,
+                                0,
+                                0,
+                                null,
+                            )
+                        true
+                    }
+                }.onFailure {
+                    status =
+                        "Wallpaper command failed: ${it.message}"
+                }.getOrDefault(false)
+
+            val commandReturnNs =
+                TransitionClock.nowNs()
+
+            TransitionLab.recordIngressStage(
+                type = "poll-command-return",
+                timeNs = commandReturnNs,
+                angleSession = session,
+                pollSequence = poll.sequence,
+                reason = "sent=$sent",
+                valueNs =
+                    commandReturnNs -
+                        commandStartNs,
+            )
+
+            controlHandler.post {
+                if (!isCurrent(session)) {
+                    return@post
+                }
+
+                if (!sent) {
+                    completePollWithoutSample(
+                        session = session,
+                        poll = poll,
+                        reason = "command-not-sent",
+                    )
+                } else {
+                    controlHandler.postDelayed(
+                        {
+                            onPollTimeout(
+                                session = session,
+                                poll = poll,
+                            )
+                        },
+                        POLL_TIMEOUT_MS,
+                    )
+                }
+            }
+        }
+    }
+
+    private fun onPollTimeout(
+        session: Long,
+        poll: Fold7AnglePipelineGen2.PollToken,
+    ) {
+        if (!isCurrent(session)) return
+
+        val current =
+            pipeline.inFlightPoll
+
+        if (
+            current?.session !=
+            poll.session ||
+            current.sequence !=
+            poll.sequence
+        ) {
+            return
+        }
+
+        timedOutPolls++
+
+        TransitionLab.recordIngressStage(
+            type = "poll-timeout",
+            angleSession = session,
+            pollSequence = poll.sequence,
         )
 
-        handler.post(
-            poll
+        val next =
+            pipeline.timeoutPoll(
+                token = poll,
+                timeoutUptimeMs =
+                    SystemClock.uptimeMillis(),
+            ) ?: return
+
+        schedulePoll(
+            session = session,
+            delayMs = next,
+        )
+    }
+
+    private fun completePollWithoutSample(
+        session: Long,
+        poll: Fold7AnglePipelineGen2.PollToken,
+        reason: String,
+    ) {
+        if (!isCurrent(session)) return
+
+        TransitionLab.recordIngressStage(
+            type = "poll-complete-no-sample",
+            angleSession = session,
+            pollSequence = poll.sequence,
+            reason = reason,
+        )
+
+        val next =
+            pipeline.completePoll(
+                token = poll,
+                completionUptimeMs =
+                    SystemClock.uptimeMillis(),
+            ) ?: return
+
+        schedulePoll(
+            session = session,
+            delayMs = next,
         )
     }
 
     private fun onAngle(
+        session: Long,
+        pollSequence: Long,
         angle: Float,
         sourceUptime: Long,
         binderArrivalTimeNs: Long,
@@ -320,17 +578,65 @@ class WallpaperAngleFeed(
         val consumerDeliveryTimeNs =
             TransitionClock.nowNs()
 
-        if (!running) return
+        if (!isCurrent(session)) {
+            droppedSessionSamples++
+
+            TransitionLab.recordIngressStage(
+                type = "sample-drop-session",
+                timeNs = consumerDeliveryTimeNs,
+                angleSession = session,
+                pollSequence = pollSequence,
+                reason = "current=$readerSession",
+            )
+            return
+        }
+
+        val poll =
+            pipeline.inFlightPoll
+
+        if (
+            poll == null ||
+            poll.sequence != pollSequence
+        ) {
+            droppedPollSamples++
+
+            TransitionLab.recordIngressStage(
+                type = "sample-drop-poll",
+                timeNs = consumerDeliveryTimeNs,
+                angleSession = session,
+                pollSequence = pollSequence,
+                reason =
+                    "inFlight=${poll?.sequence}",
+            )
+            return
+        }
+
+        val sample =
+            pipeline.nextSample(
+                poll = poll,
+                angle = angle,
+            ) ?: run {
+                droppedPollSamples++
+                return
+            }
+
+        TransitionLab.recordIngressStage(
+            type = "control-accept",
+            timeNs = consumerDeliveryTimeNs,
+            angleSession = session,
+            pollSequence = pollSequence,
+            sampleSequence = sample.sampleSequence,
+            valueFloat = angle,
+        )
 
         TransitionLab.recordSamsungSample(
-            angleDegrees =
-                angle,
-            sourceUptimeMs =
-                sourceUptime,
-            binderArrivalTimeNs =
-                binderArrivalTimeNs,
-            consumerDeliveryTimeNs =
-                consumerDeliveryTimeNs,
+            angleDegrees = angle,
+            sourceUptimeMs = sourceUptime,
+            binderArrivalTimeNs = binderArrivalTimeNs,
+            consumerDeliveryTimeNs = consumerDeliveryTimeNs,
+            angleSession = session,
+            pollSequence = pollSequence,
+            sampleSequence = sample.sampleSequence,
         )
 
         val now =
@@ -348,7 +654,7 @@ class WallpaperAngleFeed(
             now
 
         lastDeliveryLagMs =
-            (now - sourceUptime)
+            now - sourceUptime
 
         if (
             lastDeliveryLagMs >
@@ -365,11 +671,8 @@ class WallpaperAngleFeed(
                     lastAngleSeen,
             ) >= ANGLE_CHANGE_EPS
         ) {
-            lastAngleSeen =
-                angle
-
-            lastAngleChangeUptime =
-                now
+            lastAngleSeen = angle
+            lastAngleChangeUptime = now
         } else {
             duplicateAngles++
         }
@@ -382,6 +685,46 @@ class WallpaperAngleFeed(
             priorChangeUptime = priorChangeUptime,
             now = now,
         )
+
+        val next =
+            pipeline.completePoll(
+                token = poll,
+                completionUptimeMs = now,
+            ) ?: return
+
+        TransitionLab.recordIngressStage(
+            type = "poll-complete",
+            angleSession = session,
+            pollSequence = poll.sequence,
+            sampleSequence = sample.sampleSequence,
+            valueNs =
+                (now - poll.startedUptimeMs)
+                    .coerceAtLeast(0L) *
+                    TransitionClock.NS_PER_MS,
+        )
+
+        schedulePoll(
+            session = session,
+            delayMs = next,
+        )
+    }
+
+    private fun schedulePoll(
+        session: Long,
+        delayMs: Long,
+    ) {
+        if (!isCurrent(session)) return
+
+        scheduledPollSession = session
+
+        controlHandler.removeCallbacks(
+            pollRunnable
+        )
+
+        controlHandler.postDelayed(
+            pollRunnable,
+            delayMs.coerceAtLeast(0L),
+        )
     }
 
     private fun scheduleEndpointBridge(
@@ -390,49 +733,69 @@ class WallpaperAngleFeed(
         priorChangeUptime: Long,
         now: Long,
     ) {
-        if (!priorAngle.isFinite() || priorChangeUptime == 0L) return
+        if (
+            !priorAngle.isFinite() ||
+            priorChangeUptime == 0L
+        ) {
+            return
+        }
 
-        val dtMs = now - priorChangeUptime
-        if (dtMs <= 0L || dtMs > ENDPOINT_BRIDGE_SAMPLE_MAX_MS) return
+        val dtMs =
+            now - priorChangeUptime
+
+        if (
+            dtMs <= 0L ||
+            dtMs >
+            ENDPOINT_BRIDGE_SAMPLE_MAX_MS
+        ) {
+            return
+        }
 
         val velocity =
-            (angle - priorAngle) * 1_000f / dtMs.toFloat()
+            (angle - priorAngle) *
+                1_000f /
+                dtMs.toFloat()
 
         val target =
             when {
                 angle <= ENDPOINT_BRIDGE_CLOSED_MAX_DEG &&
-                    velocity <= -ENDPOINT_BRIDGE_MIN_SPEED_DPS -> 0f
+                    velocity <= -ENDPOINT_BRIDGE_MIN_SPEED_DPS ->
+                    0f
 
                 angle >= ENDPOINT_BRIDGE_OPEN_MIN_DEG &&
-                    velocity >= ENDPOINT_BRIDGE_MIN_SPEED_DPS -> 180f
+                    velocity >= ENDPOINT_BRIDGE_MIN_SPEED_DPS ->
+                    180f
 
-                else -> return
+                else ->
+                    return
             }
 
-        val generation = endpointBridgeGeneration
+        val generation =
+            endpointBridgeGeneration
 
-        handler.postDelayed(
+        controlHandler.postDelayed(
             {
                 if (
                     !running ||
                     endpointBridgeGeneration != generation ||
-                    SystemClock.uptimeMillis() - lastCallbackUptime <
-                        ENDPOINT_BRIDGE_DELAY_MS
+                    SystemClock.uptimeMillis() -
+                    lastCallbackUptime <
+                    ENDPOINT_BRIDGE_DELAY_MS
                 ) {
                     return@postDelayed
                 }
 
-                com.duoopen.debug.DuoDiagnostics.event(
+                DuoDiagnostics.event(
                     "angle-source",
                     "endpoint bridge from=$angle to=$target velocity=$velocity",
                 )
 
                 lastAngleSeen = target
-                lastAngleChangeUptime = SystemClock.uptimeMillis()
+                lastAngleChangeUptime =
+                    SystemClock.uptimeMillis()
 
                 TransitionLab.recordSyntheticEndpoint(
-                    angleDegrees =
-                        target,
+                    angleDegrees = target,
                     reason =
                         "endpoint bridge from=$angle velocity=$velocity",
                 )
@@ -443,92 +806,158 @@ class WallpaperAngleFeed(
         )
     }
 
-    private fun pollInterval(
-        now: Long,
-    ): Long {
+    private fun isCurrent(
+        session: Long,
+    ): Boolean =
+        running &&
+            session ==
+            readerSession
 
-        val moving =
-            lastAngleChangeUptime != 0L &&
-                now -
-                lastAngleChangeUptime <=
-                ACTIVE_BURST_MS
+    private fun displayKey(
+        display: Display,
+    ): String {
+        val mode =
+            runCatching {
+                display.mode
+            }.getOrNull()
+                ?: return "${display.displayId}"
 
-        return if (moving) {
-            ACTIVE_POLL_MS
-        } else {
-            IDLE_POLL_MS
-        }
-    }
-
-    private fun displayKey(d: Display): String {
-        val m = runCatching { d.mode }.getOrNull() ?: return "${d.displayId}"
-        return "${d.displayId}:${m.physicalWidth}x${m.physicalHeight}"
+        return (
+            "${display.displayId}:" +
+                "${mode.physicalWidth}x${mode.physicalHeight}"
+            )
     }
 
     /**
-     * The wallpaper only answers commands from its current target window, so
-     * the anchor shows wallpaper and lives on the default display; it is
-     * re-created when that display swaps panels.
+     * Main-thread-only window anchor. Samsung's FoldInteractive service answers
+     * commands from the current default display's wallpaper-showing token.
      */
     private fun ensureAnchor() {
-        val dm = context.getSystemService(DisplayManager::class.java)
-        val display = dm.getDisplay(Display.DEFAULT_DISPLAY) ?: return
-        val key = displayKey(display)
-        if (anchor != null && key == anchorKey) return
-        removeAnchor()
-        val c = context.createDisplayContext(display)
-            .createWindowContext(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, null)
-        val wm = c.getSystemService(WindowManager::class.java)
-        val v = View(c)
-        val params = WindowManager.LayoutParams(
-            1, 1,
-            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER,
-            PixelFormat.TRANSLUCENT,
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            title = "DuoOpenAngleAnchor"
+        val dm =
+            context.getSystemService(
+                DisplayManager::class.java,
+            )
+
+        val display =
+            dm.getDisplay(
+                Display.DEFAULT_DISPLAY
+            ) ?: return
+
+        val key =
+            displayKey(display)
+
+        if (
+            anchor != null &&
+            key == anchorKey
+        ) {
+            return
         }
-        wm.addView(v, params)
-        anchor = v
+
+        removeAnchor()
+
+        val c =
+            context
+                .createDisplayContext(display)
+                .createWindowContext(
+                    WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                    null,
+                )
+
+        val wm =
+            c.getSystemService(
+                WindowManager::class.java,
+            )
+
+        val view =
+            View(c)
+
+        val params =
+            WindowManager.LayoutParams(
+                1,
+                1,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                    WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER,
+                PixelFormat.TRANSLUCENT,
+            ).apply {
+                gravity =
+                    Gravity.TOP or
+                        Gravity.START
+                title =
+                    "DuoOpenAngleAnchor"
+            }
+
+        wm.addView(
+            view,
+            params,
+        )
+
+        anchor = view
         anchorWm = wm
         anchorKey = key
     }
 
     private fun removeAnchor() {
-        val v = anchor ?: return
-        runCatching { anchorWm?.removeViewImmediate(v) }
+        val view =
+            anchor ?: return
+
+        runCatching {
+            anchorWm
+                ?.removeViewImmediate(view)
+        }
+
         anchor = null
         anchorWm = null
         anchorKey = ""
     }
 
     companion object {
-        private const val TAG = "DuoAngleFeed"
-        // Low overhead while the phone is stationary.
-        const val IDLE_POLL_MS = 33L
+        private const val TAG =
+            "DuoAngleFeed"
 
-        // Near-display-refresh polling while moving.
-        const val ACTIVE_POLL_MS = 8L
+        /** Full interactive cadence, including stationary closed/open rest. */
+        const val INTERACTIVE_POLL_MS =
+            8L
 
-        // Remain in fast mode briefly after the last movement.
-        const val ACTIVE_BURST_MS = 900L
+        const val MINIMUM_YIELD_MS =
+            1L
 
-        const val ANGLE_CHANGE_EPS = 0.10f
+        const val NON_INTERACTIVE_RECHECK_MS =
+            500L
 
-        private const val ENDPOINT_BRIDGE_DELAY_MS = 140L
-        private const val ENDPOINT_BRIDGE_SAMPLE_MAX_MS = 300L
-        private const val ENDPOINT_BRIDGE_CLOSED_MAX_DEG = 8.0f
-        private const val ENDPOINT_BRIDGE_OPEN_MIN_DEG = 172.0f
-        private const val ENDPOINT_BRIDGE_MIN_SPEED_DPS = 18.0f
+        const val POLL_TIMEOUT_MS =
+            96L
 
-        private const val STALE_MS = 2_500L
-        val FOLD_WALLPAPER = ComponentName(
-            "com.samsung.android.wallpaper.live",
-            "com.samsung.android.wallpaper.live.fold.FoldInteractive",
-        )
+        const val STATUS_TICK_MS =
+            1_000L
+
+        const val ANGLE_CHANGE_EPS =
+            0.10f
+
+        private const val ENDPOINT_BRIDGE_DELAY_MS =
+            140L
+
+        private const val ENDPOINT_BRIDGE_SAMPLE_MAX_MS =
+            300L
+
+        private const val ENDPOINT_BRIDGE_CLOSED_MAX_DEG =
+            8.0f
+
+        private const val ENDPOINT_BRIDGE_OPEN_MIN_DEG =
+            172.0f
+
+        private const val ENDPOINT_BRIDGE_MIN_SPEED_DPS =
+            18.0f
+
+        private const val STALE_MS =
+            2_500L
+
+        val FOLD_WALLPAPER =
+            ComponentName(
+                "com.samsung.android.wallpaper.live",
+                "com.samsung.android.wallpaper.live.fold.FoldInteractive",
+            )
 
         /**
          * WallpaperManager metadata is diagnostic only.
@@ -542,9 +971,9 @@ class WallpaperAngleFeed(
         ): Boolean {
             val info =
                 runCatching {
-                    WallpaperManager.getInstance(
-                        context
-                    ).wallpaperInfo
+                    WallpaperManager
+                        .getInstance(context)
+                        .wallpaperInfo
                 }.getOrNull()
                     ?: return false
 
@@ -566,17 +995,15 @@ class WallpaperAngleFeed(
         ): String {
             val info =
                 runCatching {
-                    WallpaperManager.getInstance(
-                        context
-                    ).wallpaperInfo
+                    WallpaperManager
+                        .getInstance(context)
+                        .wallpaperInfo
                 }.getOrNull()
                     ?: return "none"
 
             val service =
                 info.serviceName
-                    .substringAfterLast(
-                        '.'
-                    )
+                    .substringAfterLast('.')
                     .ifEmpty {
                         "unknown"
                     }

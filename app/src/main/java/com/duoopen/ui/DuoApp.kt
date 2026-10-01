@@ -65,10 +65,11 @@ fun DuoApp(
     val hinge =
         remember {
             HingeAngleSource(
-                context.applicationContext
-            ) {
-                hingeAngle = it
-            }
+                context = context.applicationContext,
+                onAngle = { angle ->
+                    hingeAngle = angle
+                },
+            )
         }
 
     DisposableEffect(hinge) {

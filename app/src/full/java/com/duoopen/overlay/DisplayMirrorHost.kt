@@ -7,7 +7,9 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.Rect
+import android.hardware.SyncFence
 import android.hardware.display.DisplayManager
+import android.os.Build
 import android.os.SystemClock
 import android.view.Display
 import android.view.Gravity
@@ -31,14 +33,15 @@ import kotlinx.coroutines.launch
  *
  * No setCrop()/container-layer approximation is used in this pass.
  */
-class DisplayMirrorHost(
+internal class DisplayMirrorHost(
     private val service: AccessibilityService,
     val display: Display,
     private val scope: CoroutineScope,
     private val mirrorSession: Long,
     private val mirrorLeaseId: Long,
     private val nextMirrorSequence: () -> Long,
-    private val frozenFrameProvider: () -> Bitmap?,
+    private val frozenFrameProvider: (Int, Int) -> Fold7ContinuityFrameStore.FrameLease<Bitmap>?,
+    private val currentCycle: () -> Fold7CycleEnvelope.CloseCycle?,
     private val onStatus: (String) -> Unit,
 ) {
     val displayId: Int = display.displayId
@@ -79,6 +82,10 @@ class DisplayMirrorHost(
      * recycles it. The reference is dropped on detach.
      */
     private var frozenFrame: Bitmap? = null
+    private var frozenFrameLease: Fold7ContinuityFrameStore.FrameLease<Bitmap>? = null
+    private val presentationLease = Fold7PresentationLease()
+    private val hostEpoch = presentationLease.openHost()
+    private var activePresentation: Fold7PresentationLease.Identity? = null
 
     private val frozenPaint =
         Paint(
@@ -94,6 +101,15 @@ class DisplayMirrorHost(
                 drawFrozenFrame(
                     canvas
                 )
+
+                activePresentation?.let { identity ->
+                    val accepted = presentationLease.onDraw(identity)
+                    recordPresentationStage(
+                        type = "presentation-draw",
+                        identity = identity,
+                        accepted = accepted,
+                    )
+                }
             }
         }.apply {
             visibility =
@@ -347,7 +363,12 @@ class DisplayMirrorHost(
     }
 
     private fun clearFrozenFrame() {
+        activePresentation?.let(presentationLease::invalidateAttempt)
         frozenFrame =
+            null
+        frozenFrameLease =
+            null
+        activePresentation =
             null
 
         frozenPaneView.visibility =
@@ -364,23 +385,25 @@ class DisplayMirrorHost(
     ): Boolean {
         val candidate =
             runCatching {
-                frozenFrameProvider()
+                frozenFrameProvider(sourceWidth, sourceHeight)
             }.getOrNull()
                 ?: return false
 
+        val candidateBitmap = candidate.payload
+
         if (
-            candidate.isRecycled ||
-            candidate.width !=
+            candidateBitmap.isRecycled ||
+            candidateBitmap.width !=
                 sourceWidth ||
-            candidate.height !=
+            candidateBitmap.height !=
                 sourceHeight
         ) {
             com.duoopen.debug.DuoDiagnostics.event(
                 "snapshot-transition",
                 "continuity frame rejected reason=$reason " +
                     "expected=${sourceWidth}x$sourceHeight " +
-                    "actual=${candidate.width}x${candidate.height} " +
-                    "recycled=${candidate.isRecycled}",
+                    "actual=${candidateBitmap.width}x${candidateBitmap.height} " +
+                    "recycled=${candidateBitmap.isRecycled}",
             )
             return false
         }
@@ -393,6 +416,8 @@ class DisplayMirrorHost(
         }
 
         frozenFrame =
+            candidateBitmap
+        frozenFrameLease =
             candidate
 
         mirrorSourceKey =
@@ -400,6 +425,30 @@ class DisplayMirrorHost(
 
         frozenPaneView.visibility =
             View.VISIBLE
+
+        val presentation =
+            presentationLease.begin(
+                serviceEpoch = candidate.serviceEpoch,
+                closeCycleId = candidate.closeCycleId,
+                contentLeaseId = candidate.contentLeaseId,
+                renderPath = Fold7PresentationLease.RenderPath.FROZEN_VIEW,
+            )
+        activePresentation = presentation
+        recordPresentationStage(
+            type = "presentation-attempt",
+            identity = presentation,
+            accepted = true,
+        )
+        frozenPaneView.viewTreeObserver.registerFrameCommitCallback {
+            frozenPaneView.post {
+                val accepted = presentationLease.onFrameCommit(presentation)
+                recordPresentationStage(
+                    type = "presentation-frame-commit",
+                    identity = presentation,
+                    accepted = accepted,
+                )
+            }
+        }
 
         frozenPaneView.invalidate()
 
@@ -410,7 +459,7 @@ class DisplayMirrorHost(
         com.duoopen.debug.DuoDiagnostics.event(
             "snapshot-transition",
             "continuity frozen frame bound reason=$reason " +
-                "source=${candidate.width}x${candidate.height} " +
+                "source=${candidateBitmap.width}x${candidateBitmap.height} " +
                 "destination=$displayId hinge=$latestHingeAngle",
         )
 
@@ -750,6 +799,78 @@ class DisplayMirrorHost(
                 .setAlpha(mirror, 1f)
                 .setVisibility(mirror, true)
 
+            val presentation =
+                currentCycle()?.let { cycle ->
+                    presentationLease.begin(
+                        serviceEpoch = cycle.serviceEpoch,
+                        closeCycleId = cycle.closeCycleId,
+                        contentLeaseId = mirrorLeaseId,
+                        renderPath = Fold7PresentationLease.RenderPath.LIVE_MIRROR,
+                    )
+                }
+
+            if (presentation != null) {
+                activePresentation = presentation
+                recordPresentationStage(
+                    type = "presentation-attempt",
+                    identity = presentation,
+                    accepted = true,
+                )
+
+                if (Build.VERSION.SDK_INT >= 33) {
+                    transaction.addTransactionCommittedListener(
+                        service.mainExecutor,
+                    ) {
+                        hostView.post {
+                            val accepted =
+                                presentationLease.onTransactionCommit(presentation)
+                            recordPresentationStage(
+                                type = "presentation-transaction-commit",
+                                identity = presentation,
+                                accepted = accepted,
+                            )
+                        }
+                    }
+                }
+
+                if (Build.VERSION.SDK_INT >= 35) {
+                    transaction.addTransactionCompletedListener(
+                        service.mainExecutor,
+                    ) { stats ->
+                        val fence = stats.presentFence
+                        var presented = false
+                        try {
+                            if (fence.isValid) {
+                                val signal = fence.signalTime
+                                presented =
+                                    signal != SyncFence.SIGNAL_TIME_INVALID &&
+                                        signal != SyncFence.SIGNAL_TIME_PENDING
+                            }
+                        } finally {
+                            fence.close()
+                        }
+
+                        hostView.post {
+                            val accepted =
+                                if (presented) {
+                                    presentationLease.onPresented(presentation)
+                                } else {
+                                    presentationLease.isCurrent(presentation)
+                                }
+                            recordPresentationStage(
+                                type = if (presented) {
+                                    "presentation-presented"
+                                } else {
+                                    "presentation-completed-no-present-fence"
+                                },
+                                identity = presentation,
+                                accepted = accepted,
+                            )
+                        }
+                    }
+                }
+            }
+
             val labToken =
                 TransitionLab
                     .instrumentTransaction(
@@ -803,6 +924,32 @@ class DisplayMirrorHost(
         }
     }
 
+    private fun recordPresentationStage(
+        type: String,
+        identity: Fold7PresentationLease.Identity,
+        accepted: Boolean,
+    ) {
+        TransitionLab.recordIngressStage(
+            type = type,
+            serviceEpoch = identity.serviceEpoch,
+            closeCycleId = identity.closeCycleId,
+            contentLeaseId = identity.contentLeaseId,
+            hostEpoch = identity.hostEpoch,
+            presentationAttemptSequence = identity.attemptSequence,
+            renderPath = identity.renderPath.name,
+            staleAtCallback = !accepted,
+            rejectionReason = if (accepted) null else "stale-presentation-attempt",
+        )
+
+        com.duoopen.debug.DuoDiagnostics.event(
+            "presentation",
+            "$type accepted=$accepted " +
+                "serviceEpoch=${identity.serviceEpoch} closeCycle=${identity.closeCycleId} " +
+                "content=${identity.contentLeaseId} host=${identity.hostEpoch} " +
+                "attempt=${identity.attemptSequence} path=${identity.renderPath}",
+        )
+    }
+
     private fun releaseAppMirror() {
         val current =
             appMirror
@@ -842,6 +989,8 @@ class DisplayMirrorHost(
     }
 
     fun detach() {
+        presentationLease.invalidateHost(hostEpoch)
+        activePresentation = null
         requestShellStop("host-detach")
         generation++
         mirrorSourceKey = null
