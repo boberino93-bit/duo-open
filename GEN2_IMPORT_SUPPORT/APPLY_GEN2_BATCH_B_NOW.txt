@@ -1,0 +1,2 @@
+Upload marker for Gen-2 Batch B.
+This file intentionally triggers the apply workflow once when uploaded to main.
