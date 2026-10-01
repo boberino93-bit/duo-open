@@ -1,0 +1,1 @@
+Trigger Batch D Fix 2: same single-owner integration, with exact unique onDestroy legacy-block removal.
