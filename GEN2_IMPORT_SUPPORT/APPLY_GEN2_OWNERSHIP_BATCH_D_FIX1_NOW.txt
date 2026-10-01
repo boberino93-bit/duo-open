@@ -1,0 +1,1 @@
+Trigger Batch D Fix 1: apply ownership leases, retire the orphaned FoldOverlayService ownership path, test, then commit.
