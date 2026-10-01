@@ -124,25 +124,19 @@ jobs:
 
           gradle_path = "app/build.gradle.kts"
           gradle = read(gradle_path)
-
           gradle = replace_once(
               gradle,
               "versionCode = 24",
               "versionCode = 25",
               "versionCode",
           )
-
           gradle = replace_once(
               gradle,
               'versionName = "1.3.20-zfold7-realtime"',
               'versionName = "1.3.21-zfold7-state-machine"',
               "versionName",
           )
-
-          write(
-              gradle_path,
-              gradle,
-          )
+          write(gradle_path, gradle)
 
           # ------------------------------------------------------------------
           # FoldOverlayService
@@ -151,10 +145,7 @@ jobs:
           service_path = (
               "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
           )
-
-          service = read(
-              service_path
-          )
+          service = read(service_path)
 
           service = replace_once(
               service,
@@ -196,12 +187,10 @@ jobs:
           prime_start = service.index(
               "    private fun primeCoverRoute("
           )
-
           prime_end = service.index(
               "    private fun assertCoverPower(",
               prime_start,
           )
-
           service = (
               service[:prime_start]
               + '''    private fun primeCoverRoute(
@@ -251,12 +240,10 @@ jobs:
           assert_start = service.index(
               "    private fun assertCoverPower("
           )
-
           assert_end = service.index(
               "    private fun releaseCoverPowerHold(",
               assert_start,
           )
-
           service = (
               service[:assert_start]
               + '''    private fun assertCoverPower(
@@ -288,7 +275,6 @@ jobs:
               "\n",
               "remove release logical power request",
           )
-
           if "ShizukuBridge.requestDisplayPower(" in service:
               raise SystemExit(
                   "logical requestDisplayPower call remains after 1.3.21 safety transform"
@@ -334,14 +320,8 @@ jobs:
           )
 
           # Add helpers immediately before the hinge controller.
-          hinge_marker =
-              "    private fun handleContinuityHinge("
-
-          hinge_index =
-              service.index(
-                  hinge_marker
-              )
-
+          hinge_marker = "    private fun handleContinuityHinge("
+          hinge_index = service.index(hinge_marker)
           service = (
               service[:hinge_index]
               + '''    private fun resetDeliberateCloseEvidence() {
@@ -388,7 +368,6 @@ jobs:
           handle_start = service.index(
               "    private fun handleContinuityHinge("
           )
-
           handle_end = service.index(
               "    fun runSecondaryDisplayExperiment(",
               handle_start,
@@ -524,7 +503,6 @@ jobs:
                           false
 
                       mirrorHost?.detach()
-
                       mirrorHost =
                           null
 
@@ -566,9 +544,7 @@ jobs:
                   val cover =
                       displayManager.displays
                           .firstOrNull { candidate ->
-                              val mode =
-                                  candidate.mode
-
+                              val mode = candidate.mode
                               mode.physicalWidth == 1080 &&
                                   mode.physicalHeight == 2520
                           }
@@ -576,9 +552,7 @@ jobs:
                   val inner =
                       displayManager.displays
                           .firstOrNull { candidate ->
-                              val mode =
-                                  candidate.mode
-
+                              val mode = candidate.mode
                               mode.physicalWidth == 1968 &&
                                   mode.physicalHeight == 2184
                           }
@@ -802,10 +776,7 @@ jobs:
               "mirror attach grace constant",
           )
 
-          write(
-              service_path,
-              service,
-          )
+          write(service_path, service)
 
           # ------------------------------------------------------------------
           # DuoShellService
@@ -814,10 +785,7 @@ jobs:
           shell_path = (
               "app/src/full/java/com/duoopen/shell/DuoShellService.kt"
           )
-
-          shell = read(
-              shell_path
-          )
+          shell = read(shell_path)
 
           shell = replace_once(
               shell,
@@ -832,16 +800,13 @@ jobs:
               "physical cover cache",
           )
 
-          secondary_start =
-              shell.index(
-                  "    // ---- Fold7 cover-route / realtime secondary display"
-              )
-
-          secondary_end =
-              shell.index(
-                  "    // ---- live logical-display mirror",
-                  secondary_start,
-              )
+          secondary_start = shell.index(
+              "    // ---- Fold7 cover-route / realtime secondary display"
+          )
+          secondary_end = shell.index(
+              "    // ---- live logical-display mirror",
+              secondary_start,
+          )
 
           safe_secondary = r'''    // ---- Fold7 physical-panel-safe continuity ----------------------------
 
@@ -871,23 +836,16 @@ jobs:
                           info.javaClass
                               .getField("logicalWidth")
                               .getInt(info)
-                      }.getOrDefault(
-                          -1
-                      )
+                      }.getOrDefault(-1)
 
                   val height =
                       runCatching {
                           info.javaClass
                               .getField("logicalHeight")
                               .getInt(info)
-                      }.getOrDefault(
-                          -1
-                      )
+                      }.getOrDefault(-1)
 
-                  if (
-                      width != 1080 ||
-                      height != 2520
-                  ) {
+                  if (width != 1080 || height != 2520) {
                       return -1L
                   }
 
@@ -901,12 +859,8 @@ jobs:
 
                   return runCatching {
                       address.javaClass
-                          .getMethod(
-                              "getPhysicalDisplayId"
-                          )
-                          .invoke(
-                              address
-                          ) as Long
+                          .getMethod("getPhysicalDisplayId")
+                          .invoke(address) as Long
                   }.getOrElse {
                       -1L
                   }
@@ -915,25 +869,16 @@ jobs:
               private fun resolveFold7CoverPhysicalDisplayId(
                   targetHint: Int = -1,
               ): Long {
-                  if (
-                      cachedCoverPhysicalDisplayId >=
-                      0L
-                  ) {
+                  if (cachedCoverPhysicalDisplayId >= 0L) {
                       return cachedCoverPhysicalDisplayId
                   }
 
                   val fromAddress =
-                      physicalDisplayIdFromLogical(
-                          targetHint
-                      )
+                      physicalDisplayIdFromLogical(targetHint)
 
-                  if (
-                      fromAddress >=
-                      0L
-                  ) {
+                  if (fromAddress >= 0L) {
                       cachedCoverPhysicalDisplayId =
                           fromAddress
-
                       return fromAddress
                   }
 
@@ -950,16 +895,11 @@ jobs:
                       ).find(
                           displayDump
                       )?.groupValues
-                          ?.getOrNull(
-                              1
-                          )
+                          ?.getOrNull(1)
                           ?.toLongOrNull()
                           ?: -1L
 
-                  if (
-                      physicalId >=
-                      0L
-                  ) {
+                  if (physicalId >= 0L) {
                       cachedCoverPhysicalDisplayId =
                           physicalId
                   }
@@ -972,34 +912,12 @@ jobs:
                       resolveFold7CoverPhysicalDisplayId()
 
                   return Bundle().apply {
-                      putBoolean(
-                          "ok",
-                          physicalId >= 0L,
-                      )
-
-                      putLong(
-                          "physicalDisplayId",
-                          physicalId,
-                      )
-
-                      putInt(
-                          "targetDisplayId",
-                          -1,
-                      )
-
-                      putInt(
-                          "targetWidth",
-                          1080,
-                      )
-
-                      putInt(
-                          "targetHeight",
-                          2520,
-                      )
-
-                      if (
-                          physicalId < 0L
-                      ) {
+                      putBoolean("ok", physicalId >= 0L)
+                      putLong("physicalDisplayId", physicalId)
+                      putInt("targetDisplayId", -1)
+                      putInt("targetWidth", 1080)
+                      putInt("targetHeight", 2520)
+                      if (physicalId < 0L) {
                           putString(
                               "error",
                               "The Fold7 cover physical display was not found.",
@@ -1011,9 +929,7 @@ jobs:
               private fun currentCoverLogicalId(
                   targetHint: Int,
               ): Int {
-                  if (
-                      targetHint < 0
-                  ) {
+                  if (targetHint < 0) {
                       return -1
                   }
 
@@ -1034,48 +950,29 @@ jobs:
                   val width =
                       runCatching {
                           info.javaClass
-                              .getField(
-                                  "logicalWidth"
-                              )
-                              .getInt(
-                                  info
-                              )
-                      }.getOrDefault(
-                          -1
-                      )
+                              .getField("logicalWidth")
+                              .getInt(info)
+                      }.getOrDefault(-1)
 
                   val height =
                       runCatching {
                           info.javaClass
-                              .getField(
-                                  "logicalHeight"
-                              )
-                              .getInt(
-                                  info
-                              )
-                      }.getOrDefault(
-                          -1
-                      )
+                              .getField("logicalHeight")
+                              .getInt(info)
+                      }.getOrDefault(-1)
 
-                  return if (
-                      width == 1080 &&
-                      height == 2520
-                  ) {
+                  return if (width == 1080 && height == 2520) {
                       targetHint
                   } else {
                       -1
                   }
               }
 
-              private fun setCoverPhysicalPowerNormal():
-                  Pair<Boolean, String?> {
-
+              private fun setCoverPhysicalPowerNormal(): Pair<Boolean, String?> {
                   val physicalId =
                       cachedCoverPhysicalDisplayId
 
-                  if (
-                      physicalId < 0L
-                  ) {
+                  if (physicalId < 0L) {
                       return false to
                           "cover physical display id unavailable"
                   }
@@ -1092,10 +989,7 @@ jobs:
                                   "getPhysicalDisplayToken",
                                   java.lang.Long.TYPE,
                               )
-                              .invoke(
-                                  null,
-                                  physicalId,
-                              ) as? IBinder
+                              .invoke(null, physicalId) as? IBinder
                               ?: throw IllegalStateException(
                                   "no SurfaceControl token for physical display $physicalId"
                               )
@@ -1106,11 +1000,7 @@ jobs:
                               IBinder::class.java,
                               Integer.TYPE,
                           )
-                          .invoke(
-                              null,
-                              token,
-                              2,
-                          )
+                          .invoke(null, token, 2)
 
                       true to null
                   }.getOrElse { error ->
@@ -1128,58 +1018,24 @@ jobs:
 
                   if (!enable) {
                       val safeTarget =
-                          currentCoverLogicalId(
-                              targetHint
-                          )
+                          currentCoverLogicalId(targetHint)
 
-                      if (
-                          safeTarget < 0
-                      ) {
+                      if (safeTarget < 0) {
                           return Bundle().apply {
-                              putBoolean(
-                                  "ok",
-                                  true,
-                              )
-
-                              putBoolean(
-                                  "enable",
-                                  false,
-                              )
-
-                              putInt(
-                                  "targetDisplayId",
-                                  -1,
-                              )
-
-                              putInt(
-                                  "targetWidth",
-                                  1080,
-                              )
-
-                              putInt(
-                                  "targetHeight",
-                                  2520,
-                              )
-
-                              putBoolean(
-                                  "visibleAfter",
-                                  false,
-                              )
-
-                              putString(
-                                  "command",
-                                  "validated release skipped",
-                              )
-
+                              putBoolean("ok", true)
+                              putBoolean("enable", false)
+                              putInt("targetDisplayId", -1)
+                              putInt("targetWidth", 1080)
+                              putInt("targetHeight", 2520)
+                              putBoolean("visibleAfter", false)
+                              putString("command", "validated release skipped")
                               putString(
                                   "commandOutput",
                                   "hint no longer identifies secondary 1080x2520 cover",
                               )
-
                               putLong(
                                   "latencyMs",
-                                  SystemClock.elapsedRealtime() -
-                                      t0,
+                                  SystemClock.elapsedRealtime() - t0,
                               )
                           }
                       }
@@ -1188,132 +1044,50 @@ jobs:
                           "cmd display power-reset $safeTarget"
 
                       val output =
-                          runProbe(
-                              command
-                          )
+                          runProbe(command)
 
                       val failed =
-                          output.contains(
-                              "Exception",
-                              ignoreCase = true,
-                          ) ||
-                              output.contains(
-                                  "error",
-                                  ignoreCase = true,
-                              ) ||
-                              output.contains(
-                                  "not possible",
-                                  ignoreCase = true,
-                              )
+                          output.contains("Exception", ignoreCase = true) ||
+                              output.contains("error", ignoreCase = true) ||
+                              output.contains("not possible", ignoreCase = true)
 
                       return Bundle().apply {
-                          putBoolean(
-                              "ok",
-                              !failed,
-                          )
-
-                          putBoolean(
-                              "enable",
-                              false,
-                          )
-
-                          putInt(
-                              "targetDisplayId",
-                              safeTarget,
-                          )
-
-                          putInt(
-                              "targetWidth",
-                              1080,
-                          )
-
-                          putInt(
-                              "targetHeight",
-                              2520,
-                          )
-
-                          putBoolean(
-                              "visibleAfter",
-                              false,
-                          )
-
-                          putString(
-                              "command",
-                              command,
-                          )
-
-                          putString(
-                              "commandOutput",
-                              output,
-                          )
-
+                          putBoolean("ok", !failed)
+                          putBoolean("enable", false)
+                          putInt("targetDisplayId", safeTarget)
+                          putInt("targetWidth", 1080)
+                          putInt("targetHeight", 2520)
+                          putBoolean("visibleAfter", false)
+                          putString("command", command)
+                          putString("commandOutput", output)
                           putLong(
                               "latencyMs",
-                              SystemClock.elapsedRealtime() -
-                                  t0,
+                              SystemClock.elapsedRealtime() - t0,
                           )
                       }
                   }
 
                   val targetId =
-                      currentCoverLogicalId(
-                          targetHint
-                      )
+                      currentCoverLogicalId(targetHint)
 
-                  if (
-                      targetId < 0
-                  ) {
+                  if (targetId < 0) {
                       return Bundle().apply {
-                          putBoolean(
-                              "ok",
-                              false,
-                          )
-
-                          putBoolean(
-                              "enable",
-                              true,
-                          )
-
-                          putInt(
-                              "targetDisplayId",
-                              -1,
-                          )
-
-                          putInt(
-                              "targetWidth",
-                              1080,
-                          )
-
-                          putInt(
-                              "targetHeight",
-                              2520,
-                          )
-
-                          putBoolean(
-                              "visibleAfter",
-                              false,
-                          )
-
+                          putBoolean("ok", false)
+                          putBoolean("enable", true)
+                          putInt("targetDisplayId", -1)
+                          putInt("targetWidth", 1080)
+                          putInt("targetHeight", 2520)
+                          putBoolean("visibleAfter", false)
                           putString(
                               "error",
                               "Cover logical route changed before enable; unsafe command skipped.",
                           )
-
-                          putString(
-                              "command",
-                              "route-validation",
-                          )
-
-                          putString(
-                              "commandOutput",
-                              "skipped",
-                          )
+                          putString("command", "route-validation")
+                          putString("commandOutput", "skipped")
                       }
                   }
 
-                  resolveFold7CoverPhysicalDisplayId(
-                      targetId
-                  )
+                  resolveFold7CoverPhysicalDisplayId(targetId)
 
                   val (
                       physicalPowered,
@@ -1321,93 +1095,45 @@ jobs:
                   ) =
                       setCoverPhysicalPowerNormal()
 
-                  var routeEnabled =
-                      false
-
-                  var routeError:
-                      String? =
-                      null
+                  var routeEnabled = false
+                  var routeError: String? = null
 
                   runCatching {
-                      enableConnectedDisplayInternal(
-                          targetId
-                      )
-
-                      routeEnabled =
-                          true
+                      enableConnectedDisplayInternal(targetId)
+                      routeEnabled = true
                   }.onFailure { error ->
                       routeError =
                           "${error.javaClass.simpleName}: ${error.message}"
                   }
 
                   return Bundle().apply {
-                      putBoolean(
-                          "ok",
-                          physicalPowered ||
-                              routeEnabled,
-                      )
-
-                      putBoolean(
-                          "enable",
-                          true,
-                      )
-
-                      putInt(
-                          "targetDisplayId",
-                          targetId,
-                      )
-
+                      putBoolean("ok", physicalPowered || routeEnabled)
+                      putBoolean("enable", true)
+                      putInt("targetDisplayId", targetId)
                       putLong(
                           "physicalDisplayId",
                           cachedCoverPhysicalDisplayId,
                       )
-
-                      putInt(
-                          "targetWidth",
-                          1080,
-                      )
-
-                      putInt(
-                          "targetHeight",
-                          2520,
-                      )
-
-                      putBoolean(
-                          "visibleAfter",
-                          false,
-                      )
-
-                      putBoolean(
-                          "physicalPowered",
-                          physicalPowered,
-                      )
-
-                      putBoolean(
-                          "routeEnabled",
-                          routeEnabled,
-                      )
-
+                      putInt("targetWidth", 1080)
+                      putInt("targetHeight", 2520)
+                      putBoolean("visibleAfter", false)
+                      putBoolean("physicalPowered", physicalPowered)
+                      putBoolean("routeEnabled", routeEnabled)
                       putString(
                           "command",
                           "physical SurfaceControl token + validated logical route",
                       )
-
                       putString(
                           "commandOutput",
                           listOfNotNull(
                               physicalPowerError,
                               routeError,
-                          ).joinToString(
-                              " | "
-                          ).ifEmpty {
-                              "physical-safe-fast-path"
-                          },
+                          ).joinToString(" | ")
+                              .ifEmpty { "physical-safe-fast-path" },
                       )
-
                       putLong(
                           "latencyMs",
-                          SystemClock.elapsedRealtime() -
-                              t0,
+                          SystemClock.elapsedRealtime() - t0,
                       )
                   }
               }
@@ -1420,10 +1146,7 @@ jobs:
               + shell[secondary_end:]
           )
 
-          write(
-              shell_path,
-              shell,
-          )
+          write(shell_path, shell)
 
           # ------------------------------------------------------------------
           # Aspect-locked Fold7 mirror projection
@@ -1432,21 +1155,15 @@ jobs:
           host_path = (
               "app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt"
           )
+          host = read(host_path)
 
-          host = read(
-              host_path
+          geometry_start = host.index(
+              "        val paneWidth ="
           )
-
-          geometry_start =
-              host.index(
-                  "        val paneWidth ="
-              )
-
-          geometry_end =
-              host.index(
-                  "        val transaction =",
-                  geometry_start,
-              )
+          geometry_end = host.index(
+              "        val transaction =",
+              geometry_start,
+          )
 
           geometry_lines = [
               "        val paneWidth =",
@@ -1496,17 +1213,12 @@ jobs:
 
           host = (
               host[:geometry_start]
-              + "\n".join(
-                  geometry_lines
-              )
+              + "\n".join(geometry_lines)
               + "\n"
               + host[geometry_end:]
           )
 
-          write(
-              host_path,
-              host,
-          )
+          write(host_path, host)
 
           # ------------------------------------------------------------------
           # Front-screen visual window: only the closed half of hinge travel
@@ -1515,10 +1227,7 @@ jobs:
           shader_path = (
               "app/src/main/java/com/duoopen/fold/DuoShader.kt"
           )
-
-          shader = read(
-              shader_path
-          )
+          shader = read(shader_path)
 
           shader = replace_once(
               shader,
@@ -1528,16 +1237,13 @@ jobs:
               "cover visual max hinge",
           )
 
-          cover_fun_start =
-              shader.index(
-                  "    fun concurrentCoverTiltForHinge("
-              )
-
-          cover_fun_end =
-              shader.index(
-                  "\n    fun tiltFor(",
-                  cover_fun_start,
-              )
+          cover_fun_start = shader.index(
+              "    fun concurrentCoverTiltForHinge("
+          )
+          cover_fun_end = shader.index(
+              "\n    fun tiltFor(",
+              cover_fun_start,
+          )
 
           cover_fun_lines = [
               "    fun concurrentCoverTiltForHinge(hingeDegrees: Float, config: DuoConfig): Float {",
@@ -1558,24 +1264,16 @@ jobs:
 
           shader = (
               shader[:cover_fun_start]
-              + "\n".join(
-                  cover_fun_lines
-              )
+              + "\n".join(cover_fun_lines)
               + shader[cover_fun_end:]
           )
 
-          write(
-              shader_path,
-              shader,
-          )
+          write(shader_path, shader)
 
           panel_path = (
               "app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
           )
-
-          panel = read(
-              panel_path
-          )
+          panel = read(panel_path)
 
           panel = replace_once(
               panel,
@@ -1607,10 +1305,7 @@ jobs:
               "cover immediate opening threshold",
           )
 
-          write(
-              panel_path,
-              panel,
-          )
+          write(panel_path, panel)
 
           # ------------------------------------------------------------------
           # Endpoint bridge for FoldInteractive dropout near fully shut/open
@@ -1619,10 +1314,7 @@ jobs:
           angle_feed_path = (
               "app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt"
           )
-
-          angle_feed = read(
-              angle_feed_path
-          )
+          angle_feed = read(angle_feed_path)
 
           angle_feed = replace_once(
               angle_feed,
@@ -1724,9 +1416,7 @@ jobs:
               "        hinge.feedExternal(angle)\n" +
                   "    }\n\n" +
                   "    private fun pollInterval(\n",
-              "\n".join(
-                  bridge_insert
-              ) + "\n",
+              "\n".join(bridge_insert) + "\n",
               "endpoint bridge method",
           )
 
@@ -1744,10 +1434,7 @@ jobs:
               "endpoint bridge constants",
           )
 
-          write(
-              angle_feed_path,
-              angle_feed,
-          )
+          write(angle_feed_path, angle_feed)
 
           # ------------------------------------------------------------------
           # HingeAngleSource
@@ -1756,10 +1443,7 @@ jobs:
           hinge_path = (
               "app/src/main/java/com/duoopen/fold/HingeAngleSource.kt"
           )
-
-          hinge = read(
-              hinge_path
-          )
+          hinge = read(hinge_path)
 
           hinge = replace_once(
               hinge,
@@ -1823,14 +1507,9 @@ jobs:
               "coarse sensor guard constants",
           )
 
-          write(
-              hinge_path,
-              hinge,
-          )
+          write(hinge_path, hinge)
 
-          print(
-              "1.3.21 Fold7 state-machine + projection pass applied"
-          )
+          print("1.3.21 Fold7 state-machine + projection pass applied")
           PY
 
           git diff --stat
@@ -1856,7 +1535,6 @@ jobs:
           grep -F 'versionName = "1.3.21-zfold7-state-machine"' "$GRADLE"
 
           echo "Checking asymmetric Fold7 state machine..."
-
           grep -F 'COVER_CLOSED_READY_MAX_DEG' "$SERVICE"
           grep -F 'COVER_CLOSE_PREWARM_DEG' "$SERVICE"
           grep -F '150.0f' "$SERVICE"
@@ -1868,7 +1546,6 @@ jobs:
           grep -F 'opening-cover-visual-hidden' "$SERVICE"
 
           echo "Checking logical-id safety..."
-
           grep -F 'resolveCurrentSecondaryCoverLogicalId' "$SERVICE"
 
           if grep -F 'ShizukuBridge.requestDisplayPower(' "$SERVICE"; then
@@ -1890,7 +1567,6 @@ jobs:
           fi
 
           echo "Checking physical-panel path..."
-
           grep -F 'cachedCoverPhysicalDisplayId' "$SHELL"
           grep -F 'physicalDisplayIdFromLogical' "$SHELL"
           grep -F 'getPhysicalDisplayId' "$SHELL"
@@ -1900,7 +1576,6 @@ jobs:
           grep -F 'physical-safe-fast-path' "$SHELL"
 
           echo "Checking stable release and mirror attach..."
-
           grep -F '179.0f' "$SERVICE"
           grep -F 'COVER_RELEASE_DWELL_MS' "$SERVICE"
           grep -F 'returned-open-stable' "$SERVICE"
@@ -1908,32 +1583,27 @@ jobs:
           grep -F 'MIRROR_HOST_ATTACH_GRACE_MS' "$SERVICE"
 
           echo "Checking hinge source handoff guard..."
-
           grep -F 'coarseMidpointAfterContinuousEndpoint' "$HINGE"
           grep -F 'ignoring coarse midpoint' "$HINGE"
 
           echo "Checking aspect-locked projection..."
-
           grep -F 'canonicalPaneWidth' "$HOST"
           grep -F 'sourceLeft' "$HOST"
           grep -F 'COVER_VISUAL_MAX_HINGE = 135f' "$SHADER"
           grep -F 'COVER_OPEN_IMMEDIATE_TILT' "$PANEL"
 
           echo "Checking endpoint bridge..."
-
           grep -F 'scheduleEndpointBridge' "$ANGLE_FEED"
           grep -F 'ENDPOINT_BRIDGE_DELAY_MS' "$ANGLE_FEED"
           grep -F 'endpoint bridge from=' "$ANGLE_FEED"
 
           echo "Checking existing architecture remains..."
-
           grep -F 'DisplayMirrorHost' "$SERVICE"
           grep -F 'paneWidth' "$HOST"
           grep -F '.daemon(true)' "$BRIDGE"
           grep -F 'START_STICKY' "$RUNTIME"
 
           git diff --check
-
           echo "Fold7 1.3.21 source validation passed."
 
       - name: Set up Java 17
@@ -1962,7 +1632,6 @@ jobs:
           set -euo pipefail
 
           OUTPUT_DIR="fold7-build"
-
           mkdir -p "$OUTPUT_DIR"
 
           APK="$(
@@ -1979,13 +1648,9 @@ jobs:
           }
 
           OUTPUT_APK="$OUTPUT_DIR/DuoOpen-ZFold7-1.3.21-state-machine-debug.apk"
+          cp "$APK" "$OUTPUT_APK"
 
-          cp \
-            "$APK" \
-            "$OUTPUT_APK"
-
-          sha256sum \
-            "$OUTPUT_APK" \
+          sha256sum "$OUTPUT_APK" \
             > "$OUTPUT_DIR/APK-SHA256-1.3.21.txt"
 
           {
@@ -2020,13 +1685,10 @@ jobs:
             echo "- left-pane SurfaceControl mirror preserved"
             echo "- persistent Shizuku + foreground runtime preserved"
             echo
-
-            sha256sum \
-              "$OUTPUT_APK"
+            sha256sum "$OUTPUT_APK"
           } > "$OUTPUT_DIR/BUILD-INFO-1.3.21.txt"
 
-          cat \
-            "$OUTPUT_DIR/BUILD-INFO-1.3.21.txt"
+          cat "$OUTPUT_DIR/BUILD-INFO-1.3.21.txt"
 
       - name: Upload 1.3.21 field-test APK
         uses: actions/upload-artifact@v4
