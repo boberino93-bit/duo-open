@@ -53,6 +53,10 @@ class DuoShellService : Binder() {
     private var cachedCoverPhysicalDisplayId =
         -1L
 
+    @Volatile
+    private var cachedInnerPhysicalDisplayId =
+        -1L
+
     init {
         attachInterface(null, ShellProtocol.TOKEN)
     }
@@ -221,6 +225,30 @@ class DuoShellService : Binder() {
                                 "targetDisplayId",
                                 -1,
                             )
+                            putString(
+                                "error",
+                                "${t.javaClass.simpleName}: ${t.message}",
+                            )
+                        }
+                    } finally {
+                        restoreCallingIdentity(identity)
+                    }
+
+                out.writeNoException()
+                out.writeBundle(result)
+            }
+
+            ShellProtocol.WAKE_INNER_DISPLAY -> {
+                val identity =
+                    clearCallingIdentity()
+
+                val result =
+                    try {
+                        wakeInnerPhysicalDisplay()
+                    } catch (t: Throwable) {
+                        Bundle().apply {
+                            putBoolean("ok", false)
+                            putLong("physicalDisplayId", -1L)
                             putString(
                                 "error",
                                 "${t.javaClass.simpleName}: ${t.message}",
@@ -612,6 +640,36 @@ class DuoShellService : Binder() {
         }.getOrElse { -1L }
     }
 
+    private fun physicalDisplayIdForGeometry(
+        width: Int,
+        height: Int,
+    ): Long {
+        val displayDump =
+            runProbe(
+                "dumpsys display | " +
+                    "grep -E -i 'DisplayDeviceInfo|uniqueId=' | " +
+                    "head -n 400"
+            )
+
+        val forward =
+            Regex(
+                """DisplayDeviceInfo\{[^\n]*uniqueId="local:(\d+)"[^\n]*$width\s*x\s*$height"""
+            ).find(displayDump)
+                ?.groupValues
+                ?.getOrNull(1)
+                ?.toLongOrNull()
+
+        val reverse =
+            Regex(
+                """DisplayDeviceInfo\{[^\n]*$width\s*x\s*$height[^\n]*uniqueId="local:(\d+)""""
+            ).find(displayDump)
+                ?.groupValues
+                ?.getOrNull(1)
+                ?.toLongOrNull()
+
+        return forward ?: reverse ?: -1L
+    }
+
     private fun resolveFold7CoverPhysicalDisplayId(
         targetHint: Int = -1,
     ): Long {
@@ -619,35 +677,47 @@ class DuoShellService : Binder() {
             return cachedCoverPhysicalDisplayId
         }
 
-        val fromAddress = physicalDisplayIdFromLogical(targetHint)
+        val fromAddress =
+            physicalDisplayIdFromLogical(
+                targetHint
+            )
+
         if (fromAddress >= 0L) {
-            cachedCoverPhysicalDisplayId = fromAddress
+            cachedCoverPhysicalDisplayId =
+                fromAddress
             return fromAddress
         }
 
-        val displayDump =
-            runProbe(
-                "dumpsys display | " +
-                    "grep -E -i 'DisplayDeviceInfo|mPhysicalDisplayId=' | " +
-                    "head -n 320"
+        val physicalId =
+            physicalDisplayIdForGeometry(
+                width = 1080,
+                height = 2520,
             )
 
-        val forward =
-            Regex(
-                """DisplayDeviceInfo\\{[^\\n]*uniqueId=\"local:(\\d+)\"[^\\n]*1080 x 2520"""
-            ).find(displayDump)
-                ?.groupValues?.getOrNull(1)?.toLongOrNull()
-
-        val reverse =
-            Regex(
-                """DisplayDeviceInfo\\{[^\\n]*1080 x 2520[^\\n]*uniqueId=\"local:(\\d+)\""""
-            ).find(displayDump)
-                ?.groupValues?.getOrNull(1)?.toLongOrNull()
-
-        val physicalId = forward ?: reverse ?: -1L
         if (physicalId >= 0L) {
-            cachedCoverPhysicalDisplayId = physicalId
+            cachedCoverPhysicalDisplayId =
+                physicalId
         }
+
+        return physicalId
+    }
+
+    private fun resolveFold7InnerPhysicalDisplayId(): Long {
+        if (cachedInnerPhysicalDisplayId >= 0L) {
+            return cachedInnerPhysicalDisplayId
+        }
+
+        val physicalId =
+            physicalDisplayIdForGeometry(
+                width = 1968,
+                height = 2184,
+            )
+
+        if (physicalId >= 0L) {
+            cachedInnerPhysicalDisplayId =
+                physicalId
+        }
+
         return physicalId
     }
 
@@ -667,10 +737,11 @@ class DuoShellService : Binder() {
         }
     }
 
-    private fun setCoverPhysicalPowerNormal(): Pair<Boolean, String?> {
-        val physicalId = cachedCoverPhysicalDisplayId
+    private fun setPhysicalPowerNormal(
+        physicalId: Long,
+    ): Pair<Boolean, String?> {
         if (physicalId < 0L) {
-            return false to "cover physical display id unavailable"
+            return false to "physical display id unavailable"
         }
 
         return runCatching {
@@ -700,7 +771,56 @@ class DuoShellService : Binder() {
 
             true to null
         }.getOrElse { error ->
-            false to "${error.javaClass.simpleName}: ${error.message}"
+            false to
+                "${error.javaClass.simpleName}: ${error.message}"
+        }
+    }
+
+    private fun setCoverPhysicalPowerNormal():
+        Pair<Boolean, String?> =
+        setPhysicalPowerNormal(
+            cachedCoverPhysicalDisplayId
+        )
+
+    private fun wakeInnerPhysicalDisplay(): Bundle {
+        val t0 =
+            SystemClock.elapsedRealtime()
+
+        val physicalId =
+            resolveFold7InnerPhysicalDisplayId()
+
+        val (powered, error) =
+            setPhysicalPowerNormal(
+                physicalId
+            )
+
+        return Bundle().apply {
+            putBoolean("ok", powered)
+            putLong(
+                "physicalDisplayId",
+                physicalId,
+            )
+            putInt("targetWidth", 1968)
+            putInt("targetHeight", 2184)
+            putBoolean(
+                "physicalPowered",
+                powered,
+            )
+            putString(
+                "command",
+                "Fold7 physical inner early wake",
+            )
+            if (error != null) {
+                putString(
+                    "error",
+                    error,
+                )
+            }
+            putLong(
+                "latencyMs",
+                SystemClock.elapsedRealtime() -
+                    t0,
+            )
         }
     }
 
@@ -758,23 +878,91 @@ class DuoShellService : Binder() {
             }
         }
 
-        val targetId = resolveFreshCoverLogicalId(targetHint)
+        /*
+         * Wake the stable physical cover FIRST.
+         *
+         * Samsung may not create the 1080x2520 logical route until after the
+         * physical panel is powered. Requiring that route first creates a
+         * circular dependency and makes the cover appear much too late.
+         */
+        val physicalId =
+            resolveFold7CoverPhysicalDisplayId(
+                targetHint
+            )
+
+        val (
+            physicalPowered,
+            physicalPowerError
+        ) =
+            setPhysicalPowerNormal(
+                physicalId
+            )
+
+        val targetId =
+            resolveFreshCoverLogicalId(
+                targetHint
+            )
+
         if (targetId < 0) {
             return Bundle().apply {
-                putBoolean("ok", false)
+                putBoolean(
+                    "ok",
+                    physicalPowered,
+                )
                 putBoolean("enable", true)
-                putInt("targetDisplayId", -1)
+                putInt(
+                    "targetDisplayId",
+                    -1,
+                )
+                putLong(
+                    "physicalDisplayId",
+                    physicalId,
+                )
                 putInt("targetWidth", 1080)
                 putInt("targetHeight", 2520)
-                putBoolean("visibleAfter", false)
-                putString("error", "No fresh non-default 1080x2520 cover route was available.")
-                putString("command", "fresh-route-validation")
-                putString("commandOutput", "skipped")
+                putBoolean(
+                    "visibleAfter",
+                    false,
+                )
+                putBoolean(
+                    "routeEnabled",
+                    false,
+                )
+                putBoolean(
+                    "logicalPowered",
+                    false,
+                )
+                putBoolean(
+                    "physicalPowered",
+                    physicalPowered,
+                )
+                putBoolean(
+                    "routeStillCover",
+                    false,
+                )
+                putString(
+                    "command",
+                    "physical-first Fold7 cover prewarm",
+                )
+                putString(
+                    "commandOutput",
+                    physicalPowerError
+                        ?: "physical cover wake accepted; logical route pending",
+                )
+                if (!physicalPowered) {
+                    putString(
+                        "error",
+                        physicalPowerError
+                            ?: "Cover physical wake failed and no logical route exists.",
+                    )
+                }
+                putLong(
+                    "latencyMs",
+                    SystemClock.elapsedRealtime() -
+                        t0,
+                )
             }
         }
-
-        // Stable physical identity may be cached; the logical id may not.
-        val physicalId = resolveFold7CoverPhysicalDisplayId(targetId)
 
         if (targetId !in windowCoverRoutes()) {
             return Bundle().apply {
@@ -812,9 +1000,6 @@ class DuoShellService : Binder() {
                 false
             }
 
-        val (physicalPowered, physicalPowerError) =
-            setCoverPhysicalPowerNormal()
-
         return Bundle().apply {
             putBoolean("ok", routeEnabled || logicalPowered || physicalPowered)
             putBoolean("enable", true)
@@ -827,7 +1012,7 @@ class DuoShellService : Binder() {
             putBoolean("logicalPowered", logicalPowered)
             putBoolean("physicalPowered", physicalPowered)
             putBoolean("routeStillCover", stillCover)
-            putString("command", "fresh-route one-shot Fold7 prewarm")
+            putString("command", "physical-first fresh-route Fold7 prewarm")
             putString(
                 "commandOutput",
                 listOfNotNull(routeError, physicalPowerError)

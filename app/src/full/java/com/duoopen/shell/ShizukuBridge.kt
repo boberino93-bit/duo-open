@@ -290,6 +290,12 @@ object ShizukuBridge {
             ShellProtocol.RESOLVE_COVER_DISPLAY
         )
 
+    /** Wake the stable physical 1968x2184 Fold7 inner panel. Blocking; call off main. */
+    fun wakeInnerDisplay(): Bundle? =
+        call(
+            ShellProtocol.WAKE_INNER_DISPLAY
+        )
+
     /** Blocking; call off the main thread. */
     fun enableSecondaryDisplay(
         displayIdHint: Int,

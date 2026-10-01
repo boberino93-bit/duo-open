@@ -50,6 +50,10 @@ internal class Fold7ContinuityController(
             override val generation: Long,
         ) : Action
 
+        data class WakeInner(
+            override val generation: Long,
+        ) : Action
+
         data class ShowMirror(
             override val generation: Long,
         ) : Action
@@ -309,14 +313,22 @@ internal class Fold7ContinuityController(
                     sampleMotion &&
                     direction == Direction.OPENING &&
                     previous.isFinite() &&
-                    previous <= NATIVE_COVER_MAX_DEG
+                    previous <= NATIVE_COVER_MAX_DEG &&
+                    angle >= INNER_WAKE_MIN_DEG
                 ) {
                     transition(
                         to = State.OPENING_FROM_CLOSED,
                         angle = angle,
-                        reason = "first-opening-motion",
+                        reason = "early-inner-wake",
                         topology = topology,
                     )
+
+                    /*
+                     * Do not wait for Samsung to expose the inner logical route.
+                     * The coordinator wakes the stable physical 1968x2184 panel.
+                     * Logical ids remain disposable and are never cached.
+                     */
+                    actions += Action.WakeInner(generation)
                 }
             }
 
@@ -368,7 +380,7 @@ internal class Fold7ContinuityController(
                          * A single hinge callback may both:
                          *
                          * 1. prove deliberate closing intent, and
-                         * 2. already be below the 150 degree prewarm threshold.
+                         * 2. already be below the early cover prewarm threshold.
                          *
                          * Waiting for another callback here adds avoidable latency
                          * and was the reason the fast-close unit tests failed.
@@ -619,9 +631,10 @@ internal class Fold7ContinuityController(
 
     companion object {
         const val NATIVE_COVER_MAX_DEG = 12f
-        const val INNER_HANDOFF_MIN_DEG = 20f
+        const val INNER_WAKE_MIN_DEG = 3f
+        const val INNER_HANDOFF_MIN_DEG = 8f
 
-        const val COVER_PREWARM_DEG = 150f
+        const val COVER_PREWARM_DEG = 174f
         const val COVER_VISUAL_START_DEG = 135f
         const val COVER_VISUAL_HIDE_OPEN_DEG = 140f
 

@@ -1,0 +1,9 @@
+08295009e9d2da83133b2bb15e6b22108f408c97ccc95f51b8967345b1443fac  .github/workflows/build-direct-fold7.yml
+4b4e40f4625d3651260edc81b12ccb54a4a59923b42a08ee21fac4c4c9e4663a  README-1.3.24-EARLY-PANEL-WAKE.md
+39b6ed4c99ee90379da7239ce9f91c566d2ef41f0e7373103d4b5562b3638a06  app/build.gradle.kts
+ffdb9c843bdd78b1c329cf4cd49793f01e197111d429b3e520b640eba86ecdc3  app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+333504e9c3d77cb89048e00e1c0c0787a8a5a56787e48bd235f814fc43cfa2af  app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+eea85c9d60059f269405db7ed90dd3ddd79c208be551ef1959f686285589f5a3  app/src/full/java/com/duoopen/shell/DuoShellService.kt
+56621e65966c0a142a1bda5caa226f6582e5fd84a7a47f72fc4cd0ccc916e9f9  app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+a3808dd8a52718c3a2b815d5145ac095ecc58376d987b17e3200b60a3f0c0f07  app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+80c23a14816e2ceeb6a397701cf59912aac602c1dbdb9ce70019dcdd4516d1bb  app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt

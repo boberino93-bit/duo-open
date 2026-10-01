@@ -145,6 +145,9 @@ internal class Fold7ContinuityCoordinator(
                 is Fold7ContinuityController.Action.BeginPrewarm ->
                     beginPrewarm(action.generation)
 
+                is Fold7ContinuityController.Action.WakeInner ->
+                    wakeInner(action.generation)
+
                 is Fold7ContinuityController.Action.ShowMirror ->
                     showMirror(action.generation)
 
@@ -158,6 +161,36 @@ internal class Fold7ContinuityCoordinator(
                 is Fold7ContinuityController.Action.ReleaseSecondary ->
                     releaseSecondary(action.generation)
             }
+        }
+    }
+
+    private fun wakeInner(
+        generation: Long,
+    ) {
+        if (
+            !controller.isGenerationCurrent(generation) ||
+            !ShizukuBridge.ready
+        ) {
+            return
+        }
+
+        scope.launch(Dispatchers.IO) {
+            if (!controller.isGenerationCurrent(generation)) {
+                return@launch
+            }
+
+            val result =
+                runCatching {
+                    ShizukuBridge.wakeInnerDisplay()
+                }.getOrNull()
+
+            DuoDiagnostics.event(
+                "fold7-state",
+                "inner-wake generation=$generation " +
+                    "ok=${result?.getBoolean("ok", false) == true} " +
+                    "physical=${result?.getLong("physicalDisplayId", -1L) ?: -1L} " +
+                    "error=${result?.getString("error")}",
+            )
         }
     }
 

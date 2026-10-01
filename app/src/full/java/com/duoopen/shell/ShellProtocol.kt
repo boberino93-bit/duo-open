@@ -15,6 +15,7 @@ object ShellProtocol {
     const val MIRROR_DISPLAY = 9
     const val REQUEST_DISPLAY_POWER = 10
     const val RESOLVE_COVER_DISPLAY = 11
+    const val WAKE_INNER_DISPLAY = 12
 
     const val CB_ANGLE = 1
 }

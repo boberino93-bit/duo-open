@@ -42,7 +42,7 @@ class Fold7ContinuityControllerTest {
     }
 
     @Test
-    fun deliberateClosePrewarmsButStaysHiddenUntil135() {
+    fun deliberateClosePrewarmsEarlyButStaysHiddenUntil135() {
         val c = Fold7ContinuityController()
         c.reset(179f, 0L, openTopology)
 
@@ -55,7 +55,13 @@ class Fold7ContinuityControllerTest {
             c.state,
         )
 
-        val prewarm = c.onHinge(149f, 240L, openTopology)
+        val prewarm =
+            c.onHinge(
+                173.8f,
+                220L,
+                openTopology,
+            )
+
         val request =
             prewarm.actions.single()
                 as Fold7ContinuityController.Action.BeginPrewarm
@@ -64,7 +70,7 @@ class Fold7ContinuityControllerTest {
             c.onPrewarmResult(
                 requestGeneration = request.generation,
                 ok = true,
-                nowMs = 280L,
+                nowMs = 250L,
                 topology = openTopology,
             )
 
@@ -74,7 +80,12 @@ class Fold7ContinuityControllerTest {
         )
         assertTrue(ready.actions.isEmpty())
 
-        val visible = c.onHinge(134f, 320L, openTopology)
+        val visible =
+            c.onHinge(
+                134f,
+                320L,
+                openTopology,
+            )
 
         assertEquals(
             Fold7ContinuityController.State.COVER_VISUAL,
@@ -88,17 +99,60 @@ class Fold7ContinuityControllerTest {
     }
 
     @Test
-    fun openingFromClosedNeedsNoShellAction() {
+    fun openingFromClosedWakesInnerAtThreeDegrees() {
         val c = Fold7ContinuityController()
         c.reset(0f, 0L, closedTopology)
 
-        val firstMotion = c.onHinge(1f, 20L, closedTopology)
+        val tiny =
+            c.onHinge(
+                1f,
+                20L,
+                closedTopology,
+            )
+
+        assertEquals(
+            Fold7ContinuityController.State.NATIVE_COVER,
+            c.state,
+        )
+        assertTrue(tiny.actions.isEmpty())
+
+        val firstRealMotion =
+            c.onHinge(
+                3.2f,
+                40L,
+                closedTopology,
+            )
 
         assertEquals(
             Fold7ContinuityController.State.OPENING_FROM_CLOSED,
             c.state,
         )
-        assertTrue(firstMotion.actions.isEmpty())
+        assertTrue(
+            firstRealMotion.actions.any {
+                it is Fold7ContinuityController.Action.WakeInner
+            }
+        )
+    }
+
+    @Test
+    fun openingFallsIntoInnerHandoffByEightDegrees() {
+        val c = Fold7ContinuityController()
+        c.reset(0f, 0L, closedTopology)
+
+        c.onHinge(3.2f, 20L, closedTopology)
+
+        val handoff =
+            c.onHinge(
+                8.2f,
+                40L,
+                closedTopology,
+            )
+
+        assertEquals(
+            Fold7ContinuityController.State.INNER_HANDOFF,
+            c.state,
+        )
+        assertTrue(handoff.actions.isEmpty())
     }
 
     @Test
@@ -107,7 +161,12 @@ class Fold7ContinuityControllerTest {
         c.reset(179f, 0L, openTopology)
 
         c.onHinge(176f, 50L, openTopology)
-        val prewarm = c.onHinge(149f, 100L, openTopology)
+        val prewarm =
+            c.onHinge(
+                149f,
+                100L,
+                openTopology,
+            )
         val request =
             prewarm.actions.single()
                 as Fold7ContinuityController.Action.BeginPrewarm
@@ -120,7 +179,12 @@ class Fold7ContinuityControllerTest {
         )
         c.onHinge(134f, 150L, openTopology)
 
-        val reversal = c.onHinge(141f, 200L, openTopology)
+        val reversal =
+            c.onHinge(
+                141f,
+                200L,
+                openTopology,
+            )
 
         assertEquals(
             Fold7ContinuityController.State.INNER_HANDOFF,
@@ -144,12 +208,16 @@ class Fold7ContinuityControllerTest {
         c.reset(179f, 0L, openTopology)
 
         c.onHinge(176f, 50L, openTopology)
-        val prewarm = c.onHinge(149f, 100L, openTopology)
+        val prewarm =
+            c.onHinge(
+                149f,
+                100L,
+                openTopology,
+            )
         val request =
             prewarm.actions.single()
                 as Fold7ContinuityController.Action.BeginPrewarm
 
-        // Reverse before the shell response comes back.
         c.onHinge(151f, 130L, openTopology)
 
         val late =
