@@ -1,0 +1,13 @@
+Execute the Gen2 deployment; do not just import these files.
+
+From the repository root:
+
+python3 deploy_staged_gen2_v2.py .
+
+The V2 executor intentionally accepts a newer HEAD as long as the original
+staged Gen2 commit is an ancestor and all staged/runtime blob identities still
+match. Review the generated production diff, require all structural and Gradle
+gates to pass, then commit the resulting app/src/... Gen2 runtime changes.
+
+If execution fails, stop and report the complete failure output. Do not commit
+a partial application and do not work around a failed blob/anchor/build gate.
