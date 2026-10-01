@@ -1,0 +1,10 @@
+PASS cycle stable
+PASS lease revision fencing
+PASS readiness exact logical observation
+PASS frame provenance exact cycle
+PASS timestamp quality fences pre-cycle request
+PASS presentation stale attempt rejected
+PASS presentation attempt invalidation
+PASS presentation host invalidation
+PASS 100000-op deterministic stale fencing stress
+RESULT passed=9 failed=0 total=9

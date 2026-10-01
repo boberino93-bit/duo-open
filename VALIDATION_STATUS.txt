@@ -1,0 +1,23 @@
+DUO OPEN GEN2 FULL SYSTEM DEPLOYMENT
+AUDITED_BASELINE=586c308649258145b3da9b5ea27b726a6fb3647a
+TARGET=Samsung Galaxy Z Fold7
+INNER=1968x2184
+COVER=1080x2520
+
+COMPLETED VALIDATION
+- Current-main audit performed against exact GitHub tree.
+- Runtime vs imported R&D distinction verified.
+- Critical production blob SHAs embedded in apply_gen2.py.
+- Critical transform anchors checked against GitHub baseline and found exactly once.
+- apply_gen2.py Python syntax validation: PASS.
+- verify_gen2_postapply.py Python syntax validation: PASS.
+- Combined pure ownership harness: PASS 9/9.
+- Deterministic stale-fencing stress inside harness: 100,000 ownership operations represented by 10,000 full close-cycle loops with multiple operations per loop: PASS.
+
+NOT EXECUTED IN THIS R&D ENVIRONMENT
+- Full Gradle testFullDebugUnitTest.
+- Full assembleFullDebug.
+- Android instrumentation/device tests.
+- Galaxy Z Fold7 field validation.
+
+Those gates MUST be run by Root on the applied checkout before merge/deployment. The included verifier can run both Gradle gates using --gradle.

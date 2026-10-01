@@ -1,0 +1,24 @@
+MODIFIED BY APPLY SCRIPT
+.github/workflows/build-direct-fold7.yml
+app/build.gradle.kts
+app/src/main/java/com/duoopen/fold/HingeAngleSource.kt
+app/src/full/java/com/duoopen/lab/TransitionEvent.kt
+app/src/full/java/com/duoopen/lab/TransitionLab.kt
+app/src/full/java/com/duoopen/lab/TransitionSessionWriter.kt
+app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+app/src/full/java/com/duoopen/shell/DuoShellService.kt
+app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
+
+ADDED BY OVERLAY
+app/src/full/java/com/duoopen/overlay/Fold7CycleEnvelope.kt
+app/src/full/java/com/duoopen/overlay/Fold7CoverLeaseSnapshotGate.kt
+app/src/full/java/com/duoopen/overlay/Fold7CoverReadiness.kt
+app/src/full/java/com/duoopen/overlay/Fold7ContinuityFrameStore.kt
+app/src/full/java/com/duoopen/overlay/Fold7PresentationLease.kt
+app/src/full/java/com/duoopen/overlay/Fold7Gen2Kernel.kt
+app/src/test/java/com/duoopen/overlay/Fold7Gen2OwnershipTest.kt
