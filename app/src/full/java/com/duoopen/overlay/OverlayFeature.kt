@@ -61,4 +61,8 @@ object OverlayFeature {
 
     /** Status of the continuous-angle reader, from the running service. */
     fun angleFeedStatus(): String = FoldOverlayService.instance?.angleFeedStatus() ?: "Service not running"
+
+    /** Flush Transition Lab before packaging a user-visible debug export. */
+    fun flushDebugLogs(): Boolean =
+        TransitionLab.flushForExport()
 }

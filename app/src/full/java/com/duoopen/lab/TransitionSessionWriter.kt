@@ -7,6 +7,7 @@ import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 import java.util.UUID
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -26,16 +27,22 @@ internal class TransitionSessionWriter(
     val sessionId: String = UUID.randomUUID().toString(),
     queueCapacity: Int = 32_768,
 ) : Closeable {
+    private sealed interface WorkItem
+
     private data class QueuedEvent(
         val eventSequence: Long,
         val event: TransitionEvent,
-    )
+    ) : WorkItem
+
+    private data class FlushRequest(
+        val latch: CountDownLatch,
+    ) : WorkItem
 
     private val sequence = AtomicLong(0L)
     private val dropped = AtomicLong(0L)
     private val running = AtomicBoolean(true)
     private val queue =
-        ArrayBlockingQueue<QueuedEvent>(queueCapacity)
+        ArrayBlockingQueue<WorkItem>(queueCapacity)
 
     val file: File
 
@@ -79,6 +86,35 @@ internal class TransitionSessionWriter(
     fun droppedEventCount(): Long =
         dropped.get()
 
+    /**
+     * Force all events currently ahead of this request in the writer queue to
+     * durable file output. Used immediately before the in-app debug export.
+     */
+    fun flush(
+        timeoutMs: Long = 1_500L,
+    ): Boolean {
+        if (!running.get()) {
+            return true
+        }
+
+        val latch =
+            CountDownLatch(1)
+
+        val offered =
+            queue.offer(
+                FlushRequest(latch)
+            )
+
+        if (!offered) {
+            return false
+        }
+
+        return latch.await(
+            timeoutMs,
+            TimeUnit.MILLISECONDS,
+        )
+    }
+
     override fun close() {
         if (!running.getAndSet(false)) return
 
@@ -95,18 +131,54 @@ internal class TransitionSessionWriter(
             ),
             64 * 1024,
         ).use { writer ->
+            var dirty = false
+            var rowsSinceFlush = 0
+
             while (
                 running.get() ||
                 queue.isNotEmpty()
             ) {
-                val row =
+                val item =
                     queue.poll(
-                        250L,
+                        FLUSH_IDLE_MS,
                         TimeUnit.MILLISECONDS,
-                    ) ?: continue
+                    )
 
-                writer.write(toJson(row))
-                writer.newLine()
+                if (item == null) {
+                    if (dirty) {
+                        writer.flush()
+                        dirty = false
+                        rowsSinceFlush = 0
+                    }
+                    continue
+                }
+
+                when (item) {
+                    is QueuedEvent -> {
+                        writer.write(
+                            toJson(item)
+                        )
+                        writer.newLine()
+                        dirty = true
+                        rowsSinceFlush++
+
+                        if (
+                            rowsSinceFlush >=
+                            FLUSH_ROW_INTERVAL
+                        ) {
+                            writer.flush()
+                            dirty = false
+                            rowsSinceFlush = 0
+                        }
+                    }
+
+                    is FlushRequest -> {
+                        writer.flush()
+                        dirty = false
+                        rowsSinceFlush = 0
+                        item.latch.countDown()
+                    }
+                }
             }
 
             writer.flush()
@@ -186,5 +258,13 @@ internal class TransitionSessionWriter(
         if (value != null) {
             o.put(key, value)
         }
+    }
+
+    private companion object {
+        const val FLUSH_IDLE_MS =
+            250L
+
+        const val FLUSH_ROW_INTERVAL =
+            64
     }
 }

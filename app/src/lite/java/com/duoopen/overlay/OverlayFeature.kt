@@ -20,7 +20,9 @@ object OverlayFeature {
 
     fun playDemo(): Boolean = false
 
-    val shizukuStatus: StateFlow<String> = MutableStateFlow("Not part of the lite edition.")
+    val shizukuStatus: StateFlow<String> =
+        MutableStateFlow("Not part of the lite edition.")
+
     fun shizukuReady(): Boolean = false
     fun shizukuInstalled(): Boolean = false
     fun shizukuNeedsPermission(): Boolean = false
@@ -28,4 +30,6 @@ object OverlayFeature {
     fun refreshShizuku() = Unit
     fun foldWallpaperActive(context: Context): Boolean = false
     fun angleFeedStatus(): String = ""
+
+    fun flushDebugLogs(): Boolean = true
 }

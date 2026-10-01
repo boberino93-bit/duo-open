@@ -758,6 +758,11 @@ internal object TransitionLab {
     fun sessionFile(): File? =
         writer?.file
 
+    fun flushForExport(
+        timeoutMs: Long = 1_500L,
+    ): Boolean =
+        writer?.flush(timeoutMs) ?: true
+
     fun droppedEventCount(): Long =
         writer?.droppedEventCount() ?: 0L
 

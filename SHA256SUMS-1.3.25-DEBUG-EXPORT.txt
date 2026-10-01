@@ -1,0 +1,12 @@
+460fed85dc463ceb7882689b1c2dd6843f60305dff7c0e7e63f803d1472dc8f8  .github/workflows/build-direct-fold7.yml
+6bfa46d81f68c3517bf27cd4776d009f279ac8d9f9a87d2cb80431d928ce01fa  README-1.3.25-DEBUG-EXPORT.md
+2f0c3e2d28fd34063e52b7cf89d57bec335db6b853e7d69783fbae2fa58ef0a5  app/build.gradle.kts
+7f9c5c675d03552515f7b053da96c71f53c84f050584260583201a5984f07c0a  app/src/full/java/com/duoopen/lab/TransitionLab.kt
+27b303efe5e62d797eec7a48fd5f56fff718ce9cfa200e0baed6c16c498f34bd  app/src/full/java/com/duoopen/lab/TransitionSessionWriter.kt
+7d127e7f5b1788f742ce150c9d22ba332b6d5653a7adb44eede7330896b7ed43  app/src/full/java/com/duoopen/overlay/OverlayFeature.kt
+081210d170be5beee5a021a2872dd02d51f63a08b09687af901356761663dad8  app/src/lite/java/com/duoopen/overlay/OverlayFeature.kt
+38b385e9425d0145af76142038424a1e212b2ea19563ae1f785ab3bebe6e8d25  app/src/main/AndroidManifest.xml
+1448d5a59888800d3eacad1dbe98ba212a27e669efeae164161dae657028acee  app/src/main/java/com/duoopen/debug/DebugBundleExporter.kt
+575d0341c7dd8e13b54abab68eaa801c47af2b0d631d7cd83e6c4db8b42c95e1  app/src/main/java/com/duoopen/ui/ControlSheet.kt
+89b32f0883e6d6547e411bade7c5f5fd9e551f1266f34571d1fc1d235f05b3f4  app/src/main/java/com/duoopen/ui/DuoApp.kt
+b3170c647894dbe6d841e24f7031fc1ca056819638af07c4d07e549d8dfb5a08  app/src/main/res/xml/debug_file_paths.xml
