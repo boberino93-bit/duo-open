@@ -52,6 +52,8 @@ class FoldOverlayService : AccessibilityService() {
     private val snapshots = SnapshotCache(maxAgeMs = SNAPSHOT_MAX_AGE_MS)
     private var angleFeed: WallpaperAngleFeed? = null
 
+    private lateinit var continuity: Fold7ContinuityCoordinator
+
     /**
      * Automatically arm Fold7 geometry continuity once per accessibility-service
      * lifetime after Shizuku becomes ready.
@@ -95,6 +97,31 @@ class FoldOverlayService : AccessibilityService() {
     private var lastContinuityAngle =
         Float.NaN
 
+    private var deliberateCloseSamples =
+        0
+
+    private var deliberateCloseStartAngle =
+        Float.NaN
+
+    private var deliberateCloseStartUptime =
+        0L
+
+    private var mirrorHostCreatedUptime =
+        0L
+
+    private val openReleaseRunnable =
+        Runnable {
+            if (
+                coverPowerHold &&
+                lastContinuityAngle >=
+                    COVER_RELEASE_OPEN_MIN_DEG
+            ) {
+                releaseCoverPowerHold(
+                    "returned-open-stable"
+                )
+            }
+        }
+
     private var lastPowerAssertMs =
         0L
 
@@ -103,6 +130,9 @@ class FoldOverlayService : AccessibilityService() {
 
     private var lastCoverLogicalId =
         -1
+
+    private var coverRoutePrimeAttempted =
+        false
 
     /**
      * Last watchdog power result, used only to avoid flooding diagnostics with
@@ -205,10 +235,6 @@ class FoldOverlayService : AccessibilityService() {
                 scheduleDisplaySync(
                     "display-added:$displayId"
                 )
-
-                scheduleDisplayProbe(
-                    "display-added:$displayId"
-                )
             }
 
             override fun onDisplayRemoved(
@@ -217,20 +243,12 @@ class FoldOverlayService : AccessibilityService() {
                 scheduleDisplaySync(
                     "display-removed:$displayId"
                 )
-
-                scheduleDisplayProbe(
-                    "display-removed:$displayId"
-                )
             }
 
             override fun onDisplayChanged(
                 displayId: Int,
             ) {
                 scheduleDisplaySync(
-                    "display-changed:$displayId"
-                )
-
-                scheduleDisplayProbe(
                     "display-changed:$displayId"
                 )
             }
@@ -244,12 +262,25 @@ class FoldOverlayService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        PersistentRuntimeService.ensureRunning(this)
         instance = this
+
+        PersistentRuntimeService.ensureRunning(
+            this
+        )
         if (!receiverRegistered) {
             registerReceiver(demoReceiver, IntentFilter(ACTION_DEMO), RECEIVER_EXPORTED)
             receiverRegistered = true
         }
         displayManager = getSystemService(DisplayManager::class.java)
+        continuity = Fold7ContinuityCoordinator(
+            service = this,
+            displayManager = displayManager,
+            handler = handler,
+            scope = scope,
+            currentHingeAngle = { hinge.lastAngle },
+            onStatus = { message -> _secondaryDisplayStatus.value = message },
+        )
         displayManager.registerDisplayListener(displayListener, handler)
         hinge = HingeAngleSource(this) { onHinge(it) }
         hinge.start()
@@ -267,12 +298,10 @@ class FoldOverlayService : AccessibilityService() {
                         continuityAutoArmAttempted =
                             true
 
-                        armGeometryContinuity()
+                        continuity.arm()
                     }
-
-                    scheduleDisplayProbe(
-                        "shizuku-ready",
-                        delayMs = 800L,
+                    primeCoverRoute(
+                        "shizuku-ready"
                     )
                 }
             }
@@ -286,11 +315,6 @@ class FoldOverlayService : AccessibilityService() {
 
         syncDisplays()
 
-        scheduleDisplayProbe(
-            "service-connected",
-            delayMs = 1_000L,
-        )
-
         Log.i(
             TAG,
             "connected; hinge=${hinge.sensor?.name} live displays=${engines.keys}",
@@ -300,6 +324,10 @@ class FoldOverlayService : AccessibilityService() {
     override fun onDestroy() {
         instance = null
 
+        if (::continuity.isInitialized) {
+            continuity.destroy()
+        }
+
         handler.removeCallbacks(
             displayProbeRunnable
         )
@@ -308,12 +336,18 @@ class FoldOverlayService : AccessibilityService() {
             mirrorRefreshRunnable
         )
 
+        handler.removeCallbacks(
+            openReleaseRunnable
+        )
+
         mirrorRequested =
             false
 
         mirrorHost?.detach()
         mirrorHost =
             null
+        mirrorHostCreatedUptime =
+            0L
 
         runCatching {
             ShizukuBridge.stopDisplayMirror()
@@ -342,18 +376,10 @@ class FoldOverlayService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     private fun onHinge(angle: Float) {
-        handleContinuityHinge(
-            angle
-        )
+        continuity.onHinge(angle)
 
-        if (mirrorRequested) {
-            mirrorHost?.onHinge(
-                angle
-            )
-        }
-
-        for (e in engines.values.toList()) {
-            e.onHinge(angle)
+        for (engine in engines.values.toList()) {
+            engine.onHinge(angle)
         }
     }
 
@@ -385,7 +411,7 @@ class FoldOverlayService : AccessibilityService() {
             }
         }
         if (gone.isNotEmpty()) updateRunning()
-        if (!mirrorRequested) {
+        if (!continuity.visualMirrorActive) {
             for (e in engines.values.toList()) {
                 e.evaluate()
             }
@@ -393,7 +419,7 @@ class FoldOverlayService : AccessibilityService() {
 
         angleFeed?.onDisplayChanged()
 
-        scheduleMirrorRefresh(
+        continuity.onTopologyChanged(
             "sync-displays"
         )
     }
@@ -602,56 +628,30 @@ class FoldOverlayService : AccessibilityService() {
         return lastCoverLogicalId
     }
 
-    private fun assertCoverPower(
+    private fun primeCoverRoute(
         reason: String,
-        force: Boolean = false,
     ) {
-        if (!coverPowerHold) {
-            return
-        }
-
-        val now =
-            android.os.SystemClock.uptimeMillis()
-
         if (
-            !force &&
-            now - lastPowerAssertMs <
-                COVER_POWER_ASSERT_INTERVAL_MS
+            coverRoutePrimeAttempted ||
+            !ShizukuBridge.ready
         ) {
             return
         }
 
-        if (powerAssertInFlight) {
-            return
-        }
-
-        val target =
-            resolveCoverLogicalId()
-
-        if (target < 0) {
-            com.duoopen.debug.DuoDiagnostics.event(
-                "cover-power",
-                "assert skipped reason=$reason; no cover logical route",
-            )
-            return
-        }
-
-        lastPowerAssertMs =
-            now
-
-        powerAssertInFlight =
+        coverRoutePrimeAttempted =
             true
 
         scope.launch(
             Dispatchers.IO
         ) {
             val result =
-                ShizukuBridge.requestDisplayPower(
-                    displayId =
-                        target,
-                    requestedState =
-                        Display.STATE_ON,
-                )
+                ShizukuBridge.resolveCoverDisplay()
+
+            val physicalId =
+                result?.getLong(
+                    "physicalDisplayId",
+                    -1L,
+                ) ?: -1L
 
             val ok =
                 result?.getBoolean(
@@ -659,31 +659,19 @@ class FoldOverlayService : AccessibilityService() {
                     false,
                 ) == true
 
-            val error =
-                result?.getString(
-                    "error"
-                )
+            DuoDiagnostics.event(
+                "cover-route",
+                "prime reason=$reason physicalId=$physicalId ok=$ok",
+            )
+        }
+    }
 
-            val shouldLog =
-                reason != "watchdog" ||
-                    lastPowerAssertOk !=
-                        ok
-
-            lastPowerAssertOk =
-                ok
-
-            if (shouldLog) {
-                com.duoopen.debug.DuoDiagnostics.event(
-                    "cover-power",
-                    "assert-on reason=$reason target=$target " +
-                        "ok=$ok error=$error",
-                )
-            }
-
-            handler.post {
-                powerAssertInFlight =
-                    false
-            }
+    private fun assertCoverPower(
+        reason: String,
+        force: Boolean = false,
+    ) {
+        if (force && reason.isEmpty()) {
+            Log.d(TAG, "logical power watchdog disabled")
         }
     }
 
@@ -714,31 +702,30 @@ class FoldOverlayService : AccessibilityService() {
         )
 
         handler.removeCallbacks(
+            openReleaseRunnable
+        )
+
+        handler.removeCallbacks(
             coverPowerWatchdog
         )
 
         mirrorHost?.detach()
         mirrorHost =
             null
+        mirrorHostCreatedUptime =
+            0L
 
         val releaseTarget =
-            resolveCoverLogicalId()
+            resolveCurrentSecondaryCoverLogicalId()
 
         scope.launch(
             Dispatchers.IO
         ) {
             ShizukuBridge.stopDisplayMirror()
 
-            if (releaseTarget >= 0) {
-                ShizukuBridge.requestDisplayPower(
-                    displayId =
-                        releaseTarget,
-                    requestedState =
-                        Display.STATE_UNKNOWN,
-                )
-            }
-
-            ShizukuBridge.resetSecondaryDisplay()
+            ShizukuBridge.resetSecondaryDisplay(
+                releaseTarget
+            )
         }
 
         openReferenceAngle =
@@ -786,6 +773,10 @@ class FoldOverlayService : AccessibilityService() {
         )
 
         handler.removeCallbacks(
+            openReleaseRunnable
+        )
+
+        handler.removeCallbacks(
             coverPowerWatchdog
         )
 
@@ -796,6 +787,8 @@ class FoldOverlayService : AccessibilityService() {
         mirrorHost?.detach()
         mirrorHost =
             null
+        mirrorHostCreatedUptime =
+            0L
 
         _secondaryDisplayStatus.value =
             "ARMED: cover stays off until 4° of deliberate closing travel."
@@ -803,15 +796,50 @@ class FoldOverlayService : AccessibilityService() {
         com.duoopen.debug.DuoDiagnostics.event(
             "cover-power",
             "armed triggerDeg=$COVER_WAKE_TRAVEL_DEG " +
-                "releaseOpenDeg=$COVER_RELEASE_OPEN_DEG",
+                "releaseOpenMinDeg=$COVER_RELEASE_OPEN_MIN_DEG",
         )
 
         scope.launch(
             Dispatchers.IO
         ) {
             ShizukuBridge.stopDisplayMirror()
-            ShizukuBridge.resetSecondaryDisplay()
         }
+    }
+
+    private fun resetDeliberateCloseEvidence() {
+        deliberateCloseSamples =
+            0
+
+        deliberateCloseStartAngle =
+            Float.NaN
+
+        deliberateCloseStartUptime =
+            0L
+    }
+
+    /**
+     * A logical id is usable only while DisplayManager says it is the
+     * non-default 1080x2520 physical cover. Never cache this value.
+     */
+    private fun resolveCurrentSecondaryCoverLogicalId(): Int {
+        val cover =
+            displayManager.displays
+                .firstOrNull { candidate ->
+                    val mode =
+                        candidate.mode
+
+                    mode.physicalWidth == 1080 &&
+                        mode.physicalHeight == 2520 &&
+                        candidate.displayId !=
+                            Display.DEFAULT_DISPLAY &&
+                        candidate.state !=
+                            Display.STATE_OFF &&
+                        candidate.state !=
+                            Display.STATE_UNKNOWN
+                }
+
+        return cover?.displayId
+            ?: -1
     }
 
     private fun handleContinuityHinge(
@@ -831,98 +859,161 @@ class FoldOverlayService : AccessibilityService() {
             openReferenceAngle =
                 angle
 
-            com.duoopen.debug.DuoDiagnostics.event(
+            DuoDiagnostics.event(
                 "cover-power",
-                "open baseline=$angle",
+                "baseline=$angle mode=armed",
             )
+
             return
         }
 
+        val closingSample =
+            !previous.isNaN() &&
+                previous - angle >=
+                    COVER_SAMPLE_EPSILON_DEG
+
+        val openingSample =
+            !previous.isNaN() &&
+                angle - previous >=
+                    COVER_SAMPLE_EPSILON_DEG
+
+        if (
+            openingSample &&
+            previous <=
+                COVER_CLOSED_READY_MAX_DEG
+        ) {
+            DuoDiagnostics.event(
+                "cover-power",
+                "closed-open-start angle=$angle previous=$previous serviceHot=true",
+            )
+        }
+
         if (!coverPowerHold) {
-            if (
-                angle >
-                openReferenceAngle
-            ) {
+            if (angle > openReferenceAngle) {
                 openReferenceAngle =
                     angle
             }
 
-            val travel =
-                openReferenceAngle -
-                    angle
-
-            val closingSample =
-                !previous.isNaN() &&
-                    previous - angle >=
-                        COVER_SAMPLE_EPSILON_DEG
-
+            /*
+             * CLOSED -> OPEN: the native cover is already the active
+             * screen. Keep the runtime, Shizuku daemon and angle feed
+             * hot while shut; the local cover effect reacts to the
+             * first real opening sample without a shell wake command.
+             *
+             * OPEN -> CLOSED: do not expose anything on the front in
+             * the upper half. Pre-warm the secondary cover around 150°
+             * so it is ready, but keep the live mirror hidden until
+             * the hinge reaches the quarter-fold point (~135°).
+             */
             if (
-                travel >=
-                    COVER_WAKE_TRAVEL_DEG &&
-                closingSample
+                closingSample &&
+                angle <= COVER_CLOSE_PREWARM_DEG &&
+                angle > COVER_NATIVE_HANDOFF_MAX_DEG
             ) {
-                coverPowerHold =
-                    true
+                val currentCover =
+                    resolveCurrentSecondaryCoverLogicalId()
 
-                mirrorRequested =
-                    true
+                if (currentCover >= 0) {
+                    coverPowerHold =
+                        true
 
-                _secondaryDisplayStatus.value =
-                    "4° fold detected: waking and holding the physical cover ON."
+                    mirrorRequested =
+                        false
 
-                com.duoopen.debug.DuoDiagnostics.event(
-                    "cover-power",
-                    "wake-trigger angle=$angle " +
-                        "baseline=$openReferenceAngle " +
-                        "travel=$travel",
-                )
+                    _secondaryDisplayStatus.value =
+                        "Closing: cover pre-warmed; front visual starts after one-quarter fold travel."
 
-                runSecondaryDisplayExperiment(
-                    enable =
-                        true,
-                    reason =
-                        "4-degree-motion-trigger",
-                )
+                    DuoDiagnostics.event(
+                        "cover-power",
+                        "closing-prewarm angle=$angle target=$currentCover " +
+                            "visualStart=$COVER_CLOSE_VISUAL_START_DEG",
+                    )
 
-                handler.removeCallbacks(
-                    coverPowerWatchdog
-                )
-
-                handler.postDelayed(
-                    coverPowerWatchdog,
-                    COVER_POWER_ASSERT_INTERVAL_MS,
-                )
-
-                scheduleMirrorRefresh(
-                    "4-degree-motion-trigger"
-                )
+                    runSecondaryDisplayExperiment(
+                        enable = true,
+                        reason = "closing-prewarm",
+                    )
+                } else {
+                    DuoDiagnostics.event(
+                        "cover-power",
+                        "closing-prewarm deferred angle=$angle " +
+                            "reason=no-stable-secondary-cover",
+                    )
+                }
             }
 
             return
         }
 
-        assertCoverPower(
-            reason =
-                "hinge-${angle.toInt()}",
-        )
+        if (
+            closingSample &&
+            !mirrorRequested &&
+            angle <= COVER_CLOSE_VISUAL_START_DEG
+        ) {
+            mirrorRequested =
+                true
+
+            DuoDiagnostics.event(
+                "cover-power",
+                "closing-visual-start angle=$angle",
+            )
+
+            syncMirrorHost(
+                "closing-quarter-visual"
+            )
+        }
 
         if (
-            angle >=
-                openReferenceAngle -
-                    COVER_RELEASE_OPEN_DEG
+            openingSample &&
+            mirrorRequested &&
+            angle >= COVER_CLOSE_VISUAL_END_DEG
         ) {
-            releaseCoverPowerHold(
-                "returned-open"
+            mirrorRequested =
+                false
+
+            mirrorHost?.detach()
+            mirrorHost =
+                null
+
+            mirrorHostCreatedUptime =
+                0L
+
+            scope.launch(
+                Dispatchers.IO
+            ) {
+                ShizukuBridge.stopDisplayMirror()
+            }
+
+            DuoDiagnostics.event(
+                "cover-power",
+                "opening-cover-visual-hidden angle=$angle",
             )
-            return
+        }
+
+        if (
+            openingSample &&
+            angle >= COVER_RELEASE_OPEN_MIN_DEG
+        ) {
+            handler.removeCallbacks(
+                openReleaseRunnable
+            )
+
+            handler.postDelayed(
+                openReleaseRunnable,
+                COVER_RELEASE_DWELL_MS,
+            )
+        } else if (
+            angle < COVER_RELEASE_CANCEL_DEG
+        ) {
+            handler.removeCallbacks(
+                openReleaseRunnable
+            )
         }
 
         val cover =
             displayManager.displays
                 .firstOrNull { candidate ->
-                    val mode =
-                        candidate.mode
-
+                    val mode = candidate.mode
                     mode.physicalWidth == 1080 &&
                         mode.physicalHeight == 2520
                 }
@@ -930,33 +1021,29 @@ class FoldOverlayService : AccessibilityService() {
         val inner =
             displayManager.displays
                 .firstOrNull { candidate ->
-                    val mode =
-                        candidate.mode
-
+                    val mode = candidate.mode
                     mode.physicalWidth == 1968 &&
                         mode.physicalHeight == 2184
                 }
 
         val nativeCover =
-            cover?.displayId ==
-                Display.DEFAULT_DISPLAY &&
-                cover.state !=
-                    Display.STATE_OFF &&
-                cover.state !=
-                    Display.STATE_UNKNOWN &&
+            cover?.displayId == Display.DEFAULT_DISPLAY &&
+                cover.state != Display.STATE_OFF &&
+                cover.state != Display.STATE_UNKNOWN &&
                 (
                     inner == null ||
-                        inner.state ==
-                            Display.STATE_OFF ||
-                        inner.state ==
-                            Display.STATE_UNKNOWN
+                        inner.state == Display.STATE_OFF ||
+                        inner.state == Display.STATE_UNKNOWN
                     )
 
         if (
             nativeCover &&
-            angle <=
-                COVER_NATIVE_HANDOFF_MAX_DEG
+            angle <= COVER_NATIVE_HANDOFF_MAX_DEG
         ) {
+            handler.removeCallbacks(
+                openReleaseRunnable
+            )
+
             releaseCoverPowerHold(
                 "native-cover-handoff"
             )
@@ -1016,6 +1103,24 @@ class FoldOverlayService : AccessibilityService() {
                 null
         }
 
+        val targetHint =
+            resolveCurrentSecondaryCoverLogicalId()
+
+        if (
+            enable &&
+            targetHint < 0
+        ) {
+            _secondaryDisplayStatus.value =
+                "Fold7 cover route is changing; unsafe enable skipped."
+
+            DuoDiagnostics.event(
+                "dual-shell",
+                "skip enable reason=$reason; no stable secondary cover route",
+            )
+
+            return
+        }
+
         scope.launch(Dispatchers.IO) {
             if (!enable) {
                 ShizukuBridge.stopDisplayMirror()
@@ -1023,9 +1128,13 @@ class FoldOverlayService : AccessibilityService() {
 
             val result =
                 if (enable) {
-                    ShizukuBridge.enableSecondaryDisplay()
+                    ShizukuBridge.enableSecondaryDisplay(
+                    targetHint
+                )
                 } else {
-                    ShizukuBridge.resetSecondaryDisplay()
+                    ShizukuBridge.resetSecondaryDisplay(
+                    targetHint
+                )
                 }
 
             if (result == null) {
@@ -1053,32 +1162,12 @@ class FoldOverlayService : AccessibilityService() {
 
             if (
                 enable &&
-                target >= 0
+                target >= 0 &&
+                target ==
+                    resolveCurrentSecondaryCoverLogicalId()
             ) {
                 lastCoverLogicalId =
                     target
-
-                if (coverPowerHold) {
-                    val powerResult =
-                        ShizukuBridge.requestDisplayPower(
-                            displayId =
-                                target,
-                            requestedState =
-                                Display.STATE_ON,
-                        )
-
-                    com.duoopen.debug.DuoDiagnostics.event(
-                        "cover-power",
-                        "post-enable target=$target " +
-                            "ok=" +
-                            (
-                                powerResult?.getBoolean(
-                                    "ok",
-                                    false,
-                                ) == true
-                                ),
-                    )
-                }
             }
 
             val width =
@@ -1121,8 +1210,8 @@ class FoldOverlayService : AccessibilityService() {
                             "($width×$height). Leave Duo Open and test it."
 
                     enable ->
-                        "The enable command returned without an error, but " +
-                            "display $target is not exposed as active yet."
+                        "Fast enable accepted for display $target; " +
+                            "waiting for the Fold7 topology callback."
 
                     else ->
                         "Secondary panel power was returned to Samsung."
@@ -1138,34 +1227,9 @@ class FoldOverlayService : AccessibilityService() {
                         .replace("\n", "\\n"),
             )
 
-            DuoDiagnostics.event(
-                "dual-shell",
-                "afterDisplays=" +
-                    (
-                        result.getString(
-                            "afterDisplays"
-                        ) ?: "(missing)"
-                    )
-                        .replace("\r", "")
-                        .replace("\n", "\\n"),
-            )
-
-            DuoDiagnostics.event(
-                "dual-shell",
-                "afterPhysical=" +
-                    (
-                        result.getString(
-                            "afterPhysical"
-                        ) ?: "(missing)"
-                    )
-                        .replace("\r", "")
-                        .replace("\n", "\\n"),
-            )
-
             if (
                 enable &&
-                ok &&
-                visibleAfter
+                ok
             ) {
                 handler.post {
                     mirrorRequested =
@@ -1177,14 +1241,6 @@ class FoldOverlayService : AccessibilityService() {
                 }
             }
 
-            scheduleDisplayProbe(
-                if (enable) {
-                    "service-dual-enable"
-                } else {
-                    "service-dual-reset"
-                },
-                delayMs = 750L,
-            )
         }
     }
 
@@ -1197,6 +1253,10 @@ class FoldOverlayService : AccessibilityService() {
 
         handler.removeCallbacks(
             mirrorRefreshRunnable
+        )
+
+        handler.removeCallbacks(
+            openReleaseRunnable
         )
 
         handler.postDelayed(
@@ -1334,11 +1394,33 @@ class FoldOverlayService : AccessibilityService() {
             mirrorHost
 
         if (
+            current != null &&
+            current.displayId ==
+                activeCover.displayId &&
+            !current.isUsable &&
+            mirrorHostCreatedUptime != 0L &&
+            android.os.SystemClock.uptimeMillis() -
+                mirrorHostCreatedUptime <
+                    MIRROR_HOST_ATTACH_GRACE_MS
+        ) {
+            DuoDiagnostics.event(
+                "live-mirror",
+                "host attach pending retained " +
+                    "reason=$reason display=${current.displayId}",
+            )
+
+            return
+        }
+
+        if (
             current == null ||
             current.displayId != activeCover.displayId ||
             !current.isUsable
         ) {
             current?.detach()
+
+            mirrorHostCreatedUptime =
+                android.os.SystemClock.uptimeMillis()
 
             mirrorHost =
                 DisplayMirrorHost(
@@ -1473,13 +1555,10 @@ class FoldOverlayService : AccessibilityService() {
                     }
 
             if (enable) {
-                service.armGeometryContinuity()
+                service.continuity.arm()
             } else {
-                service.runSecondaryDisplayExperiment(
-                    enable =
-                        false,
-                    reason =
-                        "user-stop",
+                service.continuity.release(
+                    "user-stop"
                 )
             }
 
@@ -1487,13 +1566,40 @@ class FoldOverlayService : AccessibilityService() {
         }
 
         private const val DISPLAY_SYNC_DEBOUNCE_MS =
-            48L
+            24L
 
         private const val MIRROR_REBIND_DEBOUNCE_MS =
-            80L
+            16L
+
+        private const val MIRROR_HOST_ATTACH_GRACE_MS =
+            250L
 
         private const val COVER_WAKE_TRAVEL_DEG =
+            7.0f
+
+        private const val COVER_CLOSED_READY_MAX_DEG =
+            12.0f
+
+        private const val COVER_CLOSE_PREWARM_DEG =
+            150.0f
+
+        private const val COVER_CLOSE_VISUAL_START_DEG =
+            135.0f
+
+        private const val COVER_CLOSE_VISUAL_END_DEG =
+            140.0f
+
+        private const val COVER_INTENT_TRAVEL_DEG =
             4.0f
+
+        private const val COVER_INTENT_SAMPLE_COUNT =
+            3
+
+        private const val COVER_INTENT_RESET_DEG =
+            1.25f
+
+        private const val COVER_INTENT_WINDOW_MS =
+            1_800L
 
         private const val COVER_SAMPLE_EPSILON_DEG =
             0.35f
@@ -1501,8 +1607,14 @@ class FoldOverlayService : AccessibilityService() {
         private const val COVER_POWER_ASSERT_INTERVAL_MS =
             100L
 
-        private const val COVER_RELEASE_OPEN_DEG =
-            1.5f
+        private const val COVER_RELEASE_OPEN_MIN_DEG =
+            179.0f
+
+        private const val COVER_RELEASE_CANCEL_DEG =
+            178.0f
+
+        private const val COVER_RELEASE_DWELL_MS =
+            250L
 
         private const val COVER_NATIVE_HANDOFF_MAX_DEG =
             12.0f

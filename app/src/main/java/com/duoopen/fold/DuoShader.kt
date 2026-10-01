@@ -20,8 +20,10 @@ data class FoldLine(
 
 /** Shared glue for res/raw/duo_unfold.agsl — used by the app, wallpaper and overlay. */
 object DuoShader {
+    const val COVER_VISUAL_MAX_HINGE = 135f
+    const val FOLD7_COVER_CLOSED_VISUAL_HINGE = 0.5f
     /** Pane tilt cap; beyond this the kernel is mostly black anyway. */
-    const val MAX_TILT = 45f
+    const val MAX_TILT = 89.5f
 
     /** Pane tilts below this draw the plain image (effect visually off). */
     const val FLAT_EPSILON = 0.05f
@@ -75,8 +77,13 @@ object DuoShader {
      * [PANEL_ON_HINGE] degrees: flat when closed, fully frosted at the swap.
      */
     fun coverTiltForHinge(hingeDegrees: Float, config: DuoConfig): Float {
-        val progress = ((hingeDegrees - CLOSED_HINGE) / (PANEL_ON_HINGE - CLOSED_HINGE)).coerceIn(0f, 1f)
-        return (progress * MAX_TILT * config.intensity).coerceIn(0f, MAX_TILT)
+        val progress =
+            ((hingeDegrees - FOLD7_COVER_CLOSED_VISUAL_HINGE) /
+                (PANEL_ON_HINGE - FOLD7_COVER_CLOSED_VISUAL_HINGE))
+                .coerceIn(0f, 1f)
+
+        return (progress * MAX_TILT * config.intensity)
+            .coerceIn(0f, MAX_TILT)
     }
 
     /**
@@ -86,11 +93,19 @@ object DuoShader {
      * mid-fold, flat again when open — a half sine over the hinge range.
      */
     fun concurrentCoverTiltForHinge(hingeDegrees: Float, config: DuoConfig): Float {
-        val progress = ((hingeDegrees - CLOSED_HINGE) / (FLAT_HINGE - CLOSED_HINGE)).coerceIn(0f, 1f)
-        val bump = kotlin.math.sin(Math.PI * progress).toFloat()
-        return (bump * MAX_TILT * config.intensity).coerceIn(0f, MAX_TILT)
-    }
+        if (hingeDegrees >= COVER_VISUAL_MAX_HINGE) return 0f
 
+        val progress =
+            ((hingeDegrees - FOLD7_COVER_CLOSED_VISUAL_HINGE) /
+                (COVER_VISUAL_MAX_HINGE - FOLD7_COVER_CLOSED_VISUAL_HINGE))
+                .coerceIn(0f, 1f)
+
+        val bump =
+            kotlin.math.sin(Math.PI * progress).toFloat()
+
+        return (bump * MAX_TILT * config.intensity)
+            .coerceIn(0f, MAX_TILT)
+    }
     fun tiltFor(hingeDegrees: Float, config: DuoConfig, innerPanel: Boolean): Float =
         if (hingeDegrees.isNaN()) 0f
         else if (innerPanel) tiltForHinge(hingeDegrees, config)
@@ -142,6 +157,6 @@ object DuoShader {
         shader.setFloatUniform("blurSpread", config.blurSpread)
         // Blur radius is in device px; renormalize the per-px darkening from the
         // original's ~6 px/mm so dense panels don't crush to black.
-        shader.setFloatUniform("darkening", config.darkening * REFERENCE_PX_PER_MM / pxPerMm)
+        shader.setFloatUniform("darkening", 0f)
     }
 }

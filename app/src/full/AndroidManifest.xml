@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Full edition only: the accessibility service behind the system-wide fold.
-     The lite edition omits it, so Play Protect and restricted settings have
-     nothing to object to. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Optional Shizuku mode (ADB-level helpers); nothing happens unless the user authorises it in Shizuku. -->
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
     <queries>
         <package android:name="moe.shizuku.privileged.api" />
     </queries>
@@ -17,6 +16,15 @@
             android:exported="true"
             android:multiprocess="false"
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
+        <service
+            android:name=".overlay.PersistentRuntimeService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Samsung Galaxy Z Fold7 hinge-driven display continuity controller" />
+        </service>
 
         <service
             android:name=".overlay.FoldOverlayService"

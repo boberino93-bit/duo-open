@@ -9,6 +9,7 @@ import android.os.IBinder
 import android.os.Parcel
 import android.os.Process
 import android.os.SystemClock
+import android.view.Display
 import android.view.SurfaceControl
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -48,228 +49,122 @@ class DuoShellService : Binder() {
 
     private var liveMirror: SurfaceControl? = null
 
+    @Volatile
+    private var cachedCoverPhysicalDisplayId =
+        -1L
+
     init {
         attachInterface(null, ShellProtocol.TOKEN)
     }
 
-    override fun onTransact(
-        code: Int,
-        data: Parcel,
-        reply: Parcel?,
-        flags: Int,
-    ): Boolean {
+    override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
         if (code == INTERFACE_TRANSACTION) {
             reply?.writeString(ShellProtocol.TOKEN)
             return true
         }
-
         if (code == SHIZUKU_DESTROY) {
             reader?.stop()
             stopLiveMirror()
             System.exit(0)
             return true
         }
-
         data.enforceInterface(ShellProtocol.TOKEN)
-
         val caller = getCallingUid()
-
-        if (owner < 0) {
-            owner = caller
-        }
-
-        if (caller != owner) {
-            throw SecurityException("wrong caller")
-        }
-
-        val out =
-            reply
-                ?: return false
-
+        if (owner < 0) owner = caller
+        if (caller != owner) throw SecurityException("wrong caller")
+        val out = reply ?: return false
         when (code) {
             ShellProtocol.PING -> {
                 out.writeNoException()
-
-                out.writeBundle(
-                    Bundle().apply {
-                        putInt(
-                            "uid",
-                            Process.myUid(),
-                        )
-
-                        putInt(
-                            "pid",
-                            Process.myPid(),
-                        )
-
-                        putString(
-                            "capture",
-                            runCatching {
-                                api().name
-                            }.getOrElse {
-                                "unavailable: ${it.message}"
-                            },
-                        )
-                    }
-                )
+                out.writeBundle(Bundle().apply {
+                    putInt("uid", Process.myUid())
+                    putInt("pid", Process.myPid())
+                    putString("capture", runCatching { api().name }.getOrElse { "unavailable: ${it.message}" })
+                })
             }
-
             ShellProtocol.CAPTURE -> {
-                val displayId =
-                    data.readInt()
-
-                val n =
-                    data.readInt()
-
-                val excluded =
-                    Array(n) {
-                        data.readTypedObject(
-                            SurfaceControl.CREATOR
-                        )
-                    }
-
-                val scale =
-                    data.readFloat()
-
-                val identity =
-                    clearCallingIdentity()
-
-                val result =
-                    try {
-                        capture(
-                            displayId,
-                            excluded
-                                .filterNotNull()
-                                .toTypedArray(),
-                            scale,
-                        )
-                    } catch (t: Throwable) {
-                        var root: Throwable =
-                            t
-
-                        while (root.cause != null) {
-                            root =
-                                root.cause!!
-                        }
-
-                        Bundle().apply {
-                            putString(
-                                "error",
-                                "${root.javaClass.simpleName}: ${root.message}",
-                            )
-                        }
-                    } finally {
-                        excluded.forEach {
-                            runCatching {
-                                it?.release()
-                            }
-                        }
-
-                        restoreCallingIdentity(
-                            identity
-                        )
-                    }
-
+                val displayId = data.readInt()
+                val n = data.readInt()
+                val excluded = Array(n) { data.readTypedObject(SurfaceControl.CREATOR) }
+                val scale = data.readFloat()
+                val identity = clearCallingIdentity()
+                val result = try {
+                    capture(displayId, excluded.filterNotNull().toTypedArray(), scale)
+                } catch (t: Throwable) {
+                    var c: Throwable = t
+                    while (c.cause != null) c = c.cause!!
+                    Bundle().apply { putString("error", "${c.javaClass.simpleName}: ${c.message}") }
+                } finally {
+                    excluded.forEach { runCatching { it?.release() } }
+                    restoreCallingIdentity(identity)
+                }
                 out.writeNoException()
                 out.writeBundle(result)
             }
-
             ShellProtocol.START_ANGLES -> {
-                val action =
-                    data.readString()
-                        ?: throw IllegalArgumentException(
-                            "action"
-                        )
-
-                val callback =
-                    data.readStrongBinder()
-                        ?: throw IllegalArgumentException(
-                            "callback"
-                        )
-
+                val action = data.readString() ?: throw IllegalArgumentException("action")
+                val callback = data.readStrongBinder() ?: throw IllegalArgumentException("callback")
                 reader?.stop()
-
-                reader =
-                    AngleReader(
-                        action,
-                        callback,
-                    ).also {
-                        it.start()
-                    }
-
+                reader = AngleReader(action, callback).also { it.start() }
                 out.writeNoException()
             }
-
             ShellProtocol.STOP_ANGLES -> {
                 reader?.stop()
                 reader = null
-
                 out.writeNoException()
             }
-
             ShellProtocol.ANGLE_STATUS -> {
                 out.writeNoException()
-
-                out.writeBundle(
-                    reader?.status()
-                        ?: Bundle().apply {
-                            putString(
-                                "state",
-                                "not started",
-                            )
-                        }
-                )
+                out.writeBundle(reader?.status() ?: Bundle().apply { putString("state", "not started") })
             }
-
             ShellProtocol.DISPLAY_PROBE -> {
-                val identity =
-                    clearCallingIdentity()
-
-                val result =
-                    try {
-                        displayProbe()
-                    } catch (t: Throwable) {
-                        Bundle().apply {
-                            putString(
-                                "error",
-                                "${t.javaClass.simpleName}: ${t.message}",
-                            )
-                        }
-                    } finally {
-                        restoreCallingIdentity(
-                            identity
+                val identity = clearCallingIdentity()
+                val result = try {
+                    displayProbe()
+                } catch (t: Throwable) {
+                    Bundle().apply {
+                        putString(
+                            "error",
+                            "${t.javaClass.simpleName}: ${t.message}",
                         )
                     }
+                } finally {
+                    restoreCallingIdentity(identity)
+                }
 
                 out.writeNoException()
                 out.writeBundle(result)
             }
-
             ShellProtocol.ENABLE_SECONDARY_DISPLAY -> {
+                val targetHint =
+                    if (
+                        data.dataAvail() >=
+                            Integer.BYTES
+                    ) {
+                        data.readInt()
+                    } else {
+                        -1
+                    }
+
                 val identity =
                     clearCallingIdentity()
 
                 val result =
                     try {
                         secondaryDisplayCommand(
-                            enable = true
+                            enable = true,
+                            targetHint = targetHint,
                         )
                     } catch (t: Throwable) {
                         Bundle().apply {
-                            putBoolean(
-                                "ok",
-                                false,
-                            )
-
+                            putBoolean("ok", false)
                             putString(
                                 "error",
                                 "${t.javaClass.simpleName}: ${t.message}",
                             )
                         }
                     } finally {
-                        restoreCallingIdentity(
-                            identity
-                        )
+                        restoreCallingIdentity(identity)
                     }
 
                 out.writeNoException()
@@ -277,30 +172,62 @@ class DuoShellService : Binder() {
             }
 
             ShellProtocol.RESET_SECONDARY_DISPLAY -> {
+                val targetHint =
+                    if (
+                        data.dataAvail() >=
+                            Integer.BYTES
+                    ) {
+                        data.readInt()
+                    } else {
+                        -1
+                    }
+
                 val identity =
                     clearCallingIdentity()
 
                 val result =
                     try {
                         secondaryDisplayCommand(
-                            enable = false
+                            enable = false,
+                            targetHint = targetHint,
                         )
                     } catch (t: Throwable) {
                         Bundle().apply {
-                            putBoolean(
-                                "ok",
-                                false,
-                            )
-
+                            putBoolean("ok", false)
                             putString(
                                 "error",
                                 "${t.javaClass.simpleName}: ${t.message}",
                             )
                         }
                     } finally {
-                        restoreCallingIdentity(
-                            identity
-                        )
+                        restoreCallingIdentity(identity)
+                    }
+
+                out.writeNoException()
+                out.writeBundle(result)
+            }
+
+            ShellProtocol.RESOLVE_COVER_DISPLAY -> {
+                val identity =
+                    clearCallingIdentity()
+
+                val result =
+                    try {
+                        resolveCoverDisplay()
+                    } catch (t: Throwable) {
+                        Bundle().apply {
+                            putBoolean("ok", false)
+                            putInt(
+                                "targetDisplayId",
+                                -1,
+                            )
+                            putString(
+                                "error",
+                                "${t.javaClass.simpleName}: ${t.message}",
+                            )
+                        }
+                    } finally {
+                        restoreCallingIdentity(identity)
                     }
 
                 out.writeNoException()
@@ -308,67 +235,44 @@ class DuoShellService : Binder() {
             }
 
             ShellProtocol.MIRROR_DISPLAY -> {
-                val enable =
-                    data.readInt() != 0
+                val enable = data.readInt() != 0
+                val identity = clearCallingIdentity()
 
-                val identity =
-                    clearCallingIdentity()
-
-                val result =
-                    try {
-                        if (!enable) {
-                            stopLiveMirror()
-
-                            Bundle().apply {
-                                putBoolean(
-                                    "ok",
-                                    true,
-                                )
-
-                                putBoolean(
-                                    "enabled",
-                                    false,
-                                )
-                            }
-                        } else {
-                            val sourceDisplayId =
-                                data.readInt()
-
-                            createLiveMirror(
-                                sourceDisplayId =
-                                    sourceDisplayId,
-                            )
-                        }
-                    } catch (t: Throwable) {
-                        var root: Throwable =
-                            t
-
-                        while (root.cause != null) {
-                            root =
-                                root.cause!!
-                        }
+                val result = try {
+                    if (!enable) {
+                        stopLiveMirror()
 
                         Bundle().apply {
-                            putBoolean(
-                                "ok",
-                                false,
-                            )
-
-                            putBoolean(
-                                "enabled",
-                                enable,
-                            )
-
-                            putString(
-                                "error",
-                                "${root.javaClass.simpleName}: ${root.message}",
-                            )
+                            putBoolean("ok", true)
+                            putBoolean("enabled", false)
                         }
-                    } finally {
-                        restoreCallingIdentity(
-                            identity
+                    } else {
+                        val sourceDisplayId =
+                            data.readInt()
+
+                        createLiveMirror(
+                            sourceDisplayId =
+                                sourceDisplayId,
                         )
                     }
+                } catch (t: Throwable) {
+                    var root: Throwable = t
+
+                    while (root.cause != null) {
+                        root = root.cause!!
+                    }
+
+                    Bundle().apply {
+                        putBoolean("ok", false)
+                        putBoolean("enabled", enable)
+                        putString(
+                            "error",
+                            "${root.javaClass.simpleName}: ${root.message}",
+                        )
+                    }
+                } finally {
+                    restoreCallingIdentity(identity)
+                }
 
                 out.writeNoException()
                 out.writeBundle(result)
@@ -411,25 +315,21 @@ class DuoShellService : Binder() {
                                 "ok",
                                 powered,
                             )
-
                             putBoolean(
                                 "routeEnabled",
                                 routeEnabled,
                             )
-
                             putInt(
                                 "displayId",
                                 displayId,
                             )
-
                             putInt(
                                 "requestedState",
                                 requestedState,
                             )
                         }
                     } catch (t: Throwable) {
-                        var root: Throwable =
-                            t
+                        var root: Throwable = t
 
                         while (root.cause != null) {
                             root =
@@ -441,17 +341,14 @@ class DuoShellService : Binder() {
                                 "ok",
                                 false,
                             )
-
                             putInt(
                                 "displayId",
                                 displayId,
                             )
-
                             putInt(
                                 "requestedState",
                                 requestedState,
                             )
-
                             putString(
                                 "error",
                                 "${root.javaClass.simpleName}: ${root.message}",
@@ -467,15 +364,8 @@ class DuoShellService : Binder() {
                 out.writeBundle(result)
             }
 
-            else ->
-                return super.onTransact(
-                    code,
-                    data,
-                    reply,
-                    flags,
-                )
+            else -> return super.onTransact(code, data, reply, flags)
         }
-
         return true
     }
 
@@ -483,6 +373,7 @@ class DuoShellService : Binder() {
 
     private fun displayProbe(): Bundle =
         Bundle().apply {
+
             putInt(
                 "uid",
                 Process.myUid(),
@@ -544,6 +435,7 @@ class DuoShellService : Binder() {
     private fun runProbe(
         command: String,
     ): String {
+
         val process =
             ProcessBuilder(
                 "sh",
@@ -561,10 +453,12 @@ class DuoShellService : Binder() {
         val finished =
             process.waitFor(
                 3,
-                TimeUnit.SECONDS,
+                java.util.concurrent.TimeUnit.SECONDS,
             )
 
-        if (!finished) {
+        if (
+            !finished
+        ) {
             process.destroyForcibly()
 
             return (
@@ -583,225 +477,364 @@ class DuoShellService : Binder() {
             )
     }
 
-    // ---- one-shot Fold7 secondary display experiment -----------------------
+    // ---- Fold7 physical-panel-safe continuity ----------------------------
+
+    private fun displayInfoForLogicalId(
+        logicalDisplayId: Int,
+    ): Any? {
+        if (logicalDisplayId < 0) return null
+
+        return runCatching {
+            Class.forName(
+                "android.hardware.display.IDisplayManager"
+            ).getMethod(
+                "getDisplayInfo",
+                Integer.TYPE,
+            ).invoke(
+                displayManagerService(),
+                logicalDisplayId,
+            )
+        }.getOrNull()
+    }
+
+    private fun currentCoverLogicalId(
+        targetHint: Int,
+    ): Int {
+        if (
+            targetHint < 0 ||
+            targetHint == Display.DEFAULT_DISPLAY
+        ) {
+            return -1
+        }
+
+        val info =
+            displayInfoForLogicalId(targetHint)
+                ?: return -1
+
+        val width =
+            runCatching {
+                info.javaClass
+                    .getField("logicalWidth")
+                    .getInt(info)
+            }.getOrDefault(-1)
+
+        val height =
+            runCatching {
+                info.javaClass
+                    .getField("logicalHeight")
+                    .getInt(info)
+            }.getOrDefault(-1)
+
+        return if (
+            width == 1080 &&
+            height == 2520
+        ) {
+            targetHint
+        } else {
+            -1
+        }
+    }
+
+    private fun windowCoverRoutes(): List<Int> {
+        val dump =
+            runProbe(
+                "dumpsys window displays | " +
+                    "grep -E '^[[:space:]]*Display: mDisplayId=|" +
+                    "^[[:space:]]*init='"
+            )
+
+        return Regex(
+            "Display: mDisplayId=(\\d+).*?init=(\\d+)x(\\d+)",
+            setOf(RegexOption.DOT_MATCHES_ALL),
+        ).findAll(dump)
+            .mapNotNull { match ->
+                val id = match.groupValues[1].toIntOrNull()
+                    ?: return@mapNotNull null
+                val width = match.groupValues[2].toIntOrNull()
+                    ?: return@mapNotNull null
+                val height = match.groupValues[3].toIntOrNull()
+                    ?: return@mapNotNull null
+
+                if (
+                    id != Display.DEFAULT_DISPLAY &&
+                    width == 1080 &&
+                    height == 2520
+                ) {
+                    id
+                } else {
+                    null
+                }
+            }
+            .distinct()
+            .toList()
+    }
+
+    /**
+     * Resolve a logical route only for the immediate operation. Never cache it.
+     * Samsung may remap the same logical id to the inner/default display later.
+     */
+    private fun resolveFreshCoverLogicalId(
+        targetHint: Int,
+    ): Int {
+        if (
+            targetHint >= 0 &&
+            targetHint != Display.DEFAULT_DISPLAY &&
+            targetHint in windowCoverRoutes()
+        ) {
+            return targetHint
+        }
+
+        return windowCoverRoutes().firstOrNull() ?: -1
+    }
+
+    private fun physicalDisplayIdFromLogical(
+        logicalDisplayId: Int,
+    ): Long {
+        val info = displayInfoForLogicalId(logicalDisplayId) ?: return -1L
+
+        val width = runCatching {
+            info.javaClass.getField("logicalWidth").getInt(info)
+        }.getOrDefault(-1)
+        val height = runCatching {
+            info.javaClass.getField("logicalHeight").getInt(info)
+        }.getOrDefault(-1)
+
+        if (width != 1080 || height != 2520) return -1L
+
+        val address = runCatching {
+            info.javaClass.getField("address").get(info)
+        }.getOrNull() ?: return -1L
+
+        return runCatching {
+            address.javaClass
+                .getMethod("getPhysicalDisplayId")
+                .invoke(address) as Long
+        }.getOrElse { -1L }
+    }
+
+    private fun resolveFold7CoverPhysicalDisplayId(
+        targetHint: Int = -1,
+    ): Long {
+        if (cachedCoverPhysicalDisplayId >= 0L) {
+            return cachedCoverPhysicalDisplayId
+        }
+
+        val fromAddress = physicalDisplayIdFromLogical(targetHint)
+        if (fromAddress >= 0L) {
+            cachedCoverPhysicalDisplayId = fromAddress
+            return fromAddress
+        }
+
+        val displayDump =
+            runProbe(
+                "dumpsys display | " +
+                    "grep -E -i 'DisplayDeviceInfo|mPhysicalDisplayId=' | " +
+                    "head -n 320"
+            )
+
+        val forward =
+            Regex(
+                """DisplayDeviceInfo\\{[^\\n]*uniqueId=\"local:(\\d+)\"[^\\n]*1080 x 2520"""
+            ).find(displayDump)
+                ?.groupValues?.getOrNull(1)?.toLongOrNull()
+
+        val reverse =
+            Regex(
+                """DisplayDeviceInfo\\{[^\\n]*1080 x 2520[^\\n]*uniqueId=\"local:(\\d+)\""""
+            ).find(displayDump)
+                ?.groupValues?.getOrNull(1)?.toLongOrNull()
+
+        val physicalId = forward ?: reverse ?: -1L
+        if (physicalId >= 0L) {
+            cachedCoverPhysicalDisplayId = physicalId
+        }
+        return physicalId
+    }
+
+    private fun resolveCoverDisplay(): Bundle {
+        val logicalId = resolveFreshCoverLogicalId(-1)
+        val physicalId = resolveFold7CoverPhysicalDisplayId(logicalId)
+
+        return Bundle().apply {
+            putBoolean("ok", logicalId >= 0 || physicalId >= 0L)
+            putInt("targetDisplayId", logicalId)
+            putLong("physicalDisplayId", physicalId)
+            putInt("targetWidth", 1080)
+            putInt("targetHeight", 2520)
+            if (logicalId < 0 && physicalId < 0L) {
+                putString("error", "The Fold7 cover panel could not be resolved.")
+            }
+        }
+    }
+
+    private fun setCoverPhysicalPowerNormal(): Pair<Boolean, String?> {
+        val physicalId = cachedCoverPhysicalDisplayId
+        if (physicalId < 0L) {
+            return false to "cover physical display id unavailable"
+        }
+
+        return runCatching {
+            org.lsposed.hiddenapibypass.HiddenApiBypass
+                .addHiddenApiExemptions(
+                    "Landroid/view/SurfaceControl;"
+                )
+
+            val token =
+                SurfaceControl::class.java
+                    .getDeclaredMethod(
+                        "getPhysicalDisplayToken",
+                        java.lang.Long.TYPE,
+                    )
+                    .invoke(null, physicalId) as? IBinder
+                    ?: throw IllegalStateException(
+                        "no SurfaceControl token for physical display $physicalId"
+                    )
+
+            SurfaceControl::class.java
+                .getDeclaredMethod(
+                    "setDisplayPowerMode",
+                    IBinder::class.java,
+                    Integer.TYPE,
+                )
+                .invoke(null, token, 2)
+
+            true to null
+        }.getOrElse { error ->
+            false to "${error.javaClass.simpleName}: ${error.message}"
+        }
+    }
 
     private fun secondaryDisplayCommand(
         enable: Boolean,
+        targetHint: Int,
     ): Bundle {
-        val windowDisplays =
-            runProbe(
-                "dumpsys window displays | " +
-                    "grep -E '^[[:space:]]*Display: mDisplayId=|^[[:space:]]*init='"
-            )
+        val t0 = SystemClock.elapsedRealtime()
 
-        val foldDisplays =
-            Regex(
-                "Display: mDisplayId=(\\d+).*?init=(\\d+)x(\\d+)",
-                setOf(
-                    RegexOption.DOT_MATCHES_ALL
-                ),
-            ).findAll(
-                windowDisplays
-            ).mapNotNull { match ->
-                val id =
-                    match.groupValues[1]
-                        .toIntOrNull()
-                        ?: return@mapNotNull null
+        if (!enable) {
+            val safeTarget = resolveFreshCoverLogicalId(targetHint)
 
-                val width =
-                    match.groupValues[2]
-                        .toIntOrNull()
-                        ?: return@mapNotNull null
-
-                val height =
-                    match.groupValues[3]
-                        .toIntOrNull()
-                        ?: return@mapNotNull null
-
-                Triple(
-                    id,
-                    width,
-                    height,
-                )
-            }.filter { (_, width, height) ->
-                (
-                    width == 1080 &&
-                        height == 2520
-                    ) ||
-                    (
-                        width == 1968 &&
-                            height == 2184
-                    )
-            }.toList()
-
-        val target =
-            foldDisplays.firstOrNull {
-                    _,
-                    width,
-                    height,
-                ->
-                width == 1080 &&
-                    height == 2520
+            if (safeTarget < 0) {
+                return Bundle().apply {
+                    putBoolean("ok", true)
+                    putBoolean("enable", false)
+                    putInt("targetDisplayId", -1)
+                    putInt("targetWidth", 1080)
+                    putInt("targetHeight", 2520)
+                    putBoolean("visibleAfter", false)
+                    putString("command", "validated release skipped")
+                    putString("commandOutput", "no non-default 1080x2520 route")
+                    putLong("latencyMs", SystemClock.elapsedRealtime() - t0)
+                }
             }
 
-        if (target == null) {
+            // Re-resolve immediately before acting; abort if Samsung remapped it.
+            if (safeTarget !in windowCoverRoutes()) {
+                return Bundle().apply {
+                    putBoolean("ok", true)
+                    putBoolean("enable", false)
+                    putInt("targetDisplayId", -1)
+                    putString("command", "release aborted after remap")
+                    putLong("latencyMs", SystemClock.elapsedRealtime() - t0)
+                }
+            }
+
+            val command = "cmd display power-reset $safeTarget"
+            val output = runProbe(command)
+            val failed =
+                output.contains("Exception", ignoreCase = true) ||
+                    output.contains("error", ignoreCase = true) ||
+                    output.contains("not possible", ignoreCase = true)
+
             return Bundle().apply {
-                putBoolean(
-                    "ok",
-                    false,
-                )
-
-                putInt(
-                    "targetDisplayId",
-                    -1,
-                )
-
-                putString(
-                    "error",
-                    "The physical Fold7 cover route (1080x2520) was not found.",
-                )
-
-                putString(
-                    "windowDisplays",
-                    windowDisplays,
-                )
+                putBoolean("ok", !failed)
+                putBoolean("enable", false)
+                putInt("targetDisplayId", safeTarget)
+                putInt("targetWidth", 1080)
+                putInt("targetHeight", 2520)
+                putBoolean("visibleAfter", false)
+                putString("command", command)
+                putString("commandOutput", output)
+                putLong("latencyMs", SystemClock.elapsedRealtime() - t0)
             }
         }
 
-        val targetId =
-            target.first
-
-        val command =
-            if (enable) {
-                "cmd display enable-display $targetId"
-            } else {
-                /*
-                 * Return control to Samsung instead of forcing the display off.
-                 */
-                "cmd display power-reset $targetId"
+        val targetId = resolveFreshCoverLogicalId(targetHint)
+        if (targetId < 0) {
+            return Bundle().apply {
+                putBoolean("ok", false)
+                putBoolean("enable", true)
+                putInt("targetDisplayId", -1)
+                putInt("targetWidth", 1080)
+                putInt("targetHeight", 2520)
+                putBoolean("visibleAfter", false)
+                putString("error", "No fresh non-default 1080x2520 cover route was available.")
+                putString("command", "fresh-route-validation")
+                putString("commandOutput", "skipped")
             }
+        }
 
-        val commandOutput =
-            runProbe(
-                command
-            )
+        // Stable physical identity may be cached; the logical id may not.
+        val physicalId = resolveFold7CoverPhysicalDisplayId(targetId)
 
-        val immediatePowerOn =
-            if (enable) {
-                Thread.sleep(
-                    40L
-                )
+        if (targetId !in windowCoverRoutes()) {
+            return Bundle().apply {
+                putBoolean("ok", false)
+                putBoolean("enable", true)
+                putInt("targetDisplayId", -1)
+                putLong("physicalDisplayId", physicalId)
+                putString("error", "Samsung remapped the cover route before enable.")
+                putString("command", "pre-enable-route-revalidation")
+            }
+        }
 
+        var routeEnabled = false
+        var routeError: String? = null
+        runCatching {
+            enableConnectedDisplayInternal(targetId)
+            routeEnabled = true
+        }.onFailure { error ->
+            routeError = "${error.javaClass.simpleName}: ${error.message}"
+        }
+
+        // Revalidate AGAIN after enable. Never power an id that now represents
+        // the inner/default display.
+        val stillCover = targetId in windowCoverRoutes()
+
+        val logicalPowered =
+            if (stillCover) {
                 runCatching {
                     requestDisplayPowerInternal(
                         targetId,
-                        android.view.Display.STATE_ON,
+                        Display.STATE_ON,
                     )
-                }.getOrDefault(
-                    false
-                )
+                }.getOrDefault(false)
             } else {
                 false
             }
 
-        Thread.sleep(
-            600L
-        )
-
-        val afterDisplays =
-            runProbe(
-                "cmd display get-displays"
-            )
-
-        val afterPhysical =
-            runProbe(
-                "dumpsys display | " +
-                    "grep -E -i " +
-                    "'DisplayDeviceInfo|mDisplayId=|mState=|" +
-                    "mCommittedState=|mPhysicalDisplayId=|" +
-                    "uniqueId=|state ON|state OFF' | " +
-                    "head -n 220"
-            )
-
-        val visibleAfter =
-            afterDisplays.contains(
-                "Display id $targetId:"
-            )
-
-        val commandFailed =
-            commandOutput.contains(
-                "Exception",
-                ignoreCase = true,
-            ) ||
-                commandOutput.contains(
-                    "error",
-                    ignoreCase = true,
-                ) ||
-                commandOutput.contains(
-                    "not possible",
-                    ignoreCase = true,
-                )
+        val (physicalPowered, physicalPowerError) =
+            setCoverPhysicalPowerNormal()
 
         return Bundle().apply {
-            putBoolean(
-                "ok",
-                !commandFailed,
-            )
-
-            putBoolean(
-                "enable",
-                enable,
-            )
-
-            putInt(
-                "targetDisplayId",
-                targetId,
-            )
-
-            putInt(
-                "targetWidth",
-                target.second,
-            )
-
-            putInt(
-                "targetHeight",
-                target.third,
-            )
-
-            putBoolean(
-                "visibleAfter",
-                visibleAfter,
-            )
-
-            putBoolean(
-                "immediatePowerOn",
-                immediatePowerOn,
-            )
-
-            putString(
-                "command",
-                command,
-            )
-
+            putBoolean("ok", routeEnabled || logicalPowered || physicalPowered)
+            putBoolean("enable", true)
+            putInt("targetDisplayId", if (stillCover) targetId else -1)
+            putLong("physicalDisplayId", physicalId)
+            putInt("targetWidth", 1080)
+            putInt("targetHeight", 2520)
+            putBoolean("visibleAfter", false)
+            putBoolean("routeEnabled", routeEnabled)
+            putBoolean("logicalPowered", logicalPowered)
+            putBoolean("physicalPowered", physicalPowered)
+            putBoolean("routeStillCover", stillCover)
+            putString("command", "fresh-route one-shot Fold7 prewarm")
             putString(
                 "commandOutput",
-                commandOutput,
+                listOfNotNull(routeError, physicalPowerError)
+                    .joinToString(" | ")
+                    .ifEmpty { "bounded-prewarm-fast-path" },
             )
-
-            putString(
-                "windowDisplays",
-                windowDisplays,
-            )
-
-            putString(
-                "afterDisplays",
-                afterDisplays,
-            )
-
-            putString(
-                "afterPhysical",
-                afterPhysical,
-            )
+            putLong("latencyMs", SystemClock.elapsedRealtime() - t0)
         }
     }
 
@@ -821,7 +854,6 @@ class DuoShellService : Binder() {
                     current,
                     null,
                 )
-
                 tx.apply()
             }
         }
@@ -890,16 +922,8 @@ class DuoShellService : Binder() {
             mirror
 
         return Bundle().apply {
-            putBoolean(
-                "ok",
-                true,
-            )
-
-            putBoolean(
-                "enabled",
-                true,
-            )
-
+            putBoolean("ok", true)
+            putBoolean("enabled", true)
             putInt(
                 "sourceDisplayId",
                 sourceDisplayId,
@@ -976,30 +1000,10 @@ class DuoShellService : Binder() {
         val captureDisplay: Method,
     )
 
-    private fun systemService(
-        name: String,
-        stub: String,
-    ): Any {
-        val binder =
-            Class.forName(
-                "android.os.ServiceManager"
-            ).getMethod(
-                "getService",
-                String::class.java,
-            ).invoke(
-                null,
-                name,
-            ) as IBinder
-
-        return Class.forName(
-            stub
-        ).getMethod(
-            "asInterface",
-            IBinder::class.java,
-        ).invoke(
-            null,
-            binder,
-        )!!
+    private fun systemService(name: String, stub: String): Any {
+        val binder = Class.forName("android.os.ServiceManager").getMethod("getService", String::class.java)
+            .invoke(null, name) as IBinder
+        return Class.forName(stub).getMethod("asInterface", IBinder::class.java).invoke(null, binder)!!
     }
 
     /**
@@ -1009,380 +1013,92 @@ class DuoShellService : Binder() {
      * `IWindowManager.captureDisplay`.
      */
     private fun api(): CaptureApi {
-        captureApi?.let {
-            return it
-        }
-
-        val wm =
-            Class.forName(
-                "android.view.IWindowManager"
-            )
-
-        val errors =
-            StringBuilder()
-
+        captureApi?.let { return it }
+        val wm = Class.forName("android.view.IWindowManager")
+        val errors = StringBuilder()
         for (family in FAMILIES) {
             try {
-                val args =
-                    Class.forName(
-                        "$family\$CaptureArgs"
-                    )
-
-                val builder =
-                    Class.forName(
-                        "$family\$CaptureArgs\$Builder"
-                    )
-
-                val listener =
-                    Class.forName(
-                        "$family\$ScreenCaptureListener"
-                    )
-
-                val ctor =
-                    builder.getConstructor()
-
-                builder.getMethod(
-                    "setSourceCrop",
-                    Rect::class.java,
-                )
-
-                builder.getMethod(
-                    "setFrameScale",
-                    java.lang.Float.TYPE,
-                )
-
-                builder.getMethod(
-                    "setExcludeLayers",
-                    Array<SurfaceControl>::class.java,
-                )
-
-                builder.getMethod(
-                    "build"
-                )
-
-                var status =
-                    true
-
-                val listenerCtor =
-                    try {
-                        listener.getConstructor(
-                            ObjIntConsumer::class.java
-                        )
-                    } catch (
-                        _: NoSuchMethodException
-                    ) {
-                        status =
-                            false
-
-                        listener.getConstructor(
-                            Consumer::class.java
-                        )
-                    }
-
-                val capture =
-                    wm.getMethod(
-                        "captureDisplay",
-                        Integer.TYPE,
-                        args,
-                        listener,
-                    )
-
-                return CaptureApi(
-                    family,
-                    ctor,
-                    builder,
-                    listenerCtor,
-                    status,
-                    capture,
-                ).also {
-                    captureApi =
-                        it
+                val args = Class.forName("$family\$CaptureArgs")
+                val builder = Class.forName("$family\$CaptureArgs\$Builder")
+                val listener = Class.forName("$family\$ScreenCaptureListener")
+                val ctor = builder.getConstructor()
+                builder.getMethod("setSourceCrop", Rect::class.java)
+                builder.getMethod("setFrameScale", java.lang.Float.TYPE)
+                builder.getMethod("setExcludeLayers", Array<SurfaceControl>::class.java)
+                builder.getMethod("build")
+                var status = true
+                val lctor = try {
+                    listener.getConstructor(ObjIntConsumer::class.java)
+                } catch (e: NoSuchMethodException) {
+                    status = false
+                    listener.getConstructor(Consumer::class.java)
                 }
-            } catch (
-                e: ReflectiveOperationException
-            ) {
-                errors
-                    .append(family)
-                    .append(": ")
-                    .append(e)
-                    .append("; ")
+                val capture = wm.getMethod("captureDisplay", Integer.TYPE, args, listener)
+                return CaptureApi(family, ctor, builder, lctor, status, capture).also { captureApi = it }
+            } catch (e: ReflectiveOperationException) {
+                errors.append(family).append(": ").append(e).append("; ")
             }
         }
-
-        throw ClassNotFoundException(
-            "no compatible display capture API: $errors"
-        )
+        throw ClassNotFoundException("no compatible display capture API: $errors")
     }
 
-    private fun capture(
-        displayId: Int,
-        excluded: Array<SurfaceControl>,
-        scale: Float,
-    ): Bundle {
-        val t0 =
-            SystemClock.elapsedRealtime()
+    private fun capture(displayId: Int, excluded: Array<SurfaceControl>, scale: Float): Bundle {
+        val t0 = SystemClock.elapsedRealtime()
+        val api = api()
+        val wm = systemService("window", "android.view.IWindowManager\$Stub")
+        val dm = systemService("display", "android.hardware.display.IDisplayManager\$Stub")
+        val info = Class.forName("android.hardware.display.IDisplayManager").getMethod("getDisplayInfo", Integer.TYPE)
+            .invoke(dm, displayId) ?: throw IllegalStateException("no display $displayId")
+        val w = info.javaClass.getField("logicalWidth").getInt(info)
+        val h = info.javaClass.getField("logicalHeight").getInt(info)
+        if (w <= 0 || h <= 0) throw IllegalStateException("display $displayId has no size")
 
-        val api =
-            api()
-
-        val wm =
-            systemService(
-                "window",
-                "android.view.IWindowManager\$Stub",
-            )
-
-        val dm =
-            systemService(
-                "display",
-                "android.hardware.display.IDisplayManager\$Stub",
-            )
-
-        val info =
-            Class.forName(
-                "android.hardware.display.IDisplayManager"
-            ).getMethod(
-                "getDisplayInfo",
-                Integer.TYPE,
-            ).invoke(
-                dm,
-                displayId,
-            )
-                ?: throw IllegalStateException(
-                    "no display $displayId"
-                )
-
-        val width =
-            info.javaClass
-                .getField(
-                    "logicalWidth"
-                )
-                .getInt(
-                    info
-                )
-
-        val height =
-            info.javaClass
-                .getField(
-                    "logicalHeight"
-                )
-                .getInt(
-                    info
-                )
-
-        if (
-            width <= 0 ||
-            height <= 0
-        ) {
-            throw IllegalStateException(
-                "display $displayId has no size"
-            )
-        }
-
-        val builder =
-            api.builderCtor
-                .newInstance()
-
-        api.builder
-            .getMethod(
-                "setSourceCrop",
-                Rect::class.java,
-            )
-            .invoke(
-                builder,
-                Rect(
-                    0,
-                    0,
-                    width,
-                    height,
-                ),
-            )
-
-        api.builder
-            .getMethod(
-                "setFrameScale",
-                java.lang.Float.TYPE,
-            )
-            .invoke(
-                builder,
-                scale.coerceIn(
-                    0.1f,
-                    1f,
-                ),
-            )
-
+        val b = api.builderCtor.newInstance()
+        api.builder.getMethod("setSourceCrop", Rect::class.java).invoke(b, Rect(0, 0, w, h))
+        api.builder.getMethod("setFrameScale", java.lang.Float.TYPE).invoke(b, scale.coerceIn(0.1f, 1f))
         if (excluded.isNotEmpty()) {
-            api.builder
-                .getMethod(
-                    "setExcludeLayers",
-                    Array<SurfaceControl>::class.java,
-                )
-                .invoke(
-                    builder,
-                    excluded,
-                )
+            api.builder.getMethod("setExcludeLayers", Array<SurfaceControl>::class.java).invoke(b, excluded)
         }
+        val args = api.builder.getMethod("build").invoke(b)
 
-        val args =
-            api.builder
-                .getMethod(
-                    "build"
-                )
-                .invoke(
-                    builder
-                )
-
-        val latch =
-            CountDownLatch(
-                1
-            )
-
-        var shot: Any? =
-            null
-
-        val callback: Any =
-            if (api.statusCallback) {
-                ObjIntConsumer<Any?> {
-                        value,
-                        _,
-                    ->
-                    shot =
-                        value
-
-                    latch.countDown()
-                }
-            } else {
-                Consumer<Any?> { value ->
-                    shot =
-                        value
-
-                    latch.countDown()
-                }
-            }
-
-        val listener =
-            api.listenerCtor
-                .newInstance(
-                    callback
-                )
-
-        api.captureDisplay.invoke(
-            wm,
-            displayId,
-            args,
-            listener,
-        )
-
-        if (
-            !latch.await(
-                400,
-                TimeUnit.MILLISECONDS,
-            )
-        ) {
-            throw IllegalStateException(
-                "capture timed out"
-            )
+        val latch = CountDownLatch(1)
+        var shot: Any? = null
+        val callback: Any = if (api.statusCallback) {
+            ObjIntConsumer<Any?> { s, _ -> shot = s; latch.countDown() }
+        } else {
+            Consumer<Any?> { s -> shot = s; latch.countDown() }
         }
+        val listener = api.listenerCtor.newInstance(callback)
+        api.captureDisplay.invoke(wm, displayId, args, listener)
+        if (!latch.await(400, TimeUnit.MILLISECONDS)) throw IllegalStateException("capture timed out")
+        java.lang.ref.Reference.reachabilityFence(callback)
+        java.lang.ref.Reference.reachabilityFence(listener)
+        val result = shot ?: throw IllegalStateException("no frame")
 
-        java.lang.ref.Reference
-            .reachabilityFence(
-                callback
-            )
-
-        java.lang.ref.Reference
-            .reachabilityFence(
-                listener
-            )
-
-        val result =
-            shot
-                ?: throw IllegalStateException(
-                    "no frame"
-                )
-
-        var buffer: HardwareBuffer? =
-            null
-
+        var buffer: HardwareBuffer? = null
         try {
-            buffer =
-                result.javaClass
-                    .getMethod(
-                        "getHardwareBuffer"
-                    )
-                    .invoke(
-                        result
-                    ) as? HardwareBuffer
-
-            val secure =
-                runCatching {
-                    result.javaClass
-                        .getMethod(
-                            "containsSecureLayers"
-                        )
-                        .invoke(
-                            result
-                        ) as Boolean
-                }.getOrDefault(
-                    false
-                )
-
-            val hardware =
-                result.javaClass
-                    .getMethod(
-                        "asBitmap"
-                    )
-                    .invoke(
-                        result
-                    ) as? Bitmap
-                    ?: throw IllegalStateException(
-                        "frame not readable"
-                    )
-
-            val bitmap =
-                hardware.copy(
-                    Bitmap.Config.ARGB_8888,
-                    false,
-                )
-
+            buffer = result.javaClass.getMethod("getHardwareBuffer").invoke(result) as? HardwareBuffer
+            val secure = runCatching {
+                result.javaClass.getMethod("containsSecureLayers").invoke(result) as Boolean
+            }.getOrDefault(false)
+            val hardware = result.javaClass.getMethod("asBitmap").invoke(result) as? Bitmap
+                ?: throw IllegalStateException("frame not readable")
+            val bitmap = hardware.copy(Bitmap.Config.ARGB_8888, false)
             hardware.recycle()
-
             return Bundle().apply {
-                putBoolean(
-                    "ok",
-                    true,
-                )
-
-                putParcelable(
-                    "bitmap",
-                    bitmap,
-                )
-
-                putInt(
-                    "width",
-                    width,
-                )
-
-                putInt(
-                    "height",
-                    height,
-                )
-
-                putBoolean(
-                    "secure",
-                    secure,
-                )
-
-                putLong(
-                    "ms",
-                    SystemClock.elapsedRealtime() -
-                        t0,
-                )
+                putBoolean("ok", true)
+                putParcelable("bitmap", bitmap)
+                putInt("width", w)
+                putInt("height", h)
+                putBoolean("secure", secure)
+                putLong("ms", SystemClock.elapsedRealtime() - t0)
             }
         } finally {
             buffer?.close()
         }
     }
 
-    // ---- Samsung wallpaper angle reader -----------------------------------
+    // ---- Samsung wallpaper angle reader -------------------------------------
 
     /**
      * Tails logcat for the "Fold interactive" wallpaper's command log. Each
@@ -1390,318 +1106,103 @@ class DuoShellService : Binder() {
      * action it was sent, whether it's visible, and `mCurrentAngle=<deg>`.
      * Log format per Duo Fold Live's findings.
      */
-    private class AngleReader(
-        private val action: String,
-        private val callback: IBinder,
-    ) {
-        @Volatile
-        private var process: java.lang.Process? =
-            null
-
-        @Volatile
-        private var stopped =
-            false
-
-        @Volatile
-        private var state =
-            "starting"
-
-        private var lines =
-            0
-
-        private var parsed =
-            0
-
-        private var rejected =
-            0
-
-        private var lastAngle =
-            Float.NaN
-
-        private var lastUptime =
-            0L
+    private class AngleReader(private val action: String, private val callback: IBinder) {
+        @Volatile private var process: java.lang.Process? = null
+        @Volatile private var stopped = false
+        @Volatile private var state = "starting"
+        private var lines = 0
+        private var parsed = 0
+        private var rejected = 0
+        private var lastAngle = Float.NaN
+        private var lastUptime = 0L
 
         fun start() {
-            val thread =
-                Thread(
-                    {
-                        var child:
-                            java.lang.Process? =
-                            null
-
-                        try {
-                            child =
-                                ProcessBuilder(
-                                    "logcat",
-                                    "-v",
-                                    "epoch",
-                                    "-T",
-                                    "1",
-                                    "-s",
-                                    "SprWallpaper|FoldInteractive:V",
-                                    "*:S",
-                                )
-                                    .redirectErrorStream(
-                                        true
-                                    )
-                                    .start()
-
-                            process =
-                                child
-
-                            state =
-                                "listening"
-
-                            BufferedReader(
-                                InputStreamReader(
-                                    child.inputStream
-                                )
-                            ).use { input ->
-                                while (!stopped) {
-                                    val line =
-                                        input.readLine()
-                                            ?: break
-
-                                    lines++
-
-                                    val value =
-                                        parse(
-                                            line
-                                        )
-                                            ?: continue
-
-                                    /*
-                                     * Never treat a buffered line as current.
-                                     */
-                                    val epoch =
-                                        line
-                                            .trim()
-                                            .split(
-                                                Regex("\\s+"),
-                                                2,
-                                            )
-                                            .firstOrNull()
-                                            ?.toDoubleOrNull()
-
-                                    val age =
-                                        if (epoch == null) {
-                                            Long.MAX_VALUE
-                                        } else {
-                                            System.currentTimeMillis() -
-                                                (
-                                                    epoch *
-                                                        1000
-                                                    ).toLong()
-                                        }
-
-                                    if (
-                                        age < -100 ||
-                                        age > 1500
-                                    ) {
-                                        rejected++
-                                        continue
-                                    }
-
-                                    parsed++
-
-                                    lastAngle =
-                                        value
-
-                                    lastUptime =
-                                        SystemClock.uptimeMillis() -
-                                            age.coerceAtLeast(
-                                                0
-                                            )
-
-                                    state =
-                                        "receiving"
-
-                                    val parcel =
-                                        Parcel.obtain()
-
-                                    try {
-                                        parcel.writeInterfaceToken(
-                                            ShellProtocol.CALLBACK_TOKEN
-                                        )
-
-                                        parcel.writeFloat(
-                                            value
-                                        )
-
-                                        parcel.writeLong(
-                                            lastUptime
-                                        )
-
-                                        callback.transact(
-                                            ShellProtocol.CB_ANGLE,
-                                            parcel,
-                                            null,
-                                            IBinder.FLAG_ONEWAY,
-                                        )
-                                    } catch (
-                                        e: Exception
-                                    ) {
-                                        state =
-                                            "callback gone: ${e.message}"
-
-                                        break
-                                    } finally {
-                                        parcel.recycle()
-                                    }
-                                }
+            val thread = Thread({
+                var child: java.lang.Process? = null
+                try {
+                    child = ProcessBuilder(
+                        "logcat", "-v", "epoch", "-T", "1", "-s", "SprWallpaper|FoldInteractive:V", "*:S",
+                    ).redirectErrorStream(true).start()
+                    process = child
+                    state = "listening"
+                    BufferedReader(InputStreamReader(child.inputStream)).use { input ->
+                        while (!stopped) {
+                            val line = input.readLine() ?: break
+                            lines++
+                            val value = parse(line) ?: continue
+                            // Never treat a buffered line as current.
+                            val epoch = line.trim().split(Regex("\\s+"), 2).firstOrNull()?.toDoubleOrNull()
+                            val age = if (epoch == null) Long.MAX_VALUE else System.currentTimeMillis() - (epoch * 1000).toLong()
+                            if (age < -100 || age > 1500) {
+                                rejected++
+                                continue
                             }
-
-                            if (!stopped) {
-                                state =
-                                    "log reader ended"
+                            parsed++
+                            lastAngle = value
+                            lastUptime = SystemClock.uptimeMillis() - age.coerceAtLeast(0)
+                            state = "receiving"
+                            val p = Parcel.obtain()
+                            try {
+                                p.writeInterfaceToken(ShellProtocol.CALLBACK_TOKEN)
+                                p.writeFloat(value)
+                                p.writeLong(lastUptime)
+                                callback.transact(ShellProtocol.CB_ANGLE, p, null, IBinder.FLAG_ONEWAY)
+                            } catch (e: Exception) {
+                                state = "callback gone: ${e.message}"
+                                break
+                            } finally {
+                                p.recycle()
                             }
-                        } catch (
-                            e: Exception
-                        ) {
-                            state =
-                                "reader error: $e"
-                        } finally {
-                            child?.destroy()
                         }
-                    },
-                    "duo-angle-reader",
-                )
-
-            thread.isDaemon =
-                true
-
+                    }
+                    if (!stopped) state = "log reader ended"
+                } catch (e: Exception) {
+                    state = "reader error: $e"
+                } finally {
+                    child?.destroy()
+                }
+            }, "duo-angle-reader")
+            thread.isDaemon = true
             thread.start()
         }
 
         fun stop() {
-            stopped =
-                true
-
+            stopped = true
             process?.destroy()
-
-            state =
-                "stopped"
+            state = "stopped"
         }
 
-        fun status(): Bundle =
-            Bundle().apply {
-                putString(
-                    "state",
-                    state,
-                )
+        fun status(): Bundle = Bundle().apply {
+            putString("state", state)
+            putInt("lines", lines)
+            putInt("parsed", parsed)
+            putInt("rejected", rejected)
+            putFloat("angle", lastAngle)
+            putLong("last", lastUptime)
+        }
 
-                putInt(
-                    "lines",
-                    lines,
-                )
-
-                putInt(
-                    "parsed",
-                    parsed,
-                )
-
-                putInt(
-                    "rejected",
-                    rejected,
-                )
-
-                putFloat(
-                    "angle",
-                    lastAngle,
-                )
-
-                putLong(
-                    "last",
-                    lastUptime,
-                )
-            }
-
-        private fun parse(
-            line: String,
-        ): Float? {
-            if (
-                !line.contains(
-                    "SprWallpaper|FoldInteractive"
-                ) ||
-                !line.contains(
-                    "onCommand:"
-                )
-            ) {
-                return null
-            }
-
-            if (
-                !(
-                    line.contains(
-                        "action=$action,"
-                    ) ||
-                        line.contains(
-                            "action[$action]"
-                        )
-                    )
-            ) {
-                return null
-            }
-
-            if (
-                !(
-                    line.contains(
-                        "isVisible=true"
-                    ) ||
-                        line.contains(
-                            "isVisible[true]"
-                        )
-                    )
-            ) {
-                return null
-            }
-
-            val match =
-                ANGLE.matcher(
-                    line
-                )
-
-            if (!match.find()) {
-                return null
-            }
-
-            val value =
-                match.group(
-                    1
-                )?.toFloatOrNull()
-                    ?: return null
-
-            return if (
-                value in 0f..180f
-            ) {
-                value
-            } else {
-                null
-            }
+        private fun parse(line: String): Float? {
+            if (!line.contains("SprWallpaper|FoldInteractive") || !line.contains("onCommand:")) return null
+            if (!(line.contains("action=$action,") || line.contains("action[$action]"))) return null
+            if (!(line.contains("isVisible=true") || line.contains("isVisible[true]"))) return null
+            val m = ANGLE.matcher(line)
+            if (!m.find()) return null
+            val v = m.group(1)?.toFloatOrNull() ?: return null
+            return if (v in 0f..180f) v else null
         }
 
         private companion object {
-            val ANGLE: Pattern =
-                Pattern.compile(
-                    "mCurrentAngle(?:=|\\[)([0-9]+(?:\\.[0-9]+)?)"
-                )
+            val ANGLE: Pattern = Pattern.compile("mCurrentAngle(?:=|\\[)([0-9]+(?:\\.[0-9]+)?)")
         }
     }
 
     private companion object {
-        /**
-         * Shizuku asks user services to exit with this code.
-         */
-        const val SHIZUKU_DESTROY =
-            16777115
+        /** Shizuku asks user services to exit with this code. */
+        const val SHIZUKU_DESTROY = 16777115
 
         const val PROBE_OUTPUT_LIMIT =
             16_000
 
-        val FAMILIES =
-            listOf(
-                "android.window.ScreenCaptureInternal",
-                "android.window.ScreenCapture",
-            )
+        val FAMILIES = listOf("android.window.ScreenCaptureInternal", "android.window.ScreenCapture")
     }
 }

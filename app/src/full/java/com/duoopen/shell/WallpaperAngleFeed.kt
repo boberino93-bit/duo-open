@@ -33,32 +33,11 @@ class WallpaperAngleFeed(
     private val handler: Handler,
     private val hinge: HingeAngleSource,
 ) {
-    private data class AnchorBinding(
-        val key: String,
-        val displayId: Int,
-        val width: Int,
-        val height: Int,
-        val view: View,
-        val windowManager: WindowManager,
-    )
-
     private var running = false
     private var action = ""
-
-    /**
-     * Keep one tiny wallpaper target on Samsung's current DEFAULT_DISPLAY.
-     * Do not create a second accessibility-overlay anchor on the other Fold7
-     * panel while Samsung is changing display topology.
-     */
-    private val anchors =
-        LinkedHashMap<String, AnchorBinding>()
-
-    private val anchorRetryAfter =
-        HashMap<String, Long>()
-
-    private var lastAnchorSummary =
-        ""
-
+    private var anchor: View? = null
+    private var anchorWm: WindowManager? = null
+    private var anchorKey = ""
     private var lastCallbackUptime = 0L
 
     private var lastDeliveryLagMs = -1L
@@ -66,6 +45,8 @@ class WallpaperAngleFeed(
 
     private var lastAngleSeen = Float.NaN
     private var lastAngleChangeUptime = 0L
+
+    private var endpointBridgeGeneration = 0L
 
     private var duplicateAngles = 0L
 
@@ -87,42 +68,12 @@ class WallpaperAngleFeed(
             if (!running) return
             val pm = context.getSystemService(PowerManager::class.java)
             if (pm?.isInteractive != false) {
-                runCatching {
-                    ensureAnchors()
-                }.onFailure { error ->
-                    status =
-                        "Anchor refresh failed: ${error.message}"
-                }
-
-                for (binding in anchors.values) {
-                    val view =
-                        binding.view
-
-                    if (view.windowToken != null) {
-                        runCatching {
-                            WallpaperManager
-                                .getInstance(
-                                    view.context
-                                )
-                                .sendWallpaperCommand(
-                                    view.windowToken,
-                                    action,
-                                    0,
-                                    0,
-                                    0,
-                                    null,
-                                )
-                        }.onFailure { error ->
-                            com.duoopen.debug.DuoDiagnostics.event(
-                                "angle-source",
-                                "wallpaper command failed " +
-                                    "display=${binding.displayId} " +
-                                    "geometry=${binding.width}x${binding.height} " +
-                                    "error=${error.javaClass.simpleName}:" +
-                                    "${error.message}",
-                            )
-                        }
-                    }
+                runCatching { ensureAnchor() }.onFailure { status = "Anchor failed: ${it.message}" }
+                val a = anchor
+                if (a != null && a.windowToken != null) {
+                    runCatching {
+                        WallpaperManager.getInstance(a.context).sendWallpaperCommand(a.windowToken, action, 0, 0, 0, null)
+                    }.onFailure { status = "Wallpaper command failed: ${it.message}" }
                 }
             }
             handler.postDelayed(
@@ -226,10 +177,6 @@ class WallpaperAngleFeed(
                         ) +
                         " · poll ${pollInterval(now)} ms" +
                         " · dup $duplicateAngles" +
-                        " · anchors ${anchors.size}" +
-                        " · visible ${b.getInt("visibleParsed", 0)}" +
-                        " · hidden ${b.getInt("hiddenAccepted", 0)}/" +
-                        "${b.getInt("hiddenParsed", 0)}" +
                         " · source " +
                         (
                             if (
@@ -326,18 +273,14 @@ class WallpaperAngleFeed(
         handler.removeCallbacks(statusTick)
         ShizukuBridge.stopAngles()
         hinge.clearExternal()
-        removeAnchors()
+        removeAnchor()
         status = "Stopped"
         Log.i(TAG, "wallpaper angle feed stopped")
     }
 
-    /** Re-check the Fold7 wallpaper targets after any display topology change. */
+    /** Re-check the anchor after a panel swap. */
     fun onDisplayChanged() {
-        if (running) {
-            runCatching {
-                ensureAnchors()
-            }
-        }
+        if (running) runCatching { ensureAnchor() }
     }
 
     private fun onAngle(
@@ -348,6 +291,14 @@ class WallpaperAngleFeed(
 
         val now =
             SystemClock.uptimeMillis()
+
+        endpointBridgeGeneration++
+
+        val priorAngle =
+            lastAngleSeen
+
+        val priorChangeUptime =
+            lastAngleChangeUptime
 
         lastCallbackUptime =
             now
@@ -381,6 +332,64 @@ class WallpaperAngleFeed(
         }
 
         hinge.feedExternal(angle)
+
+        scheduleEndpointBridge(
+            angle = angle,
+            priorAngle = priorAngle,
+            priorChangeUptime = priorChangeUptime,
+            now = now,
+        )
+    }
+
+    private fun scheduleEndpointBridge(
+        angle: Float,
+        priorAngle: Float,
+        priorChangeUptime: Long,
+        now: Long,
+    ) {
+        if (!priorAngle.isFinite() || priorChangeUptime == 0L) return
+
+        val dtMs = now - priorChangeUptime
+        if (dtMs <= 0L || dtMs > ENDPOINT_BRIDGE_SAMPLE_MAX_MS) return
+
+        val velocity =
+            (angle - priorAngle) * 1_000f / dtMs.toFloat()
+
+        val target =
+            when {
+                angle <= ENDPOINT_BRIDGE_CLOSED_MAX_DEG &&
+                    velocity <= -ENDPOINT_BRIDGE_MIN_SPEED_DPS -> 0f
+
+                angle >= ENDPOINT_BRIDGE_OPEN_MIN_DEG &&
+                    velocity >= ENDPOINT_BRIDGE_MIN_SPEED_DPS -> 180f
+
+                else -> return
+            }
+
+        val generation = endpointBridgeGeneration
+
+        handler.postDelayed(
+            {
+                if (
+                    !running ||
+                    endpointBridgeGeneration != generation ||
+                    SystemClock.uptimeMillis() - lastCallbackUptime <
+                        ENDPOINT_BRIDGE_DELAY_MS
+                ) {
+                    return@postDelayed
+                }
+
+                com.duoopen.debug.DuoDiagnostics.event(
+                    "angle-source",
+                    "endpoint bridge from=$angle to=$target velocity=$velocity",
+                )
+
+                lastAngleSeen = target
+                lastAngleChangeUptime = SystemClock.uptimeMillis()
+                hinge.feedExternal(target)
+            },
+            ENDPOINT_BRIDGE_DELAY_MS,
+        )
     }
 
     private fun pollInterval(
@@ -400,267 +409,49 @@ class WallpaperAngleFeed(
         }
     }
 
-    private fun displayKey(
-        display: Display,
-    ): String {
-        val mode =
-            runCatching {
-                display.mode
-            }.getOrNull()
-                ?: return "${display.displayId}"
-
-        return (
-            "${display.displayId}:" +
-                "${mode.physicalWidth}x${mode.physicalHeight}"
-            )
-    }
-
-    private fun isFold7Panel(
-        display: Display,
-    ): Boolean {
-        val mode =
-            runCatching {
-                display.mode
-            }.getOrNull()
-                ?: return false
-
-        return (
-            mode.physicalWidth ==
-                COVER_WIDTH &&
-                mode.physicalHeight ==
-                    COVER_HEIGHT
-            ) ||
-            (
-                mode.physicalWidth ==
-                    INNER_WIDTH &&
-                    mode.physicalHeight ==
-                    INNER_HEIGHT
-                )
+    private fun displayKey(d: Display): String {
+        val m = runCatching { d.mode }.getOrNull() ?: return "${d.displayId}"
+        return "${d.displayId}:${m.physicalWidth}x${m.physicalHeight}"
     }
 
     /**
-     * Keep exactly one wallpaper-showing 1×1 window on DEFAULT_DISPLAY.
-     * This intentionally avoids touching the secondary Fold7 panel during
-     * Samsung's topology handoff.
+     * The wallpaper only answers commands from its current target window, so
+     * the anchor shows wallpaper and lives on the default display; it is
+     * re-created when that display swaps panels.
      */
-    private fun ensureAnchors() {
-        val displayManager =
-            context.getSystemService(
-                DisplayManager::class.java
-            )
-
-        // Stability pass: anchor only the current DEFAULT_DISPLAY.
-        //
-        // 1.3.18 tried to keep wallpaper anchors on both physical Fold7
-        // panels. Field diagnostics showed that the secondary anchor was
-        // repeatedly removed/re-added while Samsung was committing its
-        // display topology, which correlated with cover-panel black flashes.
-        // Keep Samsung's normal panel routing in control and use the same
-        // single-route strategy as the stable 1.3.17 behavior.
-        val targets =
-            listOfNotNull(
-                displayManager.getDisplay(
-                    Display.DEFAULT_DISPLAY
-                )
-            )
-
-        val wantedKeys =
-            targets.mapTo(
-                LinkedHashSet<String>()
-            ) { display ->
-                displayKey(
-                    display
-                )
-            }
-
-        val iterator =
-            anchors.entries.iterator()
-
-        while (iterator.hasNext()) {
-            val entry =
-                iterator.next()
-
-            if (entry.key !in wantedKeys) {
-                val binding =
-                    entry.value
-
-                runCatching {
-                    binding.windowManager
-                        .removeViewImmediate(
-                            binding.view
-                        )
-                }
-
-                iterator.remove()
-
-                com.duoopen.debug.DuoDiagnostics.event(
-                    "angle-source",
-                    "anchor removed display=${binding.displayId} " +
-                        "geometry=${binding.width}x${binding.height}",
-                )
-            }
+    private fun ensureAnchor() {
+        val dm = context.getSystemService(DisplayManager::class.java)
+        val display = dm.getDisplay(Display.DEFAULT_DISPLAY) ?: return
+        val key = displayKey(display)
+        if (anchor != null && key == anchorKey) return
+        removeAnchor()
+        val c = context.createDisplayContext(display)
+            .createWindowContext(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, null)
+        val wm = c.getSystemService(WindowManager::class.java)
+        val v = View(c)
+        val params = WindowManager.LayoutParams(
+            1, 1,
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER,
+            PixelFormat.TRANSLUCENT,
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            title = "DuoOpenAngleAnchor"
         }
-
-        val now =
-            SystemClock.uptimeMillis()
-
-        for (display in targets) {
-            val key =
-                displayKey(
-                    display
-                )
-
-            if (anchors.containsKey(key)) {
-                continue
-            }
-
-            val retryAfter =
-                anchorRetryAfter[key] ?:
-                    0L
-
-            if (now < retryAfter) {
-                continue
-            }
-
-            val mode =
-                runCatching {
-                    display.mode
-                }.getOrNull()
-                    ?: continue
-
-            runCatching {
-                val displayContext =
-                    context
-                        .createDisplayContext(
-                            display
-                        )
-                        .createWindowContext(
-                            WindowManager.LayoutParams
-                                .TYPE_ACCESSIBILITY_OVERLAY,
-                            null,
-                        )
-
-                val windowManager =
-                    displayContext.getSystemService(
-                        WindowManager::class.java
-                    )
-
-                val view =
-                    View(
-                        displayContext
-                    )
-
-                val params =
-                    WindowManager.LayoutParams(
-                        1,
-                        1,
-                        WindowManager.LayoutParams
-                            .TYPE_ACCESSIBILITY_OVERLAY,
-                        WindowManager.LayoutParams
-                            .FLAG_NOT_FOCUSABLE or
-                            WindowManager.LayoutParams
-                                .FLAG_NOT_TOUCHABLE or
-                            WindowManager.LayoutParams
-                                .FLAG_SHOW_WALLPAPER,
-                        PixelFormat.TRANSLUCENT,
-                    ).apply {
-                        gravity =
-                            Gravity.TOP or
-                                Gravity.START
-
-                        title =
-                            "DuoOpenAngleAnchor-" +
-                                "${mode.physicalWidth}x" +
-                                "${mode.physicalHeight}"
-                    }
-
-                windowManager.addView(
-                    view,
-                    params,
-                )
-
-                AnchorBinding(
-                    key =
-                        key,
-                    displayId =
-                        display.displayId,
-                    width =
-                        mode.physicalWidth,
-                    height =
-                        mode.physicalHeight,
-                    view =
-                        view,
-                    windowManager =
-                        windowManager,
-                )
-            }.onSuccess { binding ->
-                anchors[key] =
-                    binding
-
-                anchorRetryAfter.remove(
-                    key
-                )
-
-                com.duoopen.debug.DuoDiagnostics.event(
-                    "angle-source",
-                    "anchor attached display=${binding.displayId} " +
-                        "geometry=${binding.width}x${binding.height} " +
-                        "default=" +
-                        (
-                            binding.displayId ==
-                                Display.DEFAULT_DISPLAY
-                            ),
-                )
-            }.onFailure { error ->
-                anchorRetryAfter[key] =
-                    now +
-                        ANCHOR_RETRY_MS
-
-                com.duoopen.debug.DuoDiagnostics.event(
-                    "angle-source",
-                    "anchor unavailable display=${display.displayId} " +
-                        "geometry=${mode.physicalWidth}x${mode.physicalHeight} " +
-                        "error=${error.javaClass.simpleName}:" +
-                        "${error.message}",
-                )
-            }
-        }
-
-        val summary =
-            anchors.values
-                .joinToString(
-                    separator =
-                        " | "
-                ) { binding ->
-                    "${binding.displayId}:" +
-                        "${binding.width}x${binding.height}"
-                }
-
-        if (summary != lastAnchorSummary) {
-            com.duoopen.debug.DuoDiagnostics.event(
-                "angle-source",
-                "anchors=${summary.ifEmpty { "none" }}",
-            )
-
-            lastAnchorSummary =
-                summary
-        }
+        wm.addView(v, params)
+        anchor = v
+        anchorWm = wm
+        anchorKey = key
     }
 
-    private fun removeAnchors() {
-        for (binding in anchors.values) {
-            runCatching {
-                binding.windowManager
-                    .removeViewImmediate(
-                        binding.view
-                    )
-            }
-        }
-
-        anchors.clear()
-        anchorRetryAfter.clear()
-        lastAnchorSummary =
-            ""
+    private fun removeAnchor() {
+        val v = anchor ?: return
+        runCatching { anchorWm?.removeViewImmediate(v) }
+        anchor = null
+        anchorWm = null
+        anchorKey = ""
     }
 
     companion object {
@@ -676,20 +467,11 @@ class WallpaperAngleFeed(
 
         const val ANGLE_CHANGE_EPS = 0.10f
 
-        private const val ANCHOR_RETRY_MS =
-            1_000L
-
-        private const val COVER_WIDTH =
-            1080
-
-        private const val COVER_HEIGHT =
-            2520
-
-        private const val INNER_WIDTH =
-            1968
-
-        private const val INNER_HEIGHT =
-            2184
+        private const val ENDPOINT_BRIDGE_DELAY_MS = 140L
+        private const val ENDPOINT_BRIDGE_SAMPLE_MAX_MS = 300L
+        private const val ENDPOINT_BRIDGE_CLOSED_MAX_DEG = 8.0f
+        private const val ENDPOINT_BRIDGE_OPEN_MIN_DEG = 172.0f
+        private const val ENDPOINT_BRIDGE_MIN_SPEED_DPS = 18.0f
 
         private const val STALE_MS = 2_500L
         val FOLD_WALLPAPER = ComponentName(

@@ -22,8 +22,8 @@ android {
         // AGSL RuntimeShader needs API 33 (OnePlus Open ships Android 13+).
         minSdk = 33
         targetSdk = 35
-        versionCode = 23
-        versionName = "1.3.19-zfold7-stability"
+        versionCode = 27
+        versionName = "1.3.23-zfold7-explicit-state-machine"
     }
 
     // full: system-wide fold via the accessibility service (+ wallpaper).
@@ -77,6 +77,7 @@ kotlin {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
     implementation(platform("androidx.compose:compose-bom:2025.06.01"))
     implementation("androidx.core:core-ktx:1.16.0")
     implementation("androidx.activity:activity-compose:1.10.1")
