@@ -1,0 +1,1 @@
+Apply the evidence-driven Fold7 1.3.28 cover-hold fix, run full tests/build, upload the tested APK, and commit only production files.

@@ -1,0 +1,147 @@
+name: Apply Fold7 1.3.28 Cover Hold Fix
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/apply-fold7-1.3.28-cover-hold-fix.yml"
+      - "tools/apply_fold7_1_3_28_cover_hold_fix.py"
+      - "GEN2_IMPORT_SUPPORT/APPLY_FOLD7_1_3_28_COVER_HOLD_FIX_NOW.txt"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-fold7-1-3-28-cover-hold-fix
+  cancel-in-progress: false
+
+jobs:
+  apply-test-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify 1.3.27 production base
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'versionCode = 32' app/build.gradle.kts
+          grep -F 'versionName = "1.3.27-zfold7-cover-route-fix"' app/build.gradle.kts
+          grep -F 'activateOwnedCoverRouteAfterPhysicalWake(' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'COVER_PANEL_LEASE_V2 = 15' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+          grep -F 'mirrorLeaseCounter.incrementAndGet()' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          ! grep -Fq 'ensureSecondaryDisplayHeldV2(' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+
+      - name: Apply evidence-driven cover hold fix
+        run: python3 tools/apply_fold7_1_3_28_cover_hold_fix.py
+
+      - name: Validate ownership and route-hold invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+
+          BRIDGE=app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+          SHELL=app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          COORD=app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          GRADLE=app/build.gradle.kts
+
+          grep -F 'versionCode = 33' "$GRADLE"
+          grep -F 'versionName = "1.3.28-zfold7-cover-hold-fix"' "$GRADLE"
+
+          grep -F 'fun ensureSecondaryDisplayHeldV2(' "$BRIDGE"
+          grep -F 'parcel.writeInt(5)' "$BRIDGE"
+
+          grep -F '5 -> ensureHeldCoverRouteV2(ownerGeneration, reason)' "$SHELL"
+          grep -F 'private fun ensureHeldCoverRouteV2(' "$SHELL"
+          grep -F 'Fold7CoverPanelLease.State.HELD' "$SHELL"
+          grep -F 'lease-owned Fold7 cover hold reassert' "$SHELL"
+
+          grep -F 'private fun ensureCoverRouteHeld(' "$COORD"
+          grep -F 'cover-route-reassert begin' "$COORD"
+          grep -F 'cover-route-reassert complete' "$COORD"
+          grep -F 'COVER_ROUTE_REASSERT_SETTLE_MS = 32L' "$COORD"
+
+          grep -F 'p.writeLong(parsedLine.pollSequence)' "$SHELL"
+          grep -F 'candidate-failed-preserved-current' "$SHELL"
+          grep -F 'MIRROR_DISPLAY_V2' "$SHELL"
+          ! grep -Fq 'ShizukuBridge.stopDisplayMirror()' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          ! grep -Fq 'runSecondaryDisplayExperiment(' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Build and test 1.3.28
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Prepare tested APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p cover-hold-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" cover-hold-build/DuoOpen-ZFold7-1.3.28-cover-hold-fix-debug.apk
+          sha256sum cover-hold-build/DuoOpen-ZFold7-1.3.28-cover-hold-fix-debug.apk > cover-hold-build/APK-SHA256.txt
+          {
+            echo "version=1.3.28-zfold7-cover-hold-fix"
+            echo "versionCode=33"
+            echo "baseHead=$(git rev-parse HEAD)"
+            echo "evidence=1.3.27 trace showed logical cover alive at 168deg and gone by 133deg while lease remained HELD"
+            echo "fix=owner-scoped lease reassert on Samsung topology loss during hidden/visual states"
+            echo "tests=testFullDebugUnitTest"
+            echo "build=assembleFullDebug"
+          } > cover-hold-build/BUILD-INFO.txt
+
+      - name: Upload tested APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-1.3.28-cover-hold-fix
+          path: |
+            cover-hold-build/DuoOpen-ZFold7-1.3.28-cover-hold-fix-debug.apk
+            cover-hold-build/APK-SHA256.txt
+            cover-hold-build/BUILD-INFO.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Commit and push tested production fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add \
+            app/build.gradle.kts \
+            app/src/full/java/com/duoopen/shell/ShizukuBridge.kt \
+            app/src/full/java/com/duoopen/shell/DuoShellService.kt \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+
+          if ! git diff --cached --name-only | grep -q .; then
+            echo 'ERROR: no production changes staged.'
+            exit 1
+          fi
+
+          if git diff --cached --name-only | grep -q '^\.github/workflows/'; then
+            echo 'ERROR: workflow file unexpectedly staged.'
+            exit 1
+          fi
+
+          git diff --cached --check
+          git commit -m "Fold7 1.3.28: keep lease-owned cover route alive"
+          git push origin HEAD:main
