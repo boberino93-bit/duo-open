@@ -1,17 +1,19 @@
-# Duo Open Gen2 production workflow V4
+# Duo Open Gen2 production workflow V5
 
-V3 eliminated the previous visibility errors, but its constructor reorder caused
-one remaining compatibility error in `DuoWallpaperService`:
+V4 proved the Gen2 runtime is buildable:
 
-`No value passed for parameter 'onAngle'`
+- structural verification passed;
+- `testFullDebugUnitTest` passed;
+- `assembleFullDebug` passed;
+- Gradle reported `BUILD SUCCESSFUL`.
 
-V4 takes the safer approach:
+The only V4 failure happened after the successful build. GitHub rejected the
+push because the installer had modified `.github/workflows/build-direct-fold7.yml`
+and the GitHub Actions token does not have the separate `workflows` permission.
 
-- keep HingeAngleSource as `(context, onAngle, callbackHandler = null)`;
-- keep existing positional callers such as DuoWallpaperService working;
-- convert DuoApp's trailing-lambda construction to explicit named `onAngle`;
-- retain the successful V3 visibility fixes;
-- retain the installer shell-capture anchor fix.
+V5 keeps the exact runtime code and build gates that already passed, but stages
+and commits **only `app/**`**. The refreshed direct-build workflow remains
+runner-local and is not included in the pushed commit.
 
-The workflow remains fail-closed. It commits/pushes only after structural checks,
-unit tests, and APK assembly all pass.
+This preserves the validated Gen2 app runtime while avoiding an unrelated
+GitHub workflow-permission restriction.
