@@ -1,4 +1,4 @@
-name: Build Materialized Fold7 1.3.22 Cover Recovery
+name: Build Materialized Fold7 1.3.23 Explicit State Machine
 
 on:
   workflow_dispatch:
@@ -7,12 +7,16 @@ on:
       - main
     paths:
       - ".github/workflows/build-materialized-fold7.yml"
+      - "app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt"
+      - "app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt"
+      - "app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt"
+      - "tools/apply_fold7_1323.py"
 
 permissions:
   contents: read
 
 concurrency:
-  group: build-materialized-fold7-1322-${{ github.ref }}
+  group: build-materialized-fold7-1323-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -26,54 +30,51 @@ jobs:
           ref: generated/fold7-1.3.16-baseline
           fetch-depth: 0
 
-      - name: Fetch pinned validated transforms and inspect main corruption
+      - name: Fetch pinned validated transforms and 1.3.23 source
         shell: bash
         run: |
           set -euo pipefail
 
-          git fetch origin \
-            main:refs/remotes/origin/main
+          git fetch origin main:refs/remotes/origin/main
 
-          # Pin the exact successful 1.3.21 source/workflow (run #11).
           git show \
             e754d77dec07d61a4d01cf280e69c6ced3b48820:app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt \
             > app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
 
           git show \
-            e754d77dec07d61a4d01cf280e69c6ced3b48820:.github/workflows/build-materialized-fold7.yml \
-            > /tmp/build-materialized-fold7-1.3.21.yml
-
-          git show \
             aea6952c729cd2ed498f7728308d30a3ff4bd82f:.github/workflows/build-materialized-fold7.yml \
             > /tmp/build-materialized-fold7-1.3.20.yml
 
-          # Main is currently corrupt here: DuoShellService.kt is literally the
-          # same Gradle text as app/build.gradle.kts. Never import that file.
           git show \
-            refs/remotes/origin/main:app/src/full/java/com/duoopen/shell/DuoShellService.kt \
-            > /tmp/main-DuoShellService.kt
+            e754d77dec07d61a4d01cf280e69c6ced3b48820:.github/workflows/build-materialized-fold7.yml \
+            > /tmp/build-materialized-fold7-1.3.21.yml
+
+          mkdir -p \
+            app/src/full/java/com/duoopen/overlay \
+            app/src/test/java/com/duoopen/overlay \
+            tools
 
           git show \
-            refs/remotes/origin/main:app/build.gradle.kts \
-            > /tmp/main-app-build.gradle.kts
+            refs/remotes/origin/main:app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt \
+            > app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
 
-          if cmp -s /tmp/main-DuoShellService.kt /tmp/main-app-build.gradle.kts; then
-            echo "::warning::main DuoShellService.kt matches app/build.gradle.kts byte-for-byte; ignoring corrupted main shell source."
-          else
-            echo "::warning::main DuoShellService.kt no longer exactly matches app/build.gradle.kts; build still uses the clean pinned baseline."
-          fi
+          git show \
+            refs/remotes/origin/main:app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt \
+            > app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
 
-          grep -F 'package com.duoopen.shell' \
-            app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          git show \
+            refs/remotes/origin/main:app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt \
+            > app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt
 
-          if grep -Fq 'plugins {' \
-            app/src/full/java/com/duoopen/shell/DuoShellService.kt; then
-            echo "ERROR: baseline DuoShellService.kt contains Gradle configuration."
-            exit 1
-          fi
+          git show \
+            refs/remotes/origin/main:tools/apply_fold7_1323.py \
+            > tools/apply_fold7_1323.py
+
+          python3 -m py_compile tools/apply_fold7_1323.py
 
           echo "materialized_base=$(git rev-parse HEAD)"
           echo "pinned_1321=e754d77dec07d61a4d01cf280e69c6ced3b48820"
+          echo "integration_main=$(git rev-parse refs/remotes/origin/main)"
 
       - name: Reproduce validated 1.3.20 source
         shell: bash
@@ -144,932 +145,108 @@ jobs:
 
           grep -F 'versionCode = 25' app/build.gradle.kts
           grep -F 'versionName = "1.3.21-zfold7-state-machine"' app/build.gradle.kts
-          grep -F 'package com.duoopen.shell' app/src/full/java/com/duoopen/shell/DuoShellService.kt
 
-      - name: Apply 1.3.22 cover recovery and inner-open latch
+      - name: Apply source-controlled 1.3.23 architecture
         shell: bash
         run: |
           set -euo pipefail
 
-          python3 - <<'PY22'
-          from pathlib import Path
-          import re
-
-          def read(path: str) -> str:
-              return Path(path).read_text(encoding="utf-8")
-
-          def write(path: str, value: str) -> None:
-              Path(path).write_text(value, encoding="utf-8")
-
-          def replace_once(value: str, old: str, new: str, label: str) -> str:
-              count = value.count(old)
-              if count != 1:
-                  raise SystemExit(
-                      f"{label}: expected exactly one match, found {count}"
-                  )
-              return value.replace(old, new, 1)
-
-          # Build identity.
-          gradle_path = "app/build.gradle.kts"
-          gradle = read(gradle_path)
-          gradle = replace_once(
-              gradle,
-              "versionCode = 25",
-              "versionCode = 26",
-              "versionCode",
-          )
-          gradle = replace_once(
-              gradle,
-              'versionName = "1.3.21-zfold7-state-machine"',
-              'versionName = "1.3.22-zfold7-cover-recovery"',
-              "versionName",
-          )
-          write(gradle_path, gradle)
-
-          # FoldOverlayService: inactive-cover prewarm.
-          service_path = (
-              "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
-          )
-          service = read(service_path)
-
-          handle_start = service.index(
-              "    private fun handleContinuityHinge("
-          )
-          handle_end = service.index(
-              "    fun runSecondaryDisplayExperiment(",
-              handle_start,
-          )
-
-          new_handle = '''    private fun handleContinuityHinge(
-                  angle: Float,
-              ) {
-                  val previous =
-                      lastContinuityAngle
-          
-                  lastContinuityAngle =
-                      angle
-          
-                  if (!continuityArmed) {
-                      return
-                  }
-          
-                  if (openReferenceAngle.isNaN()) {
-                      openReferenceAngle =
-                          angle
-          
-                      DuoDiagnostics.event(
-                          "cover-power",
-                          "baseline=$angle mode=armed",
-                      )
-          
-                      return
-                  }
-          
-                  val closingSample =
-                      !previous.isNaN() &&
-                          previous - angle >=
-                              COVER_SAMPLE_EPSILON_DEG
-          
-                  val openingSample =
-                      !previous.isNaN() &&
-                          angle - previous >=
-                              COVER_SAMPLE_EPSILON_DEG
-          
-                  if (
-                      openingSample &&
-                      previous <=
-                          COVER_CLOSED_READY_MAX_DEG
-                  ) {
-                      DuoDiagnostics.event(
-                          "cover-power",
-                          "closed-open-start angle=$angle previous=$previous serviceHot=true",
-                      )
-                  }
-          
-                  if (!coverPowerHold) {
-                      if (angle > openReferenceAngle) {
-                          openReferenceAngle =
-                              angle
-                      }
-          
-                      /*
-                       * CLOSED -> OPEN: the native cover is already the active
-                       * screen. Keep the runtime, Shizuku daemon and angle feed
-                       * hot while shut; the local cover effect reacts to the
-                       * first real opening sample without a shell wake command.
-                       *
-                       * OPEN -> CLOSED: do not expose anything on the front in
-                       * the upper half. Pre-warm the secondary cover around 150°
-                       * so it is ready, but keep the live mirror hidden until
-                       * the hinge reaches the quarter-fold point (~135°).
-                       */
-                      if (
-                          closingSample &&
-                          angle <= COVER_CLOSE_PREWARM_DEG &&
-                          angle > COVER_NATIVE_HANDOFF_MAX_DEG
-                      ) {
-                          /*
-                           * The cover is still inactive here. 1.3.21 required it
-                           * to already be active before requesting privileged
-                           * enable, making prewarm impossible. Mark the hold and
-                           * let the shell resolve the fresh inactive 1080x2520
-                           * route for this one bounded enable attempt.
-                           */
-                          coverPowerHold =
-                              true
-          
-                          mirrorRequested =
-                              false
-          
-                          _secondaryDisplayStatus.value =
-                              "Closing: requesting validated cover prewarm; visual starts after one-quarter fold travel."
-          
-                          DuoDiagnostics.event(
-                              "cover-power",
-                              "closing-prewarm-request angle=$angle " +
-                                  "visualStart=$COVER_CLOSE_VISUAL_START_DEG",
-                          )
-          
-                          runSecondaryDisplayExperiment(
-                              enable = true,
-                              reason = "closing-prewarm",
-                          )
-                      }
-          
-                      return
-                  }
-          
-                  if (
-                      closingSample &&
-                      !mirrorRequested &&
-                      angle <= COVER_CLOSE_VISUAL_START_DEG
-                  ) {
-                      mirrorRequested =
-                          true
-          
-                      DuoDiagnostics.event(
-                          "cover-power",
-                          "closing-visual-start angle=$angle",
-                      )
-          
-                      syncMirrorHost(
-                          "closing-quarter-visual"
-                      )
-                  }
-          
-                  if (
-                      openingSample &&
-                      mirrorRequested &&
-                      angle >= COVER_CLOSE_VISUAL_END_DEG
-                  ) {
-                      mirrorRequested =
-                          false
-          
-                      mirrorHost?.detach()
-                      mirrorHost =
-                          null
-          
-                      mirrorHostCreatedUptime =
-                          0L
-          
-                      scope.launch(
-                          Dispatchers.IO
-                      ) {
-                          ShizukuBridge.stopDisplayMirror()
-                      }
-          
-                      DuoDiagnostics.event(
-                          "cover-power",
-                          "opening-cover-visual-hidden angle=$angle",
-                      )
-                  }
-          
-                  if (
-                      openingSample &&
-                      angle >= COVER_RELEASE_OPEN_MIN_DEG
-                  ) {
-                      handler.removeCallbacks(
-                          openReleaseRunnable
-                      )
-          
-                      handler.postDelayed(
-                          openReleaseRunnable,
-                          COVER_RELEASE_DWELL_MS,
-                      )
-                  } else if (
-                      angle < COVER_RELEASE_CANCEL_DEG
-                  ) {
-                      handler.removeCallbacks(
-                          openReleaseRunnable
-                      )
-                  }
-          
-                  val cover =
-                      displayManager.displays
-                          .firstOrNull { candidate ->
-                              val mode = candidate.mode
-                              mode.physicalWidth == 1080 &&
-                                  mode.physicalHeight == 2520
-                          }
-          
-                  val inner =
-                      displayManager.displays
-                          .firstOrNull { candidate ->
-                              val mode = candidate.mode
-                              mode.physicalWidth == 1968 &&
-                                  mode.physicalHeight == 2184
-                          }
-          
-                  val nativeCover =
-                      cover?.displayId == Display.DEFAULT_DISPLAY &&
-                          cover.state != Display.STATE_OFF &&
-                          cover.state != Display.STATE_UNKNOWN &&
-                          (
-                              inner == null ||
-                                  inner.state == Display.STATE_OFF ||
-                                  inner.state == Display.STATE_UNKNOWN
-                              )
-          
-                  if (
-                      nativeCover &&
-                      angle <= COVER_NATIVE_HANDOFF_MAX_DEG
-                  ) {
-                      handler.removeCallbacks(
-                          openReleaseRunnable
-                      )
-          
-                      releaseCoverPowerHold(
-                          "native-cover-handoff"
-                      )
-                  }
-              }
-          
-          '''
-
-          service = (
-              service[:handle_start]
-              + new_handle
-              + service[handle_end:]
-          )
-
-          service = replace_once(
-              service,
-              '''        val targetHint =
-                      resolveCurrentSecondaryCoverLogicalId()
-
-                  if (
-                      enable &&
-                      targetHint < 0
-                  ) {
-                      _secondaryDisplayStatus.value =
-                          "Fold7 cover route is changing; unsafe enable skipped."
-
-                      DuoDiagnostics.event(
-                          "dual-shell",
-                          "skip enable reason=$reason; no stable secondary cover route",
-                      )
-
-                      return
-                  }
-          ''',
-              '''        val targetHint =
-                      if (enable) {
-                          -1
-                      } else {
-                          resolveCurrentSecondaryCoverLogicalId()
-                      }
-          ''',
-              "enable uses fresh inactive route",
-          )
-
-          service = replace_once(
-              service,
-              '''            if (
-                          enable &&
-                          target >= 0 &&
-                          target ==
-                              resolveCurrentSecondaryCoverLogicalId()
-                      ) {
-                          lastCoverLogicalId =
-                              target
-                      }
-          ''',
-              '''            if (enable) {
-                          DuoDiagnostics.event(
-                              "cover-power",
-                              "prewarm-result target=$target ok=$ok",
-                          )
-
-                          if (!ok) {
-                              handler.post {
-                                  coverPowerHold =
-                                      false
-
-                                  mirrorRequested =
-                                      false
-
-                                  mirrorHost?.detach()
-                                  mirrorHost =
-                                      null
-
-                                  mirrorHostCreatedUptime =
-                                      0L
-                              }
-                          }
-                      }
-          ''',
-              "never retain remapped logical target",
-          )
-
-          write(service_path, service)
-
-          # DuoShellService: replace only the Fold7 route/power section.
-          # Main's corrupted file is never read here.
-          shell_path = (
-              "app/src/full/java/com/duoopen/shell/DuoShellService.kt"
-          )
-          shell = read(shell_path)
-
-          if not shell.lstrip().startswith("package com.duoopen.shell"):
-              raise SystemExit("DuoShellService.kt is not Kotlin shell source")
-          if "plugins {" in shell:
-              raise SystemExit("DuoShellService.kt contains Gradle configuration")
-
-          secondary_start = shell.index(
-              "    // ---- Fold7 physical-panel-safe continuity"
-          )
-          secondary_end = shell.index(
-              "    // ---- live logical-display mirror",
-              secondary_start,
-          )
-
-          safe_secondary = r'''    // ---- Fold7 physical-panel-safe continuity ----------------------------
-
-              private fun displayInfoForLogicalId(
-                  logicalDisplayId: Int,
-              ): Any? {
-                  if (logicalDisplayId < 0) return null
-
-                  return runCatching {
-                      Class.forName(
-                          "android.hardware.display.IDisplayManager"
-                      ).getMethod(
-                          "getDisplayInfo",
-                          Integer.TYPE,
-                      ).invoke(
-                          displayManagerService(),
-                          logicalDisplayId,
-                      )
-                  }.getOrNull()
-              }
-
-              private fun currentCoverLogicalId(
-                  targetHint: Int,
-              ): Int {
-                  if (
-                      targetHint < 0 ||
-                      targetHint == Display.DEFAULT_DISPLAY
-                  ) {
-                      return -1
-                  }
-
-                  val info =
-                      displayInfoForLogicalId(targetHint)
-                          ?: return -1
-
-                  val width =
-                      runCatching {
-                          info.javaClass
-                              .getField("logicalWidth")
-                              .getInt(info)
-                      }.getOrDefault(-1)
-
-                  val height =
-                      runCatching {
-                          info.javaClass
-                              .getField("logicalHeight")
-                              .getInt(info)
-                      }.getOrDefault(-1)
-
-                  return if (width == 1080 && height == 2520) {
-                      targetHint
-                  } else {
-                      -1
-                  }
-              }
-
-              /**
-               * Resolve the cover while it is still inactive. This is fresh on
-               * every enable attempt. No logical display id is retained.
-               */
-              private fun resolveInactiveCoverLogicalId(
-                  targetHint: Int,
-              ): Int {
-                  val hinted =
-                      currentCoverLogicalId(targetHint)
-
-                  if (hinted >= 0) return hinted
-
-                  val windowDisplays =
-                      runProbe(
-                          "dumpsys window displays | " +
-                              "grep -E '^[[:space:]]*Display: mDisplayId=|" +
-                              "^[[:space:]]*init='"
-                      )
-
-                  val candidates =
-                      Regex(
-                          "Display: mDisplayId=(\\d+).*?init=(\\d+)x(\\d+)",
-                          setOf(RegexOption.DOT_MATCHES_ALL),
-                      ).findAll(windowDisplays)
-                          .mapNotNull { match ->
-                              val id =
-                                  match.groupValues[1]
-                                      .toIntOrNull()
-                                      ?: return@mapNotNull null
-
-                              val width =
-                                  match.groupValues[2]
-                                      .toIntOrNull()
-                                      ?: return@mapNotNull null
-
-                              val height =
-                                  match.groupValues[3]
-                                      .toIntOrNull()
-                                      ?: return@mapNotNull null
-
-                              if (
-                                  id == Display.DEFAULT_DISPLAY ||
-                                  width != 1080 ||
-                                  height != 2520
-                              ) {
-                                  return@mapNotNull null
-                              }
-
-                              id
-                          }
-                          .toList()
-
-                  val binderValidated =
-                      candidates.firstOrNull { id ->
-                          currentCoverLogicalId(id) == id
-                      }
-
-                  if (binderValidated != null) {
-                      return binderValidated
-                  }
-
-                  // Samsung can hide an inactive route from getDisplayInfo while
-                  // still advertising it in fresh window topology.
-                  return candidates.firstOrNull()
-                      ?: -1
-              }
-
-              private fun physicalDisplayIdFromLogical(
-                  logicalDisplayId: Int,
-              ): Long {
-                  val info =
-                      displayInfoForLogicalId(logicalDisplayId)
-                          ?: return -1L
-
-                  val width =
-                      runCatching {
-                          info.javaClass
-                              .getField("logicalWidth")
-                              .getInt(info)
-                      }.getOrDefault(-1)
-
-                  val height =
-                      runCatching {
-                          info.javaClass
-                              .getField("logicalHeight")
-                              .getInt(info)
-                      }.getOrDefault(-1)
-
-                  if (width != 1080 || height != 2520) return -1L
-
-                  val address =
-                      runCatching {
-                          info.javaClass
-                              .getField("address")
-                              .get(info)
-                      }.getOrNull()
-                          ?: return -1L
-
-                  return runCatching {
-                      address.javaClass
-                          .getMethod("getPhysicalDisplayId")
-                          .invoke(address) as Long
-                  }.getOrElse { -1L }
-              }
-
-              private fun resolveFold7CoverPhysicalDisplayId(
-                  targetHint: Int = -1,
-              ): Long {
-                  if (cachedCoverPhysicalDisplayId >= 0L) {
-                      return cachedCoverPhysicalDisplayId
-                  }
-
-                  val fromAddress =
-                      physicalDisplayIdFromLogical(targetHint)
-
-                  if (fromAddress >= 0L) {
-                      cachedCoverPhysicalDisplayId = fromAddress
-                      return fromAddress
-                  }
-
-                  val displayDump =
-                      runProbe(
-                          "dumpsys display | " +
-                              "grep -E -i 'DisplayDeviceInfo|mPhysicalDisplayId=' | " +
-                              "head -n 320"
-                      )
-
-                  val forward =
-                      Regex(
-                          """DisplayDeviceInfo\\{[^\\n]*uniqueId=\"local:(\\d+)\"[^\\n]*1080 x 2520"""
-                      ).find(displayDump)
-                          ?.groupValues?.getOrNull(1)?.toLongOrNull()
-
-                  val reverse =
-                      Regex(
-                          """DisplayDeviceInfo\\{[^\\n]*1080 x 2520[^\\n]*uniqueId=\"local:(\\d+)\""""
-                      ).find(displayDump)
-                          ?.groupValues?.getOrNull(1)?.toLongOrNull()
-
-                  val physicalId = forward ?: reverse ?: -1L
-
-                  if (physicalId >= 0L) {
-                      cachedCoverPhysicalDisplayId = physicalId
-                  }
-
-                  return physicalId
-              }
-
-              private fun resolveCoverDisplay(): Bundle {
-                  val targetId =
-                      resolveInactiveCoverLogicalId(-1)
-
-                  val physicalId =
-                      resolveFold7CoverPhysicalDisplayId(targetId)
-
-                  return Bundle().apply {
-                      putBoolean("ok", targetId >= 0 || physicalId >= 0L)
-                      putLong("physicalDisplayId", physicalId)
-                      putInt("targetDisplayId", targetId)
-                      putInt("targetWidth", 1080)
-                      putInt("targetHeight", 2520)
-                      if (targetId < 0 && physicalId < 0L) {
-                          putString("error", "The Fold7 cover route was not found.")
-                      }
-                  }
-              }
-
-              private fun setCoverPhysicalPowerNormal(): Pair<Boolean, String?> {
-                  val physicalId = cachedCoverPhysicalDisplayId
-
-                  if (physicalId < 0L) {
-                      return false to "cover physical display id unavailable"
-                  }
-
-                  return runCatching {
-                      org.lsposed.hiddenapibypass.HiddenApiBypass
-                          .addHiddenApiExemptions(
-                              "Landroid/view/SurfaceControl;"
-                          )
-
-                      val token =
-                          SurfaceControl::class.java
-                              .getDeclaredMethod(
-                                  "getPhysicalDisplayToken",
-                                  java.lang.Long.TYPE,
-                              )
-                              .invoke(null, physicalId) as? IBinder
-                              ?: throw IllegalStateException(
-                                  "no SurfaceControl token for physical display $physicalId"
-                              )
-
-                      SurfaceControl::class.java
-                          .getDeclaredMethod(
-                              "setDisplayPowerMode",
-                              IBinder::class.java,
-                              Integer.TYPE,
-                          )
-                          .invoke(null, token, 2)
-
-                      true to null
-                  }.getOrElse { error ->
-                      false to "${error.javaClass.simpleName}: ${error.message}"
-                  }
-              }
-
-              private fun secondaryDisplayCommand(
-                  enable: Boolean,
-                  targetHint: Int,
-              ): Bundle {
-                  val t0 = SystemClock.elapsedRealtime()
-
-                  if (!enable) {
-                      val safeTarget = currentCoverLogicalId(targetHint)
-
-                      if (safeTarget < 0) {
-                          return Bundle().apply {
-                              putBoolean("ok", true)
-                              putBoolean("enable", false)
-                              putInt("targetDisplayId", -1)
-                              putInt("targetWidth", 1080)
-                              putInt("targetHeight", 2520)
-                              putBoolean("visibleAfter", false)
-                              putString("command", "validated release skipped")
-                              putString(
-                                  "commandOutput",
-                                  "hint no longer identifies secondary 1080x2520 cover",
-                              )
-                              putLong(
-                                  "latencyMs",
-                                  SystemClock.elapsedRealtime() - t0,
-                              )
-                          }
-                      }
-
-                      val command = "cmd display power-reset $safeTarget"
-                      val output = runProbe(command)
-                      val failed =
-                          output.contains("Exception", ignoreCase = true) ||
-                              output.contains("error", ignoreCase = true) ||
-                              output.contains("not possible", ignoreCase = true)
-
-                      return Bundle().apply {
-                          putBoolean("ok", !failed)
-                          putBoolean("enable", false)
-                          putInt("targetDisplayId", safeTarget)
-                          putInt("targetWidth", 1080)
-                          putInt("targetHeight", 2520)
-                          putBoolean("visibleAfter", false)
-                          putString("command", command)
-                          putString("commandOutput", output)
-                          putLong(
-                              "latencyMs",
-                              SystemClock.elapsedRealtime() - t0,
-                          )
-                      }
-                  }
-
-                  val targetId =
-                      resolveInactiveCoverLogicalId(targetHint)
-
-                  if (
-                      targetId < 0 ||
-                      targetId == Display.DEFAULT_DISPLAY
-                  ) {
-                      return Bundle().apply {
-                          putBoolean("ok", false)
-                          putBoolean("enable", true)
-                          putInt("targetDisplayId", -1)
-                          putInt("targetWidth", 1080)
-                          putInt("targetHeight", 2520)
-                          putBoolean("visibleAfter", false)
-                          putString(
-                              "error",
-                              "No fresh non-default 1080x2520 cover route was available.",
-                          )
-                          putString("command", "fresh-route-validation")
-                          putString("commandOutput", "skipped")
-                      }
-                  }
-
-                  resolveFold7CoverPhysicalDisplayId(targetId)
-
-                  var routeEnabled = false
-                  var routeError: String? = null
-
-                  runCatching {
-                      enableConnectedDisplayInternal(targetId)
-                      routeEnabled = true
-                  }.onFailure { error ->
-                      routeError = "${error.javaClass.simpleName}: ${error.message}"
-                  }
-
-                  // Exactly one bounded logical power request. No cache and no
-                  // watchdog can reuse this logical id after Samsung remaps it.
-                  val logicalPowered =
-                      runCatching {
-                          requestDisplayPowerInternal(
-                              targetId,
-                              Display.STATE_ON,
-                          )
-                      }.getOrDefault(false)
-
-                  val (
-                      physicalPowered,
-                      physicalPowerError,
-                  ) = setCoverPhysicalPowerNormal()
-
-                  return Bundle().apply {
-                      putBoolean(
-                          "ok",
-                          routeEnabled || logicalPowered || physicalPowered,
-                      )
-                      putBoolean("enable", true)
-                      putInt("targetDisplayId", targetId)
-                      putLong("physicalDisplayId", cachedCoverPhysicalDisplayId)
-                      putInt("targetWidth", 1080)
-                      putInt("targetHeight", 2520)
-                      putBoolean("visibleAfter", false)
-                      putBoolean("routeEnabled", routeEnabled)
-                      putBoolean("logicalPowered", logicalPowered)
-                      putBoolean("physicalPowered", physicalPowered)
-                      putString(
-                          "command",
-                          "fresh 1080x2520 route + one-shot enable/power",
-                      )
-                      putString(
-                          "commandOutput",
-                          listOfNotNull(
-                              routeError,
-                              physicalPowerError,
-                          ).joinToString(" | ")
-                              .ifEmpty { "bounded-prewarm-fast-path" },
-                      )
-                      putLong(
-                          "latencyMs",
-                          SystemClock.elapsedRealtime() - t0,
-                      )
-                  }
-              }
-
-          '''
-
-          shell = (
-              shell[:secondary_start]
-              + safe_secondary
-              + shell[secondary_end:]
-          )
-          write(shell_path, shell)
-
-          # PanelEngine: preserve the smooth inner animation and latch the
-          # fully-open endpoint so a flat snapshot layer cannot flash.
-          panel_path = (
-              "app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
-          )
-          panel = read(panel_path)
-
-          panel = replace_once(
-              panel,
-              "    private var liveLoop = false\n",
-              "    private var liveLoop = false\n\n" +
-                  "    private var innerOpenLatched = false\n",
-              "inner open latch state",
-          )
-
-          panel = replace_once(
-              panel,
-              "        lastRawHingeAngle =\n" +
-                  "            angle\n\n",
-              "        lastRawHingeAngle =\n" +
-                  "            angle\n\n" +
-                  "        if (innerPanel) {\n" +
-                  "            if (angle >= INNER_OPEN_LATCH_DEG) {\n" +
-                  "                if (!innerOpenLatched) {\n" +
-                  "                    com.duoopen.debug.DuoDiagnostics.event(\n" +
-                  "                        \"inner-open\",\n" +
-                  "                        \"latched angle=$angle; removing flat overlay without fade\",\n" +
-                  "                    )\n" +
-                  "                }\n\n" +
-                  "                innerOpenLatched = true\n" +
-                  "                restArmed = true\n" +
-                  "                panelSwitched = false\n" +
-                  "                if (phase != Phase.IDLE) removeOverlay()\n" +
-                  "                return\n" +
-                  "            }\n\n" +
-                  "            if (innerOpenLatched) {\n" +
-                  "                if (angle > INNER_OPEN_REARM_DEG) return\n" +
-                  "                innerOpenLatched = false\n" +
-                  "                restArmed = true\n" +
-                  "                panelSwitched = false\n" +
-                  "                com.duoopen.debug.DuoDiagnostics.event(\n" +
-                  "                    \"inner-open\",\n" +
-                  "                    \"rearmed angle=$angle after deliberate close\",\n" +
-                  "                )\n" +
-                  "            }\n" +
-                  "        }\n\n",
-              "inner open latch hinge guard",
-          )
-
-          panel = replace_once(
-              panel,
-              "        val angle = hinge.lastAngle\n" +
-                  "        if (angle.isNaN()) return\n" +
-                  "        val tilt = tiltFor(angle)\n",
-              "        val angle = hinge.lastAngle\n" +
-                  "        if (angle.isNaN()) return\n\n" +
-                  "        if (innerPanel) {\n" +
-                  "            if (angle >= INNER_OPEN_LATCH_DEG) {\n" +
-                  "                innerOpenLatched = true\n" +
-                  "                restArmed = true\n" +
-                  "                panelSwitched = false\n" +
-                  "                if (phase != Phase.IDLE) removeOverlay()\n" +
-                  "                return\n" +
-                  "            }\n\n" +
-                  "            if (innerOpenLatched) {\n" +
-                  "                if (angle > INNER_OPEN_REARM_DEG) return\n" +
-                  "                innerOpenLatched = false\n" +
-                  "                restArmed = true\n" +
-                  "                panelSwitched = false\n" +
-                  "            }\n" +
-                  "        }\n\n" +
-                  "        val tilt = tiltFor(angle)\n",
-              "inner open latch evaluate guard",
-          )
-
-          panel = replace_once(
-              panel,
-              "        const val COVER_OPEN_IMMEDIATE_TILT = 0.15f\n",
-              "        const val COVER_OPEN_IMMEDIATE_TILT = 0.15f\n" +
-                  "        const val INNER_OPEN_LATCH_DEG = 172f\n" +
-                  "        const val INNER_OPEN_REARM_DEG = 166f\n",
-              "inner open latch thresholds",
-          )
-
-          write(panel_path, panel)
-          print("1.3.22 Fold7 cover recovery + inner endpoint pass applied")
-          PY22
+          python3 tools/apply_fold7_1323.py
 
           git diff --stat
           git diff --check
 
-      - name: Validate Fold7 1.3.22 source
+      - name: Validate Fold7 1.3.23 safety properties
         shell: bash
         run: |
           set -euo pipefail
 
           GRADLE="app/build.gradle.kts"
           SERVICE="app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
+          CONTROLLER="app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt"
+          COORDINATOR="app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt"
+          TEST="app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt"
           SHELL="app/src/full/java/com/duoopen/shell/DuoShellService.kt"
-          PANEL="app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
+          BRIDGE="app/src/full/java/com/duoopen/shell/ShizukuBridge.kt"
           HOST="app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt"
+          PANEL="app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
           SHADER="app/src/main/java/com/duoopen/fold/DuoShader.kt"
           HINGE="app/src/main/java/com/duoopen/fold/HingeAngleSource.kt"
           ANGLE_FEED="app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt"
-          BRIDGE="app/src/full/java/com/duoopen/shell/ShizukuBridge.kt"
           RUNTIME="app/src/full/java/com/duoopen/overlay/PersistentRuntimeService.kt"
 
-          grep -F 'versionCode = 26' "$GRADLE"
-          grep -F 'versionName = "1.3.22-zfold7-cover-recovery"' "$GRADLE"
+          for file in \
+            "$GRADLE" "$SERVICE" "$CONTROLLER" "$COORDINATOR" "$TEST" \
+            "$SHELL" "$BRIDGE" "$HOST" "$PANEL" "$SHADER" \
+            "$HINGE" "$ANGLE_FEED" "$RUNTIME"
+          do
+            test -f "$file" || { echo "ERROR: missing $file"; exit 1; }
+          done
 
-          echo "Checking shell integrity..."
-          grep -F 'package com.duoopen.shell' "$SHELL"
+          grep -F 'versionCode = 27' "$GRADLE"
+          grep -F 'versionName = "1.3.23-zfold7-explicit-state-machine"' "$GRADLE"
+          grep -F 'testImplementation("junit:junit:4.13.2")' "$GRADLE"
 
-          if grep -Fq 'plugins {' "$SHELL"; then
-            echo "ERROR: DuoShellService.kt contains Gradle build configuration."
+          echo "Checking explicit continuity states..."
+          grep -F 'OPEN_INNER' "$CONTROLLER"
+          grep -F 'CLOSING_INTENT' "$CONTROLLER"
+          grep -F 'COVER_PREWARMING' "$CONTROLLER"
+          grep -F 'COVER_READY_HIDDEN' "$CONTROLLER"
+          grep -F 'COVER_VISUAL' "$CONTROLLER"
+          grep -F 'NATIVE_COVER' "$CONTROLLER"
+          grep -F 'OPENING_FROM_CLOSED' "$CONTROLLER"
+          grep -F 'INNER_HANDOFF' "$CONTROLLER"
+
+          echo "Checking prewarm/visibility separation..."
+          grep -F 'BeginPrewarm' "$CONTROLLER"
+          grep -F 'ShowMirror' "$CONTROLLER"
+          grep -F 'prewarm-ready-hidden' "$CONTROLLER"
+          grep -F 'continuity.onHinge(angle)' "$SERVICE"
+          grep -F 'continuity.onTopologyChanged' "$SERVICE"
+
+          HANDLE_CALLS="$(grep -c 'handleContinuityHinge(' "$SERVICE" || true)"
+          if [ "$HANDLE_CALLS" -gt 1 ]; then
+            echo "ERROR: legacy hinge controller still has an active caller."
             exit 1
           fi
 
-          echo "Checking cover recovery..."
-          grep -F 'closing-prewarm-request' "$SERVICE"
-          grep -F 'prewarm-result' "$SERVICE"
-          grep -F 'resolveInactiveCoverLogicalId' "$SHELL"
-          grep -F 'requestDisplayPowerInternal' "$SHELL"
-          grep -F 'fresh 1080x2520 route + one-shot enable/power' "$SHELL"
-          grep -F 'bounded-prewarm-fast-path' "$SHELL"
-
-          echo "Checking no remap-prone watchdog/cache returned..."
+          echo "Checking logical-id safety..."
+          grep -F 'resolveFreshCoverLogicalId' "$SHELL"
+          grep -F 'cachedCoverPhysicalDisplayId' "$SHELL"
+          grep -F 'routeStillCover' "$SHELL"
+          grep -F 'fresh-route one-shot Fold7 prewarm' "$SHELL"
 
           if grep -Fq 'cachedCoverDisplayId' "$SHELL"; then
-            echo "ERROR: logical cover-id cache returned."
+            echo "ERROR: cached logical cover display id returned."
             exit 1
           fi
 
-          if grep -Fq 'ShizukuBridge.requestDisplayPower(' "$SERVICE"; then
-            echo "ERROR: app-side logical display power request returned."
+          if grep -Fq 'Thread.sleep(600L)' "$SHELL"; then
+            echo "ERROR: old 600ms shell delay returned."
             exit 1
           fi
 
-          grep -F 'validated release skipped' "$SHELL"
-          grep -F 'cmd display power-reset $safeTarget' "$SHELL"
+          if grep -Fq 'Thread.sleep(40L)' "$SHELL"; then
+            echo "ERROR: old 40ms shell delay returned."
+            exit 1
+          fi
 
-          echo "Checking inner endpoint latch..."
-          grep -F 'innerOpenLatched' "$PANEL"
+          echo "Checking Fold7 visual calibration..."
+          grep -F 'FOLD7_COVER_CLOSED_VISUAL_HINGE = 0.5f' "$SHADER"
+          grep -F 'COVER_VISUAL_MAX_HINGE = 135f' "$SHADER"
           grep -F 'INNER_OPEN_LATCH_DEG = 172f' "$PANEL"
           grep -F 'INNER_OPEN_REARM_DEG = 166f' "$PANEL"
-          grep -F 'removing flat overlay without fade' "$PANEL"
 
-          echo "Checking preserved 1.3.21 improvements..."
-          grep -F 'COVER_CLOSE_PREWARM_DEG' "$SERVICE"
-          grep -F '150.0f' "$SERVICE"
-          grep -F 'COVER_CLOSE_VISUAL_START_DEG' "$SERVICE"
-          grep -F '135.0f' "$SERVICE"
+          echo "Checking preserved successful architecture..."
           grep -F 'canonicalPaneWidth' "$HOST"
           grep -F 'sourceLeft' "$HOST"
-          grep -F 'COVER_VISUAL_MAX_HINGE = 135f' "$SHADER"
           grep -F 'coarseMidpointAfterContinuousEndpoint' "$HINGE"
           grep -F 'scheduleEndpointBridge' "$ANGLE_FEED"
           grep -F '.daemon(true)' "$BRIDGE"
           grep -F 'START_STICKY' "$RUNTIME"
 
           git diff --check
-
-          echo "Fold7 1.3.22 source validation passed."
+          echo "Fold7 1.3.23 source validation passed."
 
       - name: Set up Java 17
         uses: actions/setup-java@v5
@@ -1081,7 +258,7 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x gradlew
 
-      - name: Compile and run unit tests
+      - name: Compile and run tests
         shell: bash
         run: |
           set -euo pipefail
@@ -1091,93 +268,71 @@ jobs:
             assembleFullDebug \
             --stacktrace
 
-      - name: Prepare 1.3.22 field-test APK and generated source snapshot
+      - name: Prepare 1.3.23 field-test APK and generated source
         shell: bash
         run: |
           set -euo pipefail
 
           OUTPUT_DIR="fold7-build"
           SOURCE_DIR="$OUTPUT_DIR/generated-source"
-
           mkdir -p "$SOURCE_DIR"
 
-          APK="$(
-            find \
-              app/build/outputs/apk/full/debug \
-              -type f \
-              -name '*.apk' \
-              | head -n 1
-          )"
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK" || { echo "ERROR: Full debug APK was not found."; exit 1; }
 
-          test -n "$APK" || {
-            echo "ERROR: Full debug APK was not found."
-            exit 1
-          }
+          OUTPUT_APK="$OUTPUT_DIR/DuoOpen-ZFold7-1.3.23-explicit-state-machine-debug.apk"
+          cp "$APK" "$OUTPUT_APK"
 
-          OUTPUT_APK="$OUTPUT_DIR/DuoOpen-ZFold7-1.3.22-cover-recovery-debug.apk"
+          cp app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt "$SOURCE_DIR/"
+          cp app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt "$SOURCE_DIR/"
+          cp app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt "$SOURCE_DIR/"
+          cp app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt "$SOURCE_DIR/"
+          cp app/src/full/java/com/duoopen/overlay/PanelEngine.kt "$SOURCE_DIR/"
+          cp app/src/full/java/com/duoopen/shell/DuoShellService.kt "$SOURCE_DIR/"
+          cp app/src/full/java/com/duoopen/shell/ShizukuBridge.kt "$SOURCE_DIR/"
+          cp app/src/full/java/com/duoopen/shell/ShellProtocol.kt "$SOURCE_DIR/"
+          cp app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt "$SOURCE_DIR/"
+          cp app/src/main/java/com/duoopen/fold/HingeAngleSource.kt "$SOURCE_DIR/"
+          cp app/src/main/java/com/duoopen/fold/DuoShader.kt "$SOURCE_DIR/"
 
-          cp \
-            "$APK" \
-            "$OUTPUT_APK"
-
-          cp \
-            app/src/full/java/com/duoopen/shell/DuoShellService.kt \
-            "$SOURCE_DIR/DuoShellService.kt"
-
-          cp \
-            app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt \
-            "$SOURCE_DIR/FoldOverlayService.kt"
-
-          cp \
-            app/src/full/java/com/duoopen/overlay/PanelEngine.kt \
-            "$SOURCE_DIR/PanelEngine.kt"
-
-          cp \
-            app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt \
-            "$SOURCE_DIR/DisplayMirrorHost.kt"
-
-          sha256sum \
-            "$OUTPUT_APK" \
-            > "$OUTPUT_DIR/APK-SHA256-1.3.22.txt"
+          sha256sum "$OUTPUT_APK" > "$OUTPUT_DIR/APK-SHA256-1.3.23.txt"
 
           {
-            echo "version=1.3.22-zfold7-cover-recovery"
-            echo "versionCode=26"
+            echo "version=1.3.23-zfold7-explicit-state-machine"
+            echo "versionCode=27"
             echo "target=Samsung Galaxy Z Fold7"
             echo "innerGeometry=1968x2184"
             echo "coverGeometry=1080x2520"
             echo "pinned1321=e754d77dec07d61a4d01cf280e69c6ced3b48820"
             echo
-            echo "1.3.22 changes:"
-            echo "- exact successful 1.3.21 transform replayed from pinned commit"
-            echo "- corrupted main DuoShellService.kt ignored"
-            echo "- clean generated DuoShellService.kt included in artifact for repo repair"
-            echo "- inactive 1080x2520 route resolved fresh for each cover prewarm"
-            echo "- one bounded enable + logical power-on; no logical-id cache/watchdog"
-            echo "- front visual remains scheduled near 135 degrees"
-            echo "- inner fully-open latch at 172 degrees; rearm below 166 degrees"
-            echo "- flat inner overlay removed immediately instead of whole-screen fade"
-            echo "- aspect-locked 936x2184 -> 1080x2520 mirror preserved"
+            echo "1.3.23 architecture:"
+            echo "- explicit continuity state machine"
+            echo "- deliberate-close intent detector"
+            echo "- prewarm and mirror visibility separated"
+            echo "- native closed->open path requires no shell wake"
+            echo "- fresh logical route resolution per shell operation"
+            echo "- stable physical cover identity cached separately"
+            echo "- one-shot power only after immediate route revalidation"
+            echo "- Fold7 cover visual origin at 0.5 degrees"
+            echo "- visible cover mirror threshold at 135 degrees"
+            echo "- fully-open inner latch at 172 degrees; rearm at 166"
+            echo "- 3:7 hinge-side-preserving mirror projection preserved"
+            echo "- stale async prewarm completion is released"
+            echo "- mirror host construction is guarded by coordinator"
             echo
+            sha256sum "$OUTPUT_APK"
+          } > "$OUTPUT_DIR/BUILD-INFO-1.3.23.txt"
 
-            sha256sum \
-              "$OUTPUT_APK"
-          } > "$OUTPUT_DIR/BUILD-INFO-1.3.22.txt"
+          cat "$OUTPUT_DIR/BUILD-INFO-1.3.23.txt"
 
-          cat \
-            "$OUTPUT_DIR/BUILD-INFO-1.3.22.txt"
-
-      - name: Upload 1.3.22 field-test APK and clean generated source
+      - name: Upload 1.3.23 field-test APK and generated source
         uses: actions/upload-artifact@v4
         with:
-          name: DuoOpen-ZFold7-1.3.22-cover-recovery
+          name: DuoOpen-ZFold7-1.3.23-explicit-state-machine
           path: |
-            fold7-build/DuoOpen-ZFold7-1.3.22-cover-recovery-debug.apk
-            fold7-build/APK-SHA256-1.3.22.txt
-            fold7-build/BUILD-INFO-1.3.22.txt
-            fold7-build/generated-source/DuoShellService.kt
-            fold7-build/generated-source/FoldOverlayService.kt
-            fold7-build/generated-source/PanelEngine.kt
-            fold7-build/generated-source/DisplayMirrorHost.kt
+            fold7-build/DuoOpen-ZFold7-1.3.23-explicit-state-machine-debug.apk
+            fold7-build/APK-SHA256-1.3.23.txt
+            fold7-build/BUILD-INFO-1.3.23.txt
+            fold7-build/generated-source/*
           if-no-files-found: error
           retention-days: 30
