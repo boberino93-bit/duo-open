@@ -297,7 +297,6 @@ safe_secondary = r'''    // ---- Fold7 physical-panel-safe continuity ----------
         val width = runCatching {
             info.javaClass.getField("logicalWidth").getInt(info)
         }.getOrDefault(-1)
-
         val height = runCatching {
             info.javaClass.getField("logicalHeight").getInt(info)
         }.getOrDefault(-1)
@@ -323,7 +322,6 @@ safe_secondary = r'''    // ---- Fold7 physical-panel-safe continuity ----------
         }
 
         val fromAddress = physicalDisplayIdFromLogical(targetHint)
-
         if (fromAddress >= 0L) {
             cachedCoverPhysicalDisplayId = fromAddress
             return fromAddress
@@ -340,89 +338,41 @@ safe_secondary = r'''    // ---- Fold7 physical-panel-safe continuity ----------
             Regex(
                 """DisplayDeviceInfo\\{[^\\n]*uniqueId=\"local:(\\d+)\"[^\\n]*1080 x 2520"""
             ).find(displayDump)
-                ?.groupValues
-                ?.getOrNull(1)
-                ?.toLongOrNull()
+                ?.groupValues?.getOrNull(1)?.toLongOrNull()
 
         val reverse =
             Regex(
                 """DisplayDeviceInfo\\{[^\\n]*1080 x 2520[^\\n]*uniqueId=\"local:(\\d+)\""""
             ).find(displayDump)
-                ?.groupValues
-                ?.getOrNull(1)
-                ?.toLongOrNull()
+                ?.groupValues?.getOrNull(1)?.toLongOrNull()
 
-        val physicalId =
-            forward
-                ?: reverse
-                ?: -1L
-
+        val physicalId = forward ?: reverse ?: -1L
         if (physicalId >= 0L) {
             cachedCoverPhysicalDisplayId = physicalId
         }
-
         return physicalId
     }
 
     private fun resolveCoverDisplay(): Bundle {
-        val logicalId =
-            resolveFreshCoverLogicalId(-1)
-
-        val physicalId =
-            resolveFold7CoverPhysicalDisplayId(
-                logicalId
-            )
+        val logicalId = resolveFreshCoverLogicalId(-1)
+        val physicalId = resolveFold7CoverPhysicalDisplayId(logicalId)
 
         return Bundle().apply {
-            putBoolean(
-                "ok",
-                logicalId >= 0 ||
-                    physicalId >= 0L,
-            )
-
-            putInt(
-                "targetDisplayId",
-                logicalId,
-            )
-
-            putLong(
-                "physicalDisplayId",
-                physicalId,
-            )
-
-            putInt(
-                "targetWidth",
-                1080,
-            )
-
-            putInt(
-                "targetHeight",
-                2520,
-            )
-
-            if (
-                logicalId < 0 &&
-                physicalId < 0L
-            ) {
-                putString(
-                    "error",
-                    "The Fold7 cover panel could not be resolved.",
-                )
+            putBoolean("ok", logicalId >= 0 || physicalId >= 0L)
+            putInt("targetDisplayId", logicalId)
+            putLong("physicalDisplayId", physicalId)
+            putInt("targetWidth", 1080)
+            putInt("targetHeight", 2520)
+            if (logicalId < 0 && physicalId < 0L) {
+                putString("error", "The Fold7 cover panel could not be resolved.")
             }
         }
     }
 
-    private fun setCoverPhysicalPowerNormal():
-        Pair<Boolean, String?> {
-
-        val physicalId =
-            cachedCoverPhysicalDisplayId
-
+    private fun setCoverPhysicalPowerNormal(): Pair<Boolean, String?> {
+        val physicalId = cachedCoverPhysicalDisplayId
         if (physicalId < 0L) {
-            return (
-                false to
-                    "cover physical display id unavailable"
-                )
+            return false to "cover physical display id unavailable"
         }
 
         return runCatching {
@@ -437,10 +387,7 @@ safe_secondary = r'''    // ---- Fold7 physical-panel-safe continuity ----------
                         "getPhysicalDisplayToken",
                         java.lang.Long.TYPE,
                     )
-                    .invoke(
-                        null,
-                        physicalId,
-                    ) as? IBinder
+                    .invoke(null, physicalId) as? IBinder
                     ?: throw IllegalStateException(
                         "no SurfaceControl token for physical display $physicalId"
                     )
@@ -451,16 +398,11 @@ safe_secondary = r'''    // ---- Fold7 physical-panel-safe continuity ----------
                     IBinder::class.java,
                     Integer.TYPE,
                 )
-                .invoke(
-                    null,
-                    token,
-                    2,
-                )
+                .invoke(null, token, 2)
 
             true to null
         }.getOrElse { error ->
-            false to
-                "${error.javaClass.simpleName}: ${error.message}"
+            false to "${error.javaClass.simpleName}: ${error.message}"
         }
     }
 
@@ -468,295 +410,97 @@ safe_secondary = r'''    // ---- Fold7 physical-panel-safe continuity ----------
         enable: Boolean,
         targetHint: Int,
     ): Bundle {
-        val t0 =
-            SystemClock.elapsedRealtime()
+        val t0 = SystemClock.elapsedRealtime()
 
         if (!enable) {
-            val safeTarget =
-                resolveFreshCoverLogicalId(
-                    targetHint
-                )
+            val safeTarget = resolveFreshCoverLogicalId(targetHint)
 
             if (safeTarget < 0) {
                 return Bundle().apply {
-                    putBoolean(
-                        "ok",
-                        true,
-                    )
-
-                    putBoolean(
-                        "enable",
-                        false,
-                    )
-
-                    putInt(
-                        "targetDisplayId",
-                        -1,
-                    )
-
-                    putInt(
-                        "targetWidth",
-                        1080,
-                    )
-
-                    putInt(
-                        "targetHeight",
-                        2520,
-                    )
-
-                    putBoolean(
-                        "visibleAfter",
-                        false,
-                    )
-
-                    putString(
-                        "command",
-                        "validated release skipped",
-                    )
-
-                    putString(
-                        "commandOutput",
-                        "no non-default 1080x2520 route",
-                    )
-
-                    putLong(
-                        "latencyMs",
-                        SystemClock.elapsedRealtime() - t0,
-                    )
+                    putBoolean("ok", true)
+                    putBoolean("enable", false)
+                    putInt("targetDisplayId", -1)
+                    putInt("targetWidth", 1080)
+                    putInt("targetHeight", 2520)
+                    putBoolean("visibleAfter", false)
+                    putString("command", "validated release skipped")
+                    putString("commandOutput", "no non-default 1080x2520 route")
+                    putLong("latencyMs", SystemClock.elapsedRealtime() - t0)
                 }
             }
 
-            /*
-             * Re-resolve immediately before acting. If Samsung has already
-             * remapped the logical id, abort rather than touching it.
-             */
-            if (
-                safeTarget !in
-                windowCoverRoutes()
-            ) {
+            // Re-resolve immediately before acting; abort if Samsung remapped it.
+            if (safeTarget !in windowCoverRoutes()) {
                 return Bundle().apply {
-                    putBoolean(
-                        "ok",
-                        true,
-                    )
-
-                    putBoolean(
-                        "enable",
-                        false,
-                    )
-
-                    putInt(
-                        "targetDisplayId",
-                        -1,
-                    )
-
-                    putString(
-                        "command",
-                        "release aborted after remap",
-                    )
-
-                    putLong(
-                        "latencyMs",
-                        SystemClock.elapsedRealtime() - t0,
-                    )
+                    putBoolean("ok", true)
+                    putBoolean("enable", false)
+                    putInt("targetDisplayId", -1)
+                    putString("command", "release aborted after remap")
+                    putLong("latencyMs", SystemClock.elapsedRealtime() - t0)
                 }
             }
 
-            val command =
-                "cmd display power-reset $safeTarget"
-
-            val output =
-                runProbe(
-                    command
-                )
-
+            val command = "cmd display power-reset $safeTarget"
+            val output = runProbe(command)
             val failed =
-                output.contains(
-                    "Exception",
-                    ignoreCase = true,
-                ) ||
-                    output.contains(
-                        "error",
-                        ignoreCase = true,
-                    ) ||
-                    output.contains(
-                        "not possible",
-                        ignoreCase = true,
-                    )
+                output.contains("Exception", ignoreCase = true) ||
+                    output.contains("error", ignoreCase = true) ||
+                    output.contains("not possible", ignoreCase = true)
 
             return Bundle().apply {
-                putBoolean(
-                    "ok",
-                    !failed,
-                )
-
-                putBoolean(
-                    "enable",
-                    false,
-                )
-
-                putInt(
-                    "targetDisplayId",
-                    safeTarget,
-                )
-
-                putInt(
-                    "targetWidth",
-                    1080,
-                )
-
-                putInt(
-                    "targetHeight",
-                    2520,
-                )
-
-                putBoolean(
-                    "visibleAfter",
-                    false,
-                )
-
-                putString(
-                    "command",
-                    command,
-                )
-
-                putString(
-                    "commandOutput",
-                    output,
-                )
-
-                putLong(
-                    "latencyMs",
-                    SystemClock.elapsedRealtime() - t0,
-                )
+                putBoolean("ok", !failed)
+                putBoolean("enable", false)
+                putInt("targetDisplayId", safeTarget)
+                putInt("targetWidth", 1080)
+                putInt("targetHeight", 2520)
+                putBoolean("visibleAfter", false)
+                putString("command", command)
+                putString("commandOutput", output)
+                putLong("latencyMs", SystemClock.elapsedRealtime() - t0)
             }
         }
 
-        val targetId =
-            resolveFreshCoverLogicalId(
-                targetHint
-            )
-
+        val targetId = resolveFreshCoverLogicalId(targetHint)
         if (targetId < 0) {
             return Bundle().apply {
-                putBoolean(
-                    "ok",
-                    false,
-                )
-
-                putBoolean(
-                    "enable",
-                    true,
-                )
-
-                putInt(
-                    "targetDisplayId",
-                    -1,
-                )
-
-                putInt(
-                    "targetWidth",
-                    1080,
-                )
-
-                putInt(
-                    "targetHeight",
-                    2520,
-                )
-
-                putBoolean(
-                    "visibleAfter",
-                    false,
-                )
-
-                putString(
-                    "error",
-                    "No fresh non-default 1080x2520 cover route was available.",
-                )
-
-                putString(
-                    "command",
-                    "fresh-route-validation",
-                )
-
-                putString(
-                    "commandOutput",
-                    "skipped",
-                )
+                putBoolean("ok", false)
+                putBoolean("enable", true)
+                putInt("targetDisplayId", -1)
+                putInt("targetWidth", 1080)
+                putInt("targetHeight", 2520)
+                putBoolean("visibleAfter", false)
+                putString("error", "No fresh non-default 1080x2520 cover route was available.")
+                putString("command", "fresh-route-validation")
+                putString("commandOutput", "skipped")
             }
         }
 
-        /*
-         * Stable physical identity may be cached. The logical id may not.
-         */
-        val physicalId =
-            resolveFold7CoverPhysicalDisplayId(
-                targetId
-            )
+        // Stable physical identity may be cached; the logical id may not.
+        val physicalId = resolveFold7CoverPhysicalDisplayId(targetId)
 
-        if (
-            targetId !in
-            windowCoverRoutes()
-        ) {
+        if (targetId !in windowCoverRoutes()) {
             return Bundle().apply {
-                putBoolean(
-                    "ok",
-                    false,
-                )
-
-                putBoolean(
-                    "enable",
-                    true,
-                )
-
-                putInt(
-                    "targetDisplayId",
-                    -1,
-                )
-
-                putLong(
-                    "physicalDisplayId",
-                    physicalId,
-                )
-
-                putString(
-                    "error",
-                    "Samsung remapped the cover route before enable.",
-                )
-
-                putString(
-                    "command",
-                    "pre-enable-route-revalidation",
-                )
+                putBoolean("ok", false)
+                putBoolean("enable", true)
+                putInt("targetDisplayId", -1)
+                putLong("physicalDisplayId", physicalId)
+                putString("error", "Samsung remapped the cover route before enable.")
+                putString("command", "pre-enable-route-revalidation")
             }
         }
 
-        var routeEnabled =
-            false
-
-        var routeError:
-            String? =
-            null
-
+        var routeEnabled = false
+        var routeError: String? = null
         runCatching {
-            enableConnectedDisplayInternal(
-                targetId
-            )
-
-            routeEnabled =
-                true
+            enableConnectedDisplayInternal(targetId)
+            routeEnabled = true
         }.onFailure { error ->
-            routeError =
-                "${error.javaClass.simpleName}: ${error.message}"
+            routeError = "${error.javaClass.simpleName}: ${error.message}"
         }
 
-        /*
-         * Revalidate AGAIN after enable. Never power an id that now represents
-         * the inner/default display.
-         */
-        val stillCover =
-            targetId in
-                windowCoverRoutes()
+        // Revalidate AGAIN after enable. Never power an id that now represents
+        // the inner/default display.
+        val stillCover = targetId in windowCoverRoutes()
 
         val logicalPowered =
             if (stillCover) {
@@ -765,104 +509,34 @@ safe_secondary = r'''    // ---- Fold7 physical-panel-safe continuity ----------
                         targetId,
                         Display.STATE_ON,
                     )
-                }.getOrDefault(
-                    false
-                )
+                }.getOrDefault(false)
             } else {
                 false
             }
 
-        val (
-            physicalPowered,
-            physicalPowerError,
-        ) =
+        val (physicalPowered, physicalPowerError) =
             setCoverPhysicalPowerNormal()
 
         return Bundle().apply {
-            putBoolean(
-                "ok",
-                routeEnabled ||
-                    logicalPowered ||
-                    physicalPowered,
-            )
-
-            putBoolean(
-                "enable",
-                true,
-            )
-
-            putInt(
-                "targetDisplayId",
-                if (stillCover) {
-                    targetId
-                } else {
-                    -1
-                },
-            )
-
-            putLong(
-                "physicalDisplayId",
-                physicalId,
-            )
-
-            putInt(
-                "targetWidth",
-                1080,
-            )
-
-            putInt(
-                "targetHeight",
-                2520,
-            )
-
-            putBoolean(
-                "visibleAfter",
-                false,
-            )
-
-            putBoolean(
-                "routeEnabled",
-                routeEnabled,
-            )
-
-            putBoolean(
-                "logicalPowered",
-                logicalPowered,
-            )
-
-            putBoolean(
-                "physicalPowered",
-                physicalPowered,
-            )
-
-            putBoolean(
-                "routeStillCover",
-                stillCover,
-            )
-
-            putString(
-                "command",
-                "fresh-route one-shot Fold7 prewarm",
-            )
-
+            putBoolean("ok", routeEnabled || logicalPowered || physicalPowered)
+            putBoolean("enable", true)
+            putInt("targetDisplayId", if (stillCover) targetId else -1)
+            putLong("physicalDisplayId", physicalId)
+            putInt("targetWidth", 1080)
+            putInt("targetHeight", 2520)
+            putBoolean("visibleAfter", false)
+            putBoolean("routeEnabled", routeEnabled)
+            putBoolean("logicalPowered", logicalPowered)
+            putBoolean("physicalPowered", physicalPowered)
+            putBoolean("routeStillCover", stillCover)
+            putString("command", "fresh-route one-shot Fold7 prewarm")
             putString(
                 "commandOutput",
-                listOfNotNull(
-                    routeError,
-                    physicalPowerError,
-                )
-                    .joinToString(
-                        " | "
-                    )
-                    .ifEmpty {
-                        "bounded-prewarm-fast-path"
-                    },
+                listOfNotNull(routeError, physicalPowerError)
+                    .joinToString(" | ")
+                    .ifEmpty { "bounded-prewarm-fast-path" },
             )
-
-            putLong(
-                "latencyMs",
-                SystemClock.elapsedRealtime() - t0,
-            )
+            putLong("latencyMs", SystemClock.elapsedRealtime() - t0)
         }
     }
 
@@ -871,33 +545,21 @@ safe_secondary = r'''    // ---- Fold7 physical-panel-safe continuity ----------
 shell = sub_once(
     shell,
     r'''    // ---- Fold7 physical-panel-safe continuity -+\n.*?    // ---- live logical-display mirror -+''',
-    safe_secondary +
-        "    // ---- live logical-display mirror ---------------------------------------",
+    safe_secondary + "    // ---- live logical-display mirror ---------------------------------------",
     "replace Fold7 shell continuity section",
 )
 
-write(
-    shell_path,
-    shell,
-)
+write(shell_path, shell)
 
 
 # ---------------------------------------------------------------------------
 # Fold7 visual calibration: remove the generic 6-degree cover dead zone.
 # ---------------------------------------------------------------------------
 
-shader_path =
-    "app/src/main/java/com/duoopen/fold/DuoShader.kt"
+shader_path = "app/src/main/java/com/duoopen/fold/DuoShader.kt"
+shader = read(shader_path)
 
-shader =
-    read(
-        shader_path
-    )
-
-if (
-    "FOLD7_COVER_CLOSED_VISUAL_HINGE"
-    not in shader
-):
+if "FOLD7_COVER_CLOSED_VISUAL_HINGE" not in shader:
     shader = replace_once(
         shader,
         "    const val COVER_VISUAL_MAX_HINGE = 135f\n",
@@ -909,33 +571,14 @@ if (
 shader = sub_once(
     shader,
     r'''    fun coverTiltForHinge\(hingeDegrees: Float, config: DuoConfig\): Float \{.*?\n    \}''',
-    '''    fun coverTiltForHinge(
-        hingeDegrees: Float,
-        config: DuoConfig,
-    ): Float {
+    '''    fun coverTiltForHinge(hingeDegrees: Float, config: DuoConfig): Float {
         val progress =
-            (
-                (
-                    hingeDegrees -
-                        FOLD7_COVER_CLOSED_VISUAL_HINGE
-                    ) /
-                    (
-                        PANEL_ON_HINGE -
-                            FOLD7_COVER_CLOSED_VISUAL_HINGE
-                        )
-                ).coerceIn(
-                0f,
-                1f,
-            )
+            ((hingeDegrees - FOLD7_COVER_CLOSED_VISUAL_HINGE) /
+                (PANEL_ON_HINGE - FOLD7_COVER_CLOSED_VISUAL_HINGE))
+                .coerceIn(0f, 1f)
 
-        return (
-            progress *
-                MAX_TILT *
-                config.intensity
-            ).coerceIn(
-            0f,
-            MAX_TILT,
-        )
+        return (progress * MAX_TILT * config.intensity)
+            .coerceIn(0f, MAX_TILT)
     }''',
     "native cover visual calibration",
 )
@@ -943,67 +586,32 @@ shader = sub_once(
 shader = sub_once(
     shader,
     r'''    fun concurrentCoverTiltForHinge\(hingeDegrees: Float, config: DuoConfig\): Float \{.*?\n    \}''',
-    '''    fun concurrentCoverTiltForHinge(
-        hingeDegrees: Float,
-        config: DuoConfig,
-    ): Float {
-        if (
-            hingeDegrees >=
-            COVER_VISUAL_MAX_HINGE
-        ) {
-            return 0f
-        }
+    '''    fun concurrentCoverTiltForHinge(hingeDegrees: Float, config: DuoConfig): Float {
+        if (hingeDegrees >= COVER_VISUAL_MAX_HINGE) return 0f
 
         val progress =
-            (
-                (
-                    hingeDegrees -
-                        FOLD7_COVER_CLOSED_VISUAL_HINGE
-                    ) /
-                    (
-                        COVER_VISUAL_MAX_HINGE -
-                            FOLD7_COVER_CLOSED_VISUAL_HINGE
-                        )
-                ).coerceIn(
-                0f,
-                1f,
-            )
+            ((hingeDegrees - FOLD7_COVER_CLOSED_VISUAL_HINGE) /
+                (COVER_VISUAL_MAX_HINGE - FOLD7_COVER_CLOSED_VISUAL_HINGE))
+                .coerceIn(0f, 1f)
 
         val bump =
-            kotlin.math.sin(
-                Math.PI *
-                    progress
-            ).toFloat()
+            kotlin.math.sin(Math.PI * progress).toFloat()
 
-        return (
-            bump *
-                MAX_TILT *
-                config.intensity
-            ).coerceIn(
-            0f,
-            MAX_TILT,
-        )
+        return (bump * MAX_TILT * config.intensity)
+            .coerceIn(0f, MAX_TILT)
     }''',
     "concurrent cover visual calibration",
 )
 
-write(
-    shader_path,
-    shader,
-)
+write(shader_path, shader)
 
 
 # ---------------------------------------------------------------------------
 # PanelEngine: fully-open latch without changing the successful inner curve.
 # ---------------------------------------------------------------------------
 
-panel_path =
-    "app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
-
-panel =
-    read(
-        panel_path
-    )
+panel_path = "app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
+panel = read(panel_path)
 
 # Native cover and concurrent cover both get the low leave threshold. The
 # Fold7-specific visual origin below provides the noise margin.
@@ -1013,10 +621,7 @@ panel = panel.replace(
     1,
 )
 
-if (
-    "private var innerOpenLatched"
-    not in panel
-):
+if "private var innerOpenLatched" not in panel:
     panel = replace_once(
         panel,
         "    private var liveLoop = false\n",
@@ -1027,10 +632,8 @@ if (
 
 panel = replace_once(
     panel,
-    "        lastRawHingeAngle =\n"
-    "            angle\n\n",
-    "        lastRawHingeAngle =\n"
-    "            angle\n\n"
+    "        lastRawHingeAngle =\n            angle\n\n",
+    "        lastRawHingeAngle =\n            angle\n\n"
     "        if (innerPanel) {\n"
     "            if (angle >= INNER_OPEN_LATCH_DEG) {\n"
     "                if (!innerOpenLatched) {\n"
@@ -1039,36 +642,23 @@ panel = replace_once(
     "                        \"latched angle=$angle; removing flat overlay without fade\",\n"
     "                    )\n"
     "                }\n"
-    "\n"
     "                innerOpenLatched = true\n"
     "                restArmed = true\n"
     "                panelSwitched = false\n"
-    "\n"
-    "                if (phase != Phase.IDLE) {\n"
-    "                    removeOverlay()\n"
-    "                }\n"
-    "\n"
+    "                if (phase != Phase.IDLE) removeOverlay()\n"
     "                return\n"
-    "            }\n"
-    "\n"
+    "            }\n\n"
     "            if (innerOpenLatched) {\n"
-    "                if (angle > INNER_OPEN_REARM_DEG) {\n"
-    "                    return\n"
-    "                }\n"
-    "\n"
+    "                if (angle > INNER_OPEN_REARM_DEG) return\n"
     "                innerOpenLatched = false\n"
     "                restArmed = true\n"
     "                panelSwitched = false\n"
     "            }\n"
-    "        }\n"
-    "\n",
+    "        }\n\n",
     "inner-open onHinge latch",
 )
 
-if (
-    "INNER_OPEN_LATCH_DEG = 172f"
-    not in panel
-):
+if "INNER_OPEN_LATCH_DEG = 172f" not in panel:
     panel = replace_once(
         panel,
         "        const val COVER_OPEN_IMMEDIATE_TILT = 0.15f\n",
@@ -1078,11 +668,6 @@ if (
         "inner-open constants",
     )
 
-write(
-    panel_path,
-    panel,
-)
+write(panel_path, panel)
 
-print(
-    "1.3.23 explicit Fold7 state-machine pass applied"
-)
+print("1.3.23 explicit Fold7 state-machine pass applied")
