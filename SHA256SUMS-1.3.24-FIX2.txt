@@ -1,0 +1,8 @@
+c8205a9cbbd105d540f099c1a13c91a313d41f6bd82ef7bca708dc25b4587100  .github/workflows/build-direct-fold7.yml
+d040146dea99d147ede2d71ee8c9ea8c9dab312fcf54bc2b4be438d0ce7b3f51  README-1.3.24-EARLY-WAKE-FIX2.md
+2c0e4f4138723feba8600fe4004bf17272e67641afc37bef1d0e9ffc4cafae0f  app/build.gradle.kts
+c5c1c56d442672af2c1c430f591e6d1b1785ebd0acb9e799fc3438accda43c8a  app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+ee8b41e31e2154430db5353bf0a7098af4560c565b1b94df526d1297b1c560ef  app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+1eacb1e634a2906d7d076c34a0f5e6ecee9a7ce6a65adf073e260875b7d03e81  app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+7b852686da945f0168638768283e0d0046382186b207a65d3f5cd194af1eeaa4  app/src/full/java/com/duoopen/shell/DuoShellService.kt
+9b84b9614cd25d84964454032aeba2068d3f61e416aae7cfc3df26f40b4b74a7  app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt

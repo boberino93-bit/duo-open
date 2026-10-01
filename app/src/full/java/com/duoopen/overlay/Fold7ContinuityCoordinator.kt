@@ -214,6 +214,20 @@ internal class Fold7ContinuityCoordinator(
         onStatus("Fold7 cover prewarming; mirror remains hidden.")
 
         scope.launch(Dispatchers.IO) {
+            /*
+             * The state may have reversed while this coroutine waited for an
+             * IO thread. Never let an obsolete prewarm generation reach the
+             * privileged shell and wake/reset a panel for a newer transition.
+             */
+            if (!controller.isGenerationCurrent(generation)) {
+                DuoDiagnostics.event(
+                    "fold7-state",
+                    "prewarm-stale-before-shell generation=$generation " +
+                        "current=${controller.generation}",
+                )
+                return@launch
+            }
+
             val result =
                 runCatching {
                     // -1 means: resolve the current inactive 1080x2520 Fold7
@@ -302,6 +316,20 @@ internal class Fold7ContinuityCoordinator(
 
         if (stopShellMirror) {
             scope.launch(Dispatchers.IO) {
+                /*
+                 * Shell mirror ownership is global inside DuoShellService.
+                 * Do not let an obsolete hide race with a newer ShowMirror.
+                 * The local host has already been detached synchronously.
+                 */
+                if (!controller.isGenerationCurrent(generation)) {
+                    DuoDiagnostics.event(
+                        "fold7-state",
+                        "mirror-stop-stale generation=$generation " +
+                            "current=${controller.generation} reason=$reason",
+                    )
+                    return@launch
+                }
+
                 runCatching {
                     ShizukuBridge.stopDisplayMirror()
                 }
@@ -312,6 +340,19 @@ internal class Fold7ContinuityCoordinator(
     private fun releaseSecondary(
         generation: Long,
     ) {
+        /*
+         * A queued release from an older close/open cycle must never reset a
+         * cover route that belongs to a newer generation.
+         */
+        if (!controller.isGenerationCurrent(generation)) {
+            DuoDiagnostics.event(
+                "fold7-state",
+                "secondary-release-stale generation=$generation " +
+                    "current=${controller.generation}",
+            )
+            return
+        }
+
         // Hiding is local and immediate. The privileged release is best effort
         // and resolves a fresh current cover route internally.
         hideMirror(
@@ -321,6 +362,15 @@ internal class Fold7ContinuityCoordinator(
         )
 
         scope.launch(Dispatchers.IO) {
+            if (!controller.isGenerationCurrent(generation)) {
+                DuoDiagnostics.event(
+                    "fold7-state",
+                    "secondary-release-stale-before-shell generation=$generation " +
+                        "current=${controller.generation}",
+                )
+                return@launch
+            }
+
             val result =
                 runCatching {
                     ShizukuBridge.resetSecondaryDisplay(-1)

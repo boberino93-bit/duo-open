@@ -722,17 +722,53 @@ class DuoShellService : Binder() {
     }
 
     private fun resolveCoverDisplay(): Bundle {
-        val logicalId = resolveFreshCoverLogicalId(-1)
-        val physicalId = resolveFold7CoverPhysicalDisplayId(logicalId)
+        val logicalId =
+            resolveFreshCoverLogicalId(-1)
+
+        /*
+         * This command is called once when Shizuku becomes ready, outside the
+         * physical hinge transition path. Resolve/cache BOTH stable physical
+         * panel identities here so the first real 3° inner wake and 174° cover
+         * prewarm do not have to spawn a cold dumpsys process first.
+         *
+         * Only physical ids are cached. Logical ids remain one-shot.
+         */
+        val physicalId =
+            resolveFold7CoverPhysicalDisplayId(
+                logicalId
+            )
+
+        val innerPhysicalId =
+            resolveFold7InnerPhysicalDisplayId()
 
         return Bundle().apply {
-            putBoolean("ok", logicalId >= 0 || physicalId >= 0L)
-            putInt("targetDisplayId", logicalId)
-            putLong("physicalDisplayId", physicalId)
+            putBoolean(
+                "ok",
+                logicalId >= 0 ||
+                    physicalId >= 0L,
+            )
+            putInt(
+                "targetDisplayId",
+                logicalId,
+            )
+            putLong(
+                "physicalDisplayId",
+                physicalId,
+            )
+            putLong(
+                "innerPhysicalDisplayId",
+                innerPhysicalId,
+            )
             putInt("targetWidth", 1080)
             putInt("targetHeight", 2520)
-            if (logicalId < 0 && physicalId < 0L) {
-                putString("error", "The Fold7 cover panel could not be resolved.")
+            if (
+                logicalId < 0 &&
+                physicalId < 0L
+            ) {
+                putString(
+                    "error",
+                    "The Fold7 cover panel could not be resolved.",
+                )
             }
         }
     }

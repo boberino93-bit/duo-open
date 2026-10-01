@@ -156,6 +156,47 @@ class Fold7ContinuityControllerTest {
     }
 
     @Test
+    fun fastFirstOpeningSampleWakesInnerExactlyOnce() {
+        val c = Fold7ContinuityController()
+        c.reset(0f, 0L, closedTopology)
+
+        val jump =
+            c.onHinge(
+                15f,
+                20L,
+                closedTopology,
+            )
+
+        assertEquals(
+            Fold7ContinuityController.State.OPENING_FROM_CLOSED,
+            c.state,
+        )
+        assertEquals(
+            1,
+            jump.actions.count {
+                it is Fold7ContinuityController.Action.WakeInner
+            },
+        )
+
+        val next =
+            c.onHinge(
+                15.5f,
+                40L,
+                closedTopology,
+            )
+
+        assertEquals(
+            Fold7ContinuityController.State.INNER_HANDOFF,
+            c.state,
+        )
+        assertTrue(
+            next.actions.none {
+                it is Fold7ContinuityController.Action.WakeInner
+            }
+        )
+    }
+
+    @Test
     fun steadySampleDuringEarlyOpeningDoesNotFallBackToNativeCover() {
         val c = Fold7ContinuityController()
         c.reset(0f, 0L, closedTopology)

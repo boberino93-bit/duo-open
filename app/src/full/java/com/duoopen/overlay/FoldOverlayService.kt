@@ -653,6 +653,12 @@ class FoldOverlayService : AccessibilityService() {
                     -1L,
                 ) ?: -1L
 
+            val innerPhysicalId =
+                result?.getLong(
+                    "innerPhysicalDisplayId",
+                    -1L,
+                ) ?: -1L
+
             val ok =
                 result?.getBoolean(
                     "ok",
@@ -661,7 +667,8 @@ class FoldOverlayService : AccessibilityService() {
 
             DuoDiagnostics.event(
                 "cover-route",
-                "prime reason=$reason physicalId=$physicalId ok=$ok",
+                "prime reason=$reason coverPhysicalId=$physicalId " +
+                    "innerPhysicalId=$innerPhysicalId ok=$ok",
             )
         }
     }
