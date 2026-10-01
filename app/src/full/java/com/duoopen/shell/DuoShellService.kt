@@ -428,7 +428,10 @@ class DuoShellService : Binder() {
                             stampCoverLeaseV3(base)
                         }
                     } catch (t: Throwable) {
-                        stampCoverLeaseV3(failureBundle("cover-lease-v3", t))
+                        // Do not manufacture an authoritative shellRevision
+                        // outside coverMutationExecutor. An unstamped failure
+                        // is intentionally rejected by the app-side V3 gate.
+                        failureBundle("cover-lease-v3", t)
                     } finally {
                         restoreCallingIdentity(identity)
                     }

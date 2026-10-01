@@ -80,6 +80,11 @@ internal class Fold7ContinuityFrameStore<T> {
         if (activeCycle != cycle) return null
         if (width <= 0 || height <= 0) return null
 
+        // A newer capture attempt supersedes the previous frame immediately.
+        // If this attempt later fails, current() must return null rather than
+        // resurrecting an older same-cycle image.
+        latest = null
+
         return CaptureTicket(
             serviceEpoch = cycle.serviceEpoch,
             closeCycleId = cycle.closeCycleId,
