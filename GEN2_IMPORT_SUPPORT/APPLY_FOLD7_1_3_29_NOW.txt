@@ -1,0 +1,1 @@
+Apply Fold7 1.3.29 deterministic frozen-frame + DeviceState early-wake integration, run full unit tests/build, upload the APK, then commit only production/test files.
