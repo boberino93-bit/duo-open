@@ -1,0 +1,175 @@
+name: Apply Fold7 1.3.29 Deterministic Early Wake Fix 2
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/apply-fold7-1.3.29-deterministic-early-wake-fix2.yml"
+      - "tools/apply_fold7_1_3_29_deterministic_early_wake_fix2.py"
+      - "GEN2_IMPORT_SUPPORT/APPLY_FOLD7_1_3_29_FIX2_NOW.txt"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-fold7-1-3-29-deterministic-early-wake-fix2
+  cancel-in-progress: false
+
+jobs:
+  apply-test-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify 1.3.28 production base
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'versionCode = 33' app/build.gradle.kts
+          grep -F 'versionName = "1.3.28-zfold7-cover-hold-fix"' app/build.gradle.kts
+          grep -F 'ensureSecondaryDisplayHeldV2(' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+          grep -F 'cover-route-reassert complete' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'private fun startLiveLoop()' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'class DisplayMirrorHost(' app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+          test ! -e app/src/full/java/com/duoopen/overlay/Fold7DeviceStateObserver.kt
+          ! grep -Fq 'versionCode = 34' app/build.gradle.kts
+
+      - name: Apply 1.3.29 Fix 2
+        run: python3 tools/apply_fold7_1_3_29_deterministic_early_wake_fix2.py
+
+      - name: Validate deterministic-frame and early-wake invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+
+          PANEL=app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          HOST=app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+          CTRL=app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          COORD=app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          SERVICE=app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          FEED=app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
+          OBSERVER=app/src/full/java/com/duoopen/overlay/Fold7DeviceStateObserver.kt
+
+          grep -F 'versionCode = 34' app/build.gradle.kts
+          grep -F 'versionName = "1.3.29-zfold7-deterministic-early-wake"' app/build.gradle.kts
+
+          grep -F 'private fun deterministicFrozenFrameMode(): Boolean' "$PANEL"
+          grep -F 'live recapture suppressed' "$PANEL"
+
+          grep -F 'private val frozenFrameProvider: () -> Bitmap?' "$HOST"
+          grep -F 'private fun drawFrozenFrame(' "$HOST"
+          grep -F 'continuity frozen frame bound' "$HOST"
+          grep -F 'falling back to live mirror' "$HOST"
+
+          grep -F 'fun onEarlyOpeningEdge(' "$CTRL"
+          grep -F 'reason = "device-state-opening-edge"' "$CTRL"
+          grep -F 'frozenFrameProvider = frozenInnerFrame' "$COORD"
+          grep -F 'fun kickPreciseBurst(' "$FEED"
+
+          grep -F 'PROPERTY_FOLDABLE_HARDWARE_CONFIGURATION_FOLD_IN_CLOSED' "$OBSERVER"
+          grep -F 'PROPERTY_FOLDABLE_HARDWARE_CONFIGURATION_FOLD_IN_HALF_OPEN' "$OBSERVER"
+          grep -F 'PROPERTY_FOLDABLE_HARDWARE_CONFIGURATION_FOLD_IN_OPEN' "$OBSERVER"
+          grep -F 'PROPERTY_FOLDABLE_DISPLAY_CONFIGURATION_OUTER_PRIMARY' "$OBSERVER"
+
+          ! grep -E 'folded(State|DeviceState).*=[[:space:]]*[0-9]+' "$OBSERVER"
+
+          grep -F 'const val INNER_WAKE_MIN_DEG = 3f' "$CTRL"
+          grep -F 'const val INNER_HANDOFF_MIN_DEG = 8f' "$CTRL"
+          grep -F 'const val COVER_PREWARM_DEG = 174f' "$CTRL"
+          grep -F 'const val COVER_VISUAL_START_DEG = 135f' "$CTRL"
+          grep -F 'const val COVER_VISUAL_HIDE_OPEN_DEG = 140f' "$CTRL"
+          grep -F 'const val OPEN_LATCH_DEG = 172f' "$CTRL"
+          grep -F 'const val OPEN_REARM_DEG = 166f' "$CTRL"
+
+          grep -F 'p.writeLong(parsedLine.pollSequence)' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'candidate-failed-preserved-current' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'ensureSecondaryDisplayHeldV2(' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+          grep -F 'cover-route-reassert complete' "$COORD"
+          grep -F 'mirrorLeaseCounter.incrementAndGet()' "$COORD"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Build and test 1.3.29 Fix 2
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Prepare tested APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deterministic-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" deterministic-build/DuoOpen-ZFold7-1.3.29-deterministic-early-wake-debug.apk
+          sha256sum deterministic-build/DuoOpen-ZFold7-1.3.29-deterministic-early-wake-debug.apk > deterministic-build/APK-SHA256.txt
+          {
+            echo "version=1.3.29-zfold7-deterministic-early-wake"
+            echo "versionCode=34"
+            echo "baseHead=$(git rev-parse HEAD)"
+            echo "change1=Fold7 PanelEngine transition snapshots stop live recapture/live blur"
+            echo "change2=DisplayMirrorHost prefers immutable cached inner snapshot; live SurfaceControl mirror is fallback only"
+            echo "change3=physical fully-closed DeviceState edge wakes inner before precise wallpaper angle"
+            echo "change4=device state never supplies geometry; precise Samsung angle remains authoritative"
+            echo "change5=service/Shizuku lifecycle diagnostics"
+            echo "tests=testFullDebugUnitTest"
+            echo "build=assembleFullDebug"
+          } > deterministic-build/BUILD-INFO.txt
+
+      - name: Upload tested APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-1.3.29-deterministic-early-wake-fix2
+          path: |
+            deterministic-build/DuoOpen-ZFold7-1.3.29-deterministic-early-wake-debug.apk
+            deterministic-build/APK-SHA256.txt
+            deterministic-build/BUILD-INFO.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Commit and push tested production fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add \
+            app/build.gradle.kts \
+            app/src/full/java/com/duoopen/overlay/PanelEngine.kt \
+            app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt \
+            app/src/full/java/com/duoopen/overlay/Fold7DeviceStateObserver.kt \
+            app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt \
+            app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt \
+            app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt
+
+          if ! git diff --cached --name-only | grep -q .; then
+            echo 'ERROR: no production/test changes staged.'
+            exit 1
+          fi
+
+          if git diff --cached --name-only | grep -q '^\.github/workflows/'; then
+            echo 'ERROR: workflow file unexpectedly staged.'
+            exit 1
+          fi
+
+          git diff --cached --check
+          git commit -m "Fold7 1.3.29: freeze continuity frames and wake inner early"
+          git push origin HEAD:main
