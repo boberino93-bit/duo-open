@@ -156,6 +156,48 @@ class Fold7ContinuityControllerTest {
     }
 
     @Test
+    fun steadySampleDuringEarlyOpeningDoesNotFallBackToNativeCover() {
+        val c = Fold7ContinuityController()
+        c.reset(0f, 0L, closedTopology)
+
+        c.onHinge(3.2f, 20L, closedTopology)
+        c.onHinge(8.2f, 40L, closedTopology)
+
+        val steady =
+            c.onHinge(
+                8.3f,
+                60L,
+                closedTopology,
+            )
+
+        assertEquals(
+            Fold7ContinuityController.State.INNER_HANDOFF,
+            c.state,
+        )
+        assertTrue(steady.actions.isEmpty())
+    }
+
+    @Test
+    fun reversingEarlyOpeningReturnsToNativeCover() {
+        val c = Fold7ContinuityController()
+        c.reset(0f, 0L, closedTopology)
+
+        c.onHinge(3.2f, 20L, closedTopology)
+        c.onHinge(8.2f, 40L, closedTopology)
+
+        c.onHinge(
+            7.0f,
+            60L,
+            closedTopology,
+        )
+
+        assertEquals(
+            Fold7ContinuityController.State.NATIVE_COVER,
+            c.state,
+        )
+    }
+
+    @Test
     fun reversalHidesMirrorAndReleasesSecondary() {
         val c = Fold7ContinuityController()
         c.reset(179f, 0L, openTopology)

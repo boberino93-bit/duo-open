@@ -1,0 +1,3 @@
+10bcfd8f45e27f0d8987af0ad4f617120953c44c7871ad8cb91431b32bc0236c  README-1.3.24-FIX1.md
+c5c1c56d442672af2c1c430f591e6d1b1785ebd0acb9e799fc3438accda43c8a  app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+bb2d472cf0821ba5452fdb7825c5905e1eeea55ea131c0581f70354ee2ee2fe1  app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt

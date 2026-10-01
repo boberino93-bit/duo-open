@@ -257,11 +257,24 @@ internal class Fold7ContinuityController(
             lastSampleMs = nowMs
         }
 
-        // Native cover ownership wins immediately near the closed endpoint.
+        /*
+         * Native cover ownership normally wins immediately near the closed
+         * endpoint. Exception: once deliberate opening has started, Samsung
+         * may still report the cover as native/default for several degrees
+         * while the physical inner panel wakes. Do not collapse that latched
+         * opening state back to NATIVE_COVER unless motion actually reverses
+         * toward closed.
+         */
+        val openingAwayFromNativeCover =
+            state in OPENING_STATES &&
+                angle >= INNER_WAKE_MIN_DEG &&
+                direction != Direction.CLOSING
+
         if (
             topology.nativeCover &&
             angle <= NATIVE_COVER_MAX_DEG &&
-            state != State.NATIVE_COVER
+            state != State.NATIVE_COVER &&
+            !openingAwayFromNativeCover
         ) {
             val wasVisual = state == State.COVER_VISUAL
             val hadSecondary = state in SECONDARY_STATES
