@@ -314,9 +314,34 @@ class PanelEngine(
         }
     }
 
-    /** Live blur needs no capture: the system blurs whatever is on screen. */
+    /**
+     * Fold7 transitions must be deterministic: once a transition frame is
+     * captured, changing app/system pixels underneath it must not change what
+     * the user sees while the hinge is stationary.
+     *
+     * Other device geometries keep the existing live-blur option.
+     */
+    private fun deterministicFrozenFrameMode(): Boolean {
+        val mode =
+            runCatching {
+                display.mode
+            }.getOrNull()
+                ?: return false
+
+        return (
+            mode.physicalWidth == 1968 &&
+                mode.physicalHeight == 2184
+            ) ||
+            (
+                mode.physicalWidth == 1080 &&
+                    mode.physicalHeight == 2520
+                )
+    }
+
+    /** Live blur is intentionally disabled on Fold7. */
     private fun liveMode(): Boolean =
-        DuoSettings.config.value.liveBlur &&
+        !deterministicFrozenFrameMode() &&
+            DuoSettings.config.value.liveBlur &&
             runCatching { windowManager.isCrossWindowBlurEnabled }.getOrDefault(false)
 
     private fun startEffect(afterSwap: Boolean, startTilt: Float? = null) {
@@ -568,7 +593,22 @@ class PanelEngine(
         }
         created.tilt = startTilt
         surface = created
-        if (bitmap != null && shellCapture()) startLiveLoop()
+        if (
+            bitmap != null &&
+            shellCapture()
+        ) {
+            if (
+                deterministicFrozenFrameMode()
+            ) {
+                com.duoopen.debug.DuoDiagnostics.event(
+                    "snapshot-transition",
+                    "frozen frame display=$displayId inner=$innerPanel " +
+                        "size=${bitmap.width}x${bitmap.height}; live recapture suppressed",
+                )
+            } else {
+                startLiveLoop()
+            }
+        }
         phase = Phase.SHOWING
         onShowingChanged()
         if (fadeIn) {

@@ -286,6 +286,32 @@ class WallpaperAngleFeed(
         if (running) runCatching { ensureAnchor() }
     }
 
+    /**
+     * Device-state edges accelerate acquisition only. Force the adaptive
+     * poller into its 8 ms burst and request a wallpaper sample immediately.
+     */
+    fun kickPreciseBurst(
+        reason: String,
+    ) {
+        if (!running) return
+
+        lastAngleChangeUptime =
+            SystemClock.uptimeMillis()
+
+        com.duoopen.debug.DuoDiagnostics.event(
+            "early-wake",
+            "precise-burst reason=$reason pollMs=$ACTIVE_POLL_MS",
+        )
+
+        handler.removeCallbacks(
+            poll
+        )
+
+        handler.post(
+            poll
+        )
+    }
+
     private fun onAngle(
         angle: Float,
         sourceUptime: Long,

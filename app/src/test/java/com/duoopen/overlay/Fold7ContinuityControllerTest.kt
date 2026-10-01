@@ -99,6 +99,73 @@ class Fold7ContinuityControllerTest {
     }
 
     @Test
+    fun deviceStateOpeningEdgeWakesBeforePreciseAngle() {
+        val c =
+            Fold7ContinuityController()
+
+        c.reset(
+            0f,
+            0L,
+            closedTopology,
+        )
+
+        val edge =
+            c.onEarlyOpeningEdge(
+                nowMs = 5L,
+                topology = closedTopology,
+            )
+
+        assertEquals(
+            Fold7ContinuityController.State.OPENING_FROM_CLOSED,
+            c.state,
+        )
+
+        assertEquals(
+            1,
+            edge.actions.count {
+                it is Fold7ContinuityController.Action.WakeInner
+            },
+        )
+
+        val duplicate =
+            c.onEarlyOpeningEdge(
+                nowMs = 10L,
+                topology = closedTopology,
+            )
+
+        assertTrue(
+            duplicate.actions.isEmpty()
+        )
+    }
+
+    @Test
+    fun deviceStateOpeningEdgeIsIgnoredWhenNotNativeCover() {
+        val c =
+            Fold7ContinuityController()
+
+        c.reset(
+            179f,
+            0L,
+            openTopology,
+        )
+
+        val edge =
+            c.onEarlyOpeningEdge(
+                nowMs = 5L,
+                topology = openTopology,
+            )
+
+        assertEquals(
+            Fold7ContinuityController.State.OPEN_INNER,
+            c.state,
+        )
+
+        assertTrue(
+            edge.actions.isEmpty()
+        )
+    }
+
+    @Test
     fun openingFromClosedWakesInnerAtThreeDegrees() {
         val c = Fold7ContinuityController()
         c.reset(0f, 0L, closedTopology)
