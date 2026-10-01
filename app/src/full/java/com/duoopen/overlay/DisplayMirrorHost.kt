@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
  *
  * Android's own MirrorSurfaceTest applies Transaction.setGeometry() directly
  * to the SurfaceControl returned by mirrorDisplay(). That is the operation
- * used here: sourceRect selects only the LEFT half of the 1968x2184 inner
+ * used here: sourceRect selects the RIGHT half of the 1968x2184 inner
  * display and destinationRect scales that pane to fill the 1080x2520 cover.
  *
  * No setCrop()/container-layer approximation is used in this pass.
@@ -287,9 +287,9 @@ internal class DisplayMirrorHost(
     }
 
     /**
-     * Draw the same canonical left-pane crop used by setGeometry:
-     * 1968x2184 inner -> left 984px pane -> crop outer edge to 936x2184,
-     * which is exactly the cover's 3:7 aspect ratio.
+     * Draw the same canonical right-pane crop used by setGeometry:
+     * 1968x2184 inner -> right 984px pane -> crop the outer edge to 936x2184,
+     * preserving the hinge edge. This is exactly the cover's 3:7 aspect ratio.
      */
     private fun drawFrozenFrame(
         canvas: Canvas,
@@ -314,8 +314,12 @@ internal class DisplayMirrorHost(
             return
         }
 
-        val paneWidth =
+        val paneLeft =
             (bitmap.width / 2)
+                .coerceIn(0, bitmap.width - 1)
+
+        val paneWidth =
+            (bitmap.width - paneLeft)
                 .coerceAtLeast(1)
 
         val paneHeight =
@@ -334,15 +338,15 @@ internal class DisplayMirrorHost(
                     paneWidth,
                 )
 
-        val sourceLeft =
-            paneWidth -
+        val sourceRight =
+            paneLeft +
                 canonicalPaneWidth
 
         val sourceRect =
             Rect(
-                sourceLeft,
+                paneLeft,
                 0,
-                paneWidth,
+                sourceRight,
                 paneHeight,
             )
 
@@ -453,7 +457,7 @@ internal class DisplayMirrorHost(
         frozenPaneView.invalidate()
 
         onStatus(
-            "FROZEN LEFT PANE: inner snapshot → cover $displayId."
+            "FROZEN RIGHT PANE: inner snapshot → cover $displayId."
         )
 
         com.duoopen.debug.DuoDiagnostics.event(
@@ -671,7 +675,7 @@ internal class DisplayMirrorHost(
                 }
 
                 onStatus(
-                    "LEFT PANE GEOMETRY LIVE: inner ${source.displayId} → cover $displayId."
+                    "RIGHT PANE GEOMETRY LIVE: inner ${source.displayId} → cover $displayId."
                 )
             }
         }
@@ -708,17 +712,22 @@ internal class DisplayMirrorHost(
             return false
         }
 
-        val paneWidth =
+        val paneLeft =
             (sourceWidth / 2)
+                .coerceIn(0, sourceWidth - 1)
+
+        val paneWidth =
+            (sourceWidth - paneLeft)
                 .coerceAtLeast(1)
 
         val paneHeight = sourceHeight
 
         /*
          * Canonical projection: preserve the hinge edge and crop only the
-         * outer edge of the left inner pane so source and cover have exactly
-         * the same aspect ratio. On Fold7 this is 936x2184 -> 1080x2520,
-         * both exactly 3:7. No destination overscan or non-uniform stretch.
+         * outer edge of the right inner pane so source and cover have exactly
+         * the same aspect ratio. On Fold7 this is x=984..1920 (936x2184)
+         * -> 1080x2520, both exactly 3:7. No destination overscan or
+         * non-uniform stretch.
          */
         val canonicalPaneWidth =
             (
@@ -728,14 +737,14 @@ internal class DisplayMirrorHost(
                 ).toInt()
                 .coerceIn(1, paneWidth)
 
-        val sourceLeft =
-            paneWidth - canonicalPaneWidth
+        val sourceRight =
+            paneLeft + canonicalPaneWidth
 
         val sourceRect =
             Rect(
-                sourceLeft,
+                paneLeft,
                 0,
-                paneWidth,
+                sourceRight,
                 paneHeight,
             )
 

@@ -163,6 +163,59 @@ class Fold7Gen2OwnershipTest {
     }
 
     @Test
+    fun frameStore_newCaptureRevokesOlderSameCycleFrame() {
+        val envelope = Fold7CycleEnvelope(9L)
+        val store = Fold7ContinuityFrameStore<String>()
+        val cycle = envelope.beginClose(100L)
+        store.beginCycle(cycle)
+
+        val first =
+            store.beginCapture(
+                cycle,
+                width = 1968,
+                height = 2184,
+                requestStartedUptimeMs = 110L,
+                source = Fold7ContinuityFrameStore.Source.SHIZUKU,
+            )!!
+
+        assertNotNull(
+            store.publish(
+                first,
+                capturedUptimeMs = 115L,
+                completedUptimeMs = 120L,
+                timestampQuality = Fold7ContinuityFrameStore.TimestampQuality.REQUEST_BOUNDED,
+                payload = "first",
+            ),
+        )
+        assertNotNull(store.current(cycle, 121L, 10_000L, 1968, 2184))
+
+        val second =
+            store.beginCapture(
+                cycle,
+                width = 1968,
+                height = 2184,
+                requestStartedUptimeMs = 122L,
+                source = Fold7ContinuityFrameStore.Source.SHIZUKU,
+            )!!
+
+        assertNull(store.current(cycle, 123L, 10_000L, 1968, 2184))
+
+        assertNotNull(
+            store.publish(
+                second,
+                capturedUptimeMs = 124L,
+                completedUptimeMs = 125L,
+                timestampQuality = Fold7ContinuityFrameStore.TimestampQuality.REQUEST_BOUNDED,
+                payload = "second",
+            ),
+        )
+        assertEquals(
+            "second",
+            store.current(cycle, 126L, 10_000L, 1968, 2184)?.payload,
+        )
+    }
+
+    @Test
     fun presentationLease_rejectsLateOldAttempt() {
         val p = Fold7PresentationLease()
         p.openHost()
