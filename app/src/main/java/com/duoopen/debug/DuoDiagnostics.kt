@@ -25,6 +25,19 @@ object DuoDiagnostics {
     private const val MAX_FILE_BYTES = 1_000_000L
     private const val KEEP_BYTES = 500_000
 
+    /**
+     * Optional synchronous observation tap.
+     *
+     * The full-edition Transition Lab installs this in debug builds so existing
+     * state-machine diagnostics can be timestamped in the same monotonic domain
+     * as hinge/frame/surface events. The observer must remain fast and must not
+     * call [event], which would recurse.
+     */
+    @Volatile
+    var observer:
+        ((category: String, message: String, timeNs: Long) -> Unit)? =
+        null
+
     private val lock = Any()
     private val lines = ArrayDeque<String>(MAX_LINES)
     private val writer = Executors.newSingleThreadExecutor { r ->
@@ -80,6 +93,9 @@ object DuoDiagnostics {
     ) {
         if (!ready) return
 
+        val eventTimeNs =
+            System.nanoTime()
+
         val suffix =
             error?.let {
                 " error=${it.javaClass.simpleName}:${it.message}"
@@ -87,6 +103,23 @@ object DuoDiagnostics {
 
         val line =
             "${Instant.now()} uptime=${SystemClock.uptimeMillis()} [$category] $message$suffix"
+
+        observer?.let { sink ->
+            runCatching {
+                sink(
+                    category,
+                    message + suffix,
+                    eventTimeNs,
+                )
+            }.onFailure {
+                // Never recurse through event() if the observation-only tap fails.
+                Log.w(
+                    TAG,
+                    "diagnostic observer failed",
+                    it,
+                )
+            }
+        }
 
         synchronized(lock) {
             pushLocked(line)
