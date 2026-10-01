@@ -1,0 +1,1 @@
+Trigger Batch C Fix 2. Preflight now matches the actual existing positional call `HingeAngleSource(context, ::onHingeAngle)`.
