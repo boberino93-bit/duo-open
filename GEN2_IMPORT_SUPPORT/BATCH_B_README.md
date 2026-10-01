@@ -14,3 +14,11 @@ It only establishes the transport contract required by the next batch:
 
 The included workflow applies this patch, runs `testFullDebugUnitTest` and
 `assembleFullDebug`, and commits only if those checks pass.
+
+
+## Fix 1
+The first apply attempt correctly refused to commit after Kotlin compilation failed.
+The only compiler error was the compatibility wrapper calling `startAnglesSequenced`
+with the obsolete named argument `action=` after the callee parameter became
+`actionPrefix`. This package corrects it to `actionPrefix = action` and adds a
+workflow/postcondition assertion for that exact call shape.

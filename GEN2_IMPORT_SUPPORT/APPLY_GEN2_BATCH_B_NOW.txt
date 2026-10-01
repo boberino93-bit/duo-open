@@ -1,2 +1,2 @@
-Upload marker for Gen-2 Batch B.
-This file intentionally triggers the apply workflow once when uploaded to main.
+Trigger Gen-2 Batch B Fix 1 apply/test/commit workflow.
+Retry reason: compatibility wrapper named argument corrected from action to actionPrefix.

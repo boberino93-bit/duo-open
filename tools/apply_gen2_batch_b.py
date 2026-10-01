@@ -180,7 +180,7 @@ new_bridge = '''    /** Receives angles from the shell-side wallpaper log reader
         onAngle: (Float, Long, Long) -> Unit,
     ): Boolean =
         startAnglesSequenced(
-            action = action,
+            actionPrefix = action,
         ) { angle, sourceUptime, binderArrivalTimeNs, _ ->
             onAngle(
                 angle,
@@ -342,6 +342,7 @@ print(f"patched shell reader sequence identity: {shell}")
 
 # Postconditions: old callers still compile, new caller contract is available.
 require(bridge, 'fun startAnglesSequenced(', 'bridge postcondition')
+require(bridge, 'actionPrefix = action,', 'bridge compatibility named-argument postcondition')
 require(bridge, 'pollSequence,', 'bridge pollSequence postcondition')
 require(shell, 'p.writeLong(parsedLine.pollSequence)', 'shell callback postcondition')
 require(shell, 'action.startsWith("$actionPrefix:")', 'shell action correlation postcondition')

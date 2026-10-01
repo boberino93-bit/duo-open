@@ -46,6 +46,7 @@ jobs:
           set -euo pipefail
           git diff --check
           grep -F 'fun startAnglesSequenced(' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+          grep -F 'actionPrefix = action,' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
           grep -F 'p.writeLong(parsedLine.pollSequence)' app/src/full/java/com/duoopen/shell/DuoShellService.kt
           grep -F 'action.startsWith("$actionPrefix:")' app/src/full/java/com/duoopen/shell/DuoShellService.kt
 
