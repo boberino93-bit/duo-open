@@ -16,6 +16,7 @@ import java.io.InputStreamReader
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.ObjIntConsumer
@@ -49,6 +50,26 @@ class DuoShellService : Binder() {
 
     private var liveMirror: SurfaceControl? = null
 
+    private val mirrorLeaseArbiter =
+        Fold7MirrorLeaseArbiter()
+
+    private val mirrorMutationExecutor =
+        Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "duo-mirror-mutation").apply {
+                isDaemon = true
+            }
+        }
+
+    private val coverPanelLease =
+        Fold7CoverPanelLease()
+
+    private val coverMutationExecutor =
+        Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "duo-cover-lease-mutation").apply {
+                isDaemon = true
+            }
+        }
+
     @Volatile
     private var cachedCoverPhysicalDisplayId =
         -1L
@@ -68,7 +89,13 @@ class DuoShellService : Binder() {
         }
         if (code == SHIZUKU_DESTROY) {
             reader?.stop()
-            stopLiveMirror()
+            runCatching {
+                mirrorMutationExecutor.submit {
+                    stopLiveMirror()
+                }.get(1, TimeUnit.SECONDS)
+            }
+            mirrorMutationExecutor.shutdownNow()
+            coverMutationExecutor.shutdownNow()
             System.exit(0)
             return true
         }
@@ -262,12 +289,98 @@ class DuoShellService : Binder() {
                 out.writeBundle(result)
             }
 
+            ShellProtocol.OPEN_MIRROR_SESSION -> {
+                val identity = clearCallingIdentity()
+                val result =
+                    try {
+                        runMirrorMutation {
+                            openMirrorSessionV2()
+                        }
+                    } catch (t: Throwable) {
+                        failureBundle("open-mirror-session", t)
+                    } finally {
+                        restoreCallingIdentity(identity)
+                    }
+                out.writeNoException()
+                out.writeBundle(result)
+            }
+
+            ShellProtocol.MIRROR_DISPLAY_V2 -> {
+                val operation = data.readInt()
+                val session = data.readLong()
+                val sequence = data.readLong()
+                val leaseId = data.readLong()
+                val sourceDisplayId =
+                    if (operation == 1 && data.dataAvail() >= Integer.BYTES) {
+                        data.readInt()
+                    } else {
+                        -1
+                    }
+
+                val identity = clearCallingIdentity()
+                val result =
+                    try {
+                        runMirrorMutation {
+                            when (operation) {
+                                1 -> startLiveMirrorV2(session, sequence, leaseId, sourceDisplayId)
+                                0 -> stopLiveMirrorV2(session, sequence, leaseId)
+                                2 -> forceStopLiveMirrorV2(session, sequence)
+                                else -> Bundle().apply {
+                                    putBoolean("ok", false)
+                                    putString("error", "unknown mirror V2 operation $operation")
+                                }
+                            }
+                        }
+                    } catch (t: Throwable) {
+                        failureBundle("mirror-v2", t)
+                    } finally {
+                        restoreCallingIdentity(identity)
+                    }
+
+                out.writeNoException()
+                out.writeBundle(result)
+            }
+
+            ShellProtocol.COVER_PANEL_LEASE_V2 -> {
+                val operation = data.readInt()
+                val ownerGeneration = data.readLong()
+                val reason = data.readString() ?: "unspecified"
+                val identity = clearCallingIdentity()
+                val result =
+                    try {
+                        runCoverMutation {
+                            when (operation) {
+                                1 -> prewarmCoverLeaseV2(ownerGeneration)
+                                2 -> releaseCoverLeaseV2(ownerGeneration, reason)
+                                3 -> reconcileCoverLeaseV2(reason)
+                                4 -> coverLeaseBundle("status", true)
+                                else -> Bundle().apply {
+                                    putBoolean("ok", false)
+                                    putString("error", "unknown cover lease V2 operation $operation")
+                                }
+                            }
+                        }
+                    } catch (t: Throwable) {
+                        failureBundle("cover-lease-v2", t)
+                    } finally {
+                        restoreCallingIdentity(identity)
+                    }
+                out.writeNoException()
+                out.writeBundle(result)
+            }
+
             ShellProtocol.MIRROR_DISPLAY -> {
                 val enable = data.readInt() != 0
                 val identity = clearCallingIdentity()
 
                 val result = try {
-                    if (!enable) {
+                    if (mirrorLeaseArbiter.snapshot().activeSession > 0L) {
+                        Bundle().apply {
+                            putBoolean("ok", false)
+                            putBoolean("enabled", enable)
+                            putString("error", "legacy mirror mutation rejected while V2 session is active")
+                        }
+                    } else if (!enable) {
                         stopLiveMirror()
 
                         Bundle().apply {
@@ -504,6 +617,31 @@ class DuoShellService : Binder() {
                 )
             )
     }
+
+    private fun failureBundle(
+        operation: String,
+        error: Throwable,
+    ): Bundle {
+        var root = error
+        while (root.cause != null) root = root.cause!!
+        return Bundle().apply {
+            putBoolean("ok", false)
+            putString("operation", operation)
+            putString("error", "${root.javaClass.simpleName}: ${root.message}")
+        }
+    }
+
+    private fun runMirrorMutation(
+        block: () -> Bundle,
+    ): Bundle =
+        mirrorMutationExecutor.submit<Bundle> { block() }
+            .get(4, TimeUnit.SECONDS)
+
+    private fun runCoverMutation(
+        block: () -> Bundle,
+    ): Bundle =
+        coverMutationExecutor.submit<Bundle> { block() }
+            .get(4, TimeUnit.SECONDS)
 
     // ---- Fold7 physical-panel-safe continuity ----------------------------
 
@@ -860,6 +998,212 @@ class DuoShellService : Binder() {
         }
     }
 
+    private fun logicalDisplayIdsDirect(): IntArray {
+        val dm = displayManagerService()
+        val api = Class.forName("android.hardware.display.IDisplayManager")
+
+        val withDisabled =
+            api.methods.firstOrNull { method ->
+                method.name == "getDisplayIds" &&
+                    method.parameterCount == 1 &&
+                    method.parameterTypes[0] == java.lang.Boolean.TYPE
+            }
+
+        val noArgs =
+            api.methods.firstOrNull { method ->
+                method.name == "getDisplayIds" &&
+                    method.parameterCount == 0
+            }
+
+        val value =
+            when {
+                withDisabled != null -> withDisabled.invoke(dm, true)
+                noArgs != null -> noArgs.invoke(dm)
+                else -> null
+            }
+
+        return value as? IntArray ?: intArrayOf()
+    }
+
+    private fun directGeometry(
+        logicalId: Int,
+    ): Pair<Int, Int>? {
+        val info = displayInfoForLogicalId(logicalId) ?: return null
+        val width = runCatching {
+            info.javaClass.getField("logicalWidth").getInt(info)
+        }.getOrDefault(-1)
+        val height = runCatching {
+            info.javaClass.getField("logicalHeight").getInt(info)
+        }.getOrDefault(-1)
+        return if (width > 0 && height > 0) width to height else null
+    }
+
+    private fun directCoverRoute(): Pair<Int, Long>? {
+        val directIds =
+            runCatching { logicalDisplayIdsDirect().toList() }
+                .getOrDefault(emptyList())
+
+        val candidates =
+            directIds.mapNotNull { id ->
+                if (id == Display.DEFAULT_DISPLAY) return@mapNotNull null
+                if (directGeometry(id) != (1080 to 2520)) return@mapNotNull null
+                id to physicalDisplayIdFromLogical(id)
+            }
+
+        val ownedPhysical =
+            coverPanelLease.snapshot().physicalId
+                ?: cachedCoverPhysicalDisplayId.takeIf { it >= 0L }
+
+        candidates.firstOrNull { (_, physical) ->
+            ownedPhysical != null && physical == ownedPhysical
+        }?.let { return it }
+
+        candidates.firstOrNull()?.let { return it }
+
+        // Compatibility fallback only when hidden direct enumeration is unavailable.
+        val legacyId = resolveFreshCoverLogicalId(-1)
+        return if (legacyId >= 0) {
+            legacyId to physicalDisplayIdFromLogical(legacyId)
+        } else {
+            null
+        }
+    }
+
+    private fun coverLeaseTopology(): Fold7CoverPanelLease.Topology {
+        val defaultGeometry = directGeometry(Display.DEFAULT_DISPLAY)
+        val route = directCoverRoute()
+
+        return Fold7CoverPanelLease.Topology(
+            nativeCover = defaultGeometry == (1080 to 2520),
+            innerIsDefault = defaultGeometry == (1968 to 2184),
+            coverSecondaryLogicalId = route?.first,
+            coverSecondaryPhysicalId = route?.second?.takeIf { it >= 0L },
+        )
+    }
+
+    private fun executeCoverLeaseActions(
+        actions: List<Fold7CoverPanelLease.Action>,
+    ): Boolean? {
+        var lastResetResult: Boolean? = null
+        for (action in actions) {
+            when (action) {
+                is Fold7CoverPanelLease.Action.PowerPhysicalCover -> Unit
+                is Fold7CoverPanelLease.Action.ResetLogicalCoverPower -> {
+                    val fresh = coverLeaseTopology()
+                    val ownedPhysical = coverPanelLease.snapshot().physicalId
+                    val stillSafe =
+                        fresh.innerIsDefault &&
+                            fresh.coverSecondaryLogicalId == action.logicalId &&
+                            fresh.coverSecondaryPhysicalId != null &&
+                            (ownedPhysical == null || fresh.coverSecondaryPhysicalId == ownedPhysical)
+
+                    val ok =
+                        stillSafe &&
+                            runCatching {
+                                requestDisplayPowerInternal(
+                                    action.logicalId,
+                                    Display.STATE_UNKNOWN,
+                                )
+                            }.getOrDefault(false)
+
+                    lastResetResult = ok
+                    coverPanelLease.onLogicalResetResult(
+                        action.leaseId,
+                        action.epoch,
+                        action.logicalId,
+                        ok,
+                    )
+                }
+            }
+        }
+        return lastResetResult
+    }
+
+    private fun coverLeaseBundle(
+        operation: String,
+        ok: Boolean,
+        resetResult: Boolean? = null,
+    ): Bundle {
+        val snapshot = coverPanelLease.snapshot()
+        return Bundle().apply {
+            putBoolean("ok", ok)
+            putString("operation", operation)
+            putString("leaseState", snapshot.state.name)
+            putLong("leaseId", snapshot.leaseId)
+            putLong("leaseEpoch", snapshot.epoch)
+            putLong("ownerGeneration", snapshot.ownerGeneration)
+            putLong("physicalDisplayId", snapshot.physicalId ?: -1L)
+            putString("pendingReleaseReason", snapshot.pendingReleaseReason)
+            putBoolean("released", snapshot.state == Fold7CoverPanelLease.State.IDLE)
+            putBoolean(
+                "releasePending",
+                snapshot.state == Fold7CoverPanelLease.State.RELEASE_PENDING ||
+                    snapshot.state == Fold7CoverPanelLease.State.UNKNOWN_RECOVERY,
+            )
+            if (resetResult != null) putBoolean("logicalResetOk", resetResult)
+        }
+    }
+
+    private fun prewarmCoverLeaseV2(
+        ownerGeneration: Long,
+    ): Bundle {
+        if (ownerGeneration < 0L) {
+            return coverLeaseBundle("prewarm", false)
+        }
+
+        val actions = coverPanelLease.beginPrewarm(ownerGeneration)
+        var physicalOk = true
+
+        for (action in actions) {
+            if (action is Fold7CoverPanelLease.Action.PowerPhysicalCover) {
+                val physicalId = resolveFold7CoverPhysicalDisplayId(-1)
+                val (powered, _) = setPhysicalPowerNormal(physicalId)
+                physicalOk = powered
+                val followUp = coverPanelLease.onPhysicalPrewarmResult(
+                    action.leaseId,
+                    action.epoch,
+                    powered,
+                    physicalId.takeIf { it >= 0L },
+                    coverLeaseTopology(),
+                )
+                executeCoverLeaseActions(followUp)
+            }
+        }
+
+        val snapshot = coverPanelLease.snapshot()
+        val adopted = actions.isEmpty() && snapshot.state != Fold7CoverPanelLease.State.IDLE
+        return coverLeaseBundle("prewarm", physicalOk || adopted)
+    }
+
+    private fun releaseCoverLeaseV2(
+        ownerGeneration: Long,
+        reason: String,
+    ): Bundle {
+        val before = coverPanelLease.snapshot()
+        if (before.state == Fold7CoverPanelLease.State.IDLE) {
+            return coverLeaseBundle("release", true)
+        }
+        if (ownerGeneration != before.ownerGeneration) {
+            return coverLeaseBundle("release-stale-owner", false)
+        }
+
+        val actions = coverPanelLease.requestRelease(
+            ownerGeneration,
+            reason,
+            coverLeaseTopology(),
+        )
+        val reset = executeCoverLeaseActions(actions)
+        return coverLeaseBundle("release", true, reset)
+    }
+
+    private fun reconcileCoverLeaseV2(
+        reason: String,
+    ): Bundle {
+        val actions = coverPanelLease.onTopology(coverLeaseTopology())
+        val reset = executeCoverLeaseActions(actions)
+        return coverLeaseBundle("reconcile:$reason", true, reset)
+    }
+
     private fun secondaryDisplayCommand(
         enable: Boolean,
         targetHint: Int,
@@ -1061,34 +1405,28 @@ class DuoShellService : Binder() {
 
     // ---- live logical-display mirror ---------------------------------------
 
-    private fun stopLiveMirror() {
-        val current =
-            liveMirror
-                ?: return
-
-        liveMirror =
-            null
-
+    private fun releaseMirrorSurface(
+        mirror: SurfaceControl?,
+    ) {
+        val current = mirror ?: return
         runCatching {
             SurfaceControl.Transaction().use { tx ->
-                tx.reparent(
-                    current,
-                    null,
-                )
+                tx.reparent(current, null)
                 tx.apply()
             }
         }
-
-        runCatching {
-            current.release()
-        }
+        runCatching { current.release() }
     }
 
-    private fun createLiveMirror(
-        sourceDisplayId: Int,
-    ): Bundle {
-        stopLiveMirror()
+    private fun stopLiveMirror() {
+        val current = liveMirror ?: return
+        liveMirror = null
+        releaseMirrorSurface(current)
+    }
 
+    private fun createMirrorCandidate(
+        sourceDisplayId: Int,
+    ): SurfaceControl {
         val wm =
             systemService(
                 "window",
@@ -1106,9 +1444,7 @@ class DuoShellService : Binder() {
             SurfaceControl::class.java
                 .getDeclaredConstructor()
                 .let { constructor ->
-                    constructor.isAccessible =
-                        true
-
+                    constructor.isAccessible = true
                     constructor.newInstance()
                 }
 
@@ -1123,42 +1459,137 @@ class DuoShellService : Binder() {
                 wm,
                 sourceDisplayId,
                 mirror,
-            ) as? Boolean
-                ?: false
+            ) as? Boolean ?: false
 
-        if (
-            !mirrored ||
-            !mirror.isValid
-        ) {
-            runCatching {
-                mirror.release()
-            }
-
+        if (!mirrored || !mirror.isValid) {
+            runCatching { mirror.release() }
             throw IllegalStateException(
                 "WindowManager mirrorDisplay($sourceDisplayId) returned no valid surface"
             )
         }
 
-        liveMirror =
-            mirror
+        return mirror
+    }
+
+    private fun openMirrorSessionV2(): Bundle {
+        val previous = liveMirror
+        liveMirror = null
+        val opened = mirrorLeaseArbiter.openSession()
+        releaseMirrorSurface(previous)
+        return Bundle().apply {
+            putBoolean("ok", true)
+            putLong("mirrorSession", opened.session)
+            putLong("releasedPreviousLease", opened.previousLeaseId ?: -1L)
+        }
+    }
+
+    private fun startLiveMirrorV2(
+        session: Long,
+        sequence: Long,
+        leaseId: Long,
+        sourceDisplayId: Int,
+    ): Bundle {
+        val ticket =
+            mirrorLeaseArbiter.reserveStart(
+                session, sequence, leaseId, sourceDisplayId,
+            ) ?: return Bundle().apply {
+                putBoolean("ok", false)
+                putBoolean("stale", true)
+                putString("decision", "start-rejected")
+            }
+
+        val candidate =
+            try {
+                createMirrorCandidate(sourceDisplayId)
+            } catch (t: Throwable) {
+                mirrorLeaseArbiter.failStart(ticket)
+                return failureBundle("mirror-candidate-preserved-current", t).apply {
+                    putString("decision", "candidate-failed-preserved-current")
+                    putLong("mirrorSession", session)
+                    putLong("mirrorSequence", sequence)
+                    putLong("mirrorLeaseId", leaseId)
+                }
+            }
+
+        val committed = mirrorLeaseArbiter.commitStart(ticket)
+        if (!committed.accepted) {
+            releaseMirrorSurface(candidate)
+            return Bundle().apply {
+                putBoolean("ok", false)
+                putBoolean("stale", true)
+                putString("decision", committed.reason)
+            }
+        }
+
+        val previous = liveMirror
+        liveMirror = candidate
+        if (previous !== candidate) releaseMirrorSurface(previous)
 
         return Bundle().apply {
             putBoolean("ok", true)
             putBoolean("enabled", true)
-            putInt(
-                "sourceDisplayId",
-                sourceDisplayId,
-            )
+            putString("decision", committed.reason)
+            putLong("mirrorSession", session)
+            putLong("mirrorSequence", sequence)
+            putLong("mirrorLeaseId", leaseId)
+            putLong("previousLeaseId", committed.previousLeaseId ?: -1L)
+            putInt("sourceDisplayId", sourceDisplayId)
+            putParcelable("mirrorSurface", candidate)
+        }
+    }
 
-            /*
-             * SurfaceControl is Parcelable. This duplicates the handle into the
-             * normal app process, which can then attach it to its own window
-             * using AttachedSurfaceControl.buildReparentTransaction().
-             */
-            putParcelable(
-                "mirrorSurface",
-                mirror,
-            )
+    private fun stopLiveMirrorV2(
+        session: Long,
+        sequence: Long,
+        leaseId: Long,
+    ): Bundle {
+        val result = mirrorLeaseArbiter.stop(session, sequence, leaseId)
+        if (result.releaseCurrent) {
+            val current = liveMirror
+            liveMirror = null
+            releaseMirrorSurface(current)
+        }
+        return Bundle().apply {
+            putBoolean("ok", result.accepted)
+            putBoolean("enabled", !result.releaseCurrent)
+            putString("decision", result.reason)
+            putLong("mirrorSession", session)
+            putLong("mirrorSequence", sequence)
+            putLong("mirrorLeaseId", leaseId)
+        }
+    }
+
+    private fun forceStopLiveMirrorV2(
+        session: Long,
+        sequence: Long,
+    ): Bundle {
+        val result = mirrorLeaseArbiter.forceStop(session, sequence)
+        if (result.releaseCurrent) {
+            val current = liveMirror
+            liveMirror = null
+            releaseMirrorSurface(current)
+        }
+        return Bundle().apply {
+            putBoolean("ok", result.accepted)
+            putBoolean("enabled", false)
+            putString("decision", result.reason)
+            putLong("mirrorSession", session)
+            putLong("mirrorSequence", sequence)
+        }
+    }
+
+    /** Legacy fallback used only before a V2 session is opened. */
+    private fun createLiveMirror(
+        sourceDisplayId: Int,
+    ): Bundle {
+        stopLiveMirror()
+        val mirror = createMirrorCandidate(sourceDisplayId)
+        liveMirror = mirror
+        return Bundle().apply {
+            putBoolean("ok", true)
+            putBoolean("enabled", true)
+            putInt("sourceDisplayId", sourceDisplayId)
+            putParcelable("mirrorSurface", mirror)
         }
     }
 

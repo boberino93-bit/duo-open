@@ -32,6 +32,9 @@ class DisplayMirrorHost(
     private val service: AccessibilityService,
     val display: Display,
     private val scope: CoroutineScope,
+    private val mirrorSession: Long,
+    private val mirrorLeaseId: Long,
+    private val nextMirrorSequence: () -> Long,
     private val onStatus: (String) -> Unit,
 ) {
     val displayId: Int = display.displayId
@@ -57,6 +60,7 @@ class DisplayMirrorHost(
     private var generation = 0
     private var mirrorSourceKey: String? = null
     private var appMirror: SurfaceControl? = null
+    @Volatile private var shellStopRequested = false
     private var latestHingeAngle = Float.NaN
     private var lastHingeTimeMs = 0L
     private var hingeVelocityDegPerSec = 0f
@@ -303,9 +307,13 @@ class DisplayMirrorHost(
                 "cover $displayId…"
         )
 
+        val mirrorSequence = nextMirrorSequence()
         scope.launch(Dispatchers.IO) {
             val result =
-                ShizukuBridge.startDisplayMirror(
+                ShizukuBridge.startDisplayMirrorV2(
+                    session = mirrorSession,
+                    sequence = mirrorSequence,
+                    leaseId = mirrorLeaseId,
                     sourceDisplayId = source.displayId,
                 )
 
@@ -349,6 +357,7 @@ class DisplayMirrorHost(
                     com.duoopen.debug.DuoDiagnostics.event(
                         "live-mirror",
                         "geometry bind failed reason=$reason " +
+                            "session=$mirrorSession lease=$mirrorLeaseId " +
                             "source=${source.displayId} " +
                             "destination=$displayId error=$detail",
                     )
@@ -371,6 +380,7 @@ class DisplayMirrorHost(
                 if (!applied) {
                     releaseAppMirror()
                     mirrorSourceKey = null
+                    requestShellStop("geometry-apply-failed")
                     return@post
                 }
 
@@ -568,7 +578,34 @@ class DisplayMirrorHost(
         }
     }
 
+    private fun requestShellStop(
+        reason: String,
+    ) {
+        if (shellStopRequested) return
+        shellStopRequested = true
+
+        val sequence = nextMirrorSequence()
+        scope.launch(Dispatchers.IO) {
+            val result =
+                runCatching {
+                    ShizukuBridge.stopDisplayMirrorV2(
+                        session = mirrorSession,
+                        sequence = sequence,
+                        leaseId = mirrorLeaseId,
+                    )
+                }.getOrNull()
+
+            com.duoopen.debug.DuoDiagnostics.event(
+                "live-mirror",
+                "lease stop reason=$reason session=$mirrorSession " +
+                    "sequence=$sequence lease=$mirrorLeaseId " +
+                    "decision=${result?.getString("decision")}",
+            )
+        }
+    }
+
     fun detach() {
+        requestShellStop("host-detach")
         generation++
         mirrorSourceKey = null
         releaseAppMirror()

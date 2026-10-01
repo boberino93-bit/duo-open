@@ -17,5 +17,10 @@ object ShellProtocol {
     const val RESOLVE_COVER_DISPLAY = 11
     const val WAKE_INNER_DISPLAY = 12
 
+    // Generation-2 privileged resource ownership. Legacy codes remain for fallback.
+    const val OPEN_MIRROR_SESSION = 13
+    const val MIRROR_DISPLAY_V2 = 14
+    const val COVER_PANEL_LEASE_V2 = 15
+
     const val CB_ANGLE = 1
 }
