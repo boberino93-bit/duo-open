@@ -43,6 +43,7 @@ internal class Fold7ContinuityCoordinator(
     private val mirrorLeaseCounter = AtomicLong(0L)
 
     @Volatile private var coverLeaseOwnerGeneration = -1L
+    @Volatile private var coverRouteReassertInFlight = false
     @Volatile private var destroyed = false
 
     val visualMirrorActive: Boolean
@@ -110,6 +111,24 @@ internal class Fold7ContinuityCoordinator(
 
         apply(decision)
         reconcileCoverLease("topology:$reason")
+
+        val currentTopology =
+            topology()
+
+        if (
+            (
+                controller.state ==
+                    Fold7ContinuityController.State.COVER_READY_HIDDEN ||
+                controller.state ==
+                    Fold7ContinuityController.State.COVER_VISUAL
+                ) &&
+            currentTopology.innerActive &&
+            !currentTopology.coverActive
+        ) {
+            ensureCoverRouteHeld(
+                "topology:$reason"
+            )
+        }
 
         if (visualMirrorActive) {
             syncMirrorHost(
@@ -181,6 +200,7 @@ internal class Fold7ContinuityCoordinator(
         mirrorSession = 0L
         mirrorSessionOpening = false
         mirrorSequence.set(0L)
+        coverRouteReassertInFlight = false
     }
 
     private fun apply(
@@ -340,6 +360,18 @@ internal class Fold7ContinuityCoordinator(
 
         mirrorRequested = true
         mirrorGeneration = generation
+
+        val currentTopology =
+            topology()
+
+        if (
+            currentTopology.innerActive &&
+            !currentTopology.coverActive
+        ) {
+            ensureCoverRouteHeld(
+                "state-show"
+            )
+        }
 
         syncMirrorHost(
             reason = "state-show",
@@ -594,6 +626,124 @@ internal class Fold7ContinuityCoordinator(
         )
     }
 
+    private fun ensureCoverRouteHeld(
+        reason: String,
+    ) {
+        if (
+            destroyed ||
+            !ShizukuBridge.ready ||
+            coverRouteReassertInFlight
+        ) {
+            return
+        }
+
+        if (
+            controller.state !=
+                Fold7ContinuityController.State.COVER_READY_HIDDEN &&
+            controller.state !=
+                Fold7ContinuityController.State.COVER_VISUAL
+        ) {
+            return
+        }
+
+        val owner =
+            coverLeaseOwnerGeneration
+
+        if (owner < 0L) {
+            DuoDiagnostics.event(
+                "fold7-state",
+                "cover-route-reassert skipped reason=$reason owner=none",
+            )
+            return
+        }
+
+        val requestGeneration =
+            controller.generation
+
+        coverRouteReassertInFlight =
+            true
+
+        DuoDiagnostics.event(
+            "fold7-state",
+            "cover-route-reassert begin reason=$reason " +
+                "generation=$requestGeneration owner=$owner",
+        )
+
+        scope.launch(
+            Dispatchers.IO
+        ) {
+            val result =
+                runCatching {
+                    ShizukuBridge
+                        .ensureSecondaryDisplayHeldV2(
+                            ownerGeneration = owner,
+                            reason = reason,
+                        )
+                }.getOrNull()
+
+            handler.post {
+                coverRouteReassertInFlight =
+                    false
+
+                updateCoverLeaseSnapshot(
+                    result,
+                    "route-reassert:$reason",
+                )
+
+                val ok =
+                    result?.getBoolean(
+                        "ok",
+                        false,
+                    ) == true
+
+                val target =
+                    result?.getInt(
+                        "targetDisplayId",
+                        -1,
+                    ) ?: -1
+
+                DuoDiagnostics.event(
+                    "fold7-state",
+                    "cover-route-reassert complete reason=$reason " +
+                        "generation=$requestGeneration owner=$owner " +
+                        "currentGeneration=${controller.generation} " +
+                        "ok=$ok logical=$target " +
+                        "routeEnabled=${result?.getBoolean("routeEnabled", false) == true} " +
+                        "logicalPowered=${result?.getBoolean("logicalPowered", false) == true} " +
+                        "stale=${result?.getBoolean("stale", false) == true} " +
+                        "error=${result?.getString("error")}",
+                )
+
+                if (
+                    !destroyed &&
+                    ok &&
+                    controller.isGenerationCurrent(
+                        requestGeneration
+                    ) &&
+                    controller.state ==
+                        Fold7ContinuityController.State.COVER_VISUAL
+                ) {
+                    handler.postDelayed(
+                        {
+                            if (
+                                !destroyed &&
+                                visualMirrorActive
+                            ) {
+                                syncMirrorHost(
+                                    reason =
+                                        "route-reassert:$reason",
+                                    generation =
+                                        mirrorGeneration,
+                                )
+                            }
+                        },
+                        COVER_ROUTE_REASSERT_SETTLE_MS,
+                    )
+                }
+            }
+        }
+    }
+
     private fun releaseCoverLease(
         reason: String,
     ) {
@@ -708,5 +858,6 @@ internal class Fold7ContinuityCoordinator(
         const val INNER_HEIGHT = 2184
         const val COVER_WIDTH = 1080
         const val COVER_HEIGHT = 2520
+        const val COVER_ROUTE_REASSERT_SETTLE_MS = 32L
     }
 }
