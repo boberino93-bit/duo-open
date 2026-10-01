@@ -1,0 +1,1 @@
+Apply Fold7 1.3.27 cover-route regression fix, run full tests/build, upload the tested APK, then commit the production fix.
