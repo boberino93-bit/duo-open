@@ -1,0 +1,2 @@
+Uploading this root-ready package triggers Apply Fold7 Gen2 Batch C.
+The workflow patches two production files, runs full debug unit tests + APK assembly, and commits only on success.
