@@ -354,6 +354,7 @@ class DuoShellService : Binder() {
                                 2 -> releaseCoverLeaseV2(ownerGeneration, reason)
                                 3 -> reconcileCoverLeaseV2(reason)
                                 4 -> coverLeaseBundle("status", true)
+                                5 -> ensureHeldCoverRouteV2(ownerGeneration, reason)
                                 else -> Bundle().apply {
                                     putBoolean("ok", false)
                                     putString("error", "unknown cover lease V2 operation $operation")
@@ -1397,6 +1398,129 @@ class DuoShellService : Binder() {
             putString(
                 "command",
                 "lease-owned physical+logical Fold7 cover prewarm",
+            )
+            putString(
+                "error",
+                activation.error
+                    ?: physicalError,
+            )
+        }
+    }
+
+    /**
+     * Keep an existing HELD cover lease alive without transferring ownership.
+     *
+     * The caller must still own the exact HELD lease. The stable physical
+     * cover id is taken from that lease, physical NORMAL is reasserted, and a
+     * fresh non-default 1080x2520 logical route must map back to the same
+     * physical id before enable / STATE_ON.
+     */
+    private fun ensureHeldCoverRouteV2(
+        ownerGeneration: Long,
+        reason: String,
+    ): Bundle {
+        val before =
+            coverPanelLease.snapshot()
+
+        if (
+            before.state !=
+                Fold7CoverPanelLease.State.HELD
+        ) {
+            return coverLeaseBundle(
+                "ensure-held:$reason",
+                false,
+            ).apply {
+                putBoolean("stale", true)
+                putString(
+                    "error",
+                    "cover lease is ${before.state}, not HELD",
+                )
+            }
+        }
+
+        if (
+            ownerGeneration < 0L ||
+            ownerGeneration !=
+                before.ownerGeneration
+        ) {
+            return coverLeaseBundle(
+                "ensure-held:$reason",
+                false,
+            ).apply {
+                putBoolean("stale", true)
+                putString(
+                    "error",
+                    "cover lease owner changed",
+                )
+            }
+        }
+
+        val physicalId =
+            before.physicalId
+                ?: -1L
+
+        val (
+            physicalPowered,
+            physicalError,
+        ) =
+            setPhysicalPowerNormal(
+                physicalId
+            )
+
+        val activation =
+            if (physicalPowered) {
+                activateOwnedCoverRouteAfterPhysicalWake(
+                    physicalId
+                )
+            } else {
+                CoverRouteActivation(
+                    logicalId = -1,
+                    physicalId = physicalId,
+                    routeEnabled = false,
+                    logicalPowered = false,
+                    stillSafe = false,
+                    error =
+                        physicalError
+                            ?: "physical cover reassert failed",
+                )
+            }
+
+        val ok =
+            physicalPowered &&
+                activation.ok
+
+        return coverLeaseBundle(
+            operation =
+                "ensure-held:$reason",
+            ok = ok,
+        ).apply {
+            putInt(
+                "targetDisplayId",
+                if (activation.stillSafe) {
+                    activation.logicalId
+                } else {
+                    -1
+                },
+            )
+            putBoolean(
+                "physicalPowered",
+                physicalPowered,
+            )
+            putBoolean(
+                "routeEnabled",
+                activation.routeEnabled,
+            )
+            putBoolean(
+                "logicalPowered",
+                activation.logicalPowered,
+            )
+            putBoolean(
+                "routeStillCover",
+                activation.stillSafe,
+            )
+            putString(
+                "command",
+                "lease-owned Fold7 cover hold reassert",
             )
             putString(
                 "error",

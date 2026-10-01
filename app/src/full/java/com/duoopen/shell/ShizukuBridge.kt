@@ -447,6 +447,19 @@ object ShizukuBridge {
             parcel.writeString("status")
         }
 
+    /**
+     * Reassert an already-owned Fold7 cover lease without changing ownership.
+     */
+    fun ensureSecondaryDisplayHeldV2(
+        ownerGeneration: Long,
+        reason: String,
+    ): Bundle? =
+        call(ShellProtocol.COVER_PANEL_LEASE_V2) { parcel ->
+            parcel.writeInt(5)
+            parcel.writeLong(ownerGeneration)
+            parcel.writeString(reason)
+        }
+
     fun requestDisplayPower(
         displayId: Int,
         requestedState: Int,
