@@ -12,6 +12,7 @@ import android.view.SurfaceControl
 import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
+import com.duoopen.lab.TransitionLab
 import com.duoopen.shell.ShizukuBridge
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -502,8 +503,22 @@ class DisplayMirrorHost(
                 .setAlpha(mirror, 1f)
                 .setVisibility(mirror, true)
 
+            val labToken =
+                TransitionLab
+                    .instrumentTransaction(
+                        transaction
+                    )
+
             val queued =
                 root.applyTransactionOnDraw(transaction)
+
+            TransitionLab
+                .markTransactionSubmitted(
+                    token =
+                        labToken,
+                    accepted =
+                        queued,
+                )
 
             hostView.invalidate()
 

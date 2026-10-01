@@ -20,13 +20,25 @@ internal class FrameTimelineProbe(
     var latest: FramePlanRecord? = null
         private set
 
+    val isRunning: Boolean
+        get() = running
+
     private var choreographer: Choreographer? = null
+
+    /*
+     * stop() cannot cancel a VsyncCallback already queued by Choreographer.
+     * Track whether one is pending so a quick stop/start cannot create two
+     * independent callback chains.
+     */
+    private var callbackPosted = false
 
     private val callback =
         object : Choreographer.VsyncCallback {
             override fun onVsync(
                 data: Choreographer.FrameData,
             ) {
+                callbackPosted = false
+
                 if (!running) return
 
                 val preferred =
@@ -50,7 +62,7 @@ internal class FrameTimelineProbe(
                 sink(record)
 
                 if (running) {
-                    choreographer?.postVsyncCallback(this)
+                    postNext()
                 }
             }
         }
@@ -69,7 +81,21 @@ internal class FrameTimelineProbe(
             Choreographer.getInstance()
 
         running = true
-        choreographer?.postVsyncCallback(callback)
+        postNext()
+    }
+
+    private fun postNext() {
+        if (
+            !running ||
+            callbackPosted
+        ) {
+            return
+        }
+
+        callbackPosted = true
+        choreographer?.postVsyncCallback(
+            callback
+        )
     }
 
     /**

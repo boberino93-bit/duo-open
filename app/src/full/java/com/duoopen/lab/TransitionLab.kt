@@ -1,17 +1,26 @@
 package com.duoopen.lab
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.view.SurfaceControl
 import com.duoopen.BuildConfig
 import com.duoopen.debug.DuoDiagnostics
 import java.io.File
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.abs
 
 /**
  * Observation-only runtime for Transition Lab.
  *
- * Debug full builds default to BASIC. BASIC records hinge timing plus existing
- * Fold7 state-machine diagnostics. FULL_LAB will later add vsync/transaction
- * instrumentation.
+ * Debug full builds use FULL_LAB, but expensive frame recording is armed only
+ * around real movement / Fold7 state activity. Release builds remain OFF.
+ *
+ * FrameTimeline and SurfaceControl probes are observation-only in this baseline:
+ * the lab does not call Transaction.setFrameTimeline() and does not alter the
+ * production controller, renderer thresholds, display power, or mirror geometry.
  */
 internal object TransitionLab {
     private val hingeSequence =
@@ -20,7 +29,7 @@ internal object TransitionLab {
     @Volatile
     var level: LabLevel =
         if (BuildConfig.DEBUG) {
-            LabLevel.BASIC
+            LabLevel.FULL_LAB
         } else {
             LabLevel.OFF
         }
@@ -39,9 +48,39 @@ internal object TransitionLab {
     private var publicHingeProbe:
         PublicHingeProbe? = null
 
+    private var mainHandler:
+        Handler? = null
+
+    private var frameTimelineProbe:
+        FrameTimelineProbe? = null
+
+    private var surfaceTransactionProbe:
+        SurfaceTransactionProbe? = null
+
+    private var transactionExecutor:
+        ExecutorService? = null
+
+    @Volatile
+    private var latestFramePlan:
+        FramePlanRecord? = null
+
+    @Volatile
+    private var presentationWindowDeadlineNs =
+        Long.MIN_VALUE
+
+    @Volatile
+    private var frameStartPosted =
+        false
+
     @Volatile
     private var lastSamsungConsumerTimeNs =
         Long.MIN_VALUE
+
+    private var lastSamsungAngle =
+        Float.NaN
+
+    private var lastPublicAngle =
+        Float.NaN
 
     private val recordedSamsungSamples =
         AtomicLong(0L)
@@ -92,6 +131,40 @@ internal object TransitionLab {
 
             writer = created
 
+            mainHandler =
+                Handler(
+                    Looper.getMainLooper()
+                )
+
+            if (level == LabLevel.FULL_LAB) {
+                val executor =
+                    Executors.newSingleThreadExecutor { runnable ->
+                        Thread(
+                            runnable,
+                            "DuoTransitionTx",
+                        ).apply {
+                            isDaemon = true
+                        }
+                    }
+
+                transactionExecutor =
+                    executor
+
+                frameTimelineProbe =
+                    FrameTimelineProbe(
+                        sink =
+                            ::recordFrame,
+                    )
+
+                surfaceTransactionProbe =
+                    SurfaceTransactionProbe(
+                        callbackExecutor =
+                            executor,
+                        sink =
+                            ::recordTransaction,
+                    )
+            }
+
             /*
              * Existing Fold7ContinuityCoordinator diagnostics are synchronous
              * with the controller transition / effect milestone that emitted
@@ -132,6 +205,16 @@ internal object TransitionLab {
             return null
         }
 
+        val movementDetected =
+            lastSamsungAngle.isNaN() ||
+                abs(
+                    angleDegrees -
+                        lastSamsungAngle
+                ) >= MOVEMENT_EPS_DEG
+
+        lastSamsungAngle =
+            angleDegrees
+
         val record =
             HingeSampleRecord(
                 sequence =
@@ -166,6 +249,13 @@ internal object TransitionLab {
                     "Samsung FoldInteractive logcat sample",
             )
         )
+
+        if (movementDetected) {
+            armPresentationWindow(
+                atTimeNs =
+                    consumerDeliveryTimeNs,
+            )
+        }
 
         val count =
             recordedSamsungSamples.incrementAndGet()
@@ -228,6 +318,11 @@ internal object TransitionLab {
             record.toEvent(
                 reason = reason,
             )
+        )
+
+        armPresentationWindow(
+            atTimeNs =
+                consumerDeliveryTimeNs,
         )
 
         return record
@@ -296,9 +391,26 @@ internal object TransitionLab {
                     lastSamsungConsumerTimeNs in
                     0L..SAMSUNG_AUTHORITY_WINDOW_NS
 
+        val movementDetected =
+            lastPublicAngle.isNaN() ||
+                abs(
+                    sample.angleDegrees -
+                        lastPublicAngle
+                ) >= MOVEMENT_EPS_DEG
+
+        lastPublicAngle =
+            sample.angleDegrees
+
         if (!samsungFresh) {
             latestHingeSample =
                 record
+
+            if (movementDetected) {
+                armPresentationWindow(
+                    atTimeNs =
+                        sample.callbackArrivalTimeNs,
+                )
+            }
         }
 
         writer?.record(
@@ -344,6 +456,11 @@ internal object TransitionLab {
         ) {
             return
         }
+
+        armPresentationWindow(
+            atTimeNs =
+                timeNs,
+        )
 
         val hinge =
             latestHingeSample
@@ -407,6 +524,237 @@ internal object TransitionLab {
         )
     }
 
+
+    private fun armPresentationWindow(
+        atTimeNs: Long =
+            TransitionClock.nowNs(),
+    ) {
+        if (level != LabLevel.FULL_LAB) {
+            return
+        }
+
+        val nextDeadline =
+            atTimeNs +
+                PRESENTATION_WINDOW_NS
+
+        if (
+            nextDeadline >
+            presentationWindowDeadlineNs
+        ) {
+            presentationWindowDeadlineNs =
+                nextDeadline
+        }
+
+        val probe =
+            frameTimelineProbe
+                ?: return
+
+        if (
+            probe.isRunning ||
+            frameStartPosted
+        ) {
+            return
+        }
+
+        frameStartPosted =
+            true
+
+        mainHandler?.post {
+            frameStartPosted =
+                false
+
+            if (
+                level ==
+                    LabLevel.FULL_LAB &&
+                TransitionClock.nowNs() <=
+                    presentationWindowDeadlineNs
+            ) {
+                probe.start()
+            }
+        }
+    }
+
+    private fun recordFrame(
+        raw: FramePlanRecord,
+    ) {
+        if (
+            level != LabLevel.FULL_LAB
+        ) {
+            return
+        }
+
+        if (
+            raw.callbackTimeNs >
+            presentationWindowDeadlineNs
+        ) {
+            latestFramePlan =
+                null
+            frameTimelineProbe?.stop()
+            return
+        }
+
+        val hinge =
+            latestHingeSample
+
+        val frame =
+            raw.copy(
+                latestHingeSequence =
+                    hinge?.sequence,
+                measuredAngleDegrees =
+                    hinge?.angleDegrees,
+            )
+
+        latestFramePlan =
+            frame
+
+        writer?.record(
+            TransitionEvent(
+                timeNs =
+                    frame.callbackTimeNs,
+                type =
+                    "vsync",
+                hingeSampleSequence =
+                    hinge?.sequence,
+                measuredAngle =
+                    hinge?.angleDegrees,
+                hingeSource =
+                    hinge?.source?.name,
+                hingeSourceTimeNs =
+                    hinge?.sourceTimeNs,
+                hingeBinderArrivalTimeNs =
+                    hinge?.binderArrivalTimeNs,
+                hingeConsumerDeliveryTimeNs =
+                    hinge?.consumerDeliveryTimeNs,
+                timestampQuality =
+                    hinge?.timestampQuality?.name,
+                sourceToBinderLagNs =
+                    hinge?.sourceToBinderLagNs,
+                binderToConsumerLagNs =
+                    hinge?.binderToConsumerLagNs,
+                sourceToConsumerLagNs =
+                    hinge?.sourceToConsumerLagNs,
+                vsyncId =
+                    frame.vsyncId,
+                frameTimeNs =
+                    frame.frameTimeNs,
+                deadlineNs =
+                    frame.deadlineNs,
+                expectedPresentNs =
+                    frame.expectedPresentationTimeNs,
+                reason =
+                    "FrameTimeline preferred vsync",
+            )
+        )
+    }
+
+    fun instrumentTransaction(
+        transaction: SurfaceControl.Transaction,
+    ): SurfaceTransactionProbe.Token? {
+        if (
+            level != LabLevel.FULL_LAB
+        ) {
+            return null
+        }
+
+        armPresentationWindow()
+
+        return surfaceTransactionProbe
+            ?.instrument(
+                transaction =
+                    transaction,
+                frame =
+                    latestFramePlan,
+            )
+    }
+
+    fun markTransactionSubmitted(
+        token: SurfaceTransactionProbe.Token?,
+        accepted: Boolean,
+    ) {
+        if (token == null) return
+
+        surfaceTransactionProbe
+            ?.markSubmittedOnDraw(
+                token =
+                    token,
+                accepted =
+                    accepted,
+            )
+    }
+
+    private fun recordTransaction(
+        record: TransactionTimingRecord,
+    ) {
+        if (
+            level != LabLevel.FULL_LAB
+        ) {
+            return
+        }
+
+        val hinge =
+            latestHingeSample
+
+        writer?.record(
+            TransitionEvent(
+                timeNs =
+                    record.timeNs,
+                type =
+                    "surface-transaction-" +
+                        record.kind.name
+                            .lowercase(),
+                hingeSampleSequence =
+                    hinge?.sequence,
+                measuredAngle =
+                    hinge?.angleDegrees,
+                hingeSource =
+                    hinge?.source?.name,
+                hingeSourceTimeNs =
+                    hinge?.sourceTimeNs,
+                hingeBinderArrivalTimeNs =
+                    hinge?.binderArrivalTimeNs,
+                hingeConsumerDeliveryTimeNs =
+                    hinge?.consumerDeliveryTimeNs,
+                timestampQuality =
+                    hinge?.timestampQuality?.name,
+                sourceToBinderLagNs =
+                    hinge?.sourceToBinderLagNs,
+                binderToConsumerLagNs =
+                    hinge?.binderToConsumerLagNs,
+                sourceToConsumerLagNs =
+                    hinge?.sourceToConsumerLagNs,
+                vsyncId =
+                    record.vsyncId,
+                transactionSequence =
+                    record.transactionSequence,
+                transactionSubmitNs =
+                    if (
+                        record.kind ==
+                        TransactionEventKind.SUBMITTED_ON_DRAW
+                    ) {
+                        record.timeNs
+                    } else {
+                        null
+                    },
+                transactionCommitNs =
+                    if (
+                        record.kind ==
+                        TransactionEventKind.COMMITTED
+                    ) {
+                        record.timeNs
+                    } else {
+                        null
+                    },
+                transactionLatchNs =
+                    record.latchTimeNs,
+                actualPresentNs =
+                    record.presentTimeNs,
+                reason =
+                    "accepted=${record.submissionAccepted} " +
+                        "presentFenceValid=${record.presentFenceValid}",
+            )
+        )
+    }
+
     fun sessionFile(): File? =
         writer?.file
 
@@ -447,6 +795,12 @@ internal object TransitionLab {
 
     private const val SUMMARY_SAMPLE_INTERVAL =
         250L
+
+    private const val MOVEMENT_EPS_DEG =
+        0.10f
+
+    private const val PRESENTATION_WINDOW_NS =
+        1_500_000_000L
 
     private const val FOLD7_STATE_CATEGORY =
         "fold7-state"

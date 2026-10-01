@@ -12,6 +12,11 @@ import java.util.concurrent.atomic.AtomicLong
  * Call instrument() BEFORE passing the transaction to
  * AttachedSurfaceControl.applyTransactionOnDraw().
  *
+ * Baseline measurements are deliberately observational: the nearest observed
+ * vsync id is stored for correlation, but this probe does NOT call
+ * Transaction.setFrameTimeline(), because doing so could affect compositor
+ * scheduling and contaminate the baseline.
+ *
  * Call markSubmittedOnDraw() immediately around the app-side submission call.
  *
  * The completed callback provides:
@@ -42,16 +47,6 @@ internal class SurfaceTransactionProbe(
                 vsyncId =
                     frame?.vsyncId,
             )
-
-        if (
-            Build.VERSION.SDK_INT >= 35 &&
-            token.vsyncId != null &&
-            token.vsyncId > 0L
-        ) {
-            transaction.setFrameTimeline(
-                token.vsyncId,
-            )
-        }
 
         if (Build.VERSION.SDK_INT >= 33) {
             transaction.addTransactionCommittedListener(
