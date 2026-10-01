@@ -1,0 +1,1131 @@
+DUO OPEN — GALAXY Z FOLD7 — FROZEN FRAME PROVENANCE GENERATION-2 R&D HANDOFF
+
+R&D STATUS=R&D ONLY
+PRODUCTION_READY=NO
+INSTALLATION_AUTHORIZED=NO
+MANUAL_REVIEW_REQUIRED=YES
+
+This handoff is self-contained. It was produced in an isolated R&D role with no production write authority. No repository branch, ref, commit, release tag, CI configuration, production source file, or APK was modified.
+
+==================================================
+1. EXECUTIVE SUMMARY
+==================================================
+
+SUBSYSTEM CHOSEN
+Fold7 deterministic frozen-continuity-frame provenance and lifecycle between PanelEngine/SnapshotCache and DisplayMirrorHost.
+
+WHY CURRENT main MADE THIS THE HIGHEST-VALUE TARGET
+CURRENT main 8f844ba8aadd8417a92ec8b568288fd0dd9e06e3 already contains substantial Gen2 work for hinge-poll identity, mirror ownership, cover-panel lease ownership, route reassertion, deterministic frozen rendering, early inner wake, and Transition Lab instrumentation. Two additional R&D packages supplied during this investigation were independently verified and rerun: Cover Readiness Gen2 and Cover Lease Protocol Gen2. Those packages already go deep on topology/readiness timing and app↔shell lease identity/order, so repeating either area would be duplication.
+
+The remaining concrete weakness is inside the new 1.3.29 frozen-frame path. FoldOverlayService obtains the continuity frame from the generic SnapshotCache using only:
+- panel kind = inner;
+- expected geometry = 1968x2184;
+- age <= 10,000 ms.
+
+SnapshotCache itself stores only bitmap + insertion uptime, keyed by Boolean inner/cover. It does not record which physical close cycle produced the image. DisplayMirrorHost then accepts the returned bitmap if dimensions match and it is not recycled. Therefore the continuity host has no proof that a candidate frame belongs to the current close transition.
+
+DOMINANT LIMITATION
+Frozen-frame eligibility is based on recency, not ownership/provenance. A bitmap captured during an earlier fold can remain eligible for a later close cycle. If the current-cycle capture is unavailable, delayed, or fails, the stale-but-young prior frame can suppress the live-mirror fallback and become the cover continuity frame.
+
+GENERATION-2 DIRECTION
+Introduce an explicit transition-scoped Continuity Frame Lease:
+- a service/process epoch;
+- a stable closeCycleId that spans CLOSING_INTENT -> PREWARM -> READY_HIDDEN -> COVER_VISUAL;
+- capture sequence identity;
+- source geometry / panel identity;
+- capture source and timestamp-quality metadata;
+- capture request start and capture/completion timestamps;
+- exact-cycle acceptance in a small deterministic ContinuityFrameLeaseStore;
+- invalidation on reversal, native-cover takeover, service restart, and destruction;
+- no reuse of a prior-cycle frame merely because it is young;
+- existing live-mirror/native fallback remains available when no current-cycle frozen frame is proven.
+
+This is intentionally NOT a proposal to reduce FOLD7_FROZEN_FRAME_MAX_AGE_MS. Tightening 10 seconds to some arbitrary smaller constant would remain a temporal heuristic. The Gen2 design makes frame ownership explicit.
+
+STRONGEST EVIDENCE
+1. FINAL main SnapshotCache keys entries only by panel kind and stores bitmap + insertion uptime.
+2. FINAL main FoldOverlayService permits the frozen continuity provider to return an inner frame up to 10,000 ms old.
+3. FINAL main DisplayMirrorHost validates only bitmap validity/dimensions before binding the frozen frame; no fold-cycle token is checked.
+4. FINAL main PanelEngine onCaptured() writes the latest capture into the generic cache, while capture failure/timeout paths do not invalidate the prior cache entry.
+5. Android AccessibilityService.ScreenshotResult exposes the actual screenshot timestamp in the SystemClock.uptimeMillis() domain, allowing exact capture-time provenance for that path.
+6. Android documents ERROR_TAKE_SCREENSHOT_SECURE_WINDOW, confirming that capture failure can be a legitimate runtime condition rather than only an exceptional bug.
+7. A source-faithful age-only baseline model deterministically accepts a previous-cycle frame when it is <10 s old and dimensions match.
+8. The Gen2 pure-Kotlin provenance model compiled and passed 15/15 deterministic tests including 100,000 fixed-seed randomized operations.
+
+CONFIDENCE LEVEL
+HIGH for the source-level provenance gap and the deterministic model properties.
+MEDIUM for the practical frequency with which a stale prior frame is currently selected on a physical Fold7 because that requires field traces.
+LOW/UNKNOWN for any claim that this specific gap is the dominant cause of an existing user-visible glitch. Device evidence is required.
+
+LARGEST REMAINING UNKNOWN
+How often a close reaches COVER_VISUAL before a current-cycle inner frame is available, and whether real Fold7 capture failures/timeouts leave an eligible prior frame often enough to be visible. FOLD7 FIELD VALIDATION REQUIRED.
+
+==================================================
+2. REPOSITORY BASELINE
+==================================================
+
+REPOSITORY=https://github.com/boberino93-bit/duo-open
+TARGET_DEVICE=Samsung Galaxy Z Fold7 only
+TARGET_INNER_GEOMETRY=1968x2184
+TARGET_COVER_GEOMETRY=1080x2520
+TARGET_PLATFORM=Android 16 / Samsung One UI on Galaxy Z Fold7
+
+STARTING_MAIN_SHA=8f844ba8aadd8417a92ec8b568288fd0dd9e06e3
+FINAL_MAIN_SHA=8f844ba8aadd8417a92ec8b568288fd0dd9e06e3
+MAIN_CHANGED_DURING_RND=NO
+OVERLAPPING_CHANGE=NO
+
+CURRENT APP VERSION
+versionCode=34
+versionName=1.3.29-zfold7-deterministic-early-wake
+compileSdk=35
+targetSdk=35
+minSdk=33
+
+SOURCE RETRIEVAL
+- Current main was fetched repeatedly through the connected GitHub repository interface.
+- Direct local git clone was attempted during the session and failed with EXIT 128 because the container could not resolve github.com.
+- Therefore source inspection used the connected GitHub interface, while pure Kotlin prototypes were compiled locally.
+
+RELEVANT CURRENT BLOBS INSPECTED
+- app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+  blob=810edd929ab020b32f171ca0338acf975d91fd92
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+  blob=50b602a32d70ac00e0b1fec251fab1e55c53a999
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+  blob=23cfa0cc9802c2921d56190bf0abbf4478c1547b
+- app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+  blob=0a6c3e85d0b3f4531eac504170be0e38a8a290de
+- app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+  blob=582c7ea965405a07b2dea4ea9277a86d1639e5f8
+- app/src/full/java/com/duoopen/overlay/SnapshotCache.kt
+  blob=4b1b6bb9837de4fb77cdc1bdc26f4a39aa72ab26
+- app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+  blob=0260da09c6d8ae80f3a21dbec041b987e4f75254
+- app/src/full/java/com/duoopen/lab/TransitionLab.kt
+  blob=ae60f8cfaff1632c2676266d7fad203e4f101893
+- app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt
+  blob=287a4e52146307ac2e6c349f99ecbd2711423a92
+- app/build.gradle.kts
+  blob=0ae3ead1edc3e181db0d4608edb108ed353df2cc
+
+RELEVANT CURRENT COMMIT
+8f844ba8aadd8417a92ec8b568288fd0dd9e06e3
+Title: Fold7 1.3.29: freeze continuity frames and wake inner early
+This commit introduced the continuity frozenFrameProvider, frozen-pane rendering in DisplayMirrorHost, a 10 s Fold7 continuity-frame age check, deterministic Fold7 snapshot behavior, and early opening wake infrastructure.
+
+CI / WORKFLOW STATUS
+- get_commit_combined_status(FINAL_MAIN_SHA) returned no direct statuses.
+- fetch_commit_workflow_runs(FINAL_MAIN_SHA) returned no workflow runs directly associated with the final commit.
+- Imported prior R&D packages report that the tree later committed as FINAL main was built/tested successfully by a parent-triggered workflow before being committed, but that is imported evidence rather than a direct FINAL-SHA status object from this silo.
+- Production Android compilation was NOT rerun locally in this silo because the repository could not be cloned into the container.
+
+CI_RESULTS_CORRESPOND_DIRECTLY_TO_FINAL_MAIN_SHA=NO_DIRECT_STATUS_FOUND
+PRODUCTION_ANDROID_BUILD_THIS_SILO=NOT COMPILED
+
+==================================================
+3. PRIOR WORK / DUPLICATION CHECK
+==================================================
+
+PRIOR WORK INDEX
+
+A. 8f844ba... / GEN2_IMPORT_SUPPORT/FOLD7_1_3_29_README.md
+Subsystem: deterministic frozen frames + early inner wake.
+Status in CURRENT main: REPRESENTED.
+Key conclusion: live recapture is suppressed on Fold7 after transition-frame establishment so pixels do not mutate under a stationary hinge.
+Known remaining weakness selected here: frame determinism exists, but frame ownership/provenance is age-only.
+Duplication decision: do not re-propose deterministic freezing or early wake.
+
+B. Imported package: DUO_OPEN_COVER_READINESS_GEN2_PROPOSAL.zip
+Verified ZIP SHA256=ebadeb1958f43ae5b869115bea88c2bf04e882323214947897cfca8177dd90c3
+Verified handoff SHA256=924964eb42f248d50af3504671dd50980c00a5cd34819f378c454686e26e6e32
+Final-main basis=8f844ba8aadd8417a92ec8b568288fd0dd9e06e3
+Subsystem: lease-scoped cover presentation readiness / topology ingress.
+Independent integrity check: internal SHA256SUMS passed for all packaged files.
+Independent execution rerun:
+- Kotlin readiness model: RESULT passed=22 failed=0 total=22
+- timing model executed successfully.
+Status: PRIOR R&D, not production.
+Duplication decision: do not re-propose fast topology lane, readiness owner, route-vs-readiness separation, reassert ticket, or removal of the normal 32 ms readiness timer.
+
+C. Imported package: DUO_OPEN_COVER_LEASE_PROTOCOL_GEN2_PROPOSAL.zip
+Verified ZIP SHA256=60f08ec267e2679acac8660a41e2dc15fda03638648b3674f31894eccdadef29
+Verified handoff SHA256=ccc6b257d993818adabe013f7c82d3db108263e6cb3a2f1a734a7d05fdf850ce
+Final-main basis=8f844ba8aadd8417a92ec8b568288fd0dd9e06e3
+Subsystem: app↔shell cover-lease identity, mutation ordering, reconnect fencing.
+Independent integrity check: internal SHA256SUMS passed for all packaged files.
+Independent execution rerun:
+- snapshot gate: 10/10 passed
+- protocol identity: 5/5 passed
+- fuzz: 5,000 rounds / 125,000 deliveries passed
+Status: PRIOR R&D, not production.
+Duplication decision: do not re-propose Cover Lease Protocol V3, shellSession/shellRevision, exact cover lease token authorization, or coordinator cover-snapshot acceptance gates.
+
+D. 7f5af1917508abae1472ddbc91e82663fdb6252e
+Subsystem: single-owner mirror and cover leases.
+Status: represented in main.
+Duplication decision: preserve.
+
+E. 37be3060880f01590bfb7d5b4f6f442a7b47de92
+Subsystem: lease-owned cover route wake / fresh logical route resolution.
+Status: represented in main.
+Duplication decision: preserve.
+
+F. b3179244f236230652e43150f67742b3babbc4cd
+Subsystem: route reassertion while lease remains held.
+Status: represented in main.
+Duplication decision: preserve.
+
+G. 3de9d5dd54dbd193ddec6f2011073a8f4e6e52a9
+Subsystem: angle poll sequence identity.
+Status: represented in main.
+Duplication decision: preserve.
+
+H. Existing tests checked by direct path
+- Fold7ContinuityControllerTest.kt exists.
+- SnapshotCacheTest.kt: not found.
+- DisplayMirrorHostTest.kt: not found.
+- PanelEngineTest.kt: not found.
+This does not prove no differently named test exists, but no dedicated provenance test was identified in current source inspection.
+
+VISIBLE BRANCHES
+- main
+- generated/fold7-1.3.16-baseline
+No visible branch identified as duplicating this frame-provenance proposal.
+
+HOW THIS R&D DIFFERS
+The imported Readiness proposal asks: “Is the leased cover route actually ready to present?”
+The imported Lease Protocol proposal asks: “Is this app↔shell lease command/snapshot authorized and ordered?”
+This proposal asks: “Does the bitmap about to be presented belong to THIS physical close cycle?”
+
+==================================================
+4. CURRENT IMPLEMENTATION
+==================================================
+
+IMPORTANT FILES / CLASSES
+- FoldOverlayService
+- Fold7ContinuityController
+- Fold7ContinuityCoordinator
+- PanelEngine
+- SnapshotCache
+- DisplayMirrorHost
+- ShizukuBridge
+- TransitionLab
+
+ENTRY POINT / EVENT SOURCE
+Physical hinge samples enter FoldOverlayService.onHinge(angle).
+FoldOverlayService calls continuity.onHinge(angle) first, then each PanelEngine.onHinge(angle).
+This ordering is important: the continuity state machine can identify closing intent before a PanelEngine processes the same hinge sample, but a PanelEngine may also have started capture on an earlier, smaller movement before deliberate close intent was fully established.
+
+CURRENT CONTINUITY STATE OWNERSHIP
+Fold7ContinuityController owns fold state and a state-transition generation. Its generation increments on every state transition, not once per complete close cycle.
+Relevant closing states:
+OPEN_INNER / INNER_HANDOFF
+-> CLOSING_INTENT
+-> COVER_PREWARMING
+-> COVER_READY_HIDDEN
+-> COVER_VISUAL
+-> NATIVE_COVER
+with reversal paths back toward INNER_HANDOFF/OPEN_INNER.
+
+Because controller.generation increments across those internal states, it is not itself a stable frozen-frame cycle identity.
+
+CURRENT SNAPSHOT CACHE
+SnapshotCache stores:
+Entry(bitmap, at)
+inside HashMap<Boolean, Entry>, where Boolean identifies inner vs cover.
+put(innerPanel, bitmap) overwrites that panel-kind entry.
+get(innerPanel, width, height) checks:
+- entry exists;
+- bitmap not recycled;
+- dimensions equal requested size;
+- age <= SnapshotCache.maxAgeMs.
+No capture sequence, transition/cycle ID, source display physical identity, capture timestamp quality, or service epoch is retained.
+
+The generic SnapshotCache is constructed with SNAPSHOT_MAX_AGE_MS = 15 minutes for bridge behavior elsewhere.
+
+CURRENT FOLD7 FROZEN FRAME PROVIDER
+FoldOverlayService supplies Fold7ContinuityCoordinator with frozenInnerFrame lambda.
+That lambda:
+1. reads snapshots.ageMs(true);
+2. requires age <= FOLD7_FROZEN_FRAME_MAX_AGE_MS;
+3. requests snapshots.get(innerPanel=true,width=1968,height=2184).
+FOLD7_FROZEN_FRAME_MAX_AGE_MS = 10,000 ms.
+Therefore Fold7 continuity uses an additional 10 s age cap but no cycle ownership.
+
+CURRENT CAPTURE PRODUCER
+PanelEngine starts capture when its fold effect begins. Shizuku capture is attempted when configured/ready; otherwise AccessibilityService.takeScreenshot is used.
+PanelEngine has captureGen/captureAttempt logic to prevent a late screenshot from mutating a newer PanelEngine phase.
+That is useful local ownership, but it is scoped to PanelEngine's effect phase, not to DisplayMirrorHost's later continuity-frame selection.
+
+On successful capture, PanelEngine.onCaptured(bitmap, ...) calls:
+cache.put(innerPanel, bitmap)
+then presents/replaces the fold overlay.
+
+On capture failure/timeout, the prior SnapshotCache entry is not globally invalidated. Thus a prior successful inner capture may remain available to the continuity frozen-frame provider.
+
+CURRENT DISPLAY MIRROR HOST
+DisplayMirrorHost.bind(reason):
+1. resolves root SurfaceControl;
+2. freshly finds the 1968x2184 inner Display;
+3. checks source logical ID != destination logical ID;
+4. computes sourceKey from current logical source/destination and geometry;
+5. calls tryBindFrozenFrame(...);
+6. only if no acceptable frozen frame exists does it fall back to the live SurfaceControl mirror path.
+
+tryBindFrozenFrame:
+- calls frozenFrameProvider();
+- rejects recycled bitmap;
+- rejects wrong dimensions;
+- otherwise binds it, makes frozenPaneView visible, and returns true.
+It does NOT check when/why/which close cycle produced the bitmap.
+
+CURRENT FROZEN FRAME LIFETIME
+Once bound, the host keeps the bitmap reference until:
+- sourceKey changes and clearFrozenFrame() runs; or
+- host detaches.
+For the same sourceKey, refresh() simply invalidates the existing frozen pane and returns; it does not replace the frozen frame with a later current-cycle capture. This is consistent with 1.3.29’s deterministic-frame intent, but it increases the importance of selecting the correct frame once.
+
+CURRENT SHIZUKU CAPTURE
+ShizukuBridge.capture(...) is blocking, returns Bitmap?, and returns null when the shell reports secure content or other failure. The current app-level return type discards request/capture/completion provenance beyond logging an elapsed millisecond duration.
+
+CURRENT ACCESSIBILITY CAPTURE
+AccessibilityService.takeScreenshot returns ScreenshotResult. Current code uses hardwareBuffer and colorSpace but does not consume ScreenshotResult.timestamp.
+Official Android API documents getTimestamp() as screenshot time in milliseconds of non-sleep uptime from SystemClock.uptimeMillis(). This is directly compatible with the app’s existing monotonic timing domain.
+
+CURRENT TEST GAP
+Fold7ContinuityController tests cover state transitions but do not exercise bitmap provenance. No dedicated SnapshotCacheTest, DisplayMirrorHostTest, or PanelEngineTest was found at the expected test paths.
+
+CAUSAL PATH
+PHYSICAL HINGE SAMPLE
+-> FoldOverlayService.onHinge
+-> Fold7ContinuityController transition policy
+-> PanelEngine.onHinge/evaluate
+-> startEffect/startCapture
+-> Shizuku or Accessibility screenshot
+-> PanelEngine.onCaptured
+-> SnapshotCache.put(innerPanel=true, bitmap)
+-> later COVER_VISUAL / syncMirrorHost
+-> DisplayMirrorHost creation/attach/bind
+-> frozenFrameProvider
+-> age <= 10 s + geometry check
+-> tryBindFrozenFrame
+-> View.onDraw canonical left-pane crop
+-> cover presentation
+
+RACE / OWNERSHIP BOUNDARIES
+- PanelEngine capture is asynchronous.
+- Controller state advances asynchronously with privileged prewarm completion.
+- The generic cache persists across state transitions and fold cycles.
+- Current-cycle capture can fail or arrive after the host asks for a frame.
+- The host does not know whether the selected cached image came from the current cycle.
+- Once a frame is bound for a stable sourceKey, current host refresh does not replace it.
+
+==================================================
+5. CLAIM / EVIDENCE LEDGER
+==================================================
+
+CLAIM 1
+SnapshotCache has no fold-cycle provenance.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=SnapshotCache.kt Entry(bitmap, at), HashMap<Boolean,Entry>, get() checks only panel kind/size/age/recycled state.
+LIMITATION=This alone does not prove a stale image was physically shown.
+VALIDATION REQUIRED=Device trace correlating capture IDs with displayed frozen-frame ID.
+
+CLAIM 2
+Fold7 continuity accepts an inner bitmap up to 10 s old without proving it belongs to the current close.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=FoldOverlayService frozenInnerFrame provider + FOLD7_FROZEN_FRAME_MAX_AGE_MS=10_000L.
+LIMITATION=Age cap reduces the window but does not create ownership.
+VALIDATION REQUIRED=None for source fact; device frequency requires measurement.
+
+CLAIM 3
+DisplayMirrorHost accepts the provider bitmap by validity/dimensions and then suppresses live fallback.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=DisplayMirrorHost.tryBindFrozenFrame() and early return from bind() on success.
+LIMITATION=Requires provider to return a stale candidate.
+VALIDATION REQUIRED=Instrument chosen frame identity on device.
+
+CLAIM 4
+A current capture failure can leave an earlier cache entry intact.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=PanelEngine failure/timeout paths return to IDLE/bridge behavior but do not clear generic SnapshotCache; cache.put occurs only on success.
+LIMITATION=Does not prove failure happens within a 10 s cross-cycle window on Fold7.
+VALIDATION REQUIRED=Fault injection / secure-window / timeout field tests.
+
+CLAIM 5
+The reduced CURRENT-main-equivalent age-only cache accepts a previous-cycle frame that is 5 s old and correctly sized.
+CATEGORY=CONFIRMED TEST ISSUE
+EVIDENCE=Local pure-Kotlin baseline test “baseline accepts previous-cycle frame when age and geometry match”.
+LIMITATION=Reduced model, not Android rendering.
+VALIDATION REQUIRED=Integration instrumentation.
+
+CLAIM 6
+Android AccessibilityService.ScreenshotResult provides an exact uptime-domain screenshot timestamp.
+CATEGORY=ANDROID API CONTRACT
+EVIDENCE=Android Developers API reference for ScreenshotResult.getTimestamp().
+LIMITATION=Applies to Accessibility screenshot path, not automatically to Shizuku SurfaceControl capture.
+VALIDATION REQUIRED=None for API contract.
+
+CLAIM 7
+Accessibility screenshot failure due to FLAG_SECURE is an explicitly documented condition.
+CATEGORY=ANDROID API CONTRACT
+EVIDENCE=AccessibilityService.ERROR_TAKE_SCREENSHOT_SECURE_WINDOW API documentation.
+LIMITATION=Shizuku capture behavior and Samsung behavior may differ; this is not proof of a Fold7 stale-frame event.
+VALIDATION REQUIRED=Device test.
+
+CLAIM 8
+Gen2 exact-cycle frame eligibility rejects previous-cycle, reversed-cycle, prior-service, pre-cycle, wrong-geometry, and lower-sequence candidates in the tested model.
+CATEGORY=CONFIRMED TEST ISSUE
+EVIDENCE=15/15 deterministic tests passed plus fixed-seed 100,000-operation randomized test.
+LIMITATION=Pure Kotlin model only.
+VALIDATION REQUIRED=Production-adjacent JVM + Android integration + Fold7 tests.
+
+CLAIM 9
+The existing 10 s age cap can remain as a secondary freshness bound; provenance does not require changing it.
+CATEGORY=CONFIRMED TEST ISSUE / ARCHITECTURAL DESIGN PROPERTY
+EVIDENCE=Gen2 model test preserves 10 s cap independently of exact-cycle matching.
+LIMITATION=Whether 10 s is aesthetically appropriate still requires product/device validation.
+VALIDATION REQUIRED=Field testing, but not required to prove provenance correctness.
+
+CLAIM 10
+A stale prior frame is currently causing a specific visible glitch on the user’s Fold7.
+CATEGORY=MEASUREMENT REQUIRED
+EVIDENCE=NONE in this silo.
+LIMITATION=No frame-ID-correlated device trace was supplied.
+VALIDATION REQUIRED=Transition Lab + capture/frame IDs + external video.
+
+==================================================
+6. CONFIRMED FINDINGS
+==================================================
+
+SOURCE-CONFIRMED
+1. SnapshotCache is panel-kind/size/age based and not transition-scoped.
+2. Generic cache max age is 15 minutes.
+3. Fold7 continuity adds a 10-second age gate but no close-cycle identity.
+4. PanelEngine writes successful captures into the generic cache.
+5. Capture failure does not invalidate a previous cache entry.
+6. DisplayMirrorHost frozen selection validates bitmap state/dimensions but no transition provenance.
+7. Successful frozen binding prevents the live-mirror fallback for that bind.
+8. The bound frozen frame is intentionally stable for a stable sourceKey.
+9. Controller generation is state-transition-scoped, not close-cycle-scoped, and therefore should not be reused directly as the frame lease ID.
+10. FoldOverlayService processes continuity.onHinge before PanelEngine.onHinge for each hinge callback.
+
+TEST-CONFIRMED
+1. Baseline age-only model accepts a previous-cycle frame within 10 seconds.
+2. Gen2 begins each new close cycle with no inherited eligible frame.
+3. Exact same-cycle Accessibility frame is accepted.
+4. Exact timestamp before cycle start is rejected.
+5. Shizuku capture request begun before cycle start is rejected in the bounded-time model.
+6. Shizuku request begun after cycle start is accepted.
+7. Reversal invalidates the cycle and late completion becomes inert.
+8. Prior-cycle late completion cannot populate a newer cycle.
+9. Prior-service epoch capture is rejected.
+10. Wrong geometry is rejected.
+11. Lower capture sequence cannot overwrite newer frame.
+12. The frame remains valid across multiple controller state transitions inside the same close cycle.
+13. Existing 10 s freshness cap still works independently.
+14. Absence of a current-cycle frame fails closed rather than replaying prior content.
+15. Fixed-seed 100,000-operation randomized execution preserved provenance invariants.
+
+DEVICE-CONFIRMED
+NONE for stale frozen-frame provenance in this silo.
+
+AOSP / ANDROID-API-CONFIRMED
+1. AccessibilityService.ScreenshotResult.getTimestamp() returns screenshot time in the SystemClock.uptimeMillis() domain.
+2. ERROR_TAKE_SCREENSHOT_SECURE_WINDOW is an explicit Accessibility screenshot failure condition on modern Android.
+
+==================================================
+7. HYPOTHESES / UNVERIFIED RISKS
+==================================================
+
+H1 — CURRENT-CYCLE CAPTURE SOMETIMES MISSES COVER_VISUAL
+Hypothesis: a fast close, capture failure, or delayed waking-panel capture causes DisplayMirrorHost to request a frozen frame before the current close produced one.
+Experiment: log closeCycleId, capture request/start/completion, provider query, selected frame ID, and COVER_VISUAL entry across slow/medium/fast closes.
+
+H2 — STALE PRIOR-CYCLE FRAME IS PHYSICALLY VISIBLE
+Hypothesis: when H1 occurs and a prior inner capture is <10 s old, the current implementation displays it on the cover.
+Experiment: create two visually distinct app states A/B across consecutive closes <10 s apart; deliberately fail/delay B capture; capture 240 fps external video and Transition Lab frame IDs.
+
+H3 — SHIZUKU CAPTURE TIME BOUNDS ARE TOO WIDE FOR SAFE ADOPTION OF A PRE-CYCLE REQUEST
+Hypothesis: because current ShizukuBridge.capture returns Bitmap only, a request that began before close-cycle arming cannot prove its pixels were sampled after cycle start.
+Experiment: extend shell response with request-start/completion uptime and, if available from capture API, actual capture/latch timing. Until then, fail closed for requests started before cycle start.
+
+H4 — FAIL-CLOSED PROVENANCE MAY INCREASE LIVE-MIRROR FALLBACK FREQUENCY
+Hypothesis: rejecting unproven cached frames can make some transitions fall back to the existing live mirror path more often.
+Experiment: A/B log frozen-frame-hit rate, live-fallback rate, first-visible-frame time, and visual quality.
+
+H5 — 10 SECOND WITHIN-CYCLE FRESHNESS MAY BE TOO PERMISSIVE FOR A PAUSED CLOSE
+Hypothesis: an unusually long paused close could still use a frame that is old in human terms even though it belongs to the same cycle.
+Experiment: pause the hinge at several angles for 2/5/10+ seconds then continue. Do not change the existing 10 s cap without measured evidence.
+
+==================================================
+8. GENERATION-2 DESIGN
+==================================================
+
+DESIGN NAME
+Transition-Scoped Frozen Frame Lease (TSFFL)
+
+RESPONSIBILITY SPLIT
+A. Fold7ContinuityController remains the owner of hinge intent/state transitions and all existing angle thresholds.
+B. New ContinuityFrameLeaseStore owns only continuity-frame provenance/eligibility.
+C. PanelEngine remains the renderer/capture consumer for the fold shader and may continue using the generic SnapshotCache for its own bridge behavior.
+D. Fold7 continuity frame selection must stop reading an untyped Bitmap directly from generic SnapshotCache.
+E. DisplayMirrorHost consumes a FrameLease (or equivalent immutable metadata+Bitmap object), not Bitmap? with no provenance.
+F. Transition Lab records frame lifecycle metadata but does not influence acceptance.
+
+NEW IDENTITY: serviceEpoch
+Opaque per AccessibilityService lifetime (or equivalent process/session identity). Prevents a late capture from an old service instance from becoming eligible after service restart.
+
+NEW IDENTITY: closeCycleId
+A monotonic ID created once when deliberate closing enters a new close cycle. It remains stable through:
+CLOSING_INTENT
+-> COVER_PREWARMING
+-> COVER_READY_HIDDEN
+-> COVER_VISUAL
+and is invalidated by:
+- reversal back toward inner;
+- native-cover takeover / close completion;
+- explicit release/destroy;
+- service restart.
+
+IMPORTANT: do NOT use controller.generation directly for closeCycleId because controller.generation intentionally changes on every state transition.
+
+FRAME PROVENANCE RECORD
+Recommended immutable fields:
+- serviceEpoch
+- closeCycleId
+- captureSequence
+- sourcePanel=INNER
+- width=1968
+- height=2184
+- captureSource=ACCESSIBILITY|SHIZUKU
+- requestStartedUptimeMs
+- capturedUptimeMs or bounded equivalent
+- completedUptimeMs
+- timestampQuality=EXACT_CAPTURE|REQUEST_BOUNDED
+- Bitmap reference
+
+ACCESSIBILITY TIMESTAMP RULE
+Use ScreenshotResult.timestamp as capturedUptimeMs. Accept only when:
+- serviceEpoch matches;
+- closeCycleId is current;
+- capturedUptimeMs >= closeCycleStartedUptimeMs;
+- geometry is exact;
+- captureSequence is newer than any accepted frame for the cycle.
+
+SHIZUKU TIMESTAMP RULE
+Current Shizuku capture returns Bitmap only. Generation 2 should preserve enough metadata to prove timing. Minimum safe rule before a true capture timestamp exists:
+- requestStartedUptimeMs must be >= closeCycleStartedUptimeMs;
+- completion must be >= request start;
+- exact current serviceEpoch/cycleId required.
+A request already in flight before the cycle is not allowed to become a continuity frame solely because it completed after cycle start.
+
+FRAME BIND RULE
+DisplayMirrorHost may bind a frozen frame only if ContinuityFrameLeaseStore returns a FrameLease for the exact active closeCycleId. If not, the host follows the existing fallback path. Never silently substitute a previous-cycle generic cache frame.
+
+FRESHNESS RULE
+Keep the current 10,000 ms maximum age initially as a SECONDARY bound. The correctness improvement comes from provenance, not from inventing a new age constant.
+
+CYCLE INVALIDATION
+On reversal/native takeover/destroy:
+- invalidate active closeCycleId;
+- make late capture publication inert;
+- drop the eligible continuity-frame reference;
+- do not clear the generic SnapshotCache unless required for unrelated reasons.
+
+CAPTURE COALESCING / PERFORMANCE
+P0 correctness does not require a second screenshot if existing PanelEngine capture can publish a proven current-cycle frame. However capture ownership must be explicit.
+Recommended integration:
+- expose current frame-cycle token to the capture path;
+- if a capture begins after cycle arming, tag it with that token;
+- Accessibility result may use exact ScreenshotResult.timestamp to prove eligibility;
+- if capture began before arming and cannot prove post-arm sampling, it may still serve PanelEngine’s visual overlay but must not be promoted to continuity frozen-frame authority.
+
+Optional P1 optimization:
+Add a small shared capture broker so the continuity consumer can request one current-cycle capture without duplicating a PanelEngine capture that is already proven eligible.
+
+EXPLICIT INVARIANTS
+1. A frozen continuity frame belongs to exactly one serviceEpoch + closeCycleId.
+2. Starting a new close cycle never inherits frozen-frame authority from the previous cycle.
+3. A bitmap’s age alone can never authorize continuity presentation.
+4. Controller state generation and frozen-frame closeCycleId are distinct identities.
+5. A capture completed after reversal cannot become eligible for the reversed cycle.
+6. A capture from a prior service/process epoch is inert.
+7. Accessibility capture time must come from ScreenshotResult.timestamp when available, not callback-receipt time.
+8. Shizuku captures without exact capture timestamps must fail closed if their request began before the cycle.
+9. Logical display IDs are never used as permanent physical identity.
+10. No hinge threshold changes are part of this proposal.
+11. No raw physical-panel OFF command is part of this proposal.
+12. If no exact-cycle frozen frame exists, use an existing safe fallback; do not replay unproven prior content.
+13. Transition Lab timestamps frame events at the event boundary, not retrospectively.
+
+DEGRADATION PATH
+- No eligible frame: current live-mirror fallback or Samsung-native behavior, depending surrounding readiness/privilege state.
+- Shizuku unavailable: Accessibility capture may still publish exact-timestamp frame; otherwise fallback.
+- Secure capture failure: no current-cycle frozen frame is authorized. Prior non-secure cache content is not promoted solely due to age.
+- Service restart: old epoch frames are rejected; continuity reconstructs from new lifecycle.
+
+==================================================
+9. PROTOTYPE / PROPOSED CHANGES
+==================================================
+
+FILE=Fold7ContinuityFrameLeaseGen2.kt
+PURPOSE=Pure Kotlin reduced model for baseline age-only cache and Gen2 transition-scoped frame lease store.
+BASELINE OR NEW=NEW R&D MODEL
+COMPILED=YES
+TESTED=YES
+PRODUCTION_READY=NO
+
+FILE=Fold7ContinuityFrameLeaseGen2Test.kt
+PURPOSE=Deterministic/adversarial model tests including baseline stale acceptance and 100,000-operation randomized invariants.
+BASELINE OR NEW=NEW R&D TEST
+COMPILED=YES
+TESTED=YES
+PRODUCTION_READY=NO
+
+FILE=timing_model.py
+PURPOSE=Classifies performance implications without inventing device latency numbers.
+BASELINE OR NEW=NEW R&D MODEL
+COMPILED=N/A
+TESTED=EXECUTED
+PRODUCTION_READY=NO
+
+NO PRODUCTION PATCH WAS CREATED.
+The correct integration touches Android classes and needs manual architectural integration against the current main plus the imported readiness/lease proposals selected by the primary supervisor.
+
+==================================================
+10. EXECUTION EVIDENCE
+==================================================
+
+EXECUTION 1 — IMPORTED PACKAGE HASH VERIFICATION
+COMMAND OR TOOL=sha256sum on supplied ZIP/TXT files
+WORKING DIRECTORY=/mnt/data
+EXIT STATUS=0
+IMPORTANT OUTPUT:
+- Readiness ZIP = ebadeb1958f43ae5b869115bea88c2bf04e882323214947897cfca8177dd90c3
+- Readiness handoff = 924964eb42f248d50af3504671dd50980c00a5cd34819f378c454686e26e6e32
+- Lease ZIP = 60f08ec267e2679acac8660a41e2dc15fda03638648b3674f31894eccdadef29
+- Lease handoff = ccc6b257d993818adabe013f7c82d3db108263e6cb3a2f1a734a7d05fdf850ce
+ARTIFACT PATH=/mnt/data supplied files
+
+EXECUTION 2 — IMPORTED INTERNAL MANIFEST CHECK
+COMMAND OR TOOL=sha256sum -c SHA256SUMS.txt
+WORKING DIRECTORY=/mnt/data/incorporated_readiness and /mnt/data/incorporated_lease
+EXIT STATUS=0
+PASS COUNT=all listed files OK
+FAIL COUNT=0
+
+EXECUTION 3 — READINESS MODEL RERUN
+COMMAND=kotlinc Fold7CoverReadinessGen2.kt Fold7CoverReadinessGen2Test.kt -include-runtime ... ; java -jar ...
+EXIT STATUS=0
+TEST COUNT=22
+PASS COUNT=22
+FAIL COUNT=0
+IMPORTANT OUTPUT=RESULT passed=22 failed=0 total=22
+
+EXECUTION 4 — LEASE SNAPSHOT GATE RERUN
+COMMAND=kotlinc Fold7CoverLeaseSnapshotGateGen2.kt Fold7CoverLeaseSnapshotGateHarness.kt ... ; java -jar ...
+EXIT STATUS=0
+TEST COUNT=10
+PASS COUNT=10
+FAIL COUNT=0
+IMPORTANT OUTPUT=SUMMARY tests=10 passed=10 failed=0
+
+EXECUTION 5 — LEASE FUZZ RERUN
+COMMAND=kotlinc Fold7CoverLeaseSnapshotGateGen2.kt Fold7CoverLeaseSnapshotGateFuzz.kt ... ; java -jar ...
+EXIT STATUS=0
+ROUNDS=5000
+DELIVERIES=125000
+IMPORTANT OUTPUT=FUZZ PASS rounds=5000 deliveries=125000
+
+EXECUTION 6 — LEASE IDENTITY RERUN
+COMMAND=kotlinc Fold7CoverLeaseProtocolIdentityModel.kt Fold7CoverLeaseProtocolIdentityHarness.kt ... ; java -jar ...
+EXIT STATUS=0
+TEST COUNT=5
+PASS COUNT=5
+FAIL COUNT=0
+IMPORTANT OUTPUT=SUMMARY tests=5 passed=5 failed=0
+
+EXECUTION 7 — FRAME PROVENANCE MODEL BUILD/TEST
+COMMAND=kotlinc Fold7ContinuityFrameLeaseGen2.kt Fold7ContinuityFrameLeaseGen2Test.kt -include-runtime -d frame-lease-gen2-tests.jar ; java -jar frame-lease-gen2-tests.jar
+WORKING DIRECTORY=/mnt/data/duo_rnd_frame_provenance
+EXIT STATUS=0
+TEST COUNT=15
+PASS COUNT=15
+FAIL COUNT=0
+IMPORTANT OUTPUT=RESULT passed=15 failed=0 total=15
+ARTIFACT PATH=/mnt/data/duo_rnd_frame_provenance/TEST_OUTPUT.txt
+
+EXECUTION 8 — FRAME TIMING CLASSIFICATION
+COMMAND=python3 timing_model.py
+WORKING DIRECTORY=/mnt/data/duo_rnd_frame_provenance
+EXIT STATUS=0
+IMPORTANT OUTPUT=No new Binder/subprocess/fixed delay required by P0; live fallback latency remains UNKNOWN.
+ARTIFACT PATH=/mnt/data/duo_rnd_frame_provenance/TIMING_MODEL_OUTPUT.txt
+
+EXECUTION 9 — LOCAL REPOSITORY CLONE ATTEMPT
+COMMAND=git clone --depth 1 --branch main https://github.com/boberino93-bit/duo-open.git ...
+EXIT STATUS=128
+IMPORTANT OUTPUT=fatal: Could not resolve host: github.com
+RESULT=SOURCE NOT LOCALLY CLONED; GitHub connector used for authoritative current source.
+
+EXECUTION 10 — FINAL MAIN FETCH
+COMMAND OR TOOL=connected GitHub fetch_commit(main)
+RESULT=8f844ba8aadd8417a92ec8b568288fd0dd9e06e3
+
+EXECUTION 11 — FINAL COMMIT DIRECT CI LOOKUP
+COMMAND OR TOOL=get_commit_combined_status + fetch_commit_workflow_runs
+RESULT=no direct statuses; no direct runs associated with FINAL SHA
+LIMITATION=does not contradict imported evidence that a parent-triggered workflow built/tested the tree before committing it.
+
+==================================================
+11. ADVERSARIAL BACK-TEST RESULTS
+==================================================
+
+SCENARIO=previous-cycle frame 5 seconds old; current capture absent
+CURRENT MAIN MODEL=accepts prior frame if geometry matches
+GEN2=returns no frame for new closeCycleId
+RESULT=PASS
+REVISION=None
+
+SCENARIO=new close cycle after prior successful cycle
+CURRENT MAIN=generic cache remains populated
+GEN2=beginCloseCycle clears current frame authority for the new cycle
+RESULT=PASS
+
+SCENARIO=exact Accessibility capture after cycle start
+GEN2=accepted
+RESULT=PASS
+
+SCENARIO=Accessibility result timestamp proves capture occurred before cycle start
+GEN2=rejected even if callback/completion arrives later
+RESULT=PASS
+
+SCENARIO=Shizuku request started before cycle, completed after cycle
+GEN2=request-bounded timestamp quality rejects it
+RESULT=PASS
+NEGATIVE IMPACT=may increase fallback if no later capture exists; documented regression risk.
+
+SCENARIO=Shizuku request started after cycle
+GEN2=accepted
+RESULT=PASS
+
+SCENARIO=immediate reversal with capture still in flight
+GEN2=invalidateCloseCycle makes late completion inert
+RESULT=PASS
+
+SCENARIO=close→open→close with first close capture completing during second close
+GEN2=old closeCycleId rejected
+RESULT=PASS
+
+SCENARIO=service/accessibility restart during capture
+GEN2=old serviceEpoch rejected
+RESULT=PASS
+
+SCENARIO=wrong geometry
+GEN2=rejected
+RESULT=PASS
+
+SCENARIO=duplicate/out-of-order capture completion sequence
+GEN2=lower sequence cannot replace newer accepted frame
+RESULT=PASS
+
+SCENARIO=multiple controller state transitions in one close
+GEN2=stable closeCycleId retains frame eligibility
+RESULT=PASS
+
+SCENARIO=long same-cycle age
+GEN2=existing 10 s age cap still expires the frame
+RESULT=PASS
+
+SCENARIO=current capture failure after previous app state was cached
+CURRENT MAIN MODEL=prior content remains eligible by age
+GEN2=no current-cycle publish -> no frozen lease
+RESULT=PASS
+
+SCENARIO=randomized lifecycle / late completion / restart / publish / bind operations
+GEN2=100,000 fixed-seed operations; no stale-provenance lease observed
+RESULT=PASS
+
+NEGATIVE FINDING DISCOVERED DURING DESIGN
+A naive design that simply tags a PanelEngine capture with the controller’s current generation is incorrect because controller.generation changes on every state transition. The architecture was revised to require a separate stable closeCycleId.
+
+SECOND NEGATIVE FINDING
+A Shizuku capture request that starts before cycle arming cannot be proven current merely because it completes afterward. The proposal therefore distinguishes EXACT_CAPTURE from REQUEST_BOUNDED timestamp quality and fails closed for a pre-cycle Shizuku request.
+
+==================================================
+12. BASELINE VS GENERATION-2
+==================================================
+
+BEHAVIOR=Frame identity
+CURRENT MAIN=panel kind + geometry + age
+GENERATION 2=serviceEpoch + stable closeCycleId + captureSequence + geometry + timestamp provenance
+WHY DIFFERENT=explicit ownership replaces temporal guess
+EXPECTED BENEFIT=prevents cross-cycle stale-frame authority
+REGRESSION RISK=more live fallback when current frame cannot be proven
+PROOF LEVEL=source + pure model
+VALIDATION REQUIRED=Fold7 field test
+
+BEHAVIOR=Cycle change
+CURRENT MAIN=prior cache remains eligible until age expiry/replacement
+GENERATION 2=new cycle starts without inherited frozen authority
+WHY DIFFERENT=cycle lease reset
+EXPECTED BENEFIT=correct frame-to-transition association
+REGRESSION RISK=potentially no frozen frame on capture failure
+PROOF LEVEL=test-confirmed model
+VALIDATION REQUIRED=integration
+
+BEHAVIOR=Reversal
+CURRENT MAIN=PanelEngine captureGen protects local phase, but generic cache has no continuity cycle identity
+GENERATION 2=reversal invalidates frame cycle; late publish rejected
+WHY DIFFERENT=cycle-level cancellation
+EXPECTED BENEFIT=no stale frame promotion after reversal
+REGRESSION RISK=none expected beyond fallback frequency
+PROOF LEVEL=test-confirmed model
+VALIDATION REQUIRED=Android race test
+
+BEHAVIOR=Accessibility timing
+CURRENT MAIN=ScreenshotResult.timestamp unused
+GENERATION 2=use exact uptime capture timestamp
+WHY DIFFERENT=actual capture boundary, not callback receipt
+EXPECTED BENEFIT=strong temporal proof at zero additional screenshot call
+REGRESSION RISK=integration mistakes around clock domain
+PROOF LEVEL=Android API contract + model
+VALIDATION REQUIRED=unit/integration test
+
+BEHAVIOR=Shizuku timing
+CURRENT MAIN=Bitmap? return; elapsed capture duration only logged
+GENERATION 2=preserve request/completion bounds; reject pre-cycle request unless exact timestamp becomes available
+WHY DIFFERENT=uncertainty is explicit
+EXPECTED BENEFIT=prevents ambiguous pre-cycle bitmap promotion
+REGRESSION RISK=more fallback on gentle closes where capture started just before cycle arming
+PROOF LEVEL=source + architectural model
+VALIDATION REQUIRED=Fold7 A/B measurement
+
+BEHAVIOR=Age cap
+CURRENT MAIN=10 s is primary continuity-frame gate after geometry
+GENERATION 2=10 s remains secondary freshness cap after exact cycle ownership
+WHY DIFFERENT=age no longer substitutes for identity
+EXPECTED BENEFIT=correctness without unmeasured threshold change
+REGRESSION RISK=minimal
+PROOF LEVEL=model
+VALIDATION REQUIRED=product/device tuning only
+
+==================================================
+13. REGRESSION RISKS
+==================================================
+
+CORRECTNESS REGRESSIONS
+- Incorrect closeCycleId lifecycle could reject legitimate current-cycle frames or accidentally span separate closes.
+- Using controller.generation directly would be wrong because it changes within one close cycle.
+- Bad serviceEpoch plumbing could cause all captures to reject after reconnect/restart.
+
+LATENCY REGRESSIONS
+- Metadata checks themselves are local/O(1) and should be negligible, but unmeasured.
+- Fail-closed selection can increase live-mirror fallback frequency, whose startup latency is device-dependent and UNKNOWN.
+- Do not add a mandatory second screenshot to the transition critical path without measurement.
+
+POWER IMPACT
+- P0 provenance checks require no additional capture, Binder call, or panel power operation.
+- An optional capture-broker retry/second capture could increase power and should be separately justified.
+
+SAMSUNG INTERFERENCE
+- No Samsung panel-power or topology behavior is changed by P0.
+- Shizuku capture timing remains platform-specific; do not infer pixel sample time from callback arrival.
+
+LIFECYCLE REGRESSIONS
+- Frame cycle invalidation must run on destroy/reversal/native takeover.
+- Old service/process capture results must not repopulate the store.
+
+RACE INTRODUCTION
+- If capture publication and cycle invalidation happen on different threads, store access needs single-thread confinement or synchronization.
+- Recommended: confine ContinuityFrameLeaseStore mutation to the existing app handler/main orchestration boundary, or make acceptance atomically synchronized.
+
+RENDERING REGRESSIONS
+- If no frame is eligible, existing live mirror may reveal different visual characteristics than frozen continuity.
+- Secure content behavior of live mirror remains device/platform-specific and must be tested; never re-enable stale cached content to mask a black/secure fallback.
+
+SERVICE-RESTART BEHAVIOR
+- New serviceEpoch intentionally invalidates old frame authority.
+- Recovery should prefer a fresh current-cycle capture or native/live fallback.
+
+==================================================
+14. TESTS REQUIRED
+==================================================
+
+UNIT TESTS
+1. beginCloseCycle never inherits previous frame.
+2. exact current-cycle frame accepted.
+3. wrong cycle rejected.
+4. wrong service epoch rejected.
+5. reversal invalidation rejects late completion.
+6. lower capture sequence rejected.
+7. wrong geometry rejected.
+8. existing 10 s cap still enforced.
+9. controller state transitions within same close cycle do not rotate closeCycleId.
+
+JVM TESTS
+- Port the pure model tests into app/src/test.
+- Add close-cycle lifecycle reducer tests independent of Android Bitmap.
+- Add serialization/metadata conversion tests for capture source/timestamp quality.
+
+INTEGRATION TESTS
+1. FoldOverlayService starts frame cycle before/alongside PanelEngine handling of the same closing hinge sample.
+2. Accessibility ScreenshotResult.timestamp is propagated into frame provenance.
+3. Shizuku capture wrapper returns timing metadata without breaking existing consumers.
+4. DisplayMirrorHost cannot receive untyped generic SnapshotCache Bitmap as continuity authority.
+5. Live fallback is selected when frame lease lookup returns null.
+
+FAULT-INJECTION TESTS
+1. delay capture completion across reversal.
+2. delay prior-cycle completion into new close.
+3. fail current capture while previous cache entry is <10 s old.
+4. secure-window accessibility failure.
+5. Shizuku disconnect during capture.
+6. accessibility service restart during capture.
+7. duplicate callbacks/completions.
+8. capture timeout then new close.
+
+TIMING TESTS
+Record:
+- closeCycle start uptime;
+- capture request start;
+- Accessibility ScreenshotResult.timestamp or Shizuku bounds;
+- capture completion;
+- COVER_VISUAL transition;
+- frozen provider query;
+- frame lease acceptance/rejection;
+- host draw/SurfaceControl presentation markers.
+
+DEVICE TESTS
+- slow close
+- medium close
+- fast close
+- partial close pause then resume
+- immediate reversal
+- close→open→close
+- current capture failure with recent prior frame
+- secure app/window
+- launcher/home screen
+- ordinary app with rapidly changing visible content
+- service restart mid-close
+- Shizuku loss/recovery
+
+==================================================
+15. FOLD7 FIELD TEST PLAN
+==================================================
+
+TEST A — CROSS-CYCLE STALE FRAME PROOF
+STARTING PHONE STATE=fully open, inner native/default, ordinary app state A visibly unique.
+DISPLAY STATE=inner active; cover native route not yet default.
+HINGE START ANGLE=~180°.
+HINGE MOVEMENT=close normally to native cover, reopen, change app to visibly distinct state B, begin second close within <10 s.
+HINGE SPEED=medium.
+REVERSAL PATTERN=none.
+FAULT=delay or force failure of current-cycle frame capture B if debug fault injection exists.
+INSTRUMENTATION REQUIRED=closeCycleId, captureSequence, content test marker/ID, frame provider query, accepted frame lease, Transition Lab transaction/presentation data, 240 fps external video.
+EXPECTED EVENT ORDER=cycle B starts -> B capture fails/delays -> no B frame lease -> fallback path.
+EXPECTED PHYSICAL RESULT GEN2=must not show frame A as B’s continuity image.
+PASS CONDITION=no previous-cycle frame ID is accepted/drawn.
+FAIL CONDITION=frame from cycle A appears in cycle B.
+ARTIFACTS=Transition Lab export, logcat, external video, screenshot/capture provenance log.
+
+TEST B — FAST CLOSE
+STARTING STATE=fully open, moving content on inner.
+HINGE=180° -> closed quickly.
+EXPECTED=cycle ID created once; any frame bound to cover has exact same cycle ID; no prior-cycle frame.
+PASS=correct ID and no regression in task placement/panel ownership.
+FAIL=stale frame, missing invalidation, or new cycle ID per internal state transition.
+
+TEST C — IMMEDIATE REVERSAL
+STARTING=fully open.
+HINGE=close until capture starts/prewarm, reverse before visual, then close again.
+EXPECTED=first cycle invalidated; first capture completion rejected; second close has new cycle ID.
+PASS=no first-cycle frame can become second-cycle frame.
+FAIL=late first-cycle publish accepted.
+
+TEST D — SECURE CONTENT
+STARTING=secure-window app or controlled FLAG_SECURE test activity.
+HINGE=close normally.
+EXPECTED=if current capture is denied/secure, no unrelated prior cached image is authorized as continuity frame.
+PASS=black/native/live-safe fallback as platform provides, but no prior non-secure frozen content.
+FAIL=stale unrelated screenshot displayed.
+NOTE=Do not infer Samsung/live-mirror secure behavior; observe it.
+
+TEST E — SERVICE RESTART DURING CAPTURE
+STARTING=fully open then begin close.
+ACTION=restart accessibility service after capture request but before callback.
+EXPECTED=new serviceEpoch; old completion rejected.
+PASS=no old frame authority after restart.
+FAIL=old result populates new frame store.
+
+TEST F — PAUSED CLOSE
+STARTING=fully open.
+HINGE=close to mid-fold; pause 2 s, 5 s, then optionally >10 s; continue.
+EXPECTED=same closeCycleId through the pause; existing 10 s freshness cap remains operative.
+PASS=frame valid within policy then expires after existing cap; no new arbitrary threshold introduced.
+FAIL=cycle rotates merely due pause or expired prior frame remains authorized.
+
+==================================================
+16. PERFORMANCE / LATENCY IMPACT
+==================================================
+
+This subsystem is selected primarily for correctness/determinism, not latency reduction.
+
+STAGE: hinge / close-cycle creation
+CURRENT=existing controller work
+GEN2=one local cycle-token update
+NUMBER=UNKNOWN; expected negligible
+CLASS=EXPECTED, NOT MEASURED
+
+STAGE: screenshot capture
+CURRENT=existing PanelEngine Shizuku/Accessibility capture
+GEN2=P0 reuses existing capture when provenance is valid; no mandatory new capture
+NUMBER=UNCHANGED by design intent
+CLASS=EXPECTED, NOT MEASURED
+
+STAGE: eligibility lookup
+CURRENT=HashMap lookup + bitmap validity/geometry + age check
+GEN2=local frame-store lookup + epoch/cycle/sequence/timestamp/geometry + existing age check
+NUMBER=UNKNOWN
+CLASS=EXPECTED O(1), NOT MEASURED
+
+STAGE: Binder/subprocess
+CURRENT=capture/mirror paths as existing
+GEN2=no additional Binder/subprocess required for P0
+NUMBER=0 new mandatory operations
+CLASS=ARCHITECTURAL FACT FOR PROPOSED P0
+
+STAGE: visual fallback when no valid current frame
+CURRENT=may use stale-but-young bitmap instead of fallback
+GEN2=uses existing live/native fallback
+LATENCY=UNKNOWN; may be higher on affected cycles
+CLASS=MEASUREMENT REQUIRED
+
+MODELED TIMING ARTIFACT
+TIMING_MODEL_OUTPUT.txt explicitly states that no device latency is claimed.
+
+==================================================
+17. IMPLEMENTATION PRIORITY
+==================================================
+
+P0
+1. Add closeCycleId lifecycle distinct from controller.generation.
+2. Add pure ContinuityFrameLeaseStore with exact-cycle/service-epoch acceptance.
+3. Replace continuity Bitmap? provider with typed frame-lease provider.
+4. Propagate Accessibility ScreenshotResult.timestamp.
+5. Preserve request timing metadata for Shizuku capture and fail closed for pre-cycle requests.
+6. Invalidate cycle on reversal/native takeover/destroy/restart.
+7. Extend Transition Lab/DuoDiagnostics with frame provenance events.
+8. Add JVM tests before device integration.
+
+P1
+1. Shared capture broker/coalescing so continuity can obtain a current-cycle frame without unnecessary duplicate capture.
+2. Add explicit shell capture timestamp if the underlying capture API can expose a trustworthy sample/latch time.
+3. Measure frozen-hit vs live-fallback rate.
+
+P2
+1. Revisit the 10 s within-cycle freshness cap only after field measurements.
+2. Consider richer content/frame presentation correlation if Transition Lab shows ambiguity.
+
+DEPENDENCIES / SEQUENCING
+- Integrate only after re-fetching main.
+- If the primary supervisor also integrates Cover Readiness Gen2 and Cover Lease Protocol Gen2, frame provenance should remain separate and composable.
+- Do not make readiness depend on frame availability; a ready panel and an eligible frame are separate facts.
+
+==================================================
+18. WHAT NOT TO CHANGE
+==================================================
+
+Do not change while evaluating this proposal:
+- 1968x2184 inner geometry.
+- 1080x2520 cover geometry.
+- established 174° prewarm threshold.
+- established 135° visual threshold.
+- reversal hysteresis merely to mask frame timing.
+- real Android task placement.
+- no-raw-physical-OFF policy.
+- fresh logical route resolution / physical identity validation.
+- Fold7CoverPanelLease semantics.
+- imported Cover Readiness architecture without separate evidence.
+- imported Cover Lease Protocol architecture without supervisor decision.
+- 1.3.29 deterministic “do not live-recapture under a stationary hinge” intent.
+- 1.3.29 early opening wake.
+- Transition Lab instrumentation.
+
+The target is frame provenance, not geometry, power, readiness, hinge policy, or lease ownership.
+
+==================================================
+19. SUPERVISOR INTEGRATION NOTES
+==================================================
+
+MANUAL REVIEW REQUIRED
+
+LIKELY PRODUCTION FILES TO MODIFY
+- app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+- app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+- app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+- app/src/full/java/com/duoopen/overlay/SnapshotCache.kt only if metadata is generalized there; preferred design is a separate continuity-specific store so generic bridge semantics remain untouched.
+- app/src/full/java/com/duoopen/shell/ShizukuBridge.kt if capture timing metadata is returned.
+- Transition Lab / diagnostics files for frame provenance fields.
+
+LIKELY NEW FILES
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityFrameStore.kt (name flexible)
+- app/src/test/java/com/duoopen/overlay/Fold7ContinuityFrameStoreTest.kt
+
+CONFLICT WITH FINAL main
+No remote patch was produced. The proposal is based directly on FINAL main 8f844ba and targets code added/used by 1.3.29. Manual integration is required.
+
+RELATION TO IMPORTED COVER READINESS GEN2
+Independent but complementary. Readiness decides when the cover route is present/active enough to host content. Frame provenance decides whether the frozen pixels are authorized for the current close. Do not merge these state owners into one giant class.
+
+RELATION TO IMPORTED COVER LEASE PROTOCOL GEN2
+Independent but complementary. Shell lease identity controls privileged cover mutation authority. Frame lease identity controls bitmap presentation authority. Both benefit from explicit epochs/tokens but should remain semantically separate.
+
+MECHANICAL PATCH STATUS=NO
+
+RECHECK IMMEDIATELY BEFORE INTEGRATION
+1. main HEAD SHA.
+2. SnapshotCache schema/semantics.
+3. 1.3.29 frozenFrameProvider path.
+4. DisplayMirrorHost frozen selection logic.
+5. any new capture broker or frame metadata work that may have landed.
+6. whether Cover Readiness / Cover Lease Protocol proposals have been integrated and changed lifecycle boundaries.
+
+==================================================
+20. ARTIFACT IDENTITY
+==================================================
+
+HANDOFF_FILENAME=DUO_OPEN_FROZEN_FRAME_PROVENANCE_GEN2_RND_HANDOFF.txt
+HANDOFF_SHA256=SEE_SHA256SUMS.txt (detached hash; embedding the final file hash inside the file would change that hash)
+PROPOSAL_ZIP_FILENAME=DUO_OPEN_FROZEN_FRAME_PROVENANCE_GEN2_PROPOSAL.zip
+PROPOSAL_ZIP_SHA256=SEE_EXTERNAL_ARTIFACT_HASHES.txt (ZIP contains this handoff, so its final hash must be detached)
+UNATTACHED_GIT_BLOB_SHA=N/A
+
+==================================================
+21. BOTTOM LINE
+==================================================
+
+WHAT IS PROVEN
+- CURRENT 1.3.29 frame selection has no fold-cycle provenance; it uses panel kind, size, and age.
+- A previous-cycle same-sized frame can remain eligible for up to 10 seconds.
+- Capture failure paths can leave the prior cache entry intact.
+- DisplayMirrorHost accepts such a candidate without cycle identity and returns before live fallback.
+- Android Accessibility screenshot results provide an exact uptime-domain timestamp that can support stronger provenance.
+- The pure Gen2 model eliminates tested cross-cycle/reversal/restart/stale-sequence frame authority failures and passed 15/15 tests plus 100,000 randomized operations.
+
+WHAT IS EXPECTED
+A transition-scoped frame lease should make deterministic frozen rendering safer and more semantically correct without altering hinge thresholds, display power, cover readiness, or privileged lease ownership.
+
+WHAT REMAINS UNKNOWN
+- real Fold7 frequency of stale-frame selection;
+- visual/latency cost of fail-closed live fallback;
+- best trustworthy timestamp metadata for the Shizuku capture path;
+- whether the existing 10-second within-cycle freshness cap should later be tuned.
+
+NEXT BEST ENGINEERING ACTION
+Primary supervisor should compare this proposal against the then-current main and the imported Readiness/Lease Protocol packages, then manually integrate a small typed ContinuityFrameLeaseStore + stable closeCycleId + capture provenance telemetry behind tests. Run Fold7 field validation before any production-ready conclusion.
+
+DO NOT AUTHORIZE INSTALLATION BASED ON THIS R&D PACKAGE.

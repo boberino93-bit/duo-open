@@ -1,0 +1,6 @@
+print('FRAME PROVENANCE TIMING MODEL')
+print('All values below are architectural classification, not Fold7 measurements.')
+print('CURRENT_MAIN frame eligibility check: local cache lookup + dimensions + age <= 10,000 ms [source-derived]')
+print('GEN2 frame eligibility check: local metadata comparisons + dimensions + existing age cap [expected O(1); unmeasured]')
+print('No new Binder call, subprocess, hinge threshold, panel-power command, or fixed delay is required by the P0 design.')
+print('If no exact-cycle frame exists, Gen2 deliberately falls back instead of replaying a prior-cycle bitmap; live-mirror startup latency remains UNKNOWN and requires Fold7 measurement.')
