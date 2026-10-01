@@ -1,0 +1,17 @@
+EXPECTED START HEAD
+c0a12450524296dccf74401df73d688d9e22f4b1
+
+EXPECTED PRODUCTION VERSION
+versionCode=35
+versionName=2.0.0-zfold7-gen2-ownership
+
+EXPECTED MANDATORY GATES
+- staged bundle integrity PASS
+- audited runtime blob check PASS
+- Gen2 post-apply structural verifier PASS
+- git diff --check PASS
+- testFullDebugUnitTest PASS
+- assembleFullDebug PASS
+
+EXPECTED OUTCOME
+A real app/src Gen2 production diff ready for Root review/commit. The corrective wrapper itself creates no commit and no push.

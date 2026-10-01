@@ -1,0 +1,28 @@
+You are the primary/root integration agent for boberino93-bit/duo-open.
+
+The repository is currently in a staged-but-not-applied Gen2 state. The full Gen2 deployment package was committed to main as review material, but the actual production app/src changes were never applied.
+
+STARTING HEAD REQUIRED:
+c0a12450524296dccf74401df73d688d9e22f4b1
+
+Use the attached DUO_OPEN_GEN2_STAGED_STATE_FIX package.
+
+1. Fetch and verify current main is exactly the required HEAD.
+2. Ensure the worktree is clean.
+3. Run:
+   python3 /path/to/package/deploy_staged_gen2.py .
+4. Do not bypass any failure.
+5. The wrapper must run the existing audited installer, structural verifier, git diff check, unit tests, and fullDebug assembly.
+6. Review the resulting production diff carefully.
+7. Confirm versionCode 35 / versionName 2.0.0-zfold7-gen2-ownership.
+8. Confirm real runtime files under app/src changed; do not mistake repo_overlay staging files for production integration.
+9. If every gate passes, commit the production Gen2 integration to main and report:
+   - starting SHA
+   - final SHA
+   - changed production files
+   - test/build commands and outcomes
+   - APK artifact identity if produced
+   - any deferred or failed items
+10. Do not push a partially applied or failing tree.
+
+Preserve the project invariants: no logical display ID as physical identity, no raw physical panel OFF, real task stays on default display, Samsung native handoff remains authoritative, existing Fold7 thresholds remain unless separately justified, stale async work must be inert, and Transition Lab remains enabled as architecture-level instrumentation.
