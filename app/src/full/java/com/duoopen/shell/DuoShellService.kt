@@ -1327,7 +1327,10 @@ class DuoShellService : Binder() {
      * action it was sent, whether it's visible, and `mCurrentAngle=<deg>`.
      * Log format per Duo Fold Live's findings.
      */
-    private class AngleReader(private val action: String, private val callback: IBinder) {
+    private class AngleReader(
+        private val actionPrefix: String,
+        private val callback: IBinder,
+    ) {
         @Volatile private var process: java.lang.Process? = null
         @Volatile private var stopped = false
         @Volatile private var state = "starting"
@@ -1336,6 +1339,12 @@ class DuoShellService : Binder() {
         private var rejected = 0
         private var lastAngle = Float.NaN
         private var lastUptime = 0L
+        private var lastPollSequence = 0L
+
+        private data class ParsedAngle(
+            val angle: Float,
+            val pollSequence: Long,
+        )
 
         fun start() {
             val thread = Thread({
@@ -1350,7 +1359,7 @@ class DuoShellService : Binder() {
                         while (!stopped) {
                             val line = input.readLine() ?: break
                             lines++
-                            val value = parse(line) ?: continue
+                            val parsedLine = parse(line) ?: continue
                             // Never treat a buffered line as current.
                             val epoch = line.trim().split(Regex("\\s+"), 2).firstOrNull()?.toDoubleOrNull()
                             val age = if (epoch == null) Long.MAX_VALUE else System.currentTimeMillis() - (epoch * 1000).toLong()
@@ -1359,14 +1368,16 @@ class DuoShellService : Binder() {
                                 continue
                             }
                             parsed++
-                            lastAngle = value
+                            lastAngle = parsedLine.angle
+                            lastPollSequence = parsedLine.pollSequence
                             lastUptime = SystemClock.uptimeMillis() - age.coerceAtLeast(0)
                             state = "receiving"
                             val p = Parcel.obtain()
                             try {
                                 p.writeInterfaceToken(ShellProtocol.CALLBACK_TOKEN)
-                                p.writeFloat(value)
+                                p.writeFloat(parsedLine.angle)
                                 p.writeLong(lastUptime)
+                                p.writeLong(parsedLine.pollSequence)
                                 callback.transact(ShellProtocol.CB_ANGLE, p, null, IBinder.FLAG_ONEWAY)
                             } catch (e: Exception) {
                                 state = "callback gone: ${e.message}"
@@ -1400,20 +1411,42 @@ class DuoShellService : Binder() {
             putInt("rejected", rejected)
             putFloat("angle", lastAngle)
             putLong("last", lastUptime)
+            putLong("pollSequence", lastPollSequence)
         }
 
-        private fun parse(line: String): Float? {
+        private fun parse(line: String): ParsedAngle? {
             if (!line.contains("SprWallpaper|FoldInteractive") || !line.contains("onCommand:")) return null
-            if (!(line.contains("action=$action,") || line.contains("action[$action]"))) return null
             if (!(line.contains("isVisible=true") || line.contains("isVisible[true]"))) return null
-            val m = ANGLE.matcher(line)
-            if (!m.find()) return null
-            val v = m.group(1)?.toFloatOrNull() ?: return null
-            return if (v in 0f..180f) v else null
+
+            val actionMatch = ACTION.matcher(line)
+            if (!actionMatch.find()) return null
+            val action = actionMatch.group(1) ?: return null
+
+            val pollSequence =
+                when {
+                    action == actionPrefix -> 0L
+                    action.startsWith("$actionPrefix:") ->
+                        action.substring(actionPrefix.length + 1).toLongOrNull()
+                            ?: return null
+                    else -> return null
+                }
+
+            val angleMatch = ANGLE.matcher(line)
+            if (!angleMatch.find()) return null
+            val value = angleMatch.group(1)?.toFloatOrNull() ?: return null
+            if (value !in 0f..180f) return null
+
+            return ParsedAngle(
+                angle = value,
+                pollSequence = pollSequence,
+            )
         }
 
         private companion object {
-            val ANGLE: Pattern = Pattern.compile("mCurrentAngle(?:=|\\[)([0-9]+(?:\\.[0-9]+)?)")
+            val ACTION: Pattern =
+                Pattern.compile("action(?:=|\\[)([^,\\]]+)")
+            val ANGLE: Pattern =
+                Pattern.compile("mCurrentAngle(?:=|\\[)([0-9]+(?:\\.[0-9]+)?)")
         }
     }
 

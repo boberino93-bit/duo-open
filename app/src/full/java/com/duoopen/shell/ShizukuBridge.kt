@@ -197,7 +197,7 @@ object ShizukuBridge {
 
     /** Receives angles from the shell-side wallpaper log reader. */
     private class AngleCallback(
-        private val onAngle: (Float, Long, Long) -> Unit,
+        private val onAngle: (Float, Long, Long, Long) -> Unit,
     ) : Binder() {
 
         init {
@@ -241,10 +241,26 @@ object ShizukuBridge {
                     SystemClock.uptimeMillis()
                 }
 
+            /*
+             * Gen-2 readers append a poll sequence after source uptime. A zero
+             * sequence preserves compatibility with the current production
+             * feed until it is switched to per-poll action identity.
+             */
+            val pollSequence =
+                if (
+                    data.dataAvail() >=
+                    Long.SIZE_BYTES
+                ) {
+                    data.readLong()
+                } else {
+                    0L
+                }
+
             onAngle(
                 angle,
                 sourceUptime,
                 binderArrivalTimeNs,
+                pollSequence,
             )
 
             return true
@@ -254,16 +270,33 @@ object ShizukuBridge {
     private var angleCallback:
         AngleCallback? = null
 
+    /**
+     * Compatibility entry point for the current feed. Gen-2 callers should use
+     * [startAnglesSequenced] so the poll sequence survives shell -> Binder.
+     */
     fun startAngles(
         action: String,
         onAngle: (Float, Long, Long) -> Unit,
-    ): Boolean {
+    ): Boolean =
+        startAnglesSequenced(
+            actionPrefix = action,
+        ) { angle, sourceUptime, binderArrivalTimeNs, _ ->
+            onAngle(
+                angle,
+                sourceUptime,
+                binderArrivalTimeNs,
+            )
+        }
 
+    fun startAnglesSequenced(
+        actionPrefix: String,
+        onAngle: (Float, Long, Long, Long) -> Unit,
+    ): Boolean {
         val cb =
             AngleCallback(onAngle)
         angleCallback = cb
         return call(ShellProtocol.START_ANGLES) { p ->
-            p.writeString(action)
+            p.writeString(actionPrefix)
             p.writeStrongBinder(cb)
         } != null
     }
