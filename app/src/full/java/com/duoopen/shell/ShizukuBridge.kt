@@ -372,6 +372,81 @@ object ShizukuBridge {
             parcel.writeInt(0)
         }
 
+    fun openDisplayMirrorSession(): Bundle? =
+        call(ShellProtocol.OPEN_MIRROR_SESSION)
+
+    fun startDisplayMirrorV2(
+        session: Long,
+        sequence: Long,
+        leaseId: Long,
+        sourceDisplayId: Int,
+    ): Bundle? =
+        call(ShellProtocol.MIRROR_DISPLAY_V2) { parcel ->
+            parcel.writeInt(1)
+            parcel.writeLong(session)
+            parcel.writeLong(sequence)
+            parcel.writeLong(leaseId)
+            parcel.writeInt(sourceDisplayId)
+        }
+
+    fun stopDisplayMirrorV2(
+        session: Long,
+        sequence: Long,
+        leaseId: Long,
+    ): Bundle? =
+        call(ShellProtocol.MIRROR_DISPLAY_V2) { parcel ->
+            parcel.writeInt(0)
+            parcel.writeLong(session)
+            parcel.writeLong(sequence)
+            parcel.writeLong(leaseId)
+        }
+
+    fun forceStopDisplayMirrorV2(
+        session: Long,
+        sequence: Long,
+    ): Bundle? =
+        call(ShellProtocol.MIRROR_DISPLAY_V2) { parcel ->
+            parcel.writeInt(2)
+            parcel.writeLong(session)
+            parcel.writeLong(sequence)
+            parcel.writeLong(0L)
+        }
+
+    fun prewarmSecondaryDisplayV2(
+        ownerGeneration: Long,
+    ): Bundle? =
+        call(ShellProtocol.COVER_PANEL_LEASE_V2) { parcel ->
+            parcel.writeInt(1)
+            parcel.writeLong(ownerGeneration)
+            parcel.writeString("prewarm")
+        }
+
+    fun releaseSecondaryDisplayV2(
+        ownerGeneration: Long,
+        reason: String,
+    ): Bundle? =
+        call(ShellProtocol.COVER_PANEL_LEASE_V2) { parcel ->
+            parcel.writeInt(2)
+            parcel.writeLong(ownerGeneration)
+            parcel.writeString(reason)
+        }
+
+    fun reconcileSecondaryDisplayLeaseV2(
+        reason: String,
+    ): Bundle? =
+        call(ShellProtocol.COVER_PANEL_LEASE_V2) { parcel ->
+            parcel.writeInt(3)
+            parcel.writeLong(-1L)
+            parcel.writeString(reason)
+        }
+
+    fun secondaryDisplayLeaseStatusV2(): Bundle? =
+        call(ShellProtocol.COVER_PANEL_LEASE_V2) { parcel ->
+            parcel.writeInt(4)
+            parcel.writeLong(-1L)
+            parcel.writeString("status")
+        }
+
     fun requestDisplayPower(
         displayId: Int,
         requestedState: Int,

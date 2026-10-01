@@ -10,6 +10,7 @@ import com.duoopen.shell.ShizukuBridge
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Android/Fold7 orchestration around [Fold7ContinuityController].
@@ -36,6 +37,14 @@ internal class Fold7ContinuityCoordinator(
     private var mirrorGeneration = -1L
     private var mirrorHost: DisplayMirrorHost? = null
 
+    @Volatile private var mirrorSession = 0L
+    @Volatile private var mirrorSessionOpening = false
+    private val mirrorSequence = AtomicLong(0L)
+    private val mirrorLeaseCounter = AtomicLong(0L)
+
+    @Volatile private var coverLeaseOwnerGeneration = -1L
+    @Volatile private var destroyed = false
+
     val visualMirrorActive: Boolean
         get() =
             mirrorRequested &&
@@ -45,6 +54,9 @@ internal class Fold7ContinuityCoordinator(
         get() = controller.state
 
     fun arm() {
+        destroyed = false
+        ensureMirrorSession("arm")
+
         val angle =
             currentHingeAngle()
                 .takeIf { it.isFinite() }
@@ -97,6 +109,7 @@ internal class Fold7ContinuityCoordinator(
             )
 
         apply(decision)
+        reconcileCoverLease("topology:$reason")
 
         if (visualMirrorActive) {
             syncMirrorHost(
@@ -115,26 +128,59 @@ internal class Fold7ContinuityCoordinator(
             stopShellMirror = true,
         )
 
-        scope.launch(Dispatchers.IO) {
-            val result =
-                runCatching {
-                    ShizukuBridge.resetSecondaryDisplay(-1)
-                }.getOrNull()
-
-            DuoDiagnostics.event(
-                "fold7-state",
-                "release reason=$reason ok=${result?.getBoolean("ok", false) == true} " +
-                    "target=${result?.getInt("targetDisplayId", -1) ?: -1}",
-            )
-        }
+        releaseCoverLease(reason)
     }
 
     fun destroy() {
+        destroyed = true
         hideMirror(
             generation = controller.generation,
             reason = "destroy",
             stopShellMirror = true,
         )
+        val coverOwner = coverLeaseOwnerGeneration
+        if (ShizukuBridge.ready) {
+            Thread(
+                {
+                    runCatching {
+                        if (coverOwner >= 0L) {
+                            ShizukuBridge.releaseSecondaryDisplayV2(coverOwner, "destroy")
+                        } else {
+                            ShizukuBridge.reconcileSecondaryDisplayLeaseV2("destroy")
+                        }
+                    }
+                },
+                "duo-cover-lease-destroy",
+            ).apply { isDaemon = true }.start()
+        }
+
+        val session = mirrorSession
+        if (session > 0L) {
+            val sequence = mirrorSequence.incrementAndGet()
+            Thread(
+                {
+                    runCatching {
+                        ShizukuBridge.forceStopDisplayMirrorV2(
+                            session = session,
+                            sequence = sequence,
+                        )
+                    }
+                },
+                "duo-mirror-force-stop",
+            ).apply { isDaemon = true }.start()
+        }
+    }
+
+    fun onPrivilegedReady() {
+        if (destroyed) return
+        ensureMirrorSession("shizuku-ready")
+        reconcileCoverLease("shizuku-ready")
+    }
+
+    fun onPrivilegedUnavailable() {
+        mirrorSession = 0L
+        mirrorSessionOpening = false
+        mirrorSequence.set(0L)
     }
 
     private fun apply(
@@ -230,10 +276,8 @@ internal class Fold7ContinuityCoordinator(
 
             val result =
                 runCatching {
-                    // -1 means: resolve the current inactive 1080x2520 Fold7
-                    // route inside the privileged service immediately before
-                    // the one-shot operation. Never reuse a prior logical id.
-                    ShizukuBridge.enableSecondaryDisplay(-1)
+                    ShizukuBridge.prewarmSecondaryDisplayV2(generation)
+                        ?: ShizukuBridge.enableSecondaryDisplay(-1)
                 }.getOrNull()
 
             val ok =
@@ -253,6 +297,16 @@ internal class Fold7ContinuityCoordinator(
                     "physicalDisplayId",
                     -1L,
                 ) ?: -1L
+
+            val leaseOwner =
+                result?.getLong(
+                    "ownerGeneration",
+                    -1L,
+                ) ?: -1L
+
+            if (leaseOwner >= 0L) {
+                coverLeaseOwnerGeneration = leaseOwner
+            }
 
             DuoDiagnostics.event(
                 "fold7-state",
@@ -314,26 +368,13 @@ internal class Fold7ContinuityCoordinator(
             )
         }
 
-        if (stopShellMirror) {
-            scope.launch(Dispatchers.IO) {
-                /*
-                 * Shell mirror ownership is global inside DuoShellService.
-                 * Do not let an obsolete hide race with a newer ShowMirror.
-                 * The local host has already been detached synchronously.
-                 */
-                if (!controller.isGenerationCurrent(generation)) {
-                    DuoDiagnostics.event(
-                        "fold7-state",
-                        "mirror-stop-stale generation=$generation " +
-                            "current=${controller.generation} reason=$reason",
-                    )
-                    return@launch
-                }
-
-                runCatching {
-                    ShizukuBridge.stopDisplayMirror()
-                }
-            }
+        if (stopShellMirror && old == null) {
+            // V2 ownership is host-scoped. A missing host has no lease to stop;
+            // service/session cleanup uses FORCE_STOP explicitly.
+            DuoDiagnostics.event(
+                "fold7-state",
+                "mirror stop skipped no-host generation=$generation reason=$reason",
+            )
         }
     }
 
@@ -361,28 +402,7 @@ internal class Fold7ContinuityCoordinator(
             stopShellMirror = true,
         )
 
-        scope.launch(Dispatchers.IO) {
-            if (!controller.isGenerationCurrent(generation)) {
-                DuoDiagnostics.event(
-                    "fold7-state",
-                    "secondary-release-stale-before-shell generation=$generation " +
-                        "current=${controller.generation}",
-                )
-                return@launch
-            }
-
-            val result =
-                runCatching {
-                    ShizukuBridge.resetSecondaryDisplay(-1)
-                }.getOrNull()
-
-            DuoDiagnostics.event(
-                "fold7-state",
-                "secondary-release generation=$generation " +
-                    "ok=${result?.getBoolean("ok", false) == true} " +
-                    "target=${result?.getInt("targetDisplayId", -1) ?: -1}",
-            )
-        }
+        releaseCoverLease("secondary-release:generation=$generation")
     }
 
     private fun syncMirrorHost(
@@ -394,6 +414,12 @@ internal class Fold7ContinuityCoordinator(
             !controller.isGenerationCurrent(generation) ||
             controller.state != Fold7ContinuityController.State.COVER_VISUAL
         ) {
+            return
+        }
+
+        val session = mirrorSession
+        if (session <= 0L) {
+            ensureMirrorSession("mirror:$reason")
             return
         }
 
@@ -445,6 +471,9 @@ internal class Fold7ContinuityCoordinator(
                     service = service,
                     display = activeCover,
                     scope = scope,
+                    mirrorSession = session,
+                    mirrorLeaseId = mirrorLeaseCounter.incrementAndGet(),
+                    nextMirrorSequence = { mirrorSequence.incrementAndGet() },
                     onStatus = onStatus,
                 )
             }.onFailure { error ->
@@ -501,6 +530,98 @@ internal class Fold7ContinuityCoordinator(
             "mirror host created reason=$reason generation=$generation " +
                 "inner=${activeInner.displayId} cover=${activeCover.displayId}",
         )
+    }
+
+    private fun ensureMirrorSession(
+        reason: String,
+    ) {
+        if (destroyed || !ShizukuBridge.ready) return
+        if (mirrorSession > 0L || mirrorSessionOpening) return
+
+        mirrorSessionOpening = true
+        scope.launch(Dispatchers.IO) {
+            val result =
+                runCatching {
+                    ShizukuBridge.openDisplayMirrorSession()
+                }.getOrNull()
+            val session = result?.getLong("mirrorSession", 0L) ?: 0L
+
+            handler.post {
+                mirrorSessionOpening = false
+                if (destroyed) return@post
+                if (session <= 0L) {
+                    DuoDiagnostics.event(
+                        "live-mirror",
+                        "session open failed reason=$reason error=${result?.getString("error")}",
+                    )
+                    return@post
+                }
+
+                mirrorSession = session
+                mirrorSequence.set(0L)
+                DuoDiagnostics.event(
+                    "live-mirror",
+                    "session opened reason=$reason session=$session",
+                )
+
+                if (visualMirrorActive) {
+                    syncMirrorHost(
+                        reason = "session-open:$reason",
+                        generation = mirrorGeneration,
+                    )
+                }
+            }
+        }
+    }
+
+    private fun updateCoverLeaseSnapshot(
+        result: android.os.Bundle?,
+        reason: String,
+    ) {
+        if (result == null) return
+        val state = result.getString("leaseState")
+        val owner = result.getLong("ownerGeneration", -1L)
+        coverLeaseOwnerGeneration =
+            if (state == "IDLE") -1L else owner
+
+        DuoDiagnostics.event(
+            "fold7-state",
+            "cover-lease reason=$reason state=$state " +
+                "owner=$owner lease=${result.getLong("leaseId", -1L)} " +
+                "epoch=${result.getLong("leaseEpoch", -1L)} " +
+                "pending=${result.getBoolean("releasePending", false)} " +
+                "released=${result.getBoolean("released", false)}",
+        )
+    }
+
+    private fun releaseCoverLease(
+        reason: String,
+    ) {
+        if (!ShizukuBridge.ready) return
+        val owner = coverLeaseOwnerGeneration
+        scope.launch(Dispatchers.IO) {
+            val result =
+                if (owner >= 0L) {
+                    ShizukuBridge.releaseSecondaryDisplayV2(owner, reason)
+                        ?: ShizukuBridge.resetSecondaryDisplay(-1)
+                } else {
+                    ShizukuBridge.reconcileSecondaryDisplayLeaseV2(reason)
+                        ?: ShizukuBridge.resetSecondaryDisplay(-1)
+                }
+            handler.post { updateCoverLeaseSnapshot(result, reason) }
+        }
+    }
+
+    private fun reconcileCoverLease(
+        reason: String,
+    ) {
+        if (destroyed || !ShizukuBridge.ready) return
+        scope.launch(Dispatchers.IO) {
+            val result =
+                ShizukuBridge.reconcileSecondaryDisplayLeaseV2(reason)
+                    ?: ShizukuBridge.secondaryDisplayLeaseStatusV2()
+            handler.post { updateCoverLeaseSnapshot(result, reason) }
+        }
     }
 
     private data class DisplaySnapshot(
