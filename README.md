@@ -1,25 +1,24 @@
-# Duo Open Gen2 production workflow V2
+# Duo Open Gen2 production workflow V3
 
-The first real CI execution reached the installer and failed safely at:
+V2 successfully applied and structurally verified the Gen2 runtime, then Gradle
+found four compile-surface issues:
 
-`PanelEngine.kt:shell publish: expected anchor exactly once, found 3`
+- DisplayMirrorHost public constructor exposed internal Gen2 types.
+- PanelEngine public constructor exposed internal Gen2 types.
+- Two ShizukuBridge V3 token methods exposed an internal lease-token type.
+- HingeAngleSource placed `callbackHandler` after the lambda parameter, breaking
+  existing trailing-lambda call sites such as DuoApp.
 
-Cause: the installer used a generic `onCaptured(...)` text anchor before
-distinguishing the shell path from two accessibility paths.
+V3 fixes those exact integration issues in the ephemeral runner after applying
+Gen2, then repeats structural verification and the complete Gradle gates.
 
-This workflow fixes only that installer anchor in the ephemeral GitHub Actions
-runner. It does not commit the installer modification.
+No runtime commit is pushed unless:
+- audited production blob verification passes;
+- Gen2 applies;
+- structural verification passes;
+- `git diff --check` passes;
+- `testFullDebugUnitTest` passes;
+- `assembleFullDebug` passes.
 
-Execution order:
-
-1. verify all audited production blobs with the original installer;
-2. patch the ambiguous installer anchor in the runner;
-3. run the installer against the still-audited production source;
-4. run `verify_gen2_postapply.py`;
-5. run `git diff --check`;
-6. run `testFullDebugUnitTest assembleFullDebug --stacktrace`;
-7. commit only `app/**` and the existing direct-build workflow;
-8. push the Gen2 production commit only when every prior gate succeeds.
-
-If a later source/compiler issue appears, the workflow stops before commit and
-the job log becomes the authoritative next diagnostic.
+If Gradle exposes another issue, the workflow stops before commit and the job
+log becomes the next diagnostic input.

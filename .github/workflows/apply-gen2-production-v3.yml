@@ -1,0 +1,197 @@
+name: Apply Duo Open Gen2 Production Integration V3
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/apply-gen2-production-v3.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: duo-open-gen2-production-apply
+  cancel-in-progress: false
+
+jobs:
+  apply-test-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+
+      - name: Verify audited production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen2.py . --force --check-only
+
+      - name: Patch ambiguous installer anchor in runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("tools/apply_gen2.py")
+          t = p.read_text()
+
+          old = '''        t = replace_once(
+                      t,
+                      "                onCaptured(bitmap, afterSwap, startTilt, t0)\\n",
+                      "                onCaptured(\\n"
+                      "                    bitmap = bitmap,\\n"
+                      "                    afterSwap = afterSwap,\\n"
+                      "                    startTilt = startTilt,\\n"
+                      "                    t0 = t0,\\n"
+                      "                    continuityTicket = continuityTicket,\\n"
+                      "                    capturedUptimeMs = t0,\\n"
+                      "                    timestampQuality = Fold7ContinuityFrameStore.TimestampQuality.REQUEST_BOUNDED,\\n"
+                      "                )\\n",
+                      rel + ":shell publish",
+                  )'''
+
+          new = '''        t = replace_once(
+                      t,
+                      "                }\\n"
+                      "                onCaptured(bitmap, afterSwap, startTilt, t0)\\n"
+                      "            }\\n"
+                      "            return\\n",
+                      "                }\\n"
+                      "                onCaptured(\\n"
+                      "                    bitmap = bitmap,\\n"
+                      "                    afterSwap = afterSwap,\\n"
+                      "                    startTilt = startTilt,\\n"
+                      "                    t0 = t0,\\n"
+                      "                    continuityTicket = continuityTicket,\\n"
+                      "                    capturedUptimeMs = t0,\\n"
+                      "                    timestampQuality = Fold7ContinuityFrameStore.TimestampQuality.REQUEST_BOUNDED,\\n"
+                      "                )\\n"
+                      "            }\\n"
+                      "            return\\n",
+                      rel + ":shell publish",
+                  )'''
+
+          if t.count(old) != 1:
+              raise SystemExit(f"installer anchor count={t.count(old)}; expected 1")
+          p.write_text(t.replace(old, new, 1))
+          PY
+
+      - name: Apply Gen2 production runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen2.py . --force
+
+      - name: Apply compile-surface integration fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def once(path: str, old: str, new: str) -> None:
+              p = Path(path)
+              t = p.read_text()
+              count = t.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected exactly one integration anchor, found {count}: {old!r}")
+              p.write_text(t.replace(old, new, 1))
+
+          # Keep the callback lambda last so existing trailing-lambda callers
+          # (notably DuoApp) remain source-compatible. FoldOverlayService uses
+          # named arguments, so it remains valid after this reorder.
+          once(
+              "app/src/main/java/com/duoopen/fold/HingeAngleSource.kt",
+              '''class HingeAngleSource(
+              context: Context,
+              private val onAngle: (Float) -> Unit,
+              private val callbackHandler: Handler? = null,
+          ) : SensorEventListener {''',
+              '''class HingeAngleSource(
+              context: Context,
+              private val callbackHandler: Handler? = null,
+              private val onAngle: (Float) -> Unit,
+          ) : SensorEventListener {''',
+          )
+
+          # These are full-flavor implementation classes, not external API.
+          # Making them module-internal avoids leaking the typed Gen2 owners
+          # through public constructor signatures.
+          once(
+              "app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt",
+              "class DisplayMirrorHost(",
+              "internal class DisplayMirrorHost(",
+          )
+          once(
+              "app/src/full/java/com/duoopen/overlay/PanelEngine.kt",
+              "class PanelEngine(",
+              "internal class PanelEngine(",
+          )
+
+          # V3 token-bearing helpers are used only inside the full-flavor
+          # implementation. Keep the public ShizukuBridge object while making
+          # these typed internal calls module-internal.
+          once(
+              "app/src/full/java/com/duoopen/shell/ShizukuBridge.kt",
+              "    fun ensureSecondaryDisplayHeldV3(",
+              "    internal fun ensureSecondaryDisplayHeldV3(",
+          )
+          once(
+              "app/src/full/java/com/duoopen/shell/ShizukuBridge.kt",
+              "    fun releaseSecondaryDisplayV3(",
+              "    internal fun releaseSecondaryDisplayV3(",
+          )
+
+          print("compile-surface integration fixes: PASS")
+          PY
+
+      - name: Structural verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/verify_gen2_postapply.py .
+          git diff --check
+          git status --short
+          git diff --stat
+
+      - name: Mandatory Gradle gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Commit verified Gen2 production runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add app .github/workflows/build-direct-fold7.yml
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+
+          if git diff --cached --name-only | grep -q '^tools/'; then
+            echo "ERROR: installer tooling unexpectedly staged"
+            exit 1
+          fi
+
+          git commit -m "Integrate Fold7 Gen2 production runtime"
+          git push origin HEAD:main
