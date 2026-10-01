@@ -1,0 +1,1 @@
+Trigger Batch C Fix 3 against current main. Preserves both legacy HingeAngleSource call styles.
