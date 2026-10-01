@@ -1,0 +1,1697 @@
+name: Build Materialized Fold7 1.3.21 State Machine
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build-materialized-fold7-1.3.21-state-machine.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-materialized-fold7-1321-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout clean materialized baseline
+        uses: actions/checkout@v4
+        with:
+          ref: generated/fold7-1.3.16-baseline
+          fetch-depth: 0
+
+      - name: Fetch current integration source
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch origin \
+            main:refs/remotes/origin/main
+
+          git show \
+            refs/remotes/origin/main:app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt \
+            > app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+
+          git show \
+            refs/remotes/origin/main:.github/workflows/build-materialized-fold7.yml \
+            > /tmp/build-materialized-fold7-1.3.20.yml
+
+          echo "materialized_base=$(git rev-parse HEAD)"
+          echo "overlay_main=$(git rev-parse refs/remotes/origin/main)"
+
+      - name: Reproduce validated 1.3.20 source
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PYBASE'
+          from pathlib import Path
+          import textwrap
+
+          workflow = Path(
+              "/tmp/build-materialized-fold7-1.3.20.yml"
+          ).read_text(encoding="utf-8")
+
+          step_marker = "- name: Apply 1.3.20 realtime architecture"
+          step_start = workflow.find(step_marker)
+          if step_start < 0:
+              raise SystemExit("validated 1.3.20 transform step not found")
+
+          python_marker = "python3 - <<'PY'\n"
+          code_start = workflow.find(python_marker, step_start)
+          if code_start < 0:
+              raise SystemExit("1.3.20 Python transform not found")
+          code_start += len(python_marker)
+
+          code_end = workflow.find("\n          PY", code_start)
+          if code_end < 0:
+              raise SystemExit("1.3.20 Python transform terminator not found")
+
+          code = textwrap.dedent(workflow[code_start:code_end])
+          exec(compile(code, "fold7_1320_transform.py", "exec"), {})
+          PYBASE
+
+          grep -F 'versionCode = 24' app/build.gradle.kts
+          grep -F 'versionName = "1.3.20-zfold7-realtime"' app/build.gradle.kts
+          grep -F 'COVER_RELEASE_OPEN_MIN_DEG' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+
+      - name: Apply 1.3.21 intentional-motion and physical-panel safety
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def read(path: str) -> str:
+              return Path(path).read_text(encoding="utf-8")
+
+          def write(path: str, value: str) -> None:
+              Path(path).write_text(value, encoding="utf-8")
+
+          def replace_once(value: str, old: str, new: str, label: str) -> str:
+              count = value.count(old)
+              if count != 1:
+                  raise SystemExit(
+                      f"{label}: expected exactly one match, found {count}"
+                  )
+              return value.replace(old, new, 1)
+
+          def sub_once(value: str, pattern: str, repl: str, label: str) -> str:
+              out, count = re.subn(
+                  pattern,
+                  lambda _: repl,
+                  value,
+                  count=1,
+                  flags=re.DOTALL,
+              )
+              if count != 1:
+                  raise SystemExit(
+                      f"{label}: expected exactly one match, found {count}"
+                  )
+              return out
+
+          # ------------------------------------------------------------------
+          # Build identity
+          # ------------------------------------------------------------------
+
+          gradle_path = "app/build.gradle.kts"
+          gradle = read(gradle_path)
+          gradle = replace_once(
+              gradle,
+              "versionCode = 24",
+              "versionCode = 25",
+              "versionCode",
+          )
+          gradle = replace_once(
+              gradle,
+              'versionName = "1.3.20-zfold7-realtime"',
+              'versionName = "1.3.21-zfold7-state-machine"',
+              "versionName",
+          )
+          write(gradle_path, gradle)
+
+          # ------------------------------------------------------------------
+          # FoldOverlayService
+          # ------------------------------------------------------------------
+
+          service_path = (
+              "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
+          )
+          service = read(service_path)
+
+          service = replace_once(
+              service,
+              '''    private var lastContinuityAngle =
+                  Float.NaN
+          ''',
+              '''    private var lastContinuityAngle =
+                  Float.NaN
+
+              private var deliberateCloseSamples =
+                  0
+
+              private var deliberateCloseStartAngle =
+                  Float.NaN
+
+              private var deliberateCloseStartUptime =
+                  0L
+
+              private var mirrorHostCreatedUptime =
+                  0L
+
+              private val openReleaseRunnable =
+                  Runnable {
+                      if (
+                          coverPowerHold &&
+                          lastContinuityAngle >=
+                              COVER_RELEASE_OPEN_MIN_DEG
+                      ) {
+                          releaseCoverPowerHold(
+                              "returned-open-stable"
+                          )
+                      }
+                  }
+          ''',
+              "intent state",
+          )
+
+          # Prime only a physical identity. Never cache a logical route.
+          prime_start = service.index(
+              "    private fun primeCoverRoute("
+          )
+          prime_end = service.index(
+              "    private fun assertCoverPower(",
+              prime_start,
+          )
+          service = (
+              service[:prime_start]
+              + '''    private fun primeCoverRoute(
+                  reason: String,
+              ) {
+                  if (
+                      coverRoutePrimeAttempted ||
+                      !ShizukuBridge.ready
+                  ) {
+                      return
+                  }
+
+                  coverRoutePrimeAttempted =
+                      true
+
+                  scope.launch(
+                      Dispatchers.IO
+                  ) {
+                      val result =
+                          ShizukuBridge.resolveCoverDisplay()
+
+                      val physicalId =
+                          result?.getLong(
+                              "physicalDisplayId",
+                              -1L,
+                          ) ?: -1L
+
+                      val ok =
+                          result?.getBoolean(
+                              "ok",
+                              false,
+                          ) == true
+
+                      DuoDiagnostics.event(
+                          "cover-route",
+                          "prime reason=$reason physicalId=$physicalId ok=$ok",
+                      )
+                  }
+              }
+
+          '''
+              + service[prime_end:]
+          )
+
+          # Disable all logical-id power assertions. The Fold7 remaps logical
+          # ids during handoff, which made the watchdog target the wrong panel.
+          assert_start = service.index(
+              "    private fun assertCoverPower("
+          )
+          assert_end = service.index(
+              "    private fun releaseCoverPowerHold(",
+              assert_start,
+          )
+          service = (
+              service[:assert_start]
+              + '''    private fun assertCoverPower(
+                  reason: String,
+                  force: Boolean = false,
+              ) {
+                  if (force && reason.isEmpty()) {
+                      Log.d(TAG, "logical power watchdog disabled")
+                  }
+              }
+
+          '''
+              + service[assert_end:]
+          )
+
+          # Releasing continuity now only releases our mirror. Samsung owns the
+          # panel power state again; do not issue a logical power-reset.
+          service = service.replace(
+              '''            if (releaseTarget >= 0) {
+                      ShizukuBridge.requestDisplayPower(
+                          displayId =
+                              releaseTarget,
+                          requestedState =
+                              Display.STATE_UNKNOWN,
+                      )
+                  }
+
+          ''',
+              "",
+          )
+
+          # Keep resetSecondaryDisplay(releaseTarget). The shell-side implementation
+          # revalidates the current 1080x2520 secondary cover before reset.
+          service = service.replace(
+              '''            ShizukuBridge.resetSecondaryDisplay(
+                          -1
+                      )
+          ''',
+              "",
+          )
+
+          # Clear the stable-open timer whenever continuity is torn down or armed.
+          service = service.replace(
+              '''        handler.removeCallbacks(
+                      mirrorRefreshRunnable
+                  )
+          ''',
+              '''        handler.removeCallbacks(
+                      mirrorRefreshRunnable
+                  )
+
+                  handler.removeCallbacks(
+                      openReleaseRunnable
+                  )
+          ''',
+          )
+
+          # The release target is diagnostic only and is resolved from geometry
+          # at that instant. It is never remembered across a topology change.
+          service = replace_once(
+              service,
+              '''        val releaseTarget =
+                      resolveCoverLogicalId()
+          ''',
+              '''        val releaseTarget =
+                      resolveCurrentSecondaryCoverLogicalId()
+          ''',
+              "safe release target",
+          )
+
+          # Add helpers immediately before the hinge controller.
+          hinge_marker = "    private fun handleContinuityHinge("
+          hinge_index = service.index(hinge_marker)
+          service = (
+              service[:hinge_index]
+              + '''    private fun resetDeliberateCloseEvidence() {
+                  deliberateCloseSamples =
+                      0
+
+                  deliberateCloseStartAngle =
+                      Float.NaN
+
+                  deliberateCloseStartUptime =
+                      0L
+              }
+
+              /**
+               * A logical id is usable only while DisplayManager says it is the
+               * non-default 1080x2520 physical cover. Never cache this value.
+               */
+              private fun resolveCurrentSecondaryCoverLogicalId(): Int {
+                  val cover =
+                      displayManager.displays
+                          .firstOrNull { candidate ->
+                              val mode =
+                                  candidate.mode
+
+                              mode.physicalWidth == 1080 &&
+                                  mode.physicalHeight == 2520 &&
+                                  candidate.displayId !=
+                                      Display.DEFAULT_DISPLAY &&
+                                  candidate.state !=
+                                      Display.STATE_OFF &&
+                                  candidate.state !=
+                                      Display.STATE_UNKNOWN
+                          }
+
+                  return cover?.displayId
+                      ?: -1
+              }
+
+          '''
+              + service[hinge_index:]
+          )
+
+          # Replace the full continuity hinge state machine.
+          handle_start = service.index(
+              "    private fun handleContinuityHinge("
+          )
+          handle_end = service.index(
+              "    fun runSecondaryDisplayExperiment(",
+              handle_start,
+          )
+
+          new_handle = '''    private fun handleContinuityHinge(
+                  angle: Float,
+              ) {
+                  val previous =
+                      lastContinuityAngle
+
+                  lastContinuityAngle =
+                      angle
+
+                  if (!continuityArmed) {
+                      return
+                  }
+
+                  if (openReferenceAngle.isNaN()) {
+                      openReferenceAngle =
+                          angle
+
+                      DuoDiagnostics.event(
+                          "cover-power",
+                          "baseline=$angle mode=armed",
+                      )
+
+                      return
+                  }
+
+                  val closingSample =
+                      !previous.isNaN() &&
+                          previous - angle >=
+                              COVER_SAMPLE_EPSILON_DEG
+
+                  val openingSample =
+                      !previous.isNaN() &&
+                          angle - previous >=
+                              COVER_SAMPLE_EPSILON_DEG
+
+                  if (
+                      openingSample &&
+                      previous <=
+                          COVER_CLOSED_READY_MAX_DEG
+                  ) {
+                      DuoDiagnostics.event(
+                          "cover-power",
+                          "closed-open-start angle=$angle previous=$previous serviceHot=true",
+                      )
+                  }
+
+                  if (!coverPowerHold) {
+                      if (angle > openReferenceAngle) {
+                          openReferenceAngle =
+                              angle
+                      }
+
+                      /*
+                       * CLOSED -> OPEN: the native cover is already the active
+                       * screen. Keep the runtime, Shizuku daemon and angle feed
+                       * hot while shut; the local cover effect reacts to the
+                       * first real opening sample without a shell wake command.
+                       *
+                       * OPEN -> CLOSED: do not expose anything on the front in
+                       * the upper half. Pre-warm the secondary cover around 150°
+                       * so it is ready, but keep the live mirror hidden until
+                       * the hinge reaches the quarter-fold point (~135°).
+                       */
+                      if (
+                          closingSample &&
+                          angle <= COVER_CLOSE_PREWARM_DEG &&
+                          angle > COVER_NATIVE_HANDOFF_MAX_DEG
+                      ) {
+                          val currentCover =
+                              resolveCurrentSecondaryCoverLogicalId()
+
+                          if (currentCover >= 0) {
+                              coverPowerHold =
+                                  true
+
+                              mirrorRequested =
+                                  false
+
+                              _secondaryDisplayStatus.value =
+                                  "Closing: cover pre-warmed; front visual starts after one-quarter fold travel."
+
+                              DuoDiagnostics.event(
+                                  "cover-power",
+                                  "closing-prewarm angle=$angle target=$currentCover " +
+                                      "visualStart=$COVER_CLOSE_VISUAL_START_DEG",
+                              )
+
+                              runSecondaryDisplayExperiment(
+                                  enable = true,
+                                  reason = "closing-prewarm",
+                              )
+                          } else {
+                              DuoDiagnostics.event(
+                                  "cover-power",
+                                  "closing-prewarm deferred angle=$angle " +
+                                      "reason=no-stable-secondary-cover",
+                              )
+                          }
+                      }
+
+                      return
+                  }
+
+                  if (
+                      closingSample &&
+                      !mirrorRequested &&
+                      angle <= COVER_CLOSE_VISUAL_START_DEG
+                  ) {
+                      mirrorRequested =
+                          true
+
+                      DuoDiagnostics.event(
+                          "cover-power",
+                          "closing-visual-start angle=$angle",
+                      )
+
+                      syncMirrorHost(
+                          "closing-quarter-visual"
+                      )
+                  }
+
+                  if (
+                      openingSample &&
+                      mirrorRequested &&
+                      angle >= COVER_CLOSE_VISUAL_END_DEG
+                  ) {
+                      mirrorRequested =
+                          false
+
+                      mirrorHost?.detach()
+                      mirrorHost =
+                          null
+
+                      mirrorHostCreatedUptime =
+                          0L
+
+                      scope.launch(
+                          Dispatchers.IO
+                      ) {
+                          ShizukuBridge.stopDisplayMirror()
+                      }
+
+                      DuoDiagnostics.event(
+                          "cover-power",
+                          "opening-cover-visual-hidden angle=$angle",
+                      )
+                  }
+
+                  if (
+                      openingSample &&
+                      angle >= COVER_RELEASE_OPEN_MIN_DEG
+                  ) {
+                      handler.removeCallbacks(
+                          openReleaseRunnable
+                      )
+
+                      handler.postDelayed(
+                          openReleaseRunnable,
+                          COVER_RELEASE_DWELL_MS,
+                      )
+                  } else if (
+                      angle < COVER_RELEASE_CANCEL_DEG
+                  ) {
+                      handler.removeCallbacks(
+                          openReleaseRunnable
+                      )
+                  }
+
+                  val cover =
+                      displayManager.displays
+                          .firstOrNull { candidate ->
+                              val mode = candidate.mode
+                              mode.physicalWidth == 1080 &&
+                                  mode.physicalHeight == 2520
+                          }
+
+                  val inner =
+                      displayManager.displays
+                          .firstOrNull { candidate ->
+                              val mode = candidate.mode
+                              mode.physicalWidth == 1968 &&
+                                  mode.physicalHeight == 2184
+                          }
+
+                  val nativeCover =
+                      cover?.displayId == Display.DEFAULT_DISPLAY &&
+                          cover.state != Display.STATE_OFF &&
+                          cover.state != Display.STATE_UNKNOWN &&
+                          (
+                              inner == null ||
+                                  inner.state == Display.STATE_OFF ||
+                                  inner.state == Display.STATE_UNKNOWN
+                              )
+
+                  if (
+                      nativeCover &&
+                      angle <= COVER_NATIVE_HANDOFF_MAX_DEG
+                  ) {
+                      handler.removeCallbacks(
+                          openReleaseRunnable
+                      )
+
+                      releaseCoverPowerHold(
+                          "native-cover-handoff"
+                      )
+                  }
+              }
+
+          '''
+
+          service = (
+              service[:handle_start]
+              + new_handle
+              + service[handle_end:]
+          )
+
+          # runSecondaryDisplayExperiment uses only a geometry-validated current
+          # cover id. If the route is already remapping, skip the command.
+          service = replace_once(
+              service,
+              '''        val targetHint =
+                      resolveCoverLogicalId()
+          ''',
+              '''        val targetHint =
+                      resolveCurrentSecondaryCoverLogicalId()
+
+                  if (
+                      enable &&
+                      targetHint < 0
+                  ) {
+                      _secondaryDisplayStatus.value =
+                          "Fold7 cover route is changing; unsafe enable skipped."
+
+                      DuoDiagnostics.event(
+                          "dual-shell",
+                          "skip enable reason=$reason; no stable secondary cover route",
+                      )
+
+                      return
+                  }
+          ''',
+              "current cover route",
+          )
+
+          # Do not trust the shell-reported target after Samsung has remapped it.
+          service = sub_once(
+              service,
+              r'''            if \(
+          \s*enable &&
+          \s*target >= 0
+          \s*\) \{
+          \s*lastCoverLogicalId =
+          \s*target
+          \s*\}
+          ''',
+              '''            if (
+                          enable &&
+                          target >= 0 &&
+                          target ==
+                              resolveCurrentSecondaryCoverLogicalId()
+                      ) {
+                          lastCoverLogicalId =
+                              target
+                      }
+          ''',
+              "do not retain remapped target",
+          )
+
+          # A host that was just attached is often temporarily !isUsable until
+          # its first layout. Keep it instead of destroying and recreating it.
+          service = replace_once(
+              service,
+              '''        val current =
+                      mirrorHost
+
+                  if (
+                      current == null ||
+          ''',
+              '''        val current =
+                      mirrorHost
+
+                  if (
+                      current != null &&
+                      current.displayId ==
+                          activeCover.displayId &&
+                      !current.isUsable &&
+                      mirrorHostCreatedUptime != 0L &&
+                      android.os.SystemClock.uptimeMillis() -
+                          mirrorHostCreatedUptime <
+                              MIRROR_HOST_ATTACH_GRACE_MS
+                  ) {
+                      DuoDiagnostics.event(
+                          "live-mirror",
+                          "host attach pending retained " +
+                              "reason=$reason display=${current.displayId}",
+                      )
+
+                      return
+                  }
+
+                  if (
+                      current == null ||
+          ''',
+              "mirror host attach grace",
+          )
+
+          service = replace_once(
+              service,
+              '''            current?.detach()
+
+                      mirrorHost =
+          ''',
+              '''            current?.detach()
+
+                      mirrorHostCreatedUptime =
+                          android.os.SystemClock.uptimeMillis()
+
+                      mirrorHost =
+          ''',
+              "mirror host creation time",
+          )
+
+          # Reset host creation time on explicit detach paths.
+          service = service.replace(
+              '''        mirrorHost?.detach()
+                  mirrorHost =
+                      null
+          ''',
+              '''        mirrorHost?.detach()
+                  mirrorHost =
+                      null
+                  mirrorHostCreatedUptime =
+                      0L
+          ''',
+          )
+
+          # Jitter rejection: a 4-degree twitch is no longer sufficient.
+          service = replace_once(
+              service,
+              '''        private const val COVER_WAKE_TRAVEL_DEG =
+                      4.0f
+          ''',
+              '''        private const val COVER_WAKE_TRAVEL_DEG =
+                      7.0f
+
+                  private const val COVER_CLOSED_READY_MAX_DEG =
+                      12.0f
+
+                  private const val COVER_CLOSE_PREWARM_DEG =
+                      150.0f
+
+                  private const val COVER_CLOSE_VISUAL_START_DEG =
+                      135.0f
+
+                  private const val COVER_CLOSE_VISUAL_END_DEG =
+                      140.0f
+
+                  private const val COVER_INTENT_TRAVEL_DEG =
+                      4.0f
+
+                  private const val COVER_INTENT_SAMPLE_COUNT =
+                      3
+
+                  private const val COVER_INTENT_RESET_DEG =
+                      1.25f
+
+                  private const val COVER_INTENT_WINDOW_MS =
+                      1_800L
+          ''',
+              "asymmetric Fold7 state constants",
+          )
+
+          service = replace_once(
+              service,
+              '''        private const val COVER_RELEASE_OPEN_MIN_DEG =
+                      175.0f
+          ''',
+              '''        private const val COVER_RELEASE_OPEN_MIN_DEG =
+                      179.0f
+
+                  private const val COVER_RELEASE_CANCEL_DEG =
+                      178.0f
+
+                  private const val COVER_RELEASE_DWELL_MS =
+                      250L
+          ''',
+              "stable-open release constants",
+          )
+
+          service = replace_once(
+              service,
+              '''        private const val MIRROR_REBIND_DEBOUNCE_MS =
+                      16L
+          ''',
+              '''        private const val MIRROR_REBIND_DEBOUNCE_MS =
+                      16L
+
+                  private const val MIRROR_HOST_ATTACH_GRACE_MS =
+                      250L
+          ''',
+              "mirror attach grace constant",
+          )
+
+          write(service_path, service)
+
+          # ------------------------------------------------------------------
+          # DuoShellService
+          # ------------------------------------------------------------------
+
+          shell_path = (
+              "app/src/full/java/com/duoopen/shell/DuoShellService.kt"
+          )
+          shell = read(shell_path)
+
+          shell = replace_once(
+              shell,
+              '''    @Volatile
+              private var cachedCoverDisplayId =
+                  -1
+          ''',
+              '''    @Volatile
+              private var cachedCoverPhysicalDisplayId =
+                  -1L
+          ''',
+              "physical cover cache",
+          )
+
+          secondary_start = shell.index(
+              "    // ---- Fold7 cover-route / realtime secondary display"
+          )
+          secondary_end = shell.index(
+              "    // ---- live logical-display mirror",
+              secondary_start,
+          )
+
+          safe_secondary = r'''    // ---- Fold7 physical-panel-safe continuity ----------------------------
+
+              private fun physicalDisplayIdFromLogical(
+                  logicalDisplayId: Int,
+              ): Long {
+                  if (logicalDisplayId < 0) {
+                      return -1L
+                  }
+
+                  val info =
+                      runCatching {
+                          Class.forName(
+                              "android.hardware.display.IDisplayManager"
+                          ).getMethod(
+                              "getDisplayInfo",
+                              Integer.TYPE,
+                          ).invoke(
+                              displayManagerService(),
+                              logicalDisplayId,
+                          )
+                      }.getOrNull()
+                          ?: return -1L
+
+                  val width =
+                      runCatching {
+                          info.javaClass
+                              .getField("logicalWidth")
+                              .getInt(info)
+                      }.getOrDefault(-1)
+
+                  val height =
+                      runCatching {
+                          info.javaClass
+                              .getField("logicalHeight")
+                              .getInt(info)
+                      }.getOrDefault(-1)
+
+                  if (width != 1080 || height != 2520) {
+                      return -1L
+                  }
+
+                  val address =
+                      runCatching {
+                          info.javaClass
+                              .getField("address")
+                              .get(info)
+                      }.getOrNull()
+                          ?: return -1L
+
+                  return runCatching {
+                      address.javaClass
+                          .getMethod("getPhysicalDisplayId")
+                          .invoke(address) as Long
+                  }.getOrElse {
+                      -1L
+                  }
+              }
+
+              private fun resolveFold7CoverPhysicalDisplayId(
+                  targetHint: Int = -1,
+              ): Long {
+                  if (cachedCoverPhysicalDisplayId >= 0L) {
+                      return cachedCoverPhysicalDisplayId
+                  }
+
+                  val fromAddress =
+                      physicalDisplayIdFromLogical(targetHint)
+
+                  if (fromAddress >= 0L) {
+                      cachedCoverPhysicalDisplayId =
+                          fromAddress
+                      return fromAddress
+                  }
+
+                  val displayDump =
+                      runProbe(
+                          "dumpsys display | " +
+                              "grep -E -i 'DisplayDeviceInfo|mPhysicalDisplayId=' | " +
+                              "head -n 260"
+                      )
+
+                  val physicalId =
+                      Regex(
+                          """DisplayDeviceInfo\\{[^\\n]*uniqueId="local:(\\d+)"[^\\n]*1080 x 2520"""
+                      ).find(
+                          displayDump
+                      )?.groupValues
+                          ?.getOrNull(1)
+                          ?.toLongOrNull()
+                          ?: -1L
+
+                  if (physicalId >= 0L) {
+                      cachedCoverPhysicalDisplayId =
+                          physicalId
+                  }
+
+                  return physicalId
+              }
+
+              private fun resolveCoverDisplay(): Bundle {
+                  val physicalId =
+                      resolveFold7CoverPhysicalDisplayId()
+
+                  return Bundle().apply {
+                      putBoolean("ok", physicalId >= 0L)
+                      putLong("physicalDisplayId", physicalId)
+                      putInt("targetDisplayId", -1)
+                      putInt("targetWidth", 1080)
+                      putInt("targetHeight", 2520)
+                      if (physicalId < 0L) {
+                          putString(
+                              "error",
+                              "The Fold7 cover physical display was not found.",
+                          )
+                      }
+                  }
+              }
+
+              private fun currentCoverLogicalId(
+                  targetHint: Int,
+              ): Int {
+                  if (targetHint < 0) {
+                      return -1
+                  }
+
+                  val info =
+                      runCatching {
+                          Class.forName(
+                              "android.hardware.display.IDisplayManager"
+                          ).getMethod(
+                              "getDisplayInfo",
+                              Integer.TYPE,
+                          ).invoke(
+                              displayManagerService(),
+                              targetHint,
+                          )
+                      }.getOrNull()
+                          ?: return -1
+
+                  val width =
+                      runCatching {
+                          info.javaClass
+                              .getField("logicalWidth")
+                              .getInt(info)
+                      }.getOrDefault(-1)
+
+                  val height =
+                      runCatching {
+                          info.javaClass
+                              .getField("logicalHeight")
+                              .getInt(info)
+                      }.getOrDefault(-1)
+
+                  return if (width == 1080 && height == 2520) {
+                      targetHint
+                  } else {
+                      -1
+                  }
+              }
+
+              private fun setCoverPhysicalPowerNormal(): Pair<Boolean, String?> {
+                  val physicalId =
+                      cachedCoverPhysicalDisplayId
+
+                  if (physicalId < 0L) {
+                      return false to
+                          "cover physical display id unavailable"
+                  }
+
+                  return runCatching {
+                      org.lsposed.hiddenapibypass.HiddenApiBypass
+                          .addHiddenApiExemptions(
+                              "Landroid/view/SurfaceControl;"
+                          )
+
+                      val token =
+                          SurfaceControl::class.java
+                              .getDeclaredMethod(
+                                  "getPhysicalDisplayToken",
+                                  java.lang.Long.TYPE,
+                              )
+                              .invoke(null, physicalId) as? IBinder
+                              ?: throw IllegalStateException(
+                                  "no SurfaceControl token for physical display $physicalId"
+                              )
+
+                      SurfaceControl::class.java
+                          .getDeclaredMethod(
+                              "setDisplayPowerMode",
+                              IBinder::class.java,
+                              Integer.TYPE,
+                          )
+                          .invoke(null, token, 2)
+
+                      true to null
+                  }.getOrElse { error ->
+                      false to
+                          "${error.javaClass.simpleName}: ${error.message}"
+                  }
+              }
+
+              private fun secondaryDisplayCommand(
+                  enable: Boolean,
+                  targetHint: Int,
+              ): Bundle {
+                  val t0 =
+                      SystemClock.elapsedRealtime()
+
+                  if (!enable) {
+                      val safeTarget =
+                          currentCoverLogicalId(targetHint)
+
+                      if (safeTarget < 0) {
+                          return Bundle().apply {
+                              putBoolean("ok", true)
+                              putBoolean("enable", false)
+                              putInt("targetDisplayId", -1)
+                              putInt("targetWidth", 1080)
+                              putInt("targetHeight", 2520)
+                              putBoolean("visibleAfter", false)
+                              putString("command", "validated release skipped")
+                              putString(
+                                  "commandOutput",
+                                  "hint no longer identifies secondary 1080x2520 cover",
+                              )
+                              putLong(
+                                  "latencyMs",
+                                  SystemClock.elapsedRealtime() - t0,
+                              )
+                          }
+                      }
+
+                      val command =
+                          "cmd display power-reset $safeTarget"
+
+                      val output =
+                          runProbe(command)
+
+                      val failed =
+                          output.contains("Exception", ignoreCase = true) ||
+                              output.contains("error", ignoreCase = true) ||
+                              output.contains("not possible", ignoreCase = true)
+
+                      return Bundle().apply {
+                          putBoolean("ok", !failed)
+                          putBoolean("enable", false)
+                          putInt("targetDisplayId", safeTarget)
+                          putInt("targetWidth", 1080)
+                          putInt("targetHeight", 2520)
+                          putBoolean("visibleAfter", false)
+                          putString("command", command)
+                          putString("commandOutput", output)
+                          putLong(
+                              "latencyMs",
+                              SystemClock.elapsedRealtime() - t0,
+                          )
+                      }
+                  }
+
+                  val targetId =
+                      currentCoverLogicalId(targetHint)
+
+                  if (targetId < 0) {
+                      return Bundle().apply {
+                          putBoolean("ok", false)
+                          putBoolean("enable", true)
+                          putInt("targetDisplayId", -1)
+                          putInt("targetWidth", 1080)
+                          putInt("targetHeight", 2520)
+                          putBoolean("visibleAfter", false)
+                          putString(
+                              "error",
+                              "Cover logical route changed before enable; unsafe command skipped.",
+                          )
+                          putString("command", "route-validation")
+                          putString("commandOutput", "skipped")
+                      }
+                  }
+
+                  resolveFold7CoverPhysicalDisplayId(targetId)
+
+                  val (
+                      physicalPowered,
+                      physicalPowerError,
+                  ) =
+                      setCoverPhysicalPowerNormal()
+
+                  var routeEnabled = false
+                  var routeError: String? = null
+
+                  runCatching {
+                      enableConnectedDisplayInternal(targetId)
+                      routeEnabled = true
+                  }.onFailure { error ->
+                      routeError =
+                          "${error.javaClass.simpleName}: ${error.message}"
+                  }
+
+                  return Bundle().apply {
+                      putBoolean("ok", physicalPowered || routeEnabled)
+                      putBoolean("enable", true)
+                      putInt("targetDisplayId", targetId)
+                      putLong(
+                          "physicalDisplayId",
+                          cachedCoverPhysicalDisplayId,
+                      )
+                      putInt("targetWidth", 1080)
+                      putInt("targetHeight", 2520)
+                      putBoolean("visibleAfter", false)
+                      putBoolean("physicalPowered", physicalPowered)
+                      putBoolean("routeEnabled", routeEnabled)
+                      putString(
+                          "command",
+                          "physical SurfaceControl token + validated logical route",
+                      )
+                      putString(
+                          "commandOutput",
+                          listOfNotNull(
+                              physicalPowerError,
+                              routeError,
+                          ).joinToString(" | ")
+                              .ifEmpty { "physical-safe-fast-path" },
+                      )
+                      putLong(
+                          "latencyMs",
+                          SystemClock.elapsedRealtime() - t0,
+                      )
+                  }
+              }
+
+          '''
+
+          shell = (
+              shell[:secondary_start]
+              + safe_secondary
+              + shell[secondary_end:]
+          )
+
+          write(shell_path, shell)
+
+          # ------------------------------------------------------------------
+          # Aspect-locked Fold7 mirror projection
+          # ------------------------------------------------------------------
+
+          host_path = (
+              "app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt"
+          )
+          host = read(host_path)
+
+          geometry_start = host.index(
+              "        val paneWidth ="
+          )
+          geometry_end = host.index(
+              "        val transaction =",
+              geometry_start,
+          )
+
+          geometry_lines = [
+              "        val paneWidth =",
+              "            (sourceWidth / 2)",
+              "                .coerceAtLeast(1)",
+              "",
+              "        val paneHeight = sourceHeight",
+              "",
+              "        /*",
+              "         * Canonical projection: preserve the hinge edge and crop only the",
+              "         * outer edge of the left inner pane so source and cover have exactly",
+              "         * the same aspect ratio. On Fold7 this is 936x2184 -> 1080x2520,",
+              "         * both exactly 3:7. No destination overscan or non-uniform stretch.",
+              "         */",
+              "        val canonicalPaneWidth =",
+              "            (",
+              "                paneHeight.toLong() *",
+              "                    destinationWidth.toLong() /",
+              "                    destinationHeight.toLong()",
+              "                ).toInt()",
+              "                .coerceIn(1, paneWidth)",
+              "",
+              "        val sourceLeft =",
+              "            paneWidth - canonicalPaneWidth",
+              "",
+              "        val sourceRect =",
+              "            Rect(",
+              "                sourceLeft,",
+              "                0,",
+              "                paneWidth,",
+              "                paneHeight,",
+              "            )",
+              "",
+              "        val destinationRect =",
+              "            Rect(",
+              "                0,",
+              "                0,",
+              "                destinationWidth,",
+              "                destinationHeight,",
+              "            )",
+              "",
+              "        val scale =",
+              "            destinationHeight.toFloat() /",
+              "                paneHeight.toFloat()",
+              "",
+          ]
+
+          host = (
+              host[:geometry_start]
+              + "\n".join(geometry_lines)
+              + "\n"
+              + host[geometry_end:]
+          )
+
+          write(host_path, host)
+
+          # ------------------------------------------------------------------
+          # Front-screen visual window: only the closed half of hinge travel
+          # ------------------------------------------------------------------
+
+          shader_path = (
+              "app/src/main/java/com/duoopen/fold/DuoShader.kt"
+          )
+          shader = read(shader_path)
+
+          shader = replace_once(
+              shader,
+              "object DuoShader {\n",
+              "object DuoShader {\n" +
+                  "    const val COVER_VISUAL_MAX_HINGE = 135f\n",
+              "cover visual max hinge",
+          )
+
+          cover_fun_start = shader.index(
+              "    fun concurrentCoverTiltForHinge("
+          )
+          cover_fun_end = shader.index(
+              "\n    fun tiltFor(",
+              cover_fun_start,
+          )
+
+          cover_fun_lines = [
+              "    fun concurrentCoverTiltForHinge(hingeDegrees: Float, config: DuoConfig): Float {",
+              "        if (hingeDegrees >= COVER_VISUAL_MAX_HINGE) return 0f",
+              "",
+              "        val progress =",
+              "            ((hingeDegrees - CLOSED_HINGE) /",
+              "                (COVER_VISUAL_MAX_HINGE - CLOSED_HINGE))",
+              "                .coerceIn(0f, 1f)",
+              "",
+              "        val bump =",
+              "            kotlin.math.sin(Math.PI * progress).toFloat()",
+              "",
+              "        return (bump * MAX_TILT * config.intensity)",
+              "            .coerceIn(0f, MAX_TILT)",
+              "    }",
+          ]
+
+          shader = (
+              shader[:cover_fun_start]
+              + "\n".join(cover_fun_lines)
+              + shader[cover_fun_end:]
+          )
+
+          write(shader_path, shader)
+
+          panel_path = (
+              "app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
+          )
+          panel = read(panel_path)
+
+          panel = replace_once(
+              panel,
+              "        if (phase != Phase.IDLE) return\n" +
+                  "        when {\n",
+              "        if (phase != Phase.IDLE) return\n\n" +
+                  "        val leaveThreshold =\n" +
+                  "            if (!innerPanel && concurrentCover()) {\n" +
+                  "                COVER_OPEN_IMMEDIATE_TILT\n" +
+                  "            } else {\n" +
+                  "                REST_LEAVE_TILT\n" +
+                  "            }\n\n" +
+                  "        when {\n",
+              "direction-independent cover sensitivity",
+          )
+
+          panel = replace_once(
+              panel,
+              "            restArmed && tilt >= REST_LEAVE_TILT -> {\n",
+              "            restArmed && tilt >= leaveThreshold -> {\n",
+              "cover leave threshold",
+          )
+
+          panel = replace_once(
+              panel,
+              "        const val REST_LEAVE_TILT = 2f\n",
+              "        const val REST_LEAVE_TILT = 2f\n" +
+                  "        const val COVER_OPEN_IMMEDIATE_TILT = 0.15f\n",
+              "cover immediate opening threshold",
+          )
+
+          write(panel_path, panel)
+
+          # ------------------------------------------------------------------
+          # Endpoint bridge for FoldInteractive dropout near fully shut/open
+          # ------------------------------------------------------------------
+
+          angle_feed_path = (
+              "app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt"
+          )
+          angle_feed = read(angle_feed_path)
+
+          angle_feed = replace_once(
+              angle_feed,
+              "    private var lastAngleSeen = Float.NaN\n" +
+                  "    private var lastAngleChangeUptime = 0L\n\n" +
+                  "    private var duplicateAngles = 0L\n",
+              "    private var lastAngleSeen = Float.NaN\n" +
+                  "    private var lastAngleChangeUptime = 0L\n\n" +
+                  "    private var endpointBridgeGeneration = 0L\n\n" +
+                  "    private var duplicateAngles = 0L\n",
+              "endpoint bridge generation",
+          )
+
+          angle_feed = replace_once(
+              angle_feed,
+              "        val now =\n" +
+                  "            SystemClock.uptimeMillis()\n\n" +
+                  "        lastCallbackUptime =\n" +
+                  "            now\n",
+              "        val now =\n" +
+                  "            SystemClock.uptimeMillis()\n\n" +
+                  "        endpointBridgeGeneration++\n\n" +
+                  "        val priorAngle =\n" +
+                  "            lastAngleSeen\n\n" +
+                  "        val priorChangeUptime =\n" +
+                  "            lastAngleChangeUptime\n\n" +
+                  "        lastCallbackUptime =\n" +
+                  "            now\n",
+              "endpoint trajectory capture",
+          )
+
+          bridge_insert = [
+              "        hinge.feedExternal(angle)",
+              "",
+              "        scheduleEndpointBridge(",
+              "            angle = angle,",
+              "            priorAngle = priorAngle,",
+              "            priorChangeUptime = priorChangeUptime,",
+              "            now = now,",
+              "        )",
+              "    }",
+              "",
+              "    private fun scheduleEndpointBridge(",
+              "        angle: Float,",
+              "        priorAngle: Float,",
+              "        priorChangeUptime: Long,",
+              "        now: Long,",
+              "    ) {",
+              "        if (!priorAngle.isFinite() || priorChangeUptime == 0L) return",
+              "",
+              "        val dtMs = now - priorChangeUptime",
+              "        if (dtMs <= 0L || dtMs > ENDPOINT_BRIDGE_SAMPLE_MAX_MS) return",
+              "",
+              "        val velocity =",
+              "            (angle - priorAngle) * 1_000f / dtMs.toFloat()",
+              "",
+              "        val target =",
+              "            when {",
+              "                angle <= ENDPOINT_BRIDGE_CLOSED_MAX_DEG &&",
+              "                    velocity <= -ENDPOINT_BRIDGE_MIN_SPEED_DPS -> 0f",
+              "",
+              "                angle >= ENDPOINT_BRIDGE_OPEN_MIN_DEG &&",
+              "                    velocity >= ENDPOINT_BRIDGE_MIN_SPEED_DPS -> 180f",
+              "",
+              "                else -> return",
+              "            }",
+              "",
+              "        val generation = endpointBridgeGeneration",
+              "",
+              "        handler.postDelayed(",
+              "            {",
+              "                if (",
+              "                    !running ||",
+              "                    endpointBridgeGeneration != generation ||",
+              "                    SystemClock.uptimeMillis() - lastCallbackUptime <",
+              "                        ENDPOINT_BRIDGE_DELAY_MS",
+              "                ) {",
+              "                    return@postDelayed",
+              "                }",
+              "",
+              "                com.duoopen.debug.DuoDiagnostics.event(",
+              "                    \"angle-source\",",
+              "                    \"endpoint bridge from=$angle to=$target velocity=$velocity\",",
+              "                )",
+              "",
+              "                lastAngleSeen = target",
+              "                lastAngleChangeUptime = SystemClock.uptimeMillis()",
+              "                hinge.feedExternal(target)",
+              "            },",
+              "            ENDPOINT_BRIDGE_DELAY_MS,",
+              "        )",
+              "    }",
+              "",
+              "    private fun pollInterval(",
+          ]
+
+          angle_feed = replace_once(
+              angle_feed,
+              "        hinge.feedExternal(angle)\n" +
+                  "    }\n\n" +
+                  "    private fun pollInterval(\n",
+              "\n".join(bridge_insert) + "\n",
+              "endpoint bridge method",
+          )
+
+          angle_feed = replace_once(
+              angle_feed,
+              "        const val ANGLE_CHANGE_EPS = 0.10f\n\n" +
+                  "        private const val STALE_MS = 2_500L\n",
+              "        const val ANGLE_CHANGE_EPS = 0.10f\n\n" +
+                  "        private const val ENDPOINT_BRIDGE_DELAY_MS = 140L\n" +
+                  "        private const val ENDPOINT_BRIDGE_SAMPLE_MAX_MS = 300L\n" +
+                  "        private const val ENDPOINT_BRIDGE_CLOSED_MAX_DEG = 8.0f\n" +
+                  "        private const val ENDPOINT_BRIDGE_OPEN_MIN_DEG = 172.0f\n" +
+                  "        private const val ENDPOINT_BRIDGE_MIN_SPEED_DPS = 18.0f\n\n" +
+                  "        private const val STALE_MS = 2_500L\n",
+              "endpoint bridge constants",
+          )
+
+          write(angle_feed_path, angle_feed)
+
+          # ------------------------------------------------------------------
+          # HingeAngleSource
+          # ------------------------------------------------------------------
+
+          hinge_path = (
+              "app/src/main/java/com/duoopen/fold/HingeAngleSource.kt"
+          )
+          hinge = read(hinge_path)
+
+          hinge = replace_once(
+              hinge,
+              '''        if (externalActive) {
+                      if (SystemClock.uptimeMillis() - externalLastUptime < EXTERNAL_STALE_MS) return
+                      externalActive = false
+                  }
+                  // Not an angle in degrees (state code, radians, normalized): ignore.
+          ''',
+              '''        if (externalActive) {
+                      if (SystemClock.uptimeMillis() - externalLastUptime < EXTERNAL_STALE_MS) return
+                      externalActive = false
+                  }
+
+                  val coarseMidpointAfterContinuousEndpoint =
+                      lastAngle.isFinite() &&
+                          value in COARSE_MIDPOINT_MIN_DEG..
+                              COARSE_MIDPOINT_MAX_DEG &&
+                          (
+                              lastAngle <=
+                                  CONTINUOUS_ENDPOINT_LOW_GUARD_DEG ||
+                                  lastAngle >=
+                                      CONTINUOUS_ENDPOINT_HIGH_GUARD_DEG
+                              )
+
+                  if (coarseMidpointAfterContinuousEndpoint) {
+                      Log.d(
+                          TAG,
+                          "ignoring coarse midpoint $value after continuous endpoint $lastAngle"
+                      )
+                      return
+                  }
+
+                  // Not an angle in degrees (state code, radians, normalized): ignore.
+          ''',
+              "coarse sensor midpoint guard",
+          )
+
+          hinge = replace_once(
+              hinge,
+              '''        const val EXTERNAL_STALE_MS = 3_000L
+
+                  // Ignore tiny Samsung wallpaper jitter / duplicates.
+          ''',
+              '''        const val EXTERNAL_STALE_MS = 3_000L
+
+                  const val CONTINUOUS_ENDPOINT_LOW_GUARD_DEG =
+                      20f
+
+                  const val CONTINUOUS_ENDPOINT_HIGH_GUARD_DEG =
+                      160f
+
+                  const val COARSE_MIDPOINT_MIN_DEG =
+                      45f
+
+                  const val COARSE_MIDPOINT_MAX_DEG =
+                      135f
+
+                  // Ignore tiny Samsung wallpaper jitter / duplicates.
+          ''',
+              "coarse sensor guard constants",
+          )
+
+          write(hinge_path, hinge)
+
+          print("1.3.21 Fold7 state-machine + projection pass applied")
+          PY
+
+          git diff --stat
+          git diff --check
+
+      - name: Validate Fold7 1.3.21 source
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          GRADLE="app/build.gradle.kts"
+          SERVICE="app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
+          HOST="app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt"
+          HINGE="app/src/main/java/com/duoopen/fold/HingeAngleSource.kt"
+          ANGLE_FEED="app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt"
+          PANEL="app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
+          SHADER="app/src/main/java/com/duoopen/fold/DuoShader.kt"
+          SHELL="app/src/full/java/com/duoopen/shell/DuoShellService.kt"
+          BRIDGE="app/src/full/java/com/duoopen/shell/ShizukuBridge.kt"
+          RUNTIME="app/src/full/java/com/duoopen/overlay/PersistentRuntimeService.kt"
+
+          grep -F 'versionCode = 25' "$GRADLE"
+          grep -F 'versionName = "1.3.21-zfold7-state-machine"' "$GRADLE"
+
+          echo "Checking asymmetric Fold7 state machine..."
+          grep -F 'COVER_CLOSED_READY_MAX_DEG' "$SERVICE"
+          grep -F 'COVER_CLOSE_PREWARM_DEG' "$SERVICE"
+          grep -F '150.0f' "$SERVICE"
+          grep -F 'COVER_CLOSE_VISUAL_START_DEG' "$SERVICE"
+          grep -F '135.0f' "$SERVICE"
+          grep -F 'closed-open-start' "$SERVICE"
+          grep -F 'closing-prewarm' "$SERVICE"
+          grep -F 'closing-visual-start' "$SERVICE"
+          grep -F 'opening-cover-visual-hidden' "$SERVICE"
+
+          echo "Checking logical-id safety..."
+          grep -F 'resolveCurrentSecondaryCoverLogicalId' "$SERVICE"
+
+          if grep -F 'ShizukuBridge.requestDisplayPower(' "$SERVICE"; then
+            echo "ERROR: service still issues logical display power requests."
+            exit 1
+          fi
+
+          grep -F 'validated release skipped' "$SHELL"
+          grep -F 'cmd display power-reset $safeTarget' "$SHELL"
+
+          if grep -F 'cmd display power-reset $targetId' "$SHELL"; then
+            echo "ERROR: unvalidated logical power-reset remains."
+            exit 1
+          fi
+
+          if grep -F 'cachedCoverDisplayId' "$SHELL"; then
+            echo "ERROR: logical display-id cache remains."
+            exit 1
+          fi
+
+          echo "Checking physical-panel path..."
+          grep -F 'cachedCoverPhysicalDisplayId' "$SHELL"
+          grep -F 'physicalDisplayIdFromLogical' "$SHELL"
+          grep -F 'getPhysicalDisplayId' "$SHELL"
+          grep -F 'getPhysicalDisplayToken' "$SHELL"
+          grep -F 'setDisplayPowerMode' "$SHELL"
+          grep -F 'Cover logical route changed before enable' "$SHELL"
+          grep -F 'physical-safe-fast-path' "$SHELL"
+
+          echo "Checking stable release and mirror attach..."
+          grep -F '179.0f' "$SERVICE"
+          grep -F 'COVER_RELEASE_DWELL_MS' "$SERVICE"
+          grep -F 'returned-open-stable' "$SERVICE"
+          grep -F 'host attach pending retained' "$SERVICE"
+          grep -F 'MIRROR_HOST_ATTACH_GRACE_MS' "$SERVICE"
+
+          echo "Checking hinge source handoff guard..."
+          grep -F 'coarseMidpointAfterContinuousEndpoint' "$HINGE"
+          grep -F 'ignoring coarse midpoint' "$HINGE"
+
+          echo "Checking aspect-locked projection..."
+          grep -F 'canonicalPaneWidth' "$HOST"
+          grep -F 'sourceLeft' "$HOST"
+          grep -F 'COVER_VISUAL_MAX_HINGE = 135f' "$SHADER"
+          grep -F 'COVER_OPEN_IMMEDIATE_TILT' "$PANEL"
+
+          echo "Checking endpoint bridge..."
+          grep -F 'scheduleEndpointBridge' "$ANGLE_FEED"
+          grep -F 'ENDPOINT_BRIDGE_DELAY_MS' "$ANGLE_FEED"
+          grep -F 'endpoint bridge from=' "$ANGLE_FEED"
+
+          echo "Checking existing architecture remains..."
+          grep -F 'DisplayMirrorHost' "$SERVICE"
+          grep -F 'paneWidth' "$HOST"
+          grep -F '.daemon(true)' "$BRIDGE"
+          grep -F 'START_STICKY' "$RUNTIME"
+
+          git diff --check
+          echo "Fold7 1.3.21 source validation passed."
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+
+      - name: Compile and run unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ./gradlew \
+            testFullDebugUnitTest \
+            assembleFullDebug \
+            --stacktrace
+
+      - name: Prepare 1.3.21 field-test APK
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          OUTPUT_DIR="fold7-build"
+          mkdir -p "$OUTPUT_DIR"
+
+          APK="$(
+            find \
+              app/build/outputs/apk/full/debug \
+              -type f \
+              -name '*.apk' \
+              | head -n 1
+          )"
+
+          test -n "$APK" || {
+            echo "ERROR: Full debug APK was not found."
+            exit 1
+          }
+
+          OUTPUT_APK="$OUTPUT_DIR/DuoOpen-ZFold7-1.3.21-state-machine-debug.apk"
+          cp "$APK" "$OUTPUT_APK"
+
+          sha256sum "$OUTPUT_APK" \
+            > "$OUTPUT_DIR/APK-SHA256-1.3.21.txt"
+
+          {
+            echo "version=1.3.21-zfold7-state-machine"
+            echo "versionCode=25"
+            echo
+            echo "target=Samsung Galaxy Z Fold7"
+            echo "innerGeometry=1968x2184"
+            echo "coverGeometry=1080x2520"
+            echo
+            echo "materializedBase=$(git rev-parse HEAD)"
+            echo "overlayMain=$(git rev-parse refs/remotes/origin/main)"
+            echo
+            echo "1.3.21 consolidated state-machine pass:"
+            echo "- asymmetric state machine: closed-open immediate / open-close starts after one-quarter fold travel"
+            echo "- closing cover prewarm at 150 degrees; front visual reveal at 135 degrees"
+            echo "- gives the front renderer about 45 degrees of hinge travel before the 90-degree midpoint"
+            echo "- front animation mathematically zero above 135 degrees"
+            echo "- no logical-display power watchdog"
+            echo "- no cached logical display id"
+            echo "- logical cover route revalidated immediately before enable"
+            echo "- physical cover id cached separately from logical routing"
+            echo "- SurfaceControl physical-display-token power attempt"
+            echo "- release reset only after immediate 1080x2520 route revalidation"
+            echo "- 179-degree + 250ms stable-open release"
+            echo "- 250ms mirror-host attach grace"
+            echo "- coarse 90-degree fallback rejected near continuous endpoints"
+            echo "- 140ms endpoint bridge completes final closed/open degrees"
+            echo "- aspect-locked mirror projection: 936x2184 -> 1080x2520"
+            echo "- hinge edge preserved; outer 48px cropped instead of destination overscan"
+            echo "- front cover animation exists only from 0..135 degrees"
+            echo "- left-pane SurfaceControl mirror preserved"
+            echo "- persistent Shizuku + foreground runtime preserved"
+            echo
+            sha256sum "$OUTPUT_APK"
+          } > "$OUTPUT_DIR/BUILD-INFO-1.3.21.txt"
+
+          cat "$OUTPUT_DIR/BUILD-INFO-1.3.21.txt"
+
+      - name: Upload 1.3.21 field-test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-1.3.21-state-machine
+          path: |
+            fold7-build/DuoOpen-ZFold7-1.3.21-state-machine-debug.apk
+            fold7-build/APK-SHA256-1.3.21.txt
+            fold7-build/BUILD-INFO-1.3.21.txt
+          if-no-files-found: error
+          retention-days: 30
