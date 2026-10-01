@@ -13,6 +13,7 @@ import android.os.SystemClock
 import android.util.Log
 import android.view.SurfaceControl
 import com.duoopen.BuildConfig
+import com.duoopen.lab.TransitionClock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -196,7 +197,7 @@ object ShizukuBridge {
 
     /** Receives angles from the shell-side wallpaper log reader. */
     private class AngleCallback(
-        private val onAngle: (Float, Long) -> Unit,
+        private val onAngle: (Float, Long, Long) -> Unit,
     ) : Binder() {
 
         init {
@@ -212,6 +213,8 @@ object ShizukuBridge {
             reply: Parcel?,
             flags: Int,
         ): Boolean {
+            val binderArrivalTimeNs =
+                TransitionClock.nowNs()
 
             if (code != ShellProtocol.CB_ANGLE) {
                 return super.onTransact(
@@ -241,6 +244,7 @@ object ShizukuBridge {
             onAngle(
                 angle,
                 sourceUptime,
+                binderArrivalTimeNs,
             )
 
             return true
@@ -252,7 +256,7 @@ object ShizukuBridge {
 
     fun startAngles(
         action: String,
-        onAngle: (Float, Long) -> Unit,
+        onAngle: (Float, Long, Long) -> Unit,
     ): Boolean {
 
         val cb =

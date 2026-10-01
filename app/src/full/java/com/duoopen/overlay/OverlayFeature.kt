@@ -2,6 +2,7 @@ package com.duoopen.overlay
 
 import android.content.Context
 import android.view.WindowManager
+import com.duoopen.lab.TransitionLab
 import com.duoopen.shell.ShizukuBridge
 import com.duoopen.shell.WallpaperAngleFeed
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,7 @@ object OverlayFeature {
         runCatching {
             org.lsposed.hiddenapibypass.HiddenApiBypass.addHiddenApiExemptions("Landroid/view/ViewRootImpl;")
         }
+        TransitionLab.init(context)
         ShizukuBridge.init(context)
     }
 

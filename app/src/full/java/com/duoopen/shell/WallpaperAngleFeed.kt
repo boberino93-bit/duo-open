@@ -14,6 +14,8 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import com.duoopen.fold.HingeAngleSource
+import com.duoopen.lab.TransitionClock
+import com.duoopen.lab.TransitionLab
 import kotlin.math.abs
 
 /**
@@ -228,11 +230,12 @@ class WallpaperAngleFeed(
         if (
             !ShizukuBridge.startAngles(
                 action,
-            ) { angle, sourceUptime ->
+            ) { angle, sourceUptime, binderArrivalTimeNs ->
                 handler.post {
                     onAngle(
                         angle,
                         sourceUptime,
+                        binderArrivalTimeNs,
                     )
                 }
             }
@@ -286,8 +289,23 @@ class WallpaperAngleFeed(
     private fun onAngle(
         angle: Float,
         sourceUptime: Long,
+        binderArrivalTimeNs: Long,
     ) {
+        val consumerDeliveryTimeNs =
+            TransitionClock.nowNs()
+
         if (!running) return
+
+        TransitionLab.recordSamsungSample(
+            angleDegrees =
+                angle,
+            sourceUptimeMs =
+                sourceUptime,
+            binderArrivalTimeNs =
+                binderArrivalTimeNs,
+            consumerDeliveryTimeNs =
+                consumerDeliveryTimeNs,
+        )
 
         val now =
             SystemClock.uptimeMillis()
@@ -305,7 +323,6 @@ class WallpaperAngleFeed(
 
         lastDeliveryLagMs =
             (now - sourceUptime)
-                .coerceAtLeast(0L)
 
         if (
             lastDeliveryLagMs >
@@ -386,6 +403,14 @@ class WallpaperAngleFeed(
 
                 lastAngleSeen = target
                 lastAngleChangeUptime = SystemClock.uptimeMillis()
+
+                TransitionLab.recordSyntheticEndpoint(
+                    angleDegrees =
+                        target,
+                    reason =
+                        "endpoint bridge from=$angle velocity=$velocity",
+                )
+
                 hinge.feedExternal(target)
             },
             ENDPOINT_BRIDGE_DELAY_MS,

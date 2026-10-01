@@ -40,10 +40,21 @@ internal data class HingeSampleRecord(
     val synthetic: Boolean = false,
     val uncertaintyNs: Long? = null,
 ) {
+    /**
+     * Signed deltas are intentional.
+     *
+     * The Samsung source timestamp is reconstructed from a wall-clock log
+     * timestamp. A small negative residual is evidence about conversion /
+     * quantization uncertainty and must not be silently clamped away.
+     */
     val sourceToBinderLagNs: Long?
         get() =
-            if (sourceTimeNs != null && binderArrivalTimeNs != null) {
-                (binderArrivalTimeNs - sourceTimeNs).coerceAtLeast(0L)
+            if (
+                sourceTimeNs != null &&
+                binderArrivalTimeNs != null
+            ) {
+                binderArrivalTimeNs -
+                    sourceTimeNs
             } else {
                 null
             }
@@ -51,13 +62,15 @@ internal data class HingeSampleRecord(
     val binderToConsumerLagNs: Long?
         get() =
             binderArrivalTimeNs?.let {
-                (consumerDeliveryTimeNs - it).coerceAtLeast(0L)
+                consumerDeliveryTimeNs -
+                    it
             }
 
     val sourceToConsumerLagNs: Long?
         get() =
             sourceTimeNs?.let {
-                (consumerDeliveryTimeNs - it).coerceAtLeast(0L)
+                consumerDeliveryTimeNs -
+                    it
             }
 
     /** Compatibility name for the end-to-end source-to-consumer delivery lag. */
