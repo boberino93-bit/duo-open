@@ -1,0 +1,1 @@
+Trigger Batch D Fix 3: apply Gen2 ownership, remove all orphaned FoldOverlayService mirror/panel ownership state, validate single authority, then run the full unit-test and APK build gate.
