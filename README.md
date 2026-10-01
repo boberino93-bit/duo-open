@@ -1,24 +1,17 @@
-# Duo Open Gen2 production workflow V3
+# Duo Open Gen2 production workflow V4
 
-V2 successfully applied and structurally verified the Gen2 runtime, then Gradle
-found four compile-surface issues:
+V3 eliminated the previous visibility errors, but its constructor reorder caused
+one remaining compatibility error in `DuoWallpaperService`:
 
-- DisplayMirrorHost public constructor exposed internal Gen2 types.
-- PanelEngine public constructor exposed internal Gen2 types.
-- Two ShizukuBridge V3 token methods exposed an internal lease-token type.
-- HingeAngleSource placed `callbackHandler` after the lambda parameter, breaking
-  existing trailing-lambda call sites such as DuoApp.
+`No value passed for parameter 'onAngle'`
 
-V3 fixes those exact integration issues in the ephemeral runner after applying
-Gen2, then repeats structural verification and the complete Gradle gates.
+V4 takes the safer approach:
 
-No runtime commit is pushed unless:
-- audited production blob verification passes;
-- Gen2 applies;
-- structural verification passes;
-- `git diff --check` passes;
-- `testFullDebugUnitTest` passes;
-- `assembleFullDebug` passes.
+- keep HingeAngleSource as `(context, onAngle, callbackHandler = null)`;
+- keep existing positional callers such as DuoWallpaperService working;
+- convert DuoApp's trailing-lambda construction to explicit named `onAngle`;
+- retain the successful V3 visibility fixes;
+- retain the installer shell-capture anchor fix.
 
-If Gradle exposes another issue, the workflow stops before commit and the job
-log becomes the next diagnostic input.
+The workflow remains fail-closed. It commits/pushes only after structural checks,
+unit tests, and APK assembly all pass.
