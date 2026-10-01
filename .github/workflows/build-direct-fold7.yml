@@ -1,0 +1,216 @@
+name: Build Direct Fold7 1.3.23 Source Parity
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build-direct-fold7.yml"
+      - "app/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-direct-fold7-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main directly
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate direct-source 1.3.23 architecture
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          GRADLE="app/build.gradle.kts"
+          MANIFEST="app/src/full/AndroidManifest.xml"
+          APP="app/src/main/java/com/duoopen/DuoApplication.kt"
+          DIAG="app/src/main/java/com/duoopen/debug/DuoDiagnostics.kt"
+          TRAVEL="app/src/main/java/com/duoopen/fold/HingeTravelEstimator.kt"
+          SERVICE="app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt"
+          CONTROLLER="app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt"
+          COORDINATOR="app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt"
+          HOST="app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt"
+          PANEL="app/src/full/java/com/duoopen/overlay/PanelEngine.kt"
+          RUNTIME="app/src/full/java/com/duoopen/overlay/PersistentRuntimeService.kt"
+          SHELL="app/src/full/java/com/duoopen/shell/DuoShellService.kt"
+          PROTOCOL="app/src/full/java/com/duoopen/shell/ShellProtocol.kt"
+          BRIDGE="app/src/full/java/com/duoopen/shell/ShizukuBridge.kt"
+          ANGLE_FEED="app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt"
+          HINGE="app/src/main/java/com/duoopen/fold/HingeAngleSource.kt"
+          SHADER="app/src/main/java/com/duoopen/fold/DuoShader.kt"
+          TEST="app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt"
+
+          for file in \
+            "$GRADLE" "$MANIFEST" "$APP" "$DIAG" "$TRAVEL" \
+            "$SERVICE" "$CONTROLLER" "$COORDINATOR" "$HOST" "$PANEL" "$RUNTIME" \
+            "$SHELL" "$PROTOCOL" "$BRIDGE" "$ANGLE_FEED" "$HINGE" "$SHADER" "$TEST"
+          do
+            test -f "$file" || {
+              echo "ERROR: missing direct-source file: $file"
+              exit 1
+            }
+          done
+
+          grep -F 'versionCode = 27' "$GRADLE"
+          grep -F 'versionName = "1.3.23-zfold7-explicit-state-machine"' "$GRADLE"
+          grep -F 'testImplementation("junit:junit:4.13.2")' "$GRADLE"
+
+          # Persistent runtime and field diagnostics are now ordinary source.
+          grep -F 'PersistentRuntimeService' "$MANIFEST"
+          grep -F 'FOREGROUND_SERVICE_SPECIAL_USE' "$MANIFEST"
+          grep -F 'getHistoricalProcessExitReasons' "$APP"
+          grep -F 'object DuoDiagnostics' "$DIAG"
+
+          # Preserve the explicit Fold7 physical controller.
+          grep -F 'OPEN_INNER' "$CONTROLLER"
+          grep -F 'CLOSING_INTENT' "$CONTROLLER"
+          grep -F 'COVER_PREWARMING' "$CONTROLLER"
+          grep -F 'COVER_READY_HIDDEN' "$CONTROLLER"
+          grep -F 'COVER_VISUAL' "$CONTROLLER"
+          grep -F 'NATIVE_COVER' "$CONTROLLER"
+          grep -F 'OPENING_FROM_CLOSED' "$CONTROLLER"
+          grep -F 'INNER_HANDOFF' "$CONTROLLER"
+          grep -F 'BeginPrewarm' "$CONTROLLER"
+          grep -F 'ShowMirror' "$CONTROLLER"
+
+          # Coordinator remains the active physical orchestration path.
+          grep -F 'Fold7ContinuityCoordinator' "$SERVICE"
+          grep -F 'continuity.onHinge(angle)' "$SERVICE"
+          grep -F 'continuity.onTopologyChanged' "$SERVICE"
+
+          # Fold7 logical/physical display safety from successful 1.3.23.
+          grep -F 'resolveFreshCoverLogicalId' "$SHELL"
+          grep -F 'cachedCoverPhysicalDisplayId' "$SHELL"
+          grep -F 'routeStillCover' "$SHELL"
+
+          if grep -Fq 'cachedCoverDisplayId' "$SHELL"; then
+            echo "ERROR: stale logical display-id cache returned."
+            exit 1
+          fi
+
+          if grep -Fq 'Thread.sleep(600L)' "$SHELL"; then
+            echo "ERROR: old 600 ms display delay returned."
+            exit 1
+          fi
+
+          if grep -Fq 'Thread.sleep(40L)' "$SHELL"; then
+            echo "ERROR: old 40 ms display delay returned."
+            exit 1
+          fi
+
+          # Preserve current field-tested visual calibration until Transition Lab says otherwise.
+          grep -F 'FOLD7_COVER_CLOSED_VISUAL_HINGE = 0.5f' "$SHADER"
+          grep -F 'COVER_VISUAL_MAX_HINGE = 135f' "$SHADER"
+          grep -F 'INNER_OPEN_LATCH_DEG = 172f' "$PANEL"
+          grep -F 'INNER_OPEN_REARM_DEG = 166f' "$PANEL"
+
+          # Current mirror implementation remains present as the parity baseline.
+          grep -F 'canonicalPaneWidth' "$HOST"
+          grep -F 'sourceLeft' "$HOST"
+
+          # Current Samsung angle protections remain present.
+          grep -F 'coarseMidpointAfterContinuousEndpoint' "$HINGE"
+          grep -F 'scheduleEndpointBridge' "$ANGLE_FEED"
+          grep -F '.daemon(true)' "$BRIDGE"
+          grep -F 'START_STICKY' "$RUNTIME"
+
+          git diff --check
+          echo "Direct-source Fold7 1.3.23 validation passed."
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+
+      - name: Compile and run tests from main source
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ./gradlew \
+            testFullDebugUnitTest \
+            assembleFullDebug \
+            --stacktrace
+
+      - name: Prepare direct-source field-test artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          OUTPUT_DIR="fold7-direct-build"
+          SOURCE_DIR="$OUTPUT_DIR/source-manifest"
+          mkdir -p "$SOURCE_DIR"
+
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK" || {
+            echo "ERROR: Full debug APK was not found."
+            exit 1
+          }
+
+          OUTPUT_APK="$OUTPUT_DIR/DuoOpen-ZFold7-1.3.23-direct-source-debug.apk"
+          cp "$APK" "$OUTPUT_APK"
+
+          sha256sum "$OUTPUT_APK" > "$OUTPUT_DIR/APK-SHA256-1.3.23-direct.txt"
+
+          # Record the exact source hashes used by the direct build.
+          find \
+            app/src/full/java/com/duoopen/overlay \
+            app/src/full/java/com/duoopen/shell \
+            app/src/main/java/com/duoopen/fold \
+            app/src/main/java/com/duoopen/debug \
+            -type f \
+            \( -name '*.kt' -o -name '*.java' \) \
+            -print0 \
+            | sort -z \
+            | xargs -0 sha256sum \
+            > "$SOURCE_DIR/SOURCE-SHA256.txt"
+
+          {
+            echo "version=1.3.23-zfold7-explicit-state-machine"
+            echo "versionCode=27"
+            echo "buildMode=direct-source"
+            echo "head=$(git rev-parse HEAD)"
+            echo "target=Samsung Galaxy Z Fold7"
+            echo "innerGeometry=1968x2184"
+            echo "coverGeometry=1080x2520"
+            echo
+            echo "This APK was compiled directly from main."
+            echo "No materialized baseline checkout or Python source transform was used."
+            echo
+            sha256sum "$OUTPUT_APK"
+          } > "$OUTPUT_DIR/BUILD-INFO-1.3.23-direct.txt"
+
+          cat "$OUTPUT_DIR/BUILD-INFO-1.3.23-direct.txt"
+
+      - name: Upload direct-source field-test artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-1.3.23-direct-source
+          path: |
+            fold7-direct-build/DuoOpen-ZFold7-1.3.23-direct-source-debug.apk
+            fold7-direct-build/APK-SHA256-1.3.23-direct.txt
+            fold7-direct-build/BUILD-INFO-1.3.23-direct.txt
+            fold7-direct-build/source-manifest/SOURCE-SHA256.txt
+          if-no-files-found: error
+          retention-days: 30
