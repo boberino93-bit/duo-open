@@ -48,6 +48,10 @@ internal class Fold7ContinuityCoordinator(
     @Volatile private var prewarmInFlightGeneration = -1L
     @Volatile private var prewarmInFlightConnectionEpoch = -1L
     @Volatile private var destroyed = false
+    @Volatile private var renderOwnershipArmed = false
+
+    val renderOwnershipEnabled: Boolean
+        get() = renderOwnershipArmed && !destroyed
 
     val visualMirrorActive: Boolean
         get() =
@@ -60,6 +64,7 @@ internal class Fold7ContinuityCoordinator(
     fun arm() {
         gen2.cancelActiveCycle()
         destroyed = false
+        renderOwnershipArmed = true
         ensureMirrorSession("arm")
 
         val angle =
@@ -177,6 +182,7 @@ internal class Fold7ContinuityCoordinator(
     }
 
     fun release(reason: String) {
+        renderOwnershipArmed = false
         gen2.cancelActiveCycle()
         val generation = controller.generation
 
@@ -191,6 +197,7 @@ internal class Fold7ContinuityCoordinator(
 
     fun destroy() {
         destroyed = true
+        renderOwnershipArmed = false
         hideMirror(
             generation = controller.generation,
             reason = "destroy",

@@ -96,6 +96,15 @@ internal class PanelEngine(
 
     private var innerOpenLatched = false
 
+    /** Gen2 owns Fold7 cover presentation while privileged continuity is armed. */
+    private var continuityCoverOwned = false
+
+    /** Explicit CLOSED -> OPEN visual started from the device-state opening edge. */
+    private var continuityOpeningVisual = false
+
+    /** Close cycle whose capture-only continuity prime has already been issued. */
+    private var primedContinuityCycleId = -1L
+
     /** Stable opening/closing state, resistant to tiny hinge jitter. */
     private val travelEstimator =
         HingeTravelEstimator()
@@ -151,6 +160,31 @@ internal class PanelEngine(
     private fun currentTilt(): Float = tiltFor(hinge.lastAngle)
 
     fun onHinge(angle: Float) {
+        /*
+         * Fold7 cover rendering has one owner at a time.
+         *
+         * While privileged Gen2 owns the cover, autonomous PanelEngine hinge
+         * rendering is disabled. The only exception is the explicit early
+         * opening visual, which is started from DeviceStateManager rather than
+         * waiting for Samsung's precise angle stream to resume.
+         */
+        if (
+            isFold7CoverGeometryNow() &&
+            continuityCoverOwned
+        ) {
+            lastRawHingeAngle = angle
+            lastHingeMoveMs = SystemClock.uptimeMillis()
+
+            if (
+                !continuityOpeningVisual &&
+                phase != Phase.IDLE
+            ) {
+                captureGen++
+                removeOverlay()
+            }
+            return
+        }
+
         val previousRaw =
             lastRawHingeAngle
 
@@ -284,6 +318,21 @@ internal class PanelEngine(
             panelSwitched = true
             if (phase != Phase.IDLE) removeOverlay() // old panel's snapshot is meaningless now
         }
+
+        if (
+            isFold7CoverGeometryNow() &&
+            continuityCoverOwned
+        ) {
+            if (
+                !continuityOpeningVisual &&
+                phase != Phase.IDLE
+            ) {
+                captureGen++
+                removeOverlay()
+            }
+            return
+        }
+
         val angle = hinge.lastAngle
         if (angle.isNaN()) return
         val tilt = tiltFor(angle)
@@ -317,6 +366,258 @@ internal class PanelEngine(
         }
     }
 
+    fun isFold7CoverGeometryNow(): Boolean {
+        val mode =
+            runCatching {
+                display.mode
+            }.getOrNull()
+                ?: return false
+
+        return (
+            mode.physicalWidth == 1080 &&
+                mode.physicalHeight == 2520
+            )
+    }
+
+    fun isFold7InnerGeometryNow(): Boolean {
+        val mode =
+            runCatching {
+                display.mode
+            }.getOrNull()
+                ?: return false
+
+        return (
+            mode.physicalWidth == 1968 &&
+                mode.physicalHeight == 2184
+            )
+    }
+
+    fun setContinuityCoverOwned(
+        owned: Boolean,
+        reason: String,
+    ) {
+        if (
+            owned &&
+            !isFold7CoverGeometryNow()
+        ) {
+            return
+        }
+
+        if (continuityCoverOwned == owned) {
+            if (
+                owned &&
+                !continuityOpeningVisual &&
+                phase != Phase.IDLE
+            ) {
+                captureGen++
+                removeOverlay()
+            }
+            return
+        }
+
+        continuityCoverOwned = owned
+
+        com.duoopen.debug.DuoDiagnostics.event(
+            "cover-render-owner",
+            "display=$displayId owned=$owned reason=$reason " +
+                "phase=$phase openingVisual=$continuityOpeningVisual",
+        )
+
+        if (!owned) {
+            if (continuityOpeningVisual) {
+                endContinuityOpeningVisual(
+                    "owner-released:$reason"
+                )
+            }
+            return
+        }
+
+        if (
+            !continuityOpeningVisual &&
+            phase != Phase.IDLE
+        ) {
+            captureGen++
+            removeOverlay()
+        }
+    }
+
+    fun beginContinuityOpeningVisual(
+        reason: String,
+    ) {
+        if (
+            !isFold7CoverGeometryNow() ||
+            !continuityCoverOwned ||
+            continuityOpeningVisual
+        ) {
+            return
+        }
+
+        continuityOpeningVisual = true
+        captureGen++
+
+        if (
+            phase != Phase.IDLE ||
+            surface != null
+        ) {
+            removeOverlay()
+        }
+
+        restArmed = false
+        panelSwitched = false
+
+        com.duoopen.debug.DuoDiagnostics.event(
+            "cover-opening-visual",
+            "START display=$displayId reason=$reason precise=${hinge.lastAngle}",
+        )
+
+        startEffect(
+            afterSwap = false,
+            startTilt = COVER_OPEN_IMMEDIATE_TILT,
+        )
+    }
+
+    fun endContinuityOpeningVisual(
+        reason: String,
+    ) {
+        if (!continuityOpeningVisual) {
+            return
+        }
+
+        continuityOpeningVisual = false
+        captureGen++
+
+        if (
+            phase != Phase.IDLE ||
+            surface != null
+        ) {
+            removeOverlay()
+        }
+
+        restArmed = true
+        panelSwitched = false
+
+        com.duoopen.debug.DuoDiagnostics.event(
+            "cover-opening-visual",
+            "END display=$displayId reason=$reason precise=${hinge.lastAngle}",
+        )
+    }
+
+    fun primeContinuityFrame(
+        cycle: Fold7CycleEnvelope.CloseCycle,
+        reason: String,
+    ): Boolean {
+        if (
+            !isFold7InnerGeometryNow() ||
+            !deterministicFrozenFrameMode() ||
+            !ShizukuBridge.ready ||
+            activeCloseCycle() != cycle ||
+            primedContinuityCycleId == cycle.closeCycleId
+        ) {
+            return false
+        }
+
+        val mode =
+            runCatching {
+                display.mode
+            }.getOrNull()
+                ?: return false
+
+        val startedUptimeMs =
+            SystemClock.uptimeMillis()
+
+        val ticket =
+            continuityFrames.beginCapture(
+                cycle = cycle,
+                width = mode.physicalWidth,
+                height = mode.physicalHeight,
+                requestStartedUptimeMs = startedUptimeMs,
+                source = Fold7ContinuityFrameStore.Source.SHIZUKU,
+            ) ?: return false
+
+        primedContinuityCycleId =
+            cycle.closeCycleId
+
+        com.duoopen.debug.DuoDiagnostics.event(
+            "snapshot-transition",
+            "Gen2 continuity prime START serviceEpoch=${cycle.serviceEpoch} " +
+                "closeCycle=${cycle.closeCycleId} capture=${ticket.captureSequence} " +
+                "hinge=${hinge.lastAngle} reason=$reason",
+        )
+
+        scope.launch {
+            val bitmap =
+                withContext(Dispatchers.IO) {
+                    ShizukuBridge.capture(
+                        displayId,
+                        excludedLayers(),
+                        INITIAL_SHELL_SCALE,
+                    )
+                }
+
+            if (
+                activeCloseCycle() != cycle ||
+                primedContinuityCycleId != cycle.closeCycleId
+            ) {
+                bitmap?.let {
+                    runCatching {
+                        it.recycle()
+                    }
+                }
+                return@launch
+            }
+
+            if (bitmap == null) {
+                primedContinuityCycleId = -1L
+
+                com.duoopen.debug.DuoDiagnostics.event(
+                    "snapshot-transition",
+                    "Gen2 continuity prime FAILED serviceEpoch=${cycle.serviceEpoch} " +
+                        "closeCycle=${cycle.closeCycleId} " +
+                        "latencyMs=${SystemClock.uptimeMillis() - startedUptimeMs}",
+                )
+                return@launch
+            }
+
+            val lease =
+                continuityFrames.publish(
+                    ticket = ticket,
+                    capturedUptimeMs = startedUptimeMs,
+                    completedUptimeMs = SystemClock.uptimeMillis(),
+                    timestampQuality =
+                        Fold7ContinuityFrameStore.TimestampQuality.REQUEST_BOUNDED,
+                    payload = bitmap,
+                )
+
+            if (lease == null) {
+                runCatching {
+                    bitmap.recycle()
+                }
+
+                com.duoopen.debug.DuoDiagnostics.event(
+                    "snapshot-transition",
+                    "Gen2 continuity prime REJECTED closeCycle=${cycle.closeCycleId} " +
+                        "capture=${ticket.captureSequence}",
+                )
+                return@launch
+            }
+
+            cache.put(
+                true,
+                bitmap,
+            )
+
+            com.duoopen.debug.DuoDiagnostics.event(
+                "snapshot-transition",
+                "Gen2 continuity prime READY serviceEpoch=${lease.serviceEpoch} " +
+                    "closeCycle=${lease.closeCycleId} capture=${lease.captureSequence} " +
+                    "content=${lease.contentLeaseId} " +
+                    "latencyMs=${SystemClock.uptimeMillis() - startedUptimeMs}",
+            )
+        }
+
+        return true
+    }
+
     /**
      * Fold7 transitions must be deterministic: once a transition frame is
      * captured, changing app/system pixels underneath it must not change what
@@ -347,6 +648,14 @@ internal class PanelEngine(
     ): Fold7ContinuityFrameStore.CaptureTicket? {
         if (!innerPanel || !deterministicFrozenFrameMode()) return null
         val cycle = activeCloseCycle() ?: return null
+
+        if (
+            primedContinuityCycleId ==
+            cycle.closeCycleId
+        ) {
+            return null
+        }
+
         val mode = runCatching { display.mode }.getOrNull() ?: return null
         return continuityFrames.beginCapture(
             cycle = cycle,
@@ -724,15 +1033,69 @@ internal class PanelEngine(
             }
         }
         lastHingeMoveMs = SystemClock.uptimeMillis()
-        timedResolve = easeTo != null
-        if (easeTo != null) {
-            follower?.tauS = if (hinge.isCoarse) COARSE_EASE_TAU_S else TIMED_RESOLVE_TAU_S
-            follower?.setTarget(easeTo)
-            if (easeTo > DuoShader.FLAT_EPSILON) {
-                handler.postDelayed(peakHold, if (hinge.isCoarse) COARSE_PEAK_HOLD_MS else PEAK_HOLD_MS)
+
+        val explicitOpeningVisual =
+            continuityOpeningVisual &&
+                isFold7CoverGeometryNow()
+
+        val explicitOpeningPeak =
+            DuoShader.MAX_TILT *
+                config.intensity.coerceAtMost(1f)
+
+        timedResolve =
+            easeTo != null ||
+                explicitOpeningVisual
+
+        when {
+            explicitOpeningVisual -> {
+                follower?.tauS =
+                    CONTINUITY_OPENING_TAU_S
+
+                follower?.setTarget(
+                    explicitOpeningPeak
+                )
+
+                /*
+                 * Lifetime is owned by FoldOverlayService, not this renderer.
+                 * The service owns the semantic opening latch and its one-shot
+                 * timeout, so display callbacks cannot restart a timed-out
+                 * animation behind our back.
+                 */
             }
-        } else {
-            handler.postDelayed(settleCheck, SETTLE_TIMEOUT_MS)
+
+            easeTo != null -> {
+                follower?.tauS =
+                    if (hinge.isCoarse) {
+                        COARSE_EASE_TAU_S
+                    } else {
+                        TIMED_RESOLVE_TAU_S
+                    }
+
+                follower?.setTarget(
+                    easeTo
+                )
+
+                if (
+                    easeTo >
+                    DuoShader.FLAT_EPSILON
+                ) {
+                    handler.postDelayed(
+                        peakHold,
+                        if (hinge.isCoarse) {
+                            COARSE_PEAK_HOLD_MS
+                        } else {
+                            PEAK_HOLD_MS
+                        },
+                    )
+                }
+            }
+
+            else -> {
+                handler.postDelayed(
+                    settleCheck,
+                    SETTLE_TIMEOUT_MS,
+                )
+            }
         }
     }
 
@@ -954,6 +1317,7 @@ internal class PanelEngine(
         /** Tilt hysteresis for leaving a rest pose, so hinge jitter doesn't fire. */
         const val REST_LEAVE_TILT = 2f
         const val COVER_OPEN_IMMEDIATE_TILT = 0.15f
+        const val CONTINUITY_OPENING_TAU_S = 0.09f
         const val INNER_OPEN_LATCH_DEG = 172f
         const val INNER_OPEN_REARM_DEG = 166f
         /** After a swap, don't bother if the fold is nearly finished by capture time. */

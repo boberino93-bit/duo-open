@@ -81,6 +81,38 @@ class FoldOverlayService : AccessibilityService() {
     private var continuityAutoArmAttempted =
         false
 
+    /**
+     * Semantic CLOSED -> OPEN visual latch.
+     *
+     * Topology can enter INNER_HANDOFF long before Samsung precise angle
+     * resumes, so topology alone must not cancel the opening visual.
+     *
+     * This latch is one-shot per accepted opening edge. The renderer does not
+     * own its lifetime: timeout/loss/manual-stop clear it here so a later
+     * topology callback cannot accidentally restart the same opening visual.
+     */
+    private var earlyOpeningVisualLatched =
+        false
+
+    private var earlyOpeningVisualStarted =
+        false
+
+    private val earlyOpeningVisualTimeoutRunnable =
+        Runnable {
+            if (!earlyOpeningVisualLatched) {
+                return@Runnable
+            }
+
+            setEarlyOpeningVisualLatched(
+                value = false,
+                reason = "safety-timeout",
+            )
+
+            reconcileContinuityCoverRendering(
+                "opening-timeout"
+            )
+        }
+
     private var pendingProbeReason =
         "service-connected"
 
@@ -139,11 +171,9 @@ class FoldOverlayService : AccessibilityService() {
             override fun onDisplayAdded(
                 displayId: Int,
             ) {
-                if (::continuity.isInitialized) {
-                    continuity.onTopologyFastLane(
-                        "display-added:$displayId"
-                    )
-                }
+                handleContinuityTopologyFastLane(
+                    "display-added:$displayId"
+                )
                 scheduleDisplaySync(
                     "display-added:$displayId"
                 )
@@ -152,11 +182,9 @@ class FoldOverlayService : AccessibilityService() {
             override fun onDisplayRemoved(
                 displayId: Int,
             ) {
-                if (::continuity.isInitialized) {
-                    continuity.onTopologyFastLane(
-                        "display-removed:$displayId"
-                    )
-                }
+                handleContinuityTopologyFastLane(
+                    "display-removed:$displayId"
+                )
                 scheduleDisplaySync(
                     "display-removed:$displayId"
                 )
@@ -165,11 +193,9 @@ class FoldOverlayService : AccessibilityService() {
             override fun onDisplayChanged(
                 displayId: Int,
             ) {
-                if (::continuity.isInitialized) {
-                    continuity.onTopologyFastLane(
-                        "display-changed:$displayId"
-                    )
-                }
+                handleContinuityTopologyFastLane(
+                    "display-changed:$displayId"
+                )
                 scheduleDisplaySync(
                     "display-changed:$displayId"
                 )
@@ -242,10 +268,29 @@ class FoldOverlayService : AccessibilityService() {
                         reason
                     )
 
+                val beforeOpeningState =
+                    continuity.state
+
                 continuity
                     .onEarlyOpeningEdge(
                         reason
                     )
+
+                if (
+                    beforeOpeningState ==
+                        Fold7ContinuityController.State.NATIVE_COVER &&
+                    continuity.state ==
+                        Fold7ContinuityController.State.OPENING_FROM_CLOSED
+                ) {
+                    setEarlyOpeningVisualLatched(
+                        value = true,
+                        reason = "device-state:$reason",
+                    )
+                }
+
+                reconcileContinuityCoverRendering(
+                    "early-opening:$reason"
+                )
             }.also {
                 it.start()
             }
@@ -280,8 +325,17 @@ class FoldOverlayService : AccessibilityService() {
                         "shizuku-ready"
                     )
                 } else {
+                    setEarlyOpeningVisualLatched(
+                        value = false,
+                        reason = "shizuku-unavailable",
+                    )
+
                     continuity.onPrivilegedUnavailable()
                 }
+
+                reconcileContinuityCoverRendering(
+                    "shizuku-state:${state.javaClass.simpleName}"
+                )
             }
         }
 
@@ -314,8 +368,17 @@ class FoldOverlayService : AccessibilityService() {
             null
 
         if (::continuity.isInitialized) {
+            setEarlyOpeningVisualLatched(
+                value = false,
+                reason = "service-destroy",
+            )
+
             continuity.destroy()
         }
+
+        handler.removeCallbacks(
+            earlyOpeningVisualTimeoutRunnable
+        )
 
         handler.removeCallbacks(
             displayProbeRunnable
@@ -361,7 +424,30 @@ class FoldOverlayService : AccessibilityService() {
     }
 
     private fun onHinge(angle: Float) {
+        val beforeState =
+            continuity.state
+
         continuity.onHinge(angle)
+
+        if (
+            beforeState ==
+                Fold7ContinuityController.State.NATIVE_COVER &&
+            continuity.state ==
+                Fold7ContinuityController.State.OPENING_FROM_CLOSED
+        ) {
+            setEarlyOpeningVisualLatched(
+                value = true,
+                reason = "precise-hinge-opening-edge",
+            )
+        }
+
+        primeContinuityFrameIfNeeded(
+            "hinge:$angle"
+        )
+
+        reconcileContinuityCoverRendering(
+            "hinge:$angle"
+        )
 
         deviceStateObserver
             ?.corroborateFoldedRest(
@@ -407,17 +493,26 @@ class FoldOverlayService : AccessibilityService() {
             }
         }
         if (gone.isNotEmpty()) updateRunning()
-        if (!continuity.visualMirrorActive) {
-            for (e in engines.values.toList()) {
-                e.evaluate()
-            }
-        }
 
         angleFeed?.onDisplayChanged()
 
         continuity.onTopologyChanged(
             "sync-displays"
         )
+
+        primeContinuityFrameIfNeeded(
+            "sync-displays"
+        )
+
+        reconcileContinuityCoverRendering(
+            "sync-displays"
+        )
+
+        if (!continuity.visualMirrorActive) {
+            for (e in engines.values.toList()) {
+                e.evaluate()
+            }
+        }
 
         deviceStateObserver
             ?.corroborateFoldedRest(
@@ -427,6 +522,165 @@ class FoldOverlayService : AccessibilityService() {
                 preciseAngle =
                     hinge.lastAngle,
             )
+    }
+
+    private fun setEarlyOpeningVisualLatched(
+        value: Boolean,
+        reason: String,
+    ) {
+        if (
+            earlyOpeningVisualLatched ==
+            value
+        ) {
+            return
+        }
+
+        earlyOpeningVisualLatched =
+            value
+
+        handler.removeCallbacks(
+            earlyOpeningVisualTimeoutRunnable
+        )
+
+        if (value) {
+            earlyOpeningVisualStarted =
+                false
+
+            handler.postDelayed(
+                earlyOpeningVisualTimeoutRunnable,
+                EARLY_OPENING_VISUAL_MAX_MS,
+            )
+        } else {
+            earlyOpeningVisualStarted =
+                false
+        }
+
+        DuoDiagnostics.event(
+            "cover-opening-visual",
+            "LATCH value=$value reason=$reason " +
+                "state=${continuity.state} precise=${hinge.lastAngle}",
+        )
+    }
+
+    private fun handleContinuityTopologyFastLane(
+        reason: String,
+    ) {
+        if (!::continuity.isInitialized) return
+
+        continuity.onTopologyFastLane(
+            reason
+        )
+
+        primeContinuityFrameIfNeeded(
+            "fast:$reason"
+        )
+
+        reconcileContinuityCoverRendering(
+            "fast:$reason"
+        )
+    }
+
+    private fun primeContinuityFrameIfNeeded(
+        reason: String,
+    ) {
+        val cycle =
+            gen2.activeCycle
+                ?: return
+
+        engines.values
+            .firstOrNull {
+                it.isFold7InnerGeometryNow()
+            }
+            ?.primeContinuityFrame(
+                cycle = cycle,
+                reason = reason,
+            )
+    }
+
+    private fun reconcileContinuityCoverRendering(
+        reason: String,
+    ) {
+        if (!::continuity.isInitialized) return
+
+        if (
+            !ShizukuBridge.ready ||
+            !continuity.renderOwnershipEnabled ||
+            continuity.state !in
+                setOf(
+                    Fold7ContinuityController.State.OPENING_FROM_CLOSED,
+                    Fold7ContinuityController.State.INNER_HANDOFF,
+                )
+        ) {
+            setEarlyOpeningVisualLatched(
+                value = false,
+                reason = "state-or-ownership:$reason",
+            )
+        }
+
+        val coverEngines =
+            engines.values
+                .filter {
+                    it.isFold7CoverGeometryNow()
+                }
+
+        if (
+            earlyOpeningVisualLatched &&
+            coverEngines.isEmpty()
+        ) {
+            setEarlyOpeningVisualLatched(
+                value = false,
+                reason = "cover-route-missing:$reason",
+            )
+        }
+
+        val policy =
+            Fold7CoverRenderPolicy.decide(
+                privilegedGen2Ready =
+                    ShizukuBridge.ready &&
+                        continuity.renderOwnershipEnabled,
+                openingFromClosedLatched =
+                    earlyOpeningVisualLatched,
+                state =
+                    continuity.state,
+            )
+
+        for (
+            engine in
+            engines.values.toList()
+        ) {
+            /*
+             * Fold7 logical display IDs can remap between physical panels.
+             * Render ownership follows fresh geometry, never cached innerPanel.
+             */
+            val shouldOwnCover =
+                policy.gen2OwnsCover &&
+                    engine.isFold7CoverGeometryNow()
+
+            engine.setContinuityCoverOwned(
+                owned =
+                    shouldOwnCover,
+                reason =
+                    reason,
+            )
+
+            if (
+                shouldOwnCover &&
+                policy.runEarlyOpeningVisual
+            ) {
+                if (!earlyOpeningVisualStarted) {
+                    engine.beginContinuityOpeningVisual(
+                        reason
+                    )
+
+                    earlyOpeningVisualStarted =
+                        true
+                }
+            } else {
+                engine.endContinuityOpeningVisual(
+                    reason
+                )
+            }
+        }
     }
 
     /** Samsung continuous angle via Shizuku + fold wallpaper, when everything lines up. */
@@ -705,8 +959,21 @@ class FoldOverlayService : AccessibilityService() {
 
             if (enable) {
                 service.continuity.arm()
+
+                service.reconcileContinuityCoverRendering(
+                    "user-arm"
+                )
             } else {
+                service.setEarlyOpeningVisualLatched(
+                    value = false,
+                    reason = "user-stop",
+                )
+
                 service.continuity.release(
+                    "user-stop"
+                )
+
+                service.reconcileContinuityCoverRendering(
                     "user-stop"
                 )
             }
@@ -716,6 +983,10 @@ class FoldOverlayService : AccessibilityService() {
 
         private const val DISPLAY_SYNC_DEBOUNCE_MS =
             24L
+
+        /** One semantic CLOSED -> OPEN visual attempt per opening edge. */
+        private const val EARLY_OPENING_VISUAL_MAX_MS =
+            2_500L
 
         /** How old a panel's last picture may be and still bridge the next fold. */
         private const val SNAPSHOT_MAX_AGE_MS = 15 * 60_000L
