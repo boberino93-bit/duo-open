@@ -1,0 +1,1 @@
+Trigger Batch D Fix 4. Uses the already-green Fix 3 production transform, restores build-direct-fold7.yml before staging to avoid GitHub App workflow permission rejection, uploads the tested APK, then pushes only production/test files.
