@@ -1,0 +1,39 @@
+DUO OPEN — GEN2 FOUR-LAYER ROOT DEPLOYMENT PACKAGE
+
+PURPOSE
+This package is intended to be uploaded directly to the PRIMARY / ROOT integration agent for the Duo Open Galaxy Z Fold7 project.
+It is NOT a device-installable APK and it is NOT a mechanically applicable production patch.
+The Root agent is the production integration authority and must compare every proposal against then-current main before changing code.
+
+CURRENT REPOSITORY BASELINE WHEN THIS PACKAGE WAS ASSEMBLED
+REPOSITORY=https://github.com/boberino93-bit/duo-open
+CURRENT_HEAD=0c1470210eaafb606701f0f9b9bc86e2e90867a3
+CURRENT_APP_VERSION=1.3.29-zfold7-deterministic-early-wake
+TARGET_DEVICE=Samsung Galaxy Z Fold7 only
+TARGET_INNER=1968x2184
+TARGET_COVER=1080x2520
+
+IMPORTANT BASELINE FACT
+HEAD contains imported R&D artifacts, but the production Android runtime blobs relevant to these proposals still match the earlier 1.3.29 implementation. Do not mistake artifact imports for production integration.
+
+ROOT INSTRUCTION
+1. Fetch current main immediately and record exact HEAD.
+2. Compare current production source against CURRENT_MAIN_BASELINE.txt.
+3. Read MASTER_GEN2_INTEGRATION_PLAN.txt before opening individual proposal ZIPs.
+4. Treat all four proposal ZIPs as evidence/models, not patch authority.
+5. Integrate the four layers in dependency order unless current source proves a different order is safer:
+   A. Cover Lease Protocol Gen2
+   B. Cover Readiness Gen2
+   C. Frozen Frame Provenance Gen2
+   D. Presentation Lease Gen2
+6. Do NOT collapse their separate identities into one generic generation counter.
+7. After each layer, run the relevant imported model/JVM tests plus the repository Android unit/build gate.
+8. After the combined integration, run the full adversarial matrix and Fold7 field validation before declaring production ready.
+9. Preserve all listed invariants and current 1.3.29 deterministic-frame / early-wake behavior unless direct current-main evidence requires a change.
+10. Root may modify production source and build a test APK only after performing the current-main reconciliation above.
+
+PRIMARY BUILD GATE
+./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+PRODUCTION STATUS OF THIS BUNDLE
+INTEGRATION INPUT — MANUAL ROOT REVIEW REQUIRED

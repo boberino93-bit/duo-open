@@ -1,0 +1,24 @@
+DUO OPEN — CURRENT MAIN BASELINE FOR FOUR-LAYER GEN2 INTEGRATION
+
+HEAD_SHA=0c1470210eaafb606701f0f9b9bc86e2e90867a3
+HEAD_TITLE=new
+RUNTIME_VERSION_CODE=34
+RUNTIME_VERSION_NAME=1.3.29-zfold7-deterministic-early-wake
+
+RELEVANT PRODUCTION BLOB IDENTITIES
+app/build.gradle.kts=0ae3ead1edc3e181db0d4608edb108ed353df2cc
+app/src/full/java/com/duoopen/shell/ShellProtocol.kt=b262a5c1944fda19504c72c4a49366d44b7c79b0
+app/src/full/java/com/duoopen/shell/ShizukuBridge.kt=0260da09c6d8ae80f3a21dbec041b987e4f75254
+app/src/full/java/com/duoopen/shell/DuoShellService.kt=24a5357ff6c4eedfef69a7e5d8b2ee4fa18e7de3
+app/src/full/java/com/duoopen/shell/Fold7CoverPanelLease.kt=96ed891290f6742279e19c0d2b6c110542c3a53e
+app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt=23cfa0cc9802c2921d56190bf0abbf4478c1547b
+app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt=50b602a32d70ac00e0b1fec251fab1e55c53a999
+app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt=0a6c3e85d0b3f4531eac504170be0e38a8a290de
+app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt=810edd929ab020b32f171ca0338acf975d91fd92
+app/src/full/java/com/duoopen/overlay/PanelEngine.kt=582c7ea965405a07b2dea4ea9277a86d1639e5f8
+app/src/full/java/com/duoopen/overlay/SnapshotCache.kt=4b1b6bb9837de4fb77cdc1bdc26f4a39aa72ab26
+app/src/full/java/com/duoopen/lab/TransitionLab.kt=ae60f8cfaff1632c2676266d7fad203e4f101893
+app/src/full/java/com/duoopen/lab/SurfaceTransactionProbe.kt=71887824f2ebf0c60d62724ee0bbd25f35ff1078
+
+RECONCILIATION RULE
+If current main differs from HEAD_SHA or any relevant production blob differs, inspect the exact changes and reconcile manually. Never apply an R&D prototype or integration sketch blindly.

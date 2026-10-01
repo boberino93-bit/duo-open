@@ -1,0 +1,317 @@
+DUO OPEN — GALAXY Z FOLD7 — FOUR-LAYER GEN2 MASTER INTEGRATION PLAN
+
+STATUS=ROOT INTEGRATION INPUT
+PRODUCTION_READY=NO
+TARGET=Samsung Galaxy Z Fold7
+INNER=1968x2184
+COVER=1080x2520
+
+==================================================
+1. ARCHITECTURAL OBJECTIVE
+==================================================
+Build one coherent close-to-cover continuity pipeline in which four separate questions have four separate owners:
+
+1. COVER LEASE AUTHORITY
+   Is Duo currently authorized to mutate/hold the physical cover route, and is the shell observation current?
+
+2. COVER READINESS
+   Is the lease-owned physical cover presently represented by a fresh app-visible logical route that is ready to host continuity content?
+
+3. FRAME PROVENANCE
+   Do the frozen pixels belong to THIS exact close cycle rather than merely being recent and correctly sized?
+
+4. PRESENTATION OWNERSHIP
+   Did THIS exact authorized content attempt actually reach draw / frame-commit / SurfaceFlinger presentation evidence, rather than a stale attempt producing a callback?
+
+These are complementary facts. Do not merge them into one mega-state-machine or one generic generation variable.
+
+==================================================
+2. REQUIRED IDENTITY LAYERS
+==================================================
+A. CONTROLLER / TRANSITION POLICY
+- transitionGeneration remains Fold7ContinuityController-owned.
+- It identifies policy transitions/actions.
+- Do not reinterpret it as global lease/frame/presentation identity.
+
+B. SHELL COVER LEASE AUTHORITY
+- shellSession (opaque per DuoShellService process)
+- shellRevision / coverMutationRevision (monotonic at serialized mutation boundary)
+- leaseId
+- leaseEpoch
+- ownerGeneration
+- stable physical cover id
+
+C. READINESS / MUTATION REQUEST
+- transitionGeneration
+- exact accepted cover lease token
+- requestSequence / ticket identity
+- current topology observation identity
+- stable physical cover id
+
+D. FRAME PROVENANCE
+- serviceEpoch
+- closeCycleId (stable across one deliberate close cycle)
+- captureSequence
+- contentLeaseId or equivalent immutable frame identity
+- source geometry/panel
+- request/capture/completion timing metadata
+- capture source and timestamp quality
+
+E. PRESENTATION
+- serviceEpoch
+- closeCycleId
+- contentLeaseId
+- hostEpoch / hostInstance identity
+- presentationAttemptSequence
+- immutable destination identity
+- render path (FROZEN_VIEW or LIVE_MIRROR)
+
+IDENTITY RULE
+It is acceptable for these values to be Longs internally, but they must remain semantically typed/separate. A later callback is accepted only by the owner whose exact identity it carries.
+
+==================================================
+3. INTEGRATION ORDER
+==================================================
+PHASE 0 — CURRENT-MAIN RECONCILIATION
+- fetch main
+- record SHA
+- compare relevant blobs with CURRENT_MAIN_BASELINE.txt
+- scan for newer V3/readiness/frame/presentation implementations
+- inspect any new device evidence
+- stop mechanical integration if overlapping production work has landed
+
+PHASE 1 — COVER LEASE PROTOCOL GEN2
+Goal: end-to-end privileged authority + ordered shell observations.
+
+P0:
+- add versioned COVER_PANEL_LEASE_V3; preserve V2 compatibility while staging
+- create opaque shellSession per DuoShellService process
+- stamp shellRevision inside existing single-thread cover mutation executor
+- return full lease token + revision in V3 responses
+- require exact token for ensure-held and release
+- add deterministic CoverLeaseSnapshotGate on app side
+- invalidate app authority immediately on privileged disconnect
+- replace identity-free reassert completion ownership with exact ticket
+
+Do not change physical route validation, panel power policy, hinge thresholds, task placement, or mirror V2 protections.
+
+GATE BEFORE PHASE 2:
+- imported pure tests green
+- new production JVM tests green
+- full repository unit tests green
+- fullDebug assembles
+
+PHASE 2 — COVER READINESS GEN2
+Goal: distinguish "we own/powered the cover" from "the destination is ready to host content."
+
+P0:
+- add pure CoverReadiness owner
+- split DisplayManager handling into:
+  1. immediate cheap continuity/readiness fast lane
+  2. existing debounced heavier PanelEngine/display synchronization lane
+- readiness must use fresh topology + stable physical identity + accepted lease token
+- structured prewarm result must distinguish:
+  physicalLeaseHeld
+  activationAttempted
+  routeReady / routeObserved
+  mutationError
+- route publication that is merely late must not be treated as generic mutation failure
+- visual demand is latched independently from readiness
+- reassert request completion carries exact ticket identity
+
+P1:
+- remove fixed 32 ms timer as normal readiness proof
+- keep only bounded watchdog/fallback for diagnostics if necessary
+- preserve 180 ms policy only for genuine failure unless evidence justifies revision
+
+GATE BEFORE PHASE 3:
+- readiness model/tests green
+- callback burst / reversal / reconnect tests green
+- build green
+- no regression in native Samsung handoff
+
+PHASE 3 — FROZEN FRAME PROVENANCE GEN2
+Goal: prevent a previous fold-cycle bitmap from becoming the deterministic current-cycle continuity frame just because it is young.
+
+P0:
+- introduce continuity-specific frame store/lease; avoid changing generic SnapshotCache semantics unless necessary
+- begin a new closeCycleId once per deliberate close cycle
+- keep closeCycleId stable through CLOSING_INTENT -> PREWARM -> READY_HIDDEN -> COVER_VISUAL
+- invalidate cycle on reversal, native-cover takeover, service restart, destruction
+- attach exact cycle/provenance metadata to captures
+- accept frozen frame only for exact serviceEpoch + closeCycleId + current capture sequence/content lease
+- capture failure/timeout must not silently resurrect a prior-cycle continuity frame
+- retain live mirror/native fallback when no current-cycle frozen frame is proven
+
+IMPORTANT
+Do not make readiness depend on frozen-frame availability. Ready destination and eligible content are separate facts.
+
+GATE BEFORE PHASE 4:
+- provenance tests green
+- secure-content / capture-failure / delayed-capture tests green
+- close-open-close stale frame test green
+- build green
+
+PHASE 4 — PRESENTATION LEASE GEN2
+Goal: attribute draw/commit/present evidence to the exact authorized content attempt.
+
+P0:
+- add immutable PresentationIdentity / PresentationLease owner
+- consume frame provenance serviceEpoch + closeCycleId + contentLeaseId
+- add host identity + presentationAttemptSequence
+- live mirror SurfaceControl timing callbacks must carry immutable presentation identity rather than correlate against mutable latest-global state
+
+P1 frozen path:
+- record exact content onDraw identity
+- register View frame commit callback
+- queue a visually inert SurfaceControl marker transaction through applyTransactionOnDraw() so the transaction is merged with the ViewRoot draw
+- record transaction committed/completed/present-fence evidence with the same immutable presentation identity
+- first integration is observation-only; do not block visibility waiting for instrumentation callbacks
+
+P1 telemetry:
+- extend Transition Lab schema with immutable identity and staleAtCallback/rejection reason
+- preserve latest hinge sample only as observation/correlation, not ownership
+
+P2 only after field evidence:
+- add recovery policy only if missing/late presentation evidence actually correlates with user-visible failure
+- no blind timer/retry loops
+
+==================================================
+4. CROSS-LAYER INVARIANTS
+==================================================
+1. Stable physical panel identity is never a logical display ID.
+2. Logical display IDs are freshly resolved, validated, and disposable.
+3. User's real Android task stays on normal/default display.
+4. No raw physical-panel OFF command is introduced.
+5. Samsung-native handoff remains authoritative near closed/native topology.
+6. Opening and closing remain asymmetric.
+7. Reversal is mandatory; stale async work must become inert.
+8. Duplicate callbacks/commands are expected and must be idempotent/fenced.
+9. Keep 174° prewarm, 135° visual, and established reversal/hide thresholds unless direct measured evidence justifies a separate change.
+10. Preserve 1.3.29 deterministic frozen-frame intent: do not restore live recapture underneath a stationary fold.
+11. Preserve early-inner-wake infrastructure unless direct conflict is proven.
+12. Keep Transition Lab; extend it rather than bypassing it.
+13. "Committed" != "presented" != photons visible.
+14. No subsystem may guess ownership from timing alone when an explicit token can exist.
+
+==================================================
+5. KEY PRODUCTION FILE OVERLAP
+==================================================
+Highest-overlap file:
+- Fold7ContinuityCoordinator.kt
+
+Other overlapping files:
+- FoldOverlayService.kt
+- Fold7ContinuityController.kt
+- DisplayMirrorHost.kt
+- ShizukuBridge.kt
+- DuoShellService.kt
+- TransitionLab.kt / SurfaceTransactionProbe.kt
+
+Lower-conflict/new-owner candidates:
+- CoverLeaseSnapshotGate.kt
+- Fold7CoverReadiness.kt
+- Fold7ContinuityFrameStore.kt
+- Fold7PresentationLease.kt
+- corresponding JVM tests
+
+RULE
+Prefer small deterministic owners with explicit contracts over adding more booleans/timers to Fold7ContinuityCoordinator.
+
+==================================================
+6. CROSS-LAYER EVENT FLOW TARGET
+==================================================
+HINGE / DEVICE STATE
+-> controller transitionGeneration / close intent
+-> V3 cover lease request
+-> shell serial mutation
+-> shellSession + shellRevision + exact lease token response
+-> app snapshot gate accepts/rejects
+-> CoverReadiness observes fresh topology for stable physical cover
+-> visual demand + readiness converge
+-> current closeCycle frame lease queried
+-> exact contentLeaseId selected OR live fallback chosen
+-> DisplayMirrorHost creates host/presentation attempt
+-> draw/SurfaceControl transaction
+-> immutable presentation callbacks
+-> Transition Lab records end-to-end identities and timestamps
+-> Samsung native handoff / reversal invalidates exact owners
+
+==================================================
+7. BUILD / TEST GATES
+==================================================
+Run after EACH production integration phase:
+./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+Also rerun each proposal's supplied pure model tests from its ZIP.
+
+Combined adversarial matrix must include:
+- slow close
+- fast close
+- noisy hinge samples
+- duplicate samples/callbacks
+- close -> open reversal at each major phase
+- close -> open -> close before old async completions return
+- stale/late/out-of-order shell replies
+- stale/lower shell revisions
+- Shizuku disconnect/reconnect
+- app/accessibility service restart
+- shell daemon restart
+- missing/remapped logical cover route
+- Samsung removing route while lease remains held
+- route appears after initial shell polling window
+- cover already physically powered
+- Binder/shell failure
+- SurfaceControl mirror failure
+- frozen capture delayed/fails/secure content
+- old frame younger than 10 seconds from previous close
+- host destroyed/recreated before presentation callback
+- late presentation callback from old content/host
+- transaction committed but no valid present fence
+- native cover takeover
+- duplicate release/reassert commands
+
+==================================================
+8. FOLD7 FIELD VALIDATION
+==================================================
+Before production-ready declaration, collect Transition Lab + logcat + external high-frame-rate video where possible.
+
+Measure at minimum:
+hinge/source timestamp
+-> app delivery
+-> controller decision
+-> cover mutation issue
+-> shell executor start/end
+-> wake/route command accepted
+-> app snapshot accepted
+-> DisplayManager callback arrival
+-> readiness reducer entry
+-> ready observation
+-> visual demand
+-> frame chosen + provenance identity
+-> host attached
+-> exact draw
+-> frame commit
+-> SurfaceControl transaction submit
+-> committed
+-> latch
+-> present fence / completed
+-> first physically visible stable frame (external video only)
+
+Test ordinary app, launcher, wallpaper, secure-content failure path, repeated closes, reversals, and Shizuku restart.
+
+==================================================
+9. ROOT DELIVERY EXPECTATION
+==================================================
+Root should produce:
+- exact starting/final main SHAs
+- list of integrated proposal invariants
+- list of rejected/deferred proposal elements and reasons
+- production files changed
+- new tests added
+- exact build/test commands and outcomes
+- APK identity/path only if build succeeds
+- field-validation checklist/results
+- explicit remaining unknowns
+
+Do not declare Fold7 behavior fixed solely because JVM models pass.
