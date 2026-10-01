@@ -1,0 +1,498 @@
+DUO OPEN — SHIZUKU / PRIVILEGED-DAEMON RECOVERY GEN2 R&D HANDOFF
+================================================================
+
+1. EXECUTIVE SUMMARY
+
+SUBSYSTEM=Shizuku/UserService privilege-session loss, daemon restart, and cover-route recovery
+WHY_SELECTED=Current main has strong within-session generation/lease protections, but privilege-session lifetime is not modeled as a first-class authority boundary. This leaves controller/readiness state and shell-owned cover mutations capable of diverging when Shizuku or DuoShellService disappears and later reconnects.
+DOMINANT_LIMITATION=Privilege loss invalidates app-side readiness/session tokens without invalidating the controller's COVER_READY_HIDDEN/COVER_VISUAL authority, while shell-process teardown can discard the only in-memory Fold7CoverPanelLease record without draining the cover mutation.
+GEN2_DIRECTION=Add an explicit privilege-recovery fence spanning app + shell. Revoke visible/ready authority on privilege loss, require shell recovery before new prewarm/visual work, drain known lease state on graceful UserService destroy, and cold-start the shell in UNKNOWN_RECOVERY until topology proves native ownership or a freshly validated non-default cover route can be framework-reset.
+STRONGEST_EVIDENCE=Source-level deterministic path: Fold7ContinuityCoordinator.onPrivilegedUnavailable() invalidates coverReadiness but leaves controller state/mirrorRequested intact; Fold7ContinuityController.COVER_READY_HIDDEN can then enter COVER_VISUAL based on angle alone. DuoShellService's SHIZUKU_DESTROY cleans live mirror but not coverPanelLease before System.exit(0).
+CONFIDENCE=HIGH for source architecture defect; MEDIUM for exact physical Fold7 symptom because daemon-death hardware persistence has not been physically observed in this session.
+LARGEST_UNKNOWN=Samsung/Fold7 physical/logical display state after abrupt Shizuku/UserService death versus graceful destroy; requires device fault-injection.
+
+2. REPOSITORY / COORDINATION BASELINE
+
+STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+MAIN_CHANGED_DURING_RND=NO
+OVERLAPPING_CHANGE=N/A
+AGENT_BUS_AVAILABLE=YES
+AGENT_ID=reviewer
+WORKSTREAM_ID=reviewer-shizuku-recovery-gen2-20261001
+PROMPT_PROTOCOL_VERSION=6
+LIVE_AGENT_BUS_SCHEMA=duoopen-agentbus/v1 (legacy deployed operational board)
+BASE_CURRENT_EPOCH_ID=N/A_LEGACY_BOARD_NO_V6_STATE_TREE
+BASE_CURRENT_MAIN_SHA=N/A_LEGACY_BOARD; primary coordination baseline also referenced 45bb0d326899c0e08415928224cfea0ff58d2d4e
+BASELINE_DRIFT=NO
+STATE_LANE=N/A_LEGACY_OPERATIONAL_BOARD (V6 CURRENT/FUTURE not deployed live)
+FINAL_BUS_CURSOR=20261001T223848Z__reviewer__primary__finding-shizuku-recovery.json at artifact-finalization start; recheck required immediately before primary integration.
+FINAL_WORKSTREAM_STATE=COMPLETE after final handoff message
+
+Relevant live messages:
+- msg-reviewer-20261001t223500z-71c246fb — target claim
+- msg-reviewer-20261001t223848z-357eaed6 — confirmed source finding + 9/9 model evidence
+- msg-primary-gen3-final-decision-20261001t211847z — primary Gen3 integration decision
+- msg-performance-rd-handoff-transition-observability-20261001T221922Z — performance work, non-overlapping
+- msg-state-rd-prime-ownership-source-20261001t223648z-b96c3567 — close-cycle prime ownership, non-overlapping
+
+3. PRIOR WORK / DUPLICATION CHECK
+
+Prior active ownership work:
+- state-rd: exact cover-authority CAS and, later, close-cycle prime-once/remap race.
+- display-rd: cover visual composition and requested-vs-presented authority.
+- performance-rd: immutable correlation between presentation attempts and transaction/present evidence.
+- primary: accepted authority/content/visual/presentation separation and Phase-1 CAS package.
+
+This work differs:
+- It treats Shizuku connection epoch + DuoShellService process lifetime as an authority boundary.
+- It covers loss/reconnect/restart across app controller state, cover readiness, shell lease memory, and UserService teardown.
+- It does not redesign the CAS token fields, visual compositor ownership, presentation evidence, or close-cycle capture-prime owner.
+
+New state-rd traffic during this session included service restart in the boundary only as it relates to continuity-frame prime-once ownership. No overlap with shell cover-lease recovery semantics was found.
+
+4. CURRENT IMPLEMENTATION
+
+Relevant files:
+- app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+- app/src/full/java/com/duoopen/overlay/Fold7Gen2Kernel.kt
+- app/src/full/java/com/duoopen/overlay/Fold7CoverLeaseSnapshotGate.kt
+- app/src/full/java/com/duoopen/overlay/Fold7CoverReadiness.kt
+- app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+- app/src/full/java/com/duoopen/shell/DuoShellService.kt
+- app/src/full/java/com/duoopen/shell/Fold7CoverPanelLease.kt
+- app/src/test/java/com/duoopen/shell/Fold7CoverPanelLeaseTest.kt
+
+Causal path:
+Shizuku binder / UserService connection
+→ ShizukuBridge.connectionEpoch + StateFlow
+→ FoldOverlayService Shizuku state collector
+→ Fold7ContinuityCoordinator.onPrivilegedReady/onPrivilegedUnavailable
+→ Fold7CoverLeaseSnapshotGate + Fold7CoverReadiness + controller state
+→ COVER_PANEL_LEASE_V3 binder calls
+→ DuoShellService serialized coverMutationExecutor
+→ Fold7CoverPanelLease state machine
+→ physical cover NORMAL + validated logical cover route STATE_ON
+→ DisplayMirrorHost cover visual path
+
+Current loss path:
+Shizuku loss/disconnect
+→ ShizukuBridge clears service/increments connectionEpoch
+→ FoldOverlayService receives non-Ready state
+→ onPrivilegedUnavailable()
+→ mirrorSession=0, in-flight markers reset, coverAuthority moves connection epoch, coverReadiness invalidates
+BUT
+→ controller may remain COVER_READY_HIDDEN or COVER_VISUAL
+→ mirrorRequested may remain true
+→ visualMirrorActive getter may remain true in COVER_VISUAL
+→ later hinge in COVER_READY_HIDDEN can promote to COVER_VISUAL without fresh readiness proof.
+
+Current shell teardown path:
+Shizuku UserService destroy transaction (16777115)
+→ DuoShellService stops AngleReader/live mirror
+→ mirrorMutationExecutor shutdown
+→ coverMutationExecutor shutdownNow
+→ System.exit(0)
+BUT
+→ no requestRelease/reconcile/onPrivilegedDaemonRestart is run for Fold7CoverPanelLease.
+
+New shell process:
+new Fold7CoverPanelLease() starts IDLE
++ new shellSession
+→ app connection epoch invalidates old accepted token/snapshot
+→ ordinary reconcileSecondaryDisplayLeaseV3 on new daemon calls onTopology(IDLE), which emits no recovery action.
+
+Ownership/concurrency already done well:
+- app-side connectionEpoch rejects old binder-session results;
+- shell cover mutations are serialized;
+- V3 tokens identify shellSession + leaseId + leaseEpoch + ownerGeneration + physicalDisplayId;
+- mirror session has sequence/lease arbitration;
+- stale connection results are generally ignored.
+
+The gap is cross-daemon state continuity and controller authority reset, not ordinary queued-operation CAS.
+
+5. CLAIM / EVIDENCE LEDGER
+
+CLAIM=Privilege loss can leave controller state COVER_READY_HIDDEN after Fold7CoverReadiness is invalidated.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=Fold7ContinuityCoordinator.onPrivilegedUnavailable() resets shell/mirror/prewarm bookkeeping, calls coverAuthority.onConnectionEpoch() and coverReadiness.invalidate(), but does not reset/demote Fold7ContinuityController.
+LIMITATION=No device execution performed.
+VALIDATION_REQUIRED=Unit/integration test invoking privilege loss while hidden-ready.
+
+CLAIM=COVER_READY_HIDDEN can transition to COVER_VISUAL without rechecking external cover readiness.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=Fold7ContinuityController branch checks reversal then direction/angle <= COVER_VISUAL_START_DEG and emits ShowMirror.
+LIMITATION=Controller intentionally encodes readiness in the state name during normal operation; defect arises because privilege loss breaks that invariant externally.
+VALIDATION_REQUIRED=Cross-component test with coordinator privilege loss + controller hinge input.
+
+CLAIM=visualMirrorActive can remain true while ShizukuBridge.ready is false.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=Getter uses mirrorRequested && controller.state==COVER_VISUAL; onPrivilegedUnavailable does not clear mirrorRequested or controller visual state.
+LIMITATION=Whether this leaves a visible stale overlay on Fold7 depends on host/display behavior.
+VALIDATION_REQUIRED=Device kill/restart Shizuku while COVER_VISUAL.
+
+CLAIM=Graceful Shizuku UserService destroy omits cover-lease cleanup.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=DuoShellService SHIZUKU_DESTROY path stops live mirror then shuts executors/System.exit; no coverPanelLease release/reconcile call is present.
+LIMITATION=External panel/logical-state persistence after process exit is device/platform dependent.
+VALIDATION_REQUIRED=Instrument route state before/after UserService remove=true.
+
+CLAIM=A new shell daemon can lose knowledge of a previously forced cover state.
+CATEGORY=HIGH-CONFIDENCE ARCHITECTURAL RISK
+EVIDENCE=coverPanelLease is process-local and fresh shell starts IDLE. App gate clears accepted token/snapshot on connectionEpoch change. If hardware/logical mutation persists, neither side retains exact lease ownership.
+LIMITATION=Persistence of actual Samsung display mutation after abrupt daemon death not physically observed here.
+VALIDATION_REQUIRED=Kill Shizuku/UserService after successful prewarm and probe physical/logical topology before app recovery.
+
+CLAIM=Fold7CoverPanelLease contains an UNKNOWN_RECOVERY/onPrivilegedDaemonRestart design hook that is not integrated into the inspected startup/reconcile path.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=Method exists in Fold7CoverPanelLease; DuoShellService construction/reconcile path shown in current source does not call it, and current Fold7CoverPanelLeaseTest has no daemon-restart test.
+LIMITATION=Repository-wide indexed code search was not reliable enough to treat absence of every possible indirect call as a standalone proof; direct relevant files were inspected.
+VALIDATION_REQUIRED=Primary should perform exact symbol search when integrating.
+
+CLAIM=Shizuku's UserService lifecycle expects cleanup in the reserved destroy transaction and daemon UserService is killed on Shizuku stop/restart.
+CATEGORY=AOSP-CONFIRMED BEHAVIOR (external Shizuku API contract; not AOSP)
+EVIDENCE=Shizuku-API documentation/source states daemon mode persists until unbind; the reserved destroy method exists for cleanup; Shizuku stop/restart kills the UserService.
+LIMITATION=Third-party API contract, not Android platform guarantee.
+VALIDATION_REQUIRED=Keep behavior pinned to the Shizuku API version used by the project.
+
+6. CONFIRMED FINDINGS
+
+SOURCE:
+- Ready/visible controller authority can outlive invalidated privilege/readiness state.
+- visualMirrorActive does not encode privilege/readiness.
+- shell graceful destroy cleans mirror but not cover-panel lease.
+- app-side token gate intentionally forgets old shell authority on connectionEpoch change.
+- shell cover lease is process-local.
+
+TEST:
+- Isolated adversarial model: 9/9 PASS.
+- Four tests reproduce current invariant violations/risk states.
+- Five tests validate the proposed recovery-fence invariants.
+
+DEVICE:
+- NONE in this R&D session.
+
+AOSP / PLATFORM:
+- Android ServiceConnection documents unexpected service-process disconnection callbacks.
+- Shizuku UserService daemon lifecycle explicitly provides a destroy transaction for cleanup and kills UserService on Shizuku service stop/restart.
+
+7. HYPOTHESES / UNVERIFIED RISKS
+
+H1=Physical cover NORMAL or logical cover STATE_ON survives DuoShellService process death long enough to matter.
+Resolving experiment=Prewarm cover, record shell lease + display topology + physical state, kill/remove UserService, immediately probe state from a fresh privileged process before app-driven repair.
+
+H2=Current visualMirrorActive state after Shizuku loss suppresses generic PanelEngine fallback or leaves stale cover content visible.
+Resolving experiment=Enter COVER_VISUAL, stop Shizuku, capture TransitionLab + display callbacks + visible result.
+
+H3=Samsung may reclaim native/default cover quickly enough that orphan recovery is naturally benign in some postures.
+Resolving experiment=Repeat daemon-death test at multiple hinge/posture points and classify topology within 0/25/50/100/250 ms.
+
+8. GENERATION-2 DESIGN
+
+Design name=PrivilegeEpochRecoveryGate
+
+Responsibilities:
+A. App recovery authority
+- Treat every ShizukuBridge.connectionEpoch change away from Ready as an authority revocation.
+- Immediately invalidate cover readiness, accepted shell token, in-flight prewarm, presentation/mirror visual authority, and any privileged action generation associated with the old epoch.
+- Do not let controller state names implying readiness remain authoritative after the evidence they depended on is invalid.
+
+B. Controller integration
+Preferred minimal integration:
+- Add a dedicated coordinator-level recovery state/gate rather than mixing shell lifecycle semantics into normal hinge CAS logic.
+- On privilege loss, revoke mirrorRequested and hide/release local visual host authority immediately.
+- Invalidate/cancel current privileged close-cycle side effects or mark the cycle RECOVERY_REQUIRED.
+- Controller must not emit ShowMirror while recoveryRequired=true.
+- On reconnect, do NOT infer old COVER_READY_HIDDEN as valid. Reconstruct from current hinge/topology only after shell recovery succeeds, then perform a fresh prewarm/readiness proof if the close still needs cover ownership.
+
+C. Shell recovery authority
+- Graceful SHIZUKU_DESTROY: drain the exact known Fold7CoverPanelLease on coverMutationExecutor before executor shutdown/System.exit.
+- Never use raw physical OFF.
+- If native cover is authoritative, clear lease with no power mutation.
+- If inner is default and a fresh secondary cover logical route maps safely, use framework logical power reset.
+- Bound cleanup time; record whether lease reached IDLE before exit.
+
+D. Cold-start recovery fence
+- A new DuoShellService must not silently begin IDLE from the perspective of cover safety.
+- Before the first V3 cover mutation, initialize recovery as UNKNOWN_RECOVERY and reconcile fresh topology.
+- If native cover: recovery complete → IDLE.
+- If safe non-default cover route: framework-reset logical cover → IDLE on success.
+- If topology cannot prove a safe recovery action: remain UNKNOWN_RECOVERY and reject/defer new prewarm.
+- Do not let current beginPrewarm(UNKNOWN_RECOVERY) semantics erase unresolved recovery evidence; change this behavior or interpose a gate so UNKNOWN_RECOVERY cannot start a new physical wake until resolved.
+
+E. Epoch and stale results
+- Existing app connectionEpoch checks remain.
+- Add privilegeEpoch/recoveryEpoch to any app-side recovery callbacks so old reconnect/recovery completions cannot revive a newer transition.
+- ShellSession change is authoritative evidence of a new daemon process.
+
+F. Degradation
+- If Shizuku is unavailable: return visual ownership to non-privileged/native behavior; never claim privileged cover readiness/visibility.
+- If recovery cannot prove safe ownership: fail closed on privileged prewarm; allow Samsung/native handoff.
+
+Core invariants:
+1. visualMirrorActive => ShizukuBridge.ready && current privilegeEpoch && coverReadiness==READY.
+2. COVER_READY_HIDDEN cannot remain authoritative across privilegeEpoch change.
+3. ShowMirror requires readiness evidence produced in the same privilegeEpoch/shellSession authority domain.
+4. New daemon may not start a new cover mutation while UNKNOWN_RECOVERY is unresolved.
+5. Graceful destroy attempts framework-safe lease drain before process exit.
+6. No raw physical-panel OFF command is introduced.
+7. Old daemon/session callbacks are inert after connectionEpoch change.
+8. Recovery may restore native ownership, but must never infer exact old physical ownership after process loss.
+
+9. PROTOTYPE / PROPOSED CHANGES
+
+FILE=duoopen_shizuku_recovery_model.py
+PURPOSE=Isolated executable model of current failure path and proposed privilege/shell recovery invariants.
+BASELINE_OR_NEW=NEW R&D MODEL
+COMPILED=N/A (Python)
+TESTED=YES, 9/9
+PRODUCTION_READY=NO
+
+Likely production files requiring manual changes:
+- Fold7ContinuityCoordinator.kt
+- FoldOverlayService.kt (Shizuku state orchestration/fallback reconciliation)
+- DuoShellService.kt
+- Fold7CoverPanelLease.kt
+- related unit tests
+
+Potentially touched only for explicit invariant API:
+- Fold7ContinuityController.kt OR a new PrivilegeEpochRecoveryGate.kt
+- Fold7Gen2Kernel.kt if close-cycle invalidation/recovery identity is centralized there
+
+10. EXECUTION EVIDENCE
+
+Executed locally:
+python /mnt/data/duoopen_shizuku_recovery_model.py
+Result=9/9 PASS
+
+Model SHA256=cc840a4002694c7e2998ef8e3056c1455cfa086a10e1585122cb9663e62bf1a1
+Result SHA256=34767d827d3adb469b1f93a5d5f1815a35cf47b696d65a1bdc1a721413a9f189
+
+Persistent artifacts already uploaded:
+/DuoOpen-AgentBus/artifacts/reviewer/20261001T223824Z/duoopen_shizuku_recovery_model.py
+/DuoOpen-AgentBus/artifacts/reviewer/20261001T223824Z/duoopen_shizuku_recovery_model_results.txt
+
+No repository commit/push/merge/build/APK operation was performed.
+
+11. ADVERSARIAL BACK-TEST RESULTS
+
+CURRENT exposure cases reproduced by model:
+PASS CURRENT exposes visual without re-proved readiness
+PASS CURRENT visualMirrorActive remains true after privilege loss
+PASS CURRENT restart orphan: new lease IDLE while cover mutation persists (modeled hardware persistence premise)
+PASS CURRENT new-daemon reconcile emits no recovery action from IDLE
+
+GEN2 invariant cases:
+PASS privilege loss revokes visual authority
+PASS reconnect remains fenced until recovery/readiness
+PASS fresh readiness required before visible demand
+PASS cold-start shell blocks mutation until UNKNOWN_RECOVERY normalizes safe route
+PASS graceful destroy drains cover lease with logical reset
+
+Important interpretation:
+- The first two CURRENT failures are direct source behavior.
+- The shell-orphan cases model the consequence IF Samsung display mutations outlive daemon process memory; this is a device-validation requirement, not a claimed Fold7 observation.
+
+12. BASELINE VS GENERATION-2
+
+Baseline:
+- Connection epoch protects async result freshness.
+- Readiness can be invalidated independently of controller state.
+- Controller readiness states can survive privilege loss.
+- UserService destroy does mirror cleanup only.
+- New daemon starts cover lease model IDLE.
+
+Gen2:
+- Connection epoch becomes a full authority epoch boundary.
+- Ready/visual controller authority cannot survive loss of its evidence.
+- UserService destroy drains cover ownership when safely possible.
+- New daemon starts behind a recovery fence, not a blind IDLE assumption.
+- Fresh shell recovery + fresh cover readiness are prerequisites for resumed visible ownership.
+
+13. REGRESSION RISKS
+
+Correctness:
+- Over-aggressive privilege-loss reset could prematurely abandon a close transition that would otherwise recover seamlessly.
+- Recovery must not accidentally issue reset against the native/default cover.
+
+Latency:
+- Reconnect path adds one recovery/revalidation gate before prewarm/visual. Expected cost UNKNOWN; measure on device.
+- Normal no-loss path should have near-zero added cost if gate is epoch-stable.
+
+Power:
+- Failing closed may leave Samsung native behavior rather than keeping a prewarmed cover route; preferable to unowned mutation.
+- Cleanup must remain framework logical reset only; no raw OFF.
+
+Samsung interference:
+- Topology can remap during recovery. Every logical ID must be freshly resolved and immediately validated.
+
+Lifecycle:
+- Graceful destroy is best-effort; abrupt Shizuku death may bypass the destroy cleanup path. Cold-start recovery remains mandatory.
+
+Races:
+- Reconnect, topology callbacks, and hinge motion can cross. recoveryEpoch/connectionEpoch must gate every completion.
+
+Rendering:
+- Clearing mirrorRequested on loss may expose native/generic rendering earlier; validate for flashes.
+
+Restart behavior:
+- Do not preserve stale controller ready/visual state across shellSession changes.
+
+14. TESTS REQUIRED
+
+Unit/JVM:
+- privilege loss from each controller state: NATIVE_COVER, OPENING_FROM_CLOSED, OPEN_INNER, INNER_HANDOFF, CLOSING_INTENT, COVER_PREWARMING, COVER_READY_HIDDEN, COVER_VISUAL.
+- assert no ShowMirror while recoveryRequired.
+- assert visualMirrorActive implies ready/privilege.
+- Fold7CoverPanelLease daemon-restart tests, including UNKNOWN_RECOVERY blocked-prewarm behavior.
+- graceful destroy release-path model.
+
+Integration:
+- fake Shizuku connectionEpoch changes during prewarm and visual.
+- shellSession changes while app retains old snapshot/token.
+- reconnect with no secondary cover route, safe route, mismatched physical route, native cover.
+
+Fault injection:
+- binder death before prewarm result.
+- binder death after physical NORMAL before logical route activation.
+- binder death after route ready but before app acceptance.
+- UserService destroy during HELD, RELEASE_PENDING, RELEASING.
+- repeated die/reconnect loops.
+
+Timing:
+- recovery-gate duration.
+- delay from reconnect to fresh ready-hidden.
+- visible gap/fallback duration.
+
+Device:
+- mandatory Fold7 validation described below.
+
+15. FOLD7 FIELD TEST PLAN
+
+A. Hidden-ready loss
+1. Arm continuity.
+2. Close until source logs COVER_READY_HIDDEN.
+3. Stop/restart Shizuku/UserService before visual threshold.
+4. Continue hinge below 135°.
+5. Expected Gen2: no COVER_VISUAL until recovery + fresh readiness proves same current authority domain.
+
+B. Visual-active loss
+1. Enter COVER_VISUAL.
+2. Kill Shizuku/UserService.
+3. Observe cover rendering, fallback, DisplayManager topology, TransitionLab.
+4. Expected Gen2: privileged visual authority revokes immediately; no stale active claim.
+
+C. Lease orphan test
+1. Trigger cover prewarm and record shellSession/leaseId/epoch/physical/logical route.
+2. Kill UserService abruptly (not graceful unbind).
+3. Before app-driven recovery, inspect cover physical/logical state from fresh privileged context.
+4. Determine whether mutation persisted.
+
+D. Graceful destroy test
+1. Prewarm to HELD/route ready.
+2. invoke UserService remove/destroy.
+3. Verify cleanup event + framework logical reset when safe.
+4. Verify no raw physical OFF.
+
+E. Recovery fence
+1. Force orphan-like route state.
+2. Start fresh shell.
+3. Verify first cover mutation performs UNKNOWN_RECOVERY reconciliation and blocks prewarm until resolved.
+
+F. Reversal and remap
+Repeat B/C while reversing hinge and while Samsung remaps logical display IDs.
+
+16. PERFORMANCE / LATENCY IMPACT
+
+MEASURED=No Fold7 timing measurements in this session.
+MEASURED=Local model execution is trivial and not representative of device latency.
+EXPECTED=Normal stable Shizuku path adds only boolean/epoch checks.
+EXPECTED=Reconnect path adds bounded recovery/revalidation before privileged visual ownership resumes.
+UNKNOWN=Cold-start recovery command latency on Fold7.
+UNKNOWN=Samsung route stabilization time after Shizuku death/restart.
+
+17. IMPLEMENTATION PRIORITY
+
+P0
+- Privilege loss must revoke COVER_READY_HIDDEN/COVER_VISUAL authority and mirrorRequested visibility semantics.
+- Shell cold-start recovery fence must prevent blind new prewarm if prior external mutation may exist.
+
+P1
+- Graceful SHIZUKU_DESTROY serialized cover-lease drain.
+- Cross-component tests for loss/reconnect in ready-hidden and visual.
+
+P2
+- Recovery-specific TransitionLab stages and diagnostics, coordinated with performance-rd observability work.
+
+Sequencing:
+1. Define recovery invariants/API with primary + state-rd boundary.
+2. Add shell recovery fence/tests.
+3. Add app-side privilege authority revocation/re-entry tests.
+4. Add graceful destroy cleanup.
+5. Fold7 fault-injection field validation.
+
+18. WHAT NOT TO CHANGE
+
+- Do not weaken V3 shellSession/leaseId/leaseEpoch/ownerGeneration token checks.
+- Do not remove connectionEpoch stale-result rejection.
+- Do not change established hinge thresholds to hide recovery latency.
+- Do not restore autonomous cover PanelEngine ownership rejected by primary.
+- Do not introduce raw physical-panel OFF.
+- Do not conflate requested visual with presented visual; preserve display-rd direction.
+- Do not remove TransitionLab instrumentation.
+- Do not fold close-cycle capture-prime ownership into this workstream; state-rd owns that target.
+
+19. SUPERVISOR INTEGRATION NOTES
+
+Likely production files:
+- Fold7ContinuityCoordinator.kt
+- FoldOverlayService.kt
+- DuoShellService.kt
+- Fold7CoverPanelLease.kt
+- tests
+
+Likely new file (optional):
+- PrivilegeEpochRecoveryGate.kt + test, if primary wants recovery state orthogonal to hinge controller.
+
+Conflict assessment against FINAL main:
+- main unchanged during R&D.
+- overlaps conceptually with primary P0.1 cover-authority CAS, but addresses a later/larger lifetime boundary rather than token matching.
+- no direct overlap with state-rd close-cycle prime-once files beyond Fold7Gen2Kernel if primary centralizes all cycle invalidation there.
+
+Mechanically applicable vs manual:
+- Model/invariants are mechanically testable.
+- Production integration is architectural and MUST be manually reviewed.
+
+MANUAL REVIEW REQUIRED
+
+20. ARTIFACT IDENTITY
+
+HANDOFF_FILENAME=DUO_OPEN_SHIZUKU_RECOVERY_GEN2_RND_HANDOFF.txt
+HANDOFF_SHA256=AUTHORITATIVE VALUE IN FINAL AGENT BUS HANDOFF / SHA256SUMS.txt (not embedded here to avoid self-referential file mutation)
+PROPOSAL_ZIP_FILENAME=DUO_OPEN_SHIZUKU_RECOVERY_GEN2_PROPOSAL.zip
+PROPOSAL_ZIP_SHA256=AUTHORITATIVE VALUE IN FINAL AGENT BUS HANDOFF / SHA256SUMS.txt
+UNATTACHED_GIT_BLOB_SHA=N/A
+
+21. BOTTOM LINE
+
+PROVEN:
+- Current app privilege-unavailable path invalidates readiness but can preserve controller states that imply readiness/visibility.
+- COVER_READY_HIDDEN can request COVER_VISUAL without fresh readiness after that invariant is broken.
+- visualMirrorActive does not require current privilege/readiness.
+- DuoShellService's reserved destroy path omits cover-lease cleanup.
+
+EXPECTED:
+- Treating Shizuku/shell lifetime as an explicit authority epoch and recovery fence closes those source-level gaps without changing normal hinge thresholds or introducing raw panel-off commands.
+
+UNKNOWN:
+- Exact Fold7 physical/logical state persistence after abrupt UserService death.
+- Recovery latency and visible fallback quality on device.
+
+NEXT BEST ENGINEERING ACTION:
+Primary should integrate a narrow privilege-recovery authority boundary before expanding Gen3 visual behavior: revoke stale ready/visual state on Shizuku loss, wire shell cold-start UNKNOWN_RECOVERY before prewarm, and add the two deterministic regression tests (ready-hidden loss → no ShowMirror; visual loss → visualMirrorActive false). Then perform the Fold7 abrupt-daemon-death lease-orphan field test before considering the recovery path production-safe.
+
+External platform references checked:
+- Shizuku-API UserService documentation/source: daemon mode, reserved destroy transaction for cleanup, Shizuku stop/restart kills UserService.
+- Android Service/ServiceConnection documentation: unexpected remote service-process disconnection results in onServiceDisconnected.

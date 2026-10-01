@@ -1,0 +1,577 @@
+DUO OPEN — GALAXY Z FOLD7 — OPENING TERMINAL NATIVE-INNER HANDOFF / FIRST-USABLE-FRAME R&D HANDOFF
+
+R&D STATUS=COMPLETE FOR MODEL / SOURCE ANALYSIS
+PRODUCTION_READY=NO
+INSTALLATION_AUTHORIZED=NO
+PRODUCTION_GITHUB_WRITES=NONE
+MANUAL_PRIMARY_INTEGRATION_REVIEW_REQUIRED=YES
+DEVICE_VALIDATION_REQUIRED=YES
+
+WORKSTREAM_ID=ws-display-rd-opening-terminal-inner-handoff-20261001t230701z
+STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+TARGET_DEVICE=Samsung Galaxy Z Fold7 only
+INNER_GEOMETRY=1968x2184
+COVER_GEOMETRY=1080x2520
+TARGET_PLATFORM=Android 16 / One UI on Galaxy Z Fold7
+
+==================================================
+1. EXECUTIVE SUMMARY
+==================================================
+
+SUBSYSTEM
+The terminal OPENING handoff from Duo's cover opening visual to Samsung/native inner composition.
+
+NARROW QUESTION
+When the phone is opening from fully closed, can CURRENT main end Duo's cover opening visual because the inner display is logically active and the hinge has reached the open latch, before there is stronger evidence that the native inner destination has produced usable current-cycle pixels?
+
+ANSWER FROM SOURCE
+Yes, the source has this architectural gap.
+
+CURRENT main makes the terminal opening release from geometry/topology facts:
+- Fold7ContinuityController transitions an opening state to OPEN_INNER when angle >= 172 degrees and topology.innerActive is true.
+- Fold7ContinuityCoordinator defines innerActive from Display.state != STATE_OFF && != STATE_UNKNOWN.
+- FoldOverlayService.reconcileContinuityCoverRendering() clears the semantic opening latch when the controller is no longer OPENING_FROM_CLOSED or INNER_HANDOFF.
+- Fold7CoverRenderPolicy then stops the early opening visual.
+- PanelEngine.endContinuityOpeningVisual() removes the cover overlay.
+
+No current-cycle native-inner frame/capture/presentation evidence gates that terminal release.
+
+There is unusually strong internal corroboration for the distinction between "display active" and "usable pixels": PanelEngine's existing afterSwap capture path explicitly says that a freshly switched-on panel may still be lighting up, retries black captures, and allows up to a 1.1 s capture timeout. In addition, the service ordering on hinge callbacks performs controller transition + cover-render reconciliation before calling PanelEngine.onHinge() on the engines. At the same 172-degree constant, inner PanelEngine.onHinge() latches inner-open and removes its own flat overlay. Thus both sides can relinquish bridge rendering at the open threshold before any explicit destination-content proof participates in the decision.
+
+This is a CONFIRMED SOURCE ARCHITECTURE GAP, not a claim that a visible flash is proven on a physical Fold7. The physical incidence and severity require device traces/high-frame-rate video.
+
+GEN2 DIRECTION
+Do not create a competing top-level visual owner. Primary is already integrating one exact Gen3 visual-attempt owner. Add a terminal opening-release condition beneath that owner:
+
+- controller OPEN_INNER = geometric/semantic intent to finish opening;
+- inner destination readiness = separate evidence;
+- release opening visual as PROVEN only after both are true for the same current opening attempt and route epoch;
+- route loss, privilege/authority loss, manual stop, reversal, service rollover, and the existing bounded watchdog remain explicit degraded/cancel outcomes rather than being mislabeled as readiness success.
+
+Use a stable identity aligned with the accepted opening visual attempt, plus destination-route identity:
+serviceEpoch + openingCycle/movementId + visualAttemptSequence + innerRouteEpoch + readinessAttemptSequence.
+
+Where possible, reuse the existing inner afterSwap capture path rather than adding a mandatory screenshot. AccessibilityService.ScreenshotResult.timestamp already provides exact uptime for when a screenshot was taken. Treat black/secure/uncapturable results explicitly as ambiguous/failure evidence; never synthesize "ready" from time alone.
+
+MODEL RESULT
+Corrected reduced model PASS=16/16 including a deterministic 100,000-operation fixed-seed adversarial stream.
+
+NEGATIVE RESULT PRESERVED
+The first proposed model FAILED its fuzz invariant because it left a completed opening handoff owner active after release, allowing later route-remap events to mutate evidence in a terminal attempt. Design was corrected: release is terminal/immutable for that opening attempt. The corrected model then passed all tests and fuzz.
+
+==================================================
+2. DUPLICATION / OWNERSHIP CHECK
+==================================================
+
+LIVE AGENT BUS
+Legacy /DuoOpen-AgentBus/messages + /artifacts protocol was used. No V6 /states lane was invented.
+
+THIS WORKSTREAM EXPLICITLY DOES NOT DUPLICATE:
+
+A. state-rd opening owner
+- Completed handoff: exact opening-attempt ownership across PanelEngine remap/timeout/orphan races.
+- Its responsibility: who owns one opening visual attempt and how that attempt survives/rebinds hosts.
+- This work's responsibility: what evidence permits that exact attempt to TERMINALLY release to native inner composition.
+- Integration rule: reuse its exact opening attempt identity; do not create a second opening owner.
+
+B. reviewer exact presentation owner / P1.2
+- Responsibility: continuity visual demand -> host/content attempt -> exact presentation evidence, primarily for Duo's own presentation ownership.
+- This work: native INNER destination readiness at terminal OPENING handoff.
+- Native app/launcher presentation is not controlled by DisplayMirrorHost, so this is a different destination boundary.
+
+C. display-rd terminal closing handoff
+- Responsibility: Duo cover visual -> Samsung/native cover composition at terminal CLOSING.
+- This work is opening direction only: cover visual -> native inner composition.
+
+D. reviewer launcher/content continuity
+- Responsibility: semantic content equivalence across launcher/home/ordinary apps and native handoff.
+- This work does not require semantic equivalence. It only asks whether the destination has produced stronger current-cycle usable-frame evidence before bridge teardown.
+
+E. performance-rd observability
+- Responsibility: immutable timing correlation and causal latency instrumentation.
+- This work consumes/requests lifecycle instrumentation but does not redesign its schema.
+
+F. close-cycle prime/capture arbitration, Shizuku recovery, CAS cover authority
+- Preserved; not redesigned here.
+
+PRIMARY GEN3 ALPHA1 CHECKPOINT RECONCILIATION
+Primary's live 2026-10-01 23:08 UTC checkpoint says the integrated future state uses one exact visual-attempt owner and opening/closing may use different content backends. This proposal fits under that owner as a terminal release gate/outcome classifier.
+
+==================================================
+3. CURRENT SOURCE RECONSTRUCTION
+==================================================
+
+SOURCE BASELINE
+Repository=boberino93-bit/duo-open
+Commit=45bb0d326899c0e08415928224cfea0ff58d2d4e
+
+IMPORTANT BLOBS INSPECTED
+- Fold7ContinuityController.kt blob=23cfa0cc9802c2921d56190bf0abbf4478c1547b
+- Fold7ContinuityCoordinator.kt blob=89946633e5a796b9fb63a85e392455170ba31d6f
+- FoldOverlayService.kt blob=e590b40f2c839ecc05d856f6e0f9b57a10dce6ad
+- PanelEngine.kt blob=c0d23a7f2f2febe54a4a711ebffd1a23a97b37d5
+- Fold7CoverRenderPolicy.kt inspected at same commit
+
+3.1 CONTROLLER TERMINAL OPENING CONDITION
+File: app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+Approx. lines 352-366 at inspected commit:
+- if angle >= OPEN_LATCH_DEG
+- and topology.innerActive
+- and state in OPENING_STATES
+- transition to OPEN_INNER with reason "inner-open-latched"
+- OPEN_LATCH_DEG=172f
+
+There is no inner-frame-ready/presented input in this transition.
+
+3.2 WHAT innerActive MEANS
+File: app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+Approx. lines 1000-1045:
+- topology() identifies inner/cover by physical mode geometry.
+- innerActive = inner?.let(::isActive) == true
+- isActive(display) = display.state != Display.STATE_OFF && display.state != Display.STATE_UNKNOWN
+
+Thus DOZE / DOZE_SUSPEND / ON / ON_SUSPEND / VR are all "active" under this test unless otherwise excluded by upstream display enumeration. It is a display-power/state predicate, not a native-content presentation predicate.
+
+3.3 SERVICE RELEASES OPENING VISUAL WHEN CONTROLLER LEAVES OPENING STATES
+File: app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+Approx. lines 600-680:
+- reconcileContinuityCoverRendering() clears earlyOpeningVisualLatched if continuity.state is not OPENING_FROM_CLOSED or INNER_HANDOFF.
+- Fold7CoverRenderPolicy only sets runEarlyOpeningVisual=true for those two opening states.
+- For each engine, if it is not the current opening visual owner, service calls engine.endContinuityOpeningVisual().
+
+So OPEN_INNER implies opening bridge teardown regardless of destination frame evidence.
+
+3.4 COVER OVERLAY TEARDOWN IS IMMEDIATE
+File: app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+Approx. lines 479-503:
+- endContinuityOpeningVisual() sets continuityOpeningVisual=false;
+- increments captureGen;
+- if phase != IDLE or surface != null, removeOverlay();
+- restores restArmed and clears panelSwitched.
+
+There is no terminal native-inner acknowledgement here.
+
+3.5 CURRENT SOURCE ITSELF ACKNOWLEDGES FRESH PANEL MAY HAVE NO USABLE PIXELS YET
+File: PanelEngine.kt
+Approx. lines 680-860:
+- comment: a panel that has just switched on takes time to screenshot;
+- afterSwap capture retries when the bitmap is mostly black;
+- shell retry delay exists;
+- accessibility path retries black results;
+- capture timeout constant is 1,100 ms.
+
+This is a strong source-level indication that panel activation and a usable visual buffer are separate moments.
+
+3.6 HINGE CALLBACK ORDERING STRENGTHENS THE RACE
+File: FoldOverlayService.kt
+Approx. lines 420-465:
+1. continuity.onHinge(angle)
+2. reconcileContinuityCoverRendering("hinge:$angle")
+3. only later loop: engine.onHinge(angle)
+
+Therefore when the 172-degree sample takes the controller to OPEN_INNER, the service can terminate the cover opening visual before the inner PanelEngine processes that same hinge sample.
+
+3.7 INNER ENGINE ALSO DROPS ITS OWN OVERLAY AT THE SAME OPEN THRESHOLD
+File: PanelEngine.kt
+Approx. lines 170-215:
+- if innerPanel and angle >= INNER_OPEN_LATCH_DEG:
+  - innerOpenLatched=true
+  - restArmed=true
+  - panelSwitched=false
+  - if phase != IDLE removeOverlay()
+  - return
+- INNER_OPEN_LATCH_DEG=172f
+
+This reinforces that 172 degrees is being used as an endpoint geometry latch, not as a destination presentation proof.
+
+3.8 TOPOLOGY CALLBACK ORDERING HAS A SIMILAR PROPERTY
+File: FoldOverlayService.kt syncDisplays(), approx. lines 465-520:
+- update engine set;
+- continuity.onTopologyChanged();
+- reconcileContinuityCoverRendering();
+- only afterward, when no visual mirror is active, loop engine.evaluate().
+
+So topology can also drive state/release before a newly created inner engine has evaluated/captured the destination.
+
+3.9 CURRENT INNER CAPTURE SUCCESS IS NOT CONNECTED TO TERMINAL OPENING RELEASE
+PanelEngine.onCaptured():
+- puts bitmap into SnapshotCache;
+- may publish a close-cycle Fold7ContinuityFrameStore lease when a close-cycle ticket exists;
+- then presents/replaces generic fold overlay.
+
+There is no opening-cycle terminal readiness callback to the service/continuity owner.
+
+==================================================
+4. ANDROID PLATFORM EVIDENCE
+==================================================
+
+OFFICIAL DOC 1
+https://developer.android.com/reference/android/view/Display
+- Display.STATE_ON: "The display is on."
+- Display.getState(): returns state such as on/off/doze/etc.
+This API is a display state/power state. It does not document "the native task's first frame has been presented" semantics.
+
+OFFICIAL DOC 2
+https://developer.android.com/reference/android/accessibilityservice/AccessibilityService.ScreenshotResult
+- getTimestamp(): timestamp of taking the screenshot.
+- timebase: milliseconds of non-sleep uptime since boot, SystemClock.uptimeMillis().
+This provides an exact temporal observation that can be bound to an opening attempt/cycle.
+
+OFFICIAL DOC 3
+https://developer.android.com/reference/android/view/ViewTreeObserver#registerFrameCommitCallback(java.lang.Runnable)
+- frame-commit callback means current rendering content has been rendered and submitted to the swap chain;
+- docs explicitly say the frame may not yet be visible.
+This is useful for Duo-owned View content but does not by itself prove native inner pixels are physically visible.
+
+INTERPRETATION
+No Android public API examined here turns Display.STATE_ON into native-content presentation proof. Runtime gating therefore needs a stronger observable than Display state if the goal is to avoid a source-level handoff gap. A screenshot/capture observation is one practical stronger signal already present in Duo, but physical-photon timing still requires device validation.
+
+==================================================
+5. CLAIM / EVIDENCE LEDGER
+==================================================
+
+CLAIM 1
+OPEN_INNER can be reached from 172 degrees + innerActive without inner frame evidence.
+CATEGORY=CONFIRMED SOURCE FACT
+CONFIDENCE=HIGH
+
+CLAIM 2
+innerActive is based on Display.state not being OFF/UNKNOWN, not content presentation.
+CATEGORY=CONFIRMED SOURCE FACT
+CONFIDENCE=HIGH
+
+CLAIM 3
+OPEN_INNER causes opening visual teardown through service render reconciliation.
+CATEGORY=CONFIRMED SOURCE FACT
+CONFIDENCE=HIGH
+
+CLAIM 4
+Current source has an independent panel-lighting/capture path that can see black after a new panel activates and retries it.
+CATEGORY=CONFIRMED SOURCE FACT
+CONFIDENCE=HIGH
+
+CLAIM 5
+The service orders cover visual reconciliation before engine.onHinge() on the same sample.
+CATEGORY=CONFIRMED SOURCE FACT
+CONFIDENCE=HIGH
+
+CLAIM 6
+This architectural ordering can produce a physically visible blank/flash/jump on the Galaxy Z Fold7.
+CATEGORY=PLAUSIBLE BUT NOT DEVICE-PROVEN
+CONFIDENCE=MEDIUM AS RISK, UNKNOWN INCIDENCE
+REQUIRED=physical device trace/high-speed video.
+
+CLAIM 7
+A current-cycle accessibility screenshot proves physical photons are already visible.
+CATEGORY=NOT CLAIMED
+A screenshot is stronger destination-content evidence than Display state but is still not external photon proof.
+
+==================================================
+6. FAILURE SEQUENCE — CURRENT MAIN
+==================================================
+
+SOURCE-FAITHFUL OPENING TERMINAL RACE
+
+T0 phone is native cover, Duo opening visual is active/latched.
+T1 early wake has caused the stable physical inner panel to begin waking.
+T2 DisplayManager/topology exposes the 1968x2184 inner display as active.
+T3 innerActive becomes true because Display.state is neither OFF nor UNKNOWN.
+T4 hinge sample reaches >=172 degrees.
+T5 Fold7ContinuityController transitions INNER_HANDOFF -> OPEN_INNER.
+T6 FoldOverlayService immediately reconcileContinuityCoverRendering().
+T7 service clears earlyOpeningVisualLatched because OPEN_INNER is outside its opening states.
+T8 Fold7CoverRenderPolicy returns runEarlyOpeningVisual=false.
+T9 cover PanelEngine.endContinuityOpeningVisual() removes Duo's cover overlay.
+T10 only afterward the service loops engine.onHinge(angle).
+T11 inner PanelEngine may itself remove an inner overlay at its 172-degree latch.
+T12 native inner composition is now the only intended visible authority.
+
+Missing edge:
+There is no required event between T2/T4 and T9 saying "the native inner destination produced a current opening-attempt usable frame."
+
+A separate existing path can still be capturing/retrying the newly lit inner panel because it is black/not ready. That path does not gate T9.
+
+==================================================
+7. PROPOSED GEN2 TERMINAL HANDOFF CONTRACT
+==================================================
+
+DO NOT ADD A SECOND TOP-LEVEL VISUAL OWNER.
+Reuse the exact visual attempt selected by primary / state-rd.
+
+PROPOSED SUBORDINATE OWNER
+OpeningTerminalHandoffState, attached to current exact opening visual attempt.
+
+IDENTITY
+- serviceEpoch
+- openingCycleId or movementId (use primary's canonical naming)
+- visualAttemptSequence
+- innerRouteEpoch
+- readinessAttemptSequence
+
+STATE / FACTS
+- semanticOpeningActive
+- controllerWantsOpenInner
+- coverVisualStillHostable
+- currentInnerRouteIdentity
+- innerDestinationEvidence
+- terminalOutcome
+
+TERMINAL OUTCOMES
+1. PROVEN_INNER_READY
+   - controller wants OPEN_INNER
+   - current exact opening attempt is still current
+   - current-route inner destination evidence is accepted
+   - release opening visual
+
+2. DEGRADED_COVER_ROUTE_LOST
+   - cover host/route no longer exists or cannot carry the visual
+   - release because retaining bridge is physically impossible
+   - DO NOT record as readiness success
+
+3. DEGRADED_WATCHDOG_NO_PROOF
+   - existing bounded safety timeout expires before readiness proof
+   - release to avoid a stuck cover visual
+   - DO NOT record as readiness success
+
+4. CANCEL_REVERSAL
+   - opening reverses to closing
+   - invalidate attempt/evidence
+
+5. CANCEL_PRIVILEGE_OR_AUTHORITY_LOSS
+   - exact visual authority revoked
+
+6. CANCEL_SERVICE_EPOCH
+   - service/process lifecycle changes
+
+EVIDENCE ACCEPTANCE
+A readiness event must match:
+- current service epoch;
+- current opening cycle/movement;
+- current visual attempt;
+- current inner route epoch;
+- capture/observation time >= opening-cycle start;
+- monotonically accepted readiness attempt sequence.
+
+ROUTE REMAP
+A remap increments innerRouteEpoch and invalidates prior route evidence. The semantic visual attempt may remain active/rebind according to state-rd's opening owner, but readiness must be re-proven for the replacement route.
+
+REVERSAL
+Opening evidence from attempt A cannot release a later opening attempt B. Reversal terminates A.
+
+POST-RELEASE IMMUTABILITY
+Once terminalOutcome is recorded and visual authority is released, later callbacks cannot mutate the completed attempt. This was the flaw caught by the first model run.
+
+==================================================
+8. WHERE READINESS EVIDENCE CAN COME FROM
+==================================================
+
+PREFERRED LOW-INTRUSION START
+Reuse the existing inner afterSwap capture path as an observation publisher rather than adding a new mandatory screenshot.
+
+When PanelEngine receives a current inner capture result:
+- publish opening destination evidence to the service-stable terminal owner if an opening attempt exists;
+- include the current route epoch and exact screenshot timestamp when Accessibility screenshot is used;
+- do not grant readiness from a capture request that began before the opening attempt/route epoch unless exact capture timestamp proves it belongs after the boundary.
+
+BLACK CAPTURE
+Current source intentionally retries black afterSwap captures because black can mean a panel is still waking.
+Recommended evidence quality:
+- CAPTURED_NONBLACK: strong runtime readiness evidence.
+- CAPTURED_BLACK_AFTER_RETRIES: ambiguous, not equivalent to proven readiness; legitimate black content means this can false-negative.
+- SECURE/FAILED: no readiness proof.
+
+Do not solve ambiguity by inventing a new fixed wait and calling it success.
+The existing watchdog can remain a degraded release escape hatch.
+
+IMPORTANT LIMITATION
+A screenshot/capture observation is not the same thing as a SurfaceFlinger present fence for the native app, and neither is literal photon proof. The objective is to eliminate the weaker source-level dependency on Display state alone, then measure the resulting relationship on the Fold7.
+
+ALTERNATIVE / FUTURE EVIDENCE
+If Gen3's dedicated visual/content backend gains a stronger native-inner readiness primitive, plug it into the same owner contract. The contract should not depend on PanelEngine as the permanent authority.
+
+==================================================
+9. MODEL / BACK-TEST
+==================================================
+
+ARTIFACT
+opening_terminal_handoff_model.py
+
+BASELINE MODEL
+- cover visual active
+- angle >=172 + innerActive -> cover visual immediately released
+- no destination evidence needed
+
+GEN2 MODEL
+- start exact opening cycle
+- controller may request OPEN_INNER independently
+- current-route evidence can arrive before or after controller intent
+- only both together produce PROVEN_INNER_READY while cover route remains available
+- route loss and watchdog are separately classified degraded releases
+- remap/reversal/service/cycle staleness are fenced
+- release is terminal
+
+DETERMINISTIC TESTS
+1. baseline releases on topology without pixel evidence
+2. Gen2 holds when controller says OPEN_INNER but inner is unproven
+3. Gen2 releases after current evidence
+4. evidence-before-controller intent is retained and later used
+5. prior-cycle evidence rejected
+6. route-remap invalidates old evidence
+7. pre-cycle capture rejected
+8. old service epoch rejected
+9. capture failure is not readiness success
+10. cover-route loss safely releases as degraded
+11. duplicate current evidence idempotent
+12. lower sequence cannot replace newer evidence
+13. secure/uncapturable path does not synthesize readiness
+14. reversal kills old attempt/late evidence
+15. watchdog is degraded, not readiness success
+16. fixed-seed 100,000-operation adversarial stream
+
+RESULT
+PASS=16
+FAIL=0
+FUZZ_OPS=100000
+
+NEGATIVE MODEL RESULT
+Initial fuzz failed because the first design left owner.active=true after PROVEN release. A later route-remap cleared evidence but terminal release reason remained "inner-ready", violating immutability. Fix: terminal release atomically ends active ownership. Corrected suite passes.
+
+==================================================
+10. REGRESSION / FAILURE ANALYSIS
+==================================================
+
+LATENCY RISK
+Waiting for evidence can extend cover visual lifetime relative to current 172-degree teardown. This is intentional only when the cover route is still usable. Measure it; do not guess.
+
+VISUAL STICK RISK
+If capture/readiness never arrives, a bridge could remain too long. Preserve an explicit bounded watchdog as a DEGRADED release, plus immediate route-loss release.
+
+SECURE CONTENT
+Screenshot can fail on secure content. Do not replay unrelated stale content and do not label timeout as ready. Degrade via route loss/watchdog/native behavior.
+
+LEGITIMATELY BLACK CONTENT
+A black-pixel heuristic is not semantic proof of not-ready. Treat black as ambiguous rather than permanent failure; do not make nonblack pixels a correctness requirement for all apps.
+
+POWER
+If existing afterSwap capture is reused, the core proposal adds no mandatory extra capture. Any additional probe should be separately measured and justified.
+
+RACE / REMAP
+Evidence must carry route epoch. A capture for route A cannot release a visual now bound to route B.
+
+SERVICE RESTART
+New serviceEpoch invalidates old evidence.
+
+CONTROLLER GENERATION
+Do not use controller.generation as the sole stable opening cycle identity; it changes across transitions. Reuse state-rd/primary stable opening attempt identity.
+
+THRESHOLDS
+Do not change 3/8/172/166 or other existing hinge thresholds to hide the problem. This is an ownership/evidence issue.
+
+==================================================
+11. PRIMARY INTEGRATION RECOMMENDATION
+==================================================
+
+P0
+When primary implements the exact Gen3 visual-attempt owner, include an opening terminal outcome substate instead of making OPEN_INNER automatically mean visual release.
+
+Suggested relationship:
+controller OPEN_INNER intent
+        +
+current exact opening visual attempt
+        +
+current inner-route readiness evidence
+        =>
+PROVEN terminal handoff and visual release
+
+Explicit loss/watchdog paths => DEGRADED release with diagnostic reason.
+
+P1
+Publish inner afterSwap capture observations into that terminal owner with immutable attempt/route identity. Accessibility screenshot timestamp is already available in current code.
+
+P1
+Instrument exact timings:
+- opening attempt start
+- inner wake request/result
+- inner route first active
+- controller OPEN_INNER intent
+- first capture request
+- screenshot exact timestamp
+- black retry(s)
+- accepted inner readiness
+- terminal release outcome
+- cover visual detached
+- inner native visual externally observed in high-speed video
+
+P2
+If later device traces show screenshot evidence is too weak/late, investigate a stronger native-composition primitive behind the same contract rather than changing the ownership model.
+
+==================================================
+12. REQUIRED TESTS
+==================================================
+
+UNIT / MODEL
+- current attempt accepted
+- stale cycle rejected
+- stale service epoch rejected
+- stale route rejected
+- pre-cycle timestamp rejected
+- remap invalidates readiness
+- reversal invalidates readiness
+- duplicate callback idempotent
+- terminal release immutable
+- watchdog distinct from success
+
+ANDROID INTEGRATION
+- topology becomes innerActive before capture callback
+- OPEN_INNER intent occurs while capture is black/retrying
+- current capture arrives before 172 degrees
+- current capture arrives after 172 degrees
+- cover route disappears before proof
+- Shizuku/accessibility capture failure
+- service restart during opening
+- logical route remap during opening
+
+FOLD7 PHYSICAL
+A. slow open from fully closed
+B. medium open
+C. fast open
+D. pause at 20/90/160 degrees then continue
+E. immediate opening -> closing reversal
+F. opening with animated app content
+G. launcher/home screen
+H. intentionally black content
+I. secure/DRM/banking content
+J. Shizuku disconnect/reconnect
+K. accessibility restart mid-open
+L. remap/topology churn if reproducible
+
+MEASURE
+- 240 fps or higher external video if available
+- logcat/Transition Lab with attempt identities
+- exact time delta: innerActive -> inner evidence -> terminal release
+- whether any blank/flash occurs between cover visual teardown and native inner photons
+
+PASS TARGET
+No PROVEN terminal release while current-route inner evidence is absent. Any no-proof release is explicitly DEGRADED and observable in logs.
+
+==================================================
+13. WHAT THIS WORK DOES NOT CLAIM
+==================================================
+
+- It does not prove a visible Fold7 flash currently occurs.
+- It does not claim screenshot success equals physical photons.
+- It does not recommend keeping the cover physical panel on indefinitely.
+- It does not move the user's task between displays.
+- It does not redesign launcher state equivalence.
+- It does not change hinge thresholds.
+- It does not restore autonomous cover PanelEngine rendering.
+- It does not replace the primary's exact visual owner.
+- It does not authorize production code changes or APK installation.
+
+==================================================
+14. FINAL CONCLUSION
+==================================================
+
+CURRENT main has a real evidence-level asymmetry on opening: it wakes the inner early because route/pixel readiness can lag, but terminal completion still collapses to OPEN_INNER from 172-degree geometry plus Display-active topology. The renderer already contains black-capture retry logic acknowledging that a newly active panel can still be visually unready. The clean Gen3 fix is not another timeout or threshold tweak; it is to make terminal release an explicit outcome of the exact visual attempt and distinguish PROVEN native-inner readiness from DEGRADED forced release.
+
+This contract is compatible with the primary's live Gen3 alpha architecture and the completed state-rd opening-owner workstream.

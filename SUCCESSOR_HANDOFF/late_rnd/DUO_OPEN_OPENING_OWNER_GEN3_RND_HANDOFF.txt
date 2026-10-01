@@ -1,0 +1,279 @@
+DUO OPEN — GEN3 OPENING-FROM-CLOSED OWNERSHIP R&D HANDOFF
+Target: Samsung Galaxy Z Fold7 / Android 16 / One UI
+Role: state-rd (R&D only; primary retains production authority)
+Baseline: boberino93-bit/duo-open main @ 45bb0d326899c0e08415928224cfea0ff58d2d4e
+
+==================================================
+1. EXECUTIVE SUMMARY
+==================================================
+
+SUBSYSTEM
+The one-shot CLOSED -> OPEN cover visual lifetime, specifically ownership across logical-display remap, PanelEngine replacement, transient route absence, timeout, and semantic state exit.
+
+WHY THIS WORKSTREAM
+Primary explicitly accepted P1.3: retire service-global earlyOpeningVisualStarted ownership. Existing parallel work covers closing capture/prime ownership, Shizuku recovery, cover shader composition, presentation ownership, terminal closing handoff, observability, and launcher/content continuity. This work is deliberately narrower: the exact semantic opening attempt and its binding to a mutable cover renderer/host.
+
+STRONGEST SOURCE-CONFIRMED FINDING
+CURRENT main stores accepted-opening state in FoldOverlayService as two service-global booleans:
+- earlyOpeningVisualLatched
+- earlyOpeningVisualStarted
+
+The visible effect itself is instance-local in PanelEngine:
+- continuityOpeningVisual
+- beginContinuityOpeningVisual()/endContinuityOpeningVisual()
+
+syncDisplays() destroys and creates PanelEngine instances keyed by current logical display IDs before reconcileContinuityCoverRendering(). If engine A started the one-shot opening visual, earlyOpeningVisualStarted becomes true. If A is then destroyed/remapped and replacement cover engine B appears while the semantic opening latch remains valid, reconcile sees earlyOpeningVisualStarted=true and skips beginContinuityOpeningVisual() on B. The old effect is gone with A; B is never started. This is a deterministic source-level orphaning race, not a threshold problem.
+
+SECOND SOURCE-CONFIRMED FINDING
+reconcileContinuityCoverRendering() clears earlyOpeningVisualLatched whenever coverEngines.isEmpty(). This consumes the semantic opening attempt during a transient route gap even though Fold7ContinuityController intentionally preserves OPENING_FROM_CLOSED / INNER_HANDOFF across topology churn. A momentary renderer absence is therefore treated as semantic cancellation.
+
+MODEL RESULT
+A reduced source-faithful baseline model reproduces both failures. A stable-attempt proposal passes 12/12 deterministic tests including a fixed-seed 100,000-event adversarial stream.
+
+RECOMMENDED DIRECTION
+Do not “fix” this by resetting earlyOpeningVisualStarted during remap. Retire the boolean as ownership. Represent one accepted semantic opening as an immutable attempt identity that survives host/PanelEngine replacement. Bind/unbind the current host beneath that attempt. Temporary absence of a cover host means WAITING_FOR_HOST, not CANCELLED. Cancel only on semantic completion/reversal, privilege/authority loss, exact-attempt timeout, user stop, or service-epoch rollover.
+
+==================================================
+2. BASELINE / COORDINATION
+==================================================
+
+STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+MAIN_CHANGED_DURING_RND=NO
+AGENT_BUS_AVAILABLE=YES
+LIVE_BOARD_SCHEMA=duoopen-agentbus/v1 legacy /messages + /artifacts
+WORKSTREAM_ID=ws-state-rd-opening-owner-20261001T230257Z
+
+Relevant primary decision:
+- P0.2 add one exact cover visual-attempt owner + one privileged fold-shader compositor.
+- P1.3 retire service-global earlyOpeningVisualStarted ownership.
+
+Non-overlap confirmed against new parallel claims:
+- reviewer: launcher/home-screen content continuity
+- display-rd: terminal closing/native destination-frame handoff
+- reviewer: exact presentation owner / callback fencing (explicitly excludes opening ownership)
+
+No production GitHub writes were made.
+
+==================================================
+3. CURRENT SOURCE RECONSTRUCTION
+==================================================
+
+A. Service-global opening state
+FoldOverlayService.kt:
+- earlyOpeningVisualLatched at ~L94
+- earlyOpeningVisualStarted at ~L97
+- one shared 2.5 s timeout runnable at ~L100
+- setEarlyOpeningVisualLatched(true) sets earlyOpeningVisualStarted=false and posts timeout
+- setEarlyOpeningVisualLatched(false) also clears earlyOpeningVisualStarted
+
+B. Semantic edge
+- DeviceState opening edge or precise hinge transition NATIVE_COVER -> OPENING_FROM_CLOSED sets earlyOpeningVisualLatched=true.
+- Controller intentionally carries opening through OPENING_FROM_CLOSED and INNER_HANDOFF until true open or reversal.
+
+C. Display / engine lifecycle
+FoldOverlayService.syncDisplays():
+1. Build live displays keyed by logical displayId.
+2. Destroy/remove engines whose IDs disappeared.
+3. Create PanelEngine for new IDs.
+4. continuity.onTopologyChanged().
+5. reconcileContinuityCoverRendering().
+
+D. Render reconcile
+reconcileContinuityCoverRendering():
+- clears latch if Shizuku/ownership/opening state is unavailable;
+- computes current cover engines using fresh 1080x2520 geometry;
+- ALSO clears latch if coverEngines.isEmpty();
+- sets continuity cover ownership per current engine;
+- if current engine owns cover and opening policy is active, calls beginContinuityOpeningVisual() ONLY if service-global earlyOpeningVisualStarted == false;
+- then sets earlyOpeningVisualStarted=true.
+
+E. Actual renderer state is instance-local
+PanelEngine:
+- continuityOpeningVisual is per PanelEngine instance.
+- beginContinuityOpeningVisual() requires current cover geometry + continuityCoverOwned + !continuityOpeningVisual.
+- destroy() or ownership release removes the overlay / invalidates capture work.
+- there is no immutable semantic opening-attempt identity carried into the PanelEngine.
+
+F. Existing exactness pattern elsewhere
+Fold7CycleEnvelope gives close work a stable serviceEpoch + closeCycleId independent of controller generation.
+Fold7PresentationLease uses serviceEpoch + closeCycleId + contentLeaseId + hostEpoch + attemptSequence to reject stale callbacks.
+Opening visual ownership does not yet use an equivalent exact identity.
+
+==================================================
+4. FAILURE SEQUENCES
+==================================================
+
+FAILURE A — ENGINE REMAP OR REPLACEMENT ORPHANS THE ONE-SHOT
+1. State NATIVE_COVER.
+2. Accepted opening edge -> OPENING_FROM_CLOSED.
+3. earlyOpeningVisualLatched=true; earlyOpeningVisualStarted=false.
+4. Cover PanelEngine A exists; reconcile starts A.
+5. Service sets earlyOpeningVisualStarted=true.
+6. Samsung topology/display callbacks remove or remap A; syncDisplays destroys A and creates replacement cover engine B.
+7. Semantic controller state is still OPENING_FROM_CLOSED or INNER_HANDOFF.
+8. Reconcile gives B cover ownership, but global earlyOpeningVisualStarted is still true.
+9. beginContinuityOpeningVisual() is skipped on B.
+10. Result: no current renderer owns the accepted opening effect.
+
+This sequence requires no stale callback and no threading violation; all state can be serialized on the main Handler.
+
+FAILURE B — TRANSIENT ROUTE GAP CONSUMES THE SEMANTIC ATTEMPT
+1. Accepted opening attempt is active.
+2. During display churn, current engine set temporarily contains no 1080x2520 cover engine.
+3. reconcile sees earlyOpeningVisualLatched && coverEngines.isEmpty().
+4. It calls setEarlyOpeningVisualLatched(false,"cover-route-missing:...").
+5. Replacement cover route appears shortly afterward.
+6. No opening attempt remains to bind to it.
+
+This contradicts the controller-side intent to survive topology-only handoff while the device is still semantically opening.
+
+==================================================
+5. GENERATION-3 OWNERSHIP SHAPE
+==================================================
+
+Use the already-accepted exact cover visual-attempt owner; do not add a competing second visual owner.
+
+Opening attempt identity should minimally contain:
+- serviceEpoch
+- openingCycleId or movementId
+- attemptSequence
+- direction=OPENING
+
+A concrete host binding adds:
+- hostEpoch / rendererEpoch
+- optional exact content identity if opening snapshot content is tokenized by the visual compositor
+
+Recommended states:
+IDLE
+OPENING_DEMAND_WAITING_FOR_HOST
+OPENING_BOUND(hostEpoch)
+CANCELLED/COMPLETE (terminal; represented by absence of current attempt)
+
+Rules:
+1. BEGIN only on an accepted semantic NATIVE_COVER -> OPENING_FROM_CLOSED edge.
+2. OPENING_FROM_CLOSED -> INNER_HANDOFF does NOT create a second attempt.
+3. Host/PanelEngine replacement does NOT create a second semantic attempt.
+4. Host loss stops the old binding but preserves the current opening demand.
+5. Replacement host binds the same current attempt exactly once.
+6. Temporary no-cover-route is WAITING_FOR_HOST, not semantic cancellation.
+7. OPEN_INNER, reversal/native-cover authoritative return, privilege/authority loss, user stop, service destroy, or exact timeout invalidates the current attempt.
+8. Timeout callback captures attempt identity; if it does not equal current, it is a no-op.
+9. All renderer callbacks/actions carry exact attempt + host identity and cannot mutate a newer attempt.
+10. The early inner wake stays independent and must not wait for visual host readiness.
+
+PanelEngine-specific integration option if primary temporarily keeps opening rendering there:
+- replace continuityOpeningVisual:Boolean with currentOpeningBinding: OpeningVisualBinding?
+- begin/end are exact-id operations, idempotent for the same binding
+- destroy invalidates only that host binding; it does NOT consume the semantic visual attempt held by the stable owner
+
+Preferred long-term integration with primary P0.2 compositor:
+- move opening effect binding under the same exact cover visual-attempt owner/compositor as closing.
+- FoldOverlayService no longer owns earlyOpeningVisualStarted.
+- FoldOverlayService emits semantic demand/cancel events only.
+
+==================================================
+6. MODEL / TEST EVIDENCE
+==================================================
+
+Artifact: opening_owner_model.py
+Artifact: TEST_RESULTS.txt
+
+Deterministic tests:
+1. baseline_remap_loses_visual
+2. proposed_remap_rebinds
+3. baseline_transient_route_gap_consumes_attempt
+4. proposed_transient_route_gap_preserves_attempt
+5. duplicate_reconcile_idempotent
+6. old_timeout_cannot_cancel_new_cycle
+7. current_timeout_cancels_exact_attempt
+8. host_loss_stops_old_before_rebind
+9. privilege_loss_cancels
+10. state_exit_cancels
+11. service_epoch_fences_old_timeout
+12. fuzz_100k
+
+RESULT passed=12 failed=0 total=12
+FUZZ_SEED=0xD00F7
+FUZZ_EVENTS=100000
+
+Important interpretation:
+- The first two baseline tests intentionally assert the current failure outcome so the model proves the failure is reproduced, not merely that the proposed model passes.
+- The model proves ownership invariants only. It does not prove Samsung remap timing, actual View/SurfaceControl behavior, capture latency, or visible animation quality.
+
+==================================================
+7. PRIMARY INTEGRATION GUIDANCE
+==================================================
+
+Highest-value production change when primary reaches P0.2/P1.3:
+1. Add one exact opening visual attempt to the accepted visual owner (or equivalent stable owner adjacent to Fold7Gen2Kernel).
+2. Remove earlyOpeningVisualStarted as the source of truth.
+3. Do not clear semantic opening demand simply because current cover host count is zero.
+4. Reconcile current host from fresh physical geometry every time; bind current attempt to current host.
+5. On replacement: stop/invalidate old host binding, then start/rebind the same current attempt on the new host.
+6. Fence timeout and asynchronous callbacks by immutable attempt identity.
+7. Preserve existing V9 early inner wake and existing opening-state thresholds.
+8. Keep renderer ownership separate from semantic attempt ownership.
+
+DO NOT:
+- reset a naked global boolean on every display callback;
+- restart a new semantic opening attempt on every remap;
+- treat logical displayId as physical panel identity;
+- cancel merely because cover host is temporarily absent;
+- move opening thresholds to hide remap latency;
+- allow a stale timeout from an old attempt to cancel a newer one.
+
+==================================================
+8. DEVICE VALIDATION REQUIRED
+==================================================
+
+A. Closed -> slow open with normal route behavior
+Expected: exactly one opening attempt; cover effect begins once; continues through INNER_HANDOFF; cleanup at OPEN_INNER.
+
+B. Force/observe logical display remap while opening
+Log: openingCycleId/movementId, attemptSequence, logical displayId, physical geometry, hostEpoch, bind/unbind.
+Expected: same semantic attempt survives; old binding stops; replacement host binds once; no silent gap caused by global started state.
+
+C. Transient route absence
+Expected: owner enters WAITING_FOR_HOST; attempt remains current until semantic completion/cancel or timeout.
+
+D. Fast open
+Expected: if route is gone before host rebind, OPEN_INNER semantically completes and cancels the attempt; no late stale visual appears.
+
+E. Opening -> closing reversal near closed endpoint
+Expected: old opening attempt invalidated before close work; no old callback can restart it.
+
+F. Shizuku/authority loss during opening
+Expected: exact attempt cancelled; no privileged visual resurrects after recovery without a new semantic opening edge.
+
+G. Service restart
+Expected: serviceEpoch changes; old timeout/callback/binding identities are rejected.
+
+==================================================
+9. CONFIDENCE / LIMITATIONS
+==================================================
+
+CONFIRMED SOURCE ISSUE — HIGH CONFIDENCE
+- service-global start bit is not tied to renderer identity.
+- engine lifecycle is mutable and keyed by logical display IDs.
+- replacement host can therefore be denied its one-shot start.
+- temporary zero-cover-engine state explicitly clears the semantic latch.
+
+CONFIRMED TEST RESULT — HIGH CONFIDENCE
+- reduced source-faithful baseline reproduces both defects.
+- exact stable-attempt proposal maintains invariants across deterministic and 100k-event adversarial sequences.
+
+UNCONFIRMED DEVICE CAUSALITY
+- No claim that one exact Samsung remap sequence has already been captured in a Fold7 field log for the user's observed opening regression.
+- Physical timing and visual severity require device validation.
+
+==================================================
+10. FINAL STATUS
+==================================================
+
+WORKSTREAM_STATE=COMPLETE
+PRODUCTION_FILES_MODIFIED=NO
+GITHUB_WRITES=NO
+DEVICE_VALIDATION_REQUIRED=YES
+MANUAL_PRIMARY_INTEGRATION_REVIEW_REQUIRED=YES
+RECOMMENDED_PRIMARY_ACTION=Implement P1.3 by making opening demand an exact stable visual attempt that can rebind across host/PanelEngine replacement; remove earlyOpeningVisualStarted ownership and stop consuming the attempt on transient route absence.

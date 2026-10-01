@@ -1,0 +1,367 @@
+DUO OPEN — GALAXY Z FOLD7
+R&D HANDOFF: SEMANTIC CONTENT FRESHNESS / LAUNCHER + ORDINARY-APP CONTINUITY
+
+WORKSTREAM_ID=reviewer-launcher-content-continuity-gen2-20261001
+AGENT_ID=reviewer
+STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+TARGET=Samsung Galaxy Z Fold7 only (inner 1968x2184; cover 1080x2520)
+AUTHORITY=R&D only. Primary owns production architecture/integration and must independently verify.
+
+======================================================================
+0. LIVE-BOARD RECONCILIATION (23:12Z)
+======================================================================
+
+After this workstream began, primary posted Gen3 alpha-1 checkpoint msg-primary-gen3-alpha1-integration-c2819b37 against the same production main SHA. Primary has already accepted/modeled: moving exact-cycle capture admission out of PanelEngine; FrameStore rejecting captures older than newest STARTED; exact visual-attempt ownership; Shizuku authority revocation; and opening live-content attach. New display/state/reviewer handoffs also cover terminal native handoff, opening host remap, and service-stable presentation ownership.
+
+This semantic-content workstream remains additive and non-duplicative. It does NOT propose another capture owner, presentation owner, terminal-handoff owner, or opening owner. It adds one missing admission dimension to the primary's stable capture pipeline: whether an otherwise exact-cycle frame still represents the current semantic content revision. The primary alpha-1 newest-STARTED rule is treated as a prerequisite and is preserved.
+
+======================================================================
+1. EXECUTIVE FINDING
+======================================================================
+
+Current main gives a frozen continuity frame strong CLOSE-CYCLE provenance, but it does not give that frame SEMANTIC CONTENT FRESHNESS provenance.
+
+At current main:
+- Fold7ContinuityFrameStore.FrameLease identifies serviceEpoch, closeCycleId, captureSequence, contentLeaseId, dimensions, timing/source, but has no content-context revision / foreground-window identity / capture purpose.
+- Fold7ContinuityFrameStore.current() accepts the latest frame using current cycle + dimensions + age.
+- Fold7ContinuityCoordinator lets the cover host request a frozen frame with FROZEN_FRAME_MAX_AGE_MS=10,000 ms.
+- DisplayMirrorHost.tryBindFrozenFrame() validates bitmap geometry/recycled state, binds it, and returns true.
+- DisplayMirrorHost.bind() therefore prefers an eligible frozen frame and reaches the live SurfaceControl mirror only when no frozen frame is available.
+- FoldOverlayService.onAccessibilityEvent(...) is currently Unit, so there is no app/window/launcher-page semantic invalidation path in the inspected service.
+
+This means “exact cycle” is not identical to “current semantic content.” If a close begins, an early continuity frame is captured, then the foreground semantic context changes before the cover visual is requested (examples: app switch, launcher page swipe, meaningful in-app navigation), an otherwise valid same-cycle frame can still be selected. That is a source-confirmed architectural gap. Whether it is common or visually objectionable on a real Fold7 is NOT field-proven here.
+
+Important distinction: ordinary pixel motion is not automatically a bug. Gen2 intentionally freezes transition content to make a deterministic effect. The gap is about SEMANTIC context changes after capture, not clocks/video/animations continuing underneath a deliberate frozen transition.
+
+======================================================================
+2. EVIDENCE LEDGER
+======================================================================
+
+PROVEN — current repository source at 45bb0d326899c0e08415928224cfea0ff58d2d4e
+
+A. Frame provenance has cycle identity but no semantic-content revision.
+   File: app/src/full/java/com/duoopen/overlay/Fold7ContinuityFrameStore.kt
+   Observed FrameLease fields: serviceEpoch, closeCycleId, captureSequence, contentLeaseId, width, height, request/capture/completion timestamps, source, timestampQuality, payload.
+   Observed current(): validates active cycle, frame service/cycle, dimensions, and age.
+
+B. Frozen candidate may be accepted for up to 10 seconds.
+   File: app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+   FROZEN_FRAME_MAX_AGE_MS = 10_000L.
+   frozenFrameProvider calls gen2.frames.current(...) with current active cycle, dimensions and that age limit.
+
+C. Frozen content wins over the live mirror when eligible.
+   File: app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+   bind() first calls tryBindFrozenFrame(...); if it succeeds, bind() returns. The live SurfaceControl mirror is explicitly the fallback.
+
+D. Current frozen-frame acceptance is geometric/provenance-based, not semantic-context-based.
+   File: app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+   tryBindFrozenFrame() checks frame existence, recycled state and exact source dimensions. It does not compare foreground task/window/launcher state.
+
+E. Current accessibility callback does not track content context.
+   File: app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+   override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
+   The current duo_accessibility.xml permits screenshot use but does not define a content-revision pipeline.
+
+F. ShizukuBridge currently provides fast display capture and display/cover/mirror controls, but the inspected app-side API exposes no foreground-task/window semantic identity call.
+   File: app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+
+PROVEN — external platform/vendor documentation (current research, 2026-10-01)
+
+G. Android describes folding/unfolding as a configuration/continuity event and says apps should preserve state/context across it.
+   Sources: Android Developers configuration/continuity guidance.
+
+H. Samsung describes app continuity as keeping the same state/location when transitioning between the cover and main displays.
+   Sources: Samsung Developer app-continuity guidance.
+
+I. Samsung currently documents Cover screen mirroring for Galaxy Z Fold3 through Z Fold7. On Z Fold7 this is the native supported mechanism for syncing the cover and main Home-screen layouts.
+   Source: Samsung US support, “Use your Galaxy foldable phone when it's opened or closed.”
+
+J. Android AccessibilityEvent exposes window/content signals that can be used as invalidation hints, including TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOWS_CHANGED, TYPE_WINDOW_CONTENT_CHANGED and TYPE_VIEW_SCROLLED; window events expose package/window information.
+   Sources: Android Developers AccessibilityEvent / AccessibilityServiceInfo references.
+
+MODELED — not production evidence
+
+K. A pure source-arbitration model was built for this R&D pass.
+   MODELED_VISIBLE_FRESHNESS_BUDGET_MS=600 was used ONLY to exercise age-fencing mechanics. It is NOT a proposed production constant.
+   Focused tests: 15/15 PASS.
+   Deterministic adversarial stream: 100,000 events PASS.
+   Model caught and fixed one R&D design defect: content revision alone was insufficient; a newly STARTED refresh also has to fence the previously accepted frame immediately.
+
+FIELD UNKNOWN / DEVICE VALIDATION REQUIRED
+
+L. Frequency of semantic-content changes after early prime but before COVER_VISUAL on actual Fold7 use.
+M. Exact AccessibilityEvent behavior/latency from One UI Home on Fold7 for page swipes.
+N. Best refresh timing and maximum acceptable semantic-freshness age without adding visible latency.
+O. Whether starting a visible-demand refresh and using the live mirror during capture has acceptable frame pacing on device.
+P. Native endpoint timing when One UI Home Cover screen mirroring is ON vs OFF.
+
+======================================================================
+3. DOMINANT CURRENT LIMITATION
+======================================================================
+
+The present architecture conflates two different questions:
+
+1. “Does this frame belong to the current close cycle?” — CURRENT source answers this well.
+2. “Does this frame still represent the semantic content the user intends to transition?” — CURRENT source does not answer this.
+
+The first is provenance. The second is semantic freshness.
+
+A frame can be perfectly valid under (1) and wrong under (2).
+
+Baseline reproduction used by the local model:
+- close cycle C begins;
+- PRIME snapshot P is captured at content revision R0;
+- user changes semantic content to R1 while still in C;
+- P remains under the current 10s age limit;
+- current frozen-first reduction still chooses P at visible demand because cycle/geometry/age match.
+
+This is intentionally separate from:
+- state-rd’s stable prime owner / newest-started capture fence;
+- display-rd’s cover shader / visual lease;
+- performance-rd’s presentation timing correlation;
+- reviewer Shizuku privilege recovery.
+
+Those adjacent handoffs should be preserved and composed with this one.
+
+======================================================================
+4. GEN2 DESIGN — SEMANTIC CONTENT FRESHNESS LEASE
+======================================================================
+
+Do not replace exact-cycle provenance. Add a semantic-freshness layer beneath/alongside it.
+
+A. Extend capture identity
+
+Suggested conceptual fields (names are not mandated):
+- serviceEpoch
+- closeCycleId
+- captureSequence
+- capturePurpose = PRIME | VISUAL_REFRESH
+- contextRevision (monotonic, service-local)
+- optional coarse ContextSignature for diagnostics only (for example package/window identity; do not persist sensitive UI text)
+- requestStartedUptimeMs / capturedUptimeMs
+
+The existing state-rd newest-STARTED sequence rule remains mandatory.
+
+B. Separate PRIME from VISUAL_REFRESH
+
+PRIME:
+- early latency hedge;
+- may be used if still semantically current when visible demand arrives;
+- is not unconditional visible authority just because it is same-cycle.
+
+VISUAL_REFRESH:
+- issued when semantic content was marked dirty after PRIME, or when the prime no longer satisfies the measured visible-freshness policy;
+- starting VISUAL_REFRESH immediately invalidates the previous visible frozen candidate;
+- only the newest-started refresh may publish;
+- if contentRevision changes while refresh is in flight, reject that completion.
+
+C. Add ContentContextTracker
+
+Prefer a small monotonic invalidation tracker rather than trying to reconstruct every app’s internal state.
+
+Potential low-cost invalidation hints while a close cycle is active:
+- TYPE_WINDOW_STATE_CHANGED — foreground/activity/pane state changes;
+- TYPE_WINDOWS_CHANGED — active/focused/added/removed/title/layer changes as relevant;
+- TYPE_VIEW_SCROLLED — useful candidate for launcher-page movement and major scroll transitions;
+- selected TYPE_WINDOW_CONTENT_CHANGED — optional and carefully filtered because it may be noisy.
+
+Important: accessibility signals are INVALIDATION HINTS, not sole proof. Explicitly configure only the event types needed and measure overhead/noise on Fold7. Do not persist user text or accessibility node content.
+
+D. Visible-demand arbitration
+
+At COVER_VISUAL demand, choose in this order:
+
+1. Current frozen frame only if:
+   - exact current serviceEpoch + closeCycleId;
+   - newest-started capture sequence;
+   - contextRevision matches current ContentContextTracker revision;
+   - frame satisfies a field-measured freshness policy.
+
+2. Otherwise begin/continue VISUAL_REFRESH and make old frozen pixels ineligible immediately.
+
+3. While refresh is pending, prefer the existing live SurfaceControl mirror if usable. That is current pixels and avoids knowingly displaying semantically stale frozen content.
+
+4. When a current refresh completes, notify/refresh the active cover host so it may promote current frozen content if the current visual lease still wants it.
+
+5. If neither a proven-current frozen frame nor usable live mirror is available, fall back to native/degraded presentation rather than knowingly resurrecting a stale semantic frame.
+
+This ordering turns live mirror from “capture failed” fallback into “freshness not yet proven” bridge.
+
+E. Do not change existing hinge thresholds in this R&D
+
+No source or field evidence from this pass justifies changing 174° prewarm / 135° visible demand or other established thresholds. Refresh timing should be measured around the existing state machine.
+
+F. Integrate with state-rd stable capture owner
+
+Do not put a second arbitration owner back into PanelEngine. The proposed PRIME/VISUAL_REFRESH purposes should be admitted by the same service-stable close-cycle capture owner recommended by state-rd. This work adds a semantic admission condition; it does not compete for ownership.
+
+G. Integrate with display-rd exact visual lease
+
+Content freshness should be resolved before/below the exact visual attempt. Visual identity should bind the chosen contentLeaseId/contextRevision. Stale content-completion callbacks must not rebind a newer visual attempt.
+
+H. Integrate with performance-rd instrumentation
+
+Add sparse timestamps/events:
+- CONTENT_REVISION reason/type
+- VISUAL_REFRESH_START
+- VISUAL_REFRESH_ACCEPT/REJECT
+- CONTENT_PATH frozen-current | live-freshness-bridge | native-degraded
+
+Carry the existing presentation correlation identity so field logs can answer whether freshness work added latency.
+
+======================================================================
+5. LAUNCHER / HOME-SCREEN SPECIFIC CONTRACT
+======================================================================
+
+Do not build app-specific launcher automation into Duo Open.
+
+Samsung documents a native “Cover screen mirroring” setting for the Z Fold7 that syncs cover/main Home-screen layouts. That is the correct stable endpoint mechanism for launcher layout equivalence. Duo Open should bridge the visual transition; it should not move the real task, synthesize launcher gestures, or try to force the launcher page on the secondary route.
+
+Recommended contract:
+- During fold motion: use the exact content-freshness arbitration above.
+- At native handoff: release to Samsung/One UI state.
+- If the user wants matched Home layouts, document/validate One UI Cover screen mirroring as a device setting prerequisite/optimization.
+- Treat exact dynamic launcher-page selection at the native endpoint as an OS/launcher behavior to field-test, not as something proven by this R&D.
+
+This keeps the project invariant: do not move the real Android task to the cover display.
+
+======================================================================
+6. BASELINE VS GEN2 FAILURE MATRIX
+======================================================================
+
+Scenario: fast close, no semantic change after PRIME
+CURRENT: eligible frozen frame; deterministic.
+GEN2: same behavior if semantic revision/freshness remains valid.
+Regression intent: none.
+
+Scenario: app switch after PRIME, before cover visual
+CURRENT REDUCTION: old frozen frame remains eligible by cycle/geometry/age.
+GEN2: revision dirties frame; refresh or live-current bridge; old frame cannot display.
+
+Scenario: launcher page swipe after PRIME
+CURRENT REDUCTION: same stale-context risk.
+GEN2: page/window invalidation hint marks revision dirty; refresh/live path. Event reliability requires Fold7 validation.
+
+Scenario: content changes while VISUAL_REFRESH is in flight
+CURRENT: no semantic refresh identity.
+GEN2: completion rejected because request revision != current revision.
+
+Scenario: newer refresh starts, older frame was previously valid
+CURRENT: beginCapture already clears latest inside FrameStore, but capture ownership/admission is distributed.
+GEN2: stable owner + newest-started fence makes this an explicit invariant; old frozen frame becomes ineligible immediately.
+
+Scenario: refresh cannot produce snapshot (e.g. protected/secure content)
+CURRENT: live path is used only when no frozen candidate exists; a still-eligible older candidate can win.
+GEN2: known-dirty old frame is ineligible; prefer current live mirror if usable, otherwise native/degraded.
+
+Scenario: close-open-close / cycle reversal
+GEN2: existing exact-cycle identity retained; cross-cycle completion rejected; context revision is not allowed to weaken cycle fencing.
+
+Scenario: Samsung One UI Home endpoint, Cover screen mirroring ON
+GEN2: visual bridge hands off to native One UI; layout synchronization is OS-owned. Exact page behavior requires device validation.
+
+Scenario: Samsung One UI Home endpoint, Cover screen mirroring OFF
+GEN2: Duo Open must not pretend the cover and main launcher layouts are identical. Visual bridge may be correct during motion, but native endpoint can legitimately differ.
+
+======================================================================
+7. MODEL / VALIDATION RESULTS
+======================================================================
+
+Artifact: duoopen_content_freshness_model.py
+Focused unit checks: 15 PASS / 0 FAIL.
+Adversarial: deterministic 100,000-event stream PASS.
+
+Adversarial operations included:
+- semantic content revision changes;
+- PRIME/VISUAL_REFRESH start and out-of-order completion;
+- stale-cycle completion;
+- close-cycle boundary/reversal;
+- live-mirror availability changes;
+- arbitration decisions while requests are in flight.
+
+Invariant checked on every frozen decision:
+- current cycle;
+- current context revision;
+- modeled freshness budget;
+- newest-started capture sequence.
+
+The initial prototype failed the newest-started invariant in adversarial testing. It allowed a previously valid frozen frame to remain eligible after a newer capture started. The model was corrected so a frozen frame must also be the newest-started sequence. This is an R&D-discovered correction, not an assumed success.
+
+The modeled 600ms age is deliberately arbitrary for mechanics testing and MUST NOT be copied into production. Production freshness timing needs Transition Lab + physical Fold7 measurements.
+
+======================================================================
+8. PERFORMANCE / UX LABELS
+======================================================================
+
+PROVEN:
+- Current source has a 10,000ms frozen-frame age allowance.
+- Current source has a frozen-first, live-fallback bind path.
+- Current app-side Shizuku capture path comments approximately ~50ms, but that timing is a source comment and must not be treated as current Fold7 measurement for this design.
+
+MODELED:
+- 600ms model freshness budget only.
+
+FIELD-MEASURED NEEDED:
+- capture p50/p95/p99 at PRIME and VISUAL_REFRESH timing points;
+- live-mirror startup/first-present latency when used as a freshness bridge;
+- frequency of dirty-context events during a close;
+- false-positive rate/noise of selected AccessibilityEvent types;
+- launcher page-swipe event latency/reliability;
+- actual user-visible delta between frozen-current vs live-bridge paths.
+
+======================================================================
+9. PRIMARY INTEGRATION CHECKLIST
+======================================================================
+
+Before implementation:
+[ ] Revalidate main SHA and adjacent Gen3 patches/packages; this handoff is based on 45bb0d326899c0e08415928224cfea0ff58d2d4e.
+[ ] Reconcile with state-rd stable close-cycle capture owner; do not create another owner.
+[ ] Reconcile with display-rd CoverVisualLease/presentation work.
+[ ] Preserve Shizuku recovery authority epoch handling.
+
+Implementation shape:
+[ ] Add capturePurpose + contextRevision to continuity capture identity.
+[ ] Add service-stable ContentContextTracker with privacy-minimal invalidation signals.
+[ ] Explicitly request/measure selected AccessibilityEvent types if that route is used.
+[ ] At visible demand, reject semantically dirty/too-old frozen frames.
+[ ] Start VISUAL_REFRESH through stable capture owner.
+[ ] Starting refresh makes previous frozen candidate ineligible immediately.
+[ ] Reject completion if context revision changed or capture is no longer newest-started/current-cycle.
+[ ] Use live mirror as current-content bridge while freshness is unresolved.
+[ ] Notify host when fresh content becomes publishable.
+[ ] Never revive a dirty older same-cycle frame after refresh failure.
+[ ] Preserve native fallback and do not move task to secondary display.
+
+Validation:
+[ ] Fast close unchanged app.
+[ ] Slow close + app switch after prime.
+[ ] Slow close + launcher page swipe after prime.
+[ ] Slow close + in-app navigation after prime.
+[ ] Context change during refresh capture.
+[ ] Protected/secure content capture failure.
+[ ] Host remap during refresh.
+[ ] Close-open-close reversal with stale completion.
+[ ] Shizuku loss/reconnect during refresh.
+[ ] One UI Home Cover screen mirroring ON and OFF.
+[ ] Transition Lab latency attribution for every path.
+
+======================================================================
+10. FINAL ASSESSMENT
+======================================================================
+
+STRONGEST_PROVEN_FINDING:
+Current exact-cycle frame selection has no semantic-content freshness identity and frozen content is preferred for up to 10 seconds when cycle/geometry/age match.
+
+STRONGEST_RECOMMENDATION:
+Add a semantic ContentContext revision + PRIME/VISUAL_REFRESH purpose to the service-stable capture owner; make semantic dirtiness/newer-started refresh immediately fence old frozen content; use live mirror as the current-content bridge until a fresh deterministic frame is proven.
+
+STRONGEST_LAUNCHER RECOMMENDATION:
+Use One UI’s documented Z Fold7 Cover screen mirroring for native Home-layout synchronization. Duo Open should own the transition visual, not launcher/task state.
+
+STRONGEST_REMAINING_UNCERTAINTY:
+Which content-change signals and refresh timing give the best real Fold7 UX/latency tradeoff. This requires physical-device Transition Lab validation.
+
+PRODUCTION_AUTHORIZATION=NO
+GITHUB_PRODUCTION_WRITES=NONE
+DEVICE_VALIDATION_REQUIRED=YES
+MANUAL_PRIMARY_INTEGRATION_REVIEW_REQUIRED=YES

@@ -1,0 +1,1043 @@
+DUO OPEN — CLOSE-CYCLE CONTINUITY PRIME OWNERSHIP — GEN2 R&D HANDOFF
+Generated UTC: 2026-10-01T22:42:09Z
+
+AGENT_ID=state-rd
+WORKSTREAM_ID=ws-state-rd-close-cycle-prime-20261001t223445z
+ROLE=SECONDARY R&D / NO PRODUCTION AUTHORITY
+REPOSITORY=boberino93-bit/duo-open
+TARGET_DEVICE=Samsung Galaxy Z Fold7 only
+STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+PRODUCTION_GITHUB_WRITES=NONE
+
+======================================================================
+1. EXECUTIVE SUMMARY
+======================================================================
+
+SUBSYSTEM
+Close-cycle continuity-frame priming ownership and stale-capture fencing.
+
+WHY SELECTED
+Primary had already identified P1.1: the "prime once per close cycle" guard is
+owned by mutable PanelEngine instances even though the close cycle itself is a
+service-stable Fold7CycleEnvelope identity. Prior Fold7 field evidence carried
+by primary observed a second continuity prime near ~5 degrees during a display/
+engine remap. No active live Agent Bus workstream was owning this redesign when
+this workstream was claimed.
+
+DOMINANT LIMITATION
+Current main places `primedContinuityCycleId` inside each PanelEngine. A Samsung
+logical-display/engine replacement creates a new PanelEngine whose guard starts
+at -1, so the same exact close cycle can reserve a second prime. The first
+engine's prime coroutine runs in the service MainScope and is not cancelled by
+PanelEngine.destroy(), so both old and replacement attempts can remain in flight.
+
+A second source-level defect compounds this: Fold7ContinuityFrameStore assigns
+monotonic captureSequence values at beginCapture(), but publish() rejects an old
+ticket only relative to the newest already-PUBLISHED frame. It does not reject
+an older attempt merely because a newer attempt has already STARTED. Therefore:
+
+  capture #1 starts
+  engine remaps
+  capture #2 starts
+  capture #1 completes first
+  -> current publish() can accept #1 because latest == null
+
+If #2 then fails, #1 can remain current even though beginCapture(#2) explicitly
+said the newer attempt superseded the previous frame immediately.
+
+GEN2 DIRECTION
+Move prime-attempt ownership into a service-stable Gen2 kernel/cycle owner. Give
+each explicit prime/retry an immutable attempt token:
+
+  serviceEpoch + closeCycleId + attemptSequence
+
+Engine/host/display identity is attribution/source identity only; it must not be
+the once-per-cycle authority. An engine replacement cannot obtain a second
+attempt unless the current exact attempt was explicitly abandoned/failed and a
+retry was authorized. In parallel, Fold7ContinuityFrameStore must track the
+newest STARTED capture sequence and accept publish only from that exact newest
+started attempt. This creates two independent stale-result fences.
+
+STRONGEST EVIDENCE
+1. CURRENT source reconstruction at exact main SHA confirms the mutable-engine
+   guard, service-scope prime coroutine, remap-driven engine recreation, and
+   frame-store start/publish ordering gap.
+2. Reduced source-faithful baseline model reproduces both defects.
+3. Proposed ownership model passes 14/14 deterministic/adversarial tests plus a
+   deterministic 100,000-event stale/duplicate/remap property stream.
+4. Primary's prior Fold7 evidence records the real second-prime symptom near
+   ~5 degrees during remap.
+
+CONFIDENCE
+HIGH for the source-level ownership/race defects and the reduced-model
+invariants. MEDIUM for exact Android integration shape until primary implements
+and runs full Gradle tests. Device behavior remains field-validation dependent.
+
+LARGEST UNKNOWN
+How Samsung's real Fold7 topology-remap timing overlaps Shizuku screenshot
+completion under fast transitions, and whether source loss needs an immediate
+retry or a short bounded grace interval for best real-device latency. The owner
+model supports either policy without weakening exactness.
+
+======================================================================
+2. REPOSITORY / COORDINATION BASELINE
+======================================================================
+
+STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+MAIN_CHANGED_DURING_RND=NO
+AGENT_BUS_AVAILABLE=YES
+AGENT_ID=state-rd
+WORKSTREAM_ID=ws-state-rd-close-cycle-prime-20261001t223445z
+
+LIVE_AGENT_BUS_DEPLOYMENT=legacy v1 append-only /messages + /artifacts
+LIVE_AGENT_BUS_PROTOCOL_SOURCE=/DuoOpen-AgentBus/PROTOCOL.md
+AGENT_BUS_SCHEMA_LIVE=duoopen-agentbus/v1
+AGENT_BUS_SCHEMA_6_REQUESTED_BY_BOOTSTRAP=NOT_DEPLOYED_LIVE
+STATE_LANE=N/A (legacy deployed board; secondary did not invent/migrate V6 states)
+BASE_CURRENT_EPOCH_ID=N/A (legacy board has no CURRENT epoch)
+BASE_CURRENT_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+BASELINE_DRIFT=NO at workstream start
+FINAL_BUS_CURSOR=msg-state-rd-prime-owner-model-v2-20261001t224713z-4e5d9f72 (pre-final-publication cursor)
+FINAL_WORKSTREAM_STATE=COMPLETE after final handoff publication
+
+COORDINATION INPUTS MATERIAL TO THIS WORK
+- Primary Gen3 final decision:
+  msg-primary-gen3-final-decision-20261001t211847z
+- Primary Gen3 reconciliation artifact:
+  /DuoOpen-AgentBus/artifacts/primary/20261001T211847Z/DUO_OPEN_GEN3_PRIMARY_RECONCILIATION.txt
+- Primary staged Phase 1 authority V2 artifact (not current main):
+  /DuoOpen-AgentBus/artifacts/primary/20261001T213903Z/DUO_OPEN_GEN3_PHASE1_AUTHORITY_V2.zip
+  SHA256=7fbde59acf9dc5f8befca875658c72f878c7bf1e34df4ed7d717cec088150b7b
+- Performance R&D handoff:
+  msg-performance-rd-handoff-transition-observability-20261001T221922Z
+- Parallel state-rd continuity-prime arbitration handoff:
+  msg-state-rd-prime-arbitration-handoff-20261001T224555Z
+  /DuoOpen-AgentBus/artifacts/state-rd/20261001T224400Z/DUO_OPEN_CONTINUITY_PRIME_ARBITRATION_RND_HANDOFF.txt
+  SHA256=9820560494862af4259c20f09f7970d09ee1548b18c121a613d4b1c4f34827e7
+  Disposition=corroborating stream; explicitly recommends this workstream's richer stable owner/fallback model while adding the same-engine generic->prime crossover.
+
+CI
+No CI claim is made by this workstream. Full Android Gradle build/test was not
+executed because no production patch was applied and the workstream is a pure
+ownership/model R&D silo.
+
+======================================================================
+3. PRIOR WORK / DUPLICATION CHECK
+======================================================================
+
+PRIOR WORK INDEX
+
+A. state-rd — cover PREWARM authority/CAS
+- Confirmed delayed V3 prewarm can steal newer shell lease ownership.
+- Separate P0.1 problem; primary produced staged Phase 1 V2 package.
+- This work does NOT redesign physical cover authority.
+
+B. display-rd — cover visual composition ownership
+- Proposed exact CoverVisualLease / shader compositor; 34/34 model + fuzz.
+- Separate P0.2 problem; this work does NOT own visual/shader state.
+
+C. performance-rd — transition observability/causal latency
+- Proposed immutable presentation/timing correlation.
+- Separate measurement problem; this work uses no presentation proof as prime
+  authority.
+
+D. primary — Gen3 reconciliation
+- Explicitly identified P1.1: move prime-once guard out of PanelEngine.
+- Carried Fold7 evidence of a second prime near ~5 degrees during remap.
+
+E. parallel state-rd — continuity prime arbitration
+- Independently reproduced the same remap duplicate-prime and FrameStore crossed-publication defects.
+- Added a distinct same-engine generic Accessibility -> later Shizuku prime crossover.
+- Pure owner prototype reported 11/11 + 100,000 fixed-seed events; earlier combined model 10/10 + 100,000.
+- Final handoff explicitly directs primary to use this workstream's richer owner/fallback model rather than create a competing owner.
+- This workstream independently re-read current PanelEngine source, reproduced the generic crossover locally, and extended its own model to 14/14.
+
+HOW THIS WORK DIFFERS
+This work resolves P1.1 with a richer stable owner/fallback state model and a
+double-fence design. A parallel state-rd agent independently corroborated the
+core race and contributed the same-engine generic->prime crossover; that delta
+has been independently source-checked and folded into this handoff rather than
+maintained as a competing architecture. This work does not duplicate P0.1 CAS,
+P0.2 visual composition, or performance telemetry.
+
+MEANINGFUL AGENT BUS PROGRESS MESSAGE IDS
+1. msg-state-rd-close-cycle-prime-claim-20261001t223445z-42c923dc
+2. msg-state-rd-prime-ownership-source-20261001t223648z-b96c3567
+3. msg-state-rd-prime-owner-model-20261001t223940z-8b0e965e
+4. msg-state-rd-generic-prime-crossover-20261001T224237Z (parallel corroboration read/revalidated)
+5. msg-state-rd-prime-arbitration-handoff-20261001T224555Z (parallel final handoff reconciled)
+6. msg-state-rd-prime-owner-model-v2-20261001t224713z-4e5d9f72
+7. FINAL_HANDOFF_MESSAGE_ID=PENDING_PUBLICATION
+
+======================================================================
+4. CURRENT IMPLEMENTATION
+======================================================================
+
+CURRENT SOURCE BASELINE
+45bb0d326899c0e08415928224cfea0ff58d2d4e
+
+A. app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+Blob SHA: c0d23a7f2f2febe54a4a711ebffd1a23a97b37d5
+
+Current ownership:
+- Every live built-in logical display gets a mutable PanelEngine.
+- Each PanelEngine owns:
+    private var primedContinuityCycleId = -1L
+- `primeContinuityFrame(cycle, reason)` rejects a duplicate only when THIS
+  engine's local `primedContinuityCycleId` already matches the cycle.
+- Once it gets a Fold7ContinuityFrameStore ticket, it sets the local guard and
+  launches the screenshot coroutine on the shared service CoroutineScope.
+- Async completion checks activeCloseCycle() and the SAME ENGINE's local guard.
+- `destroy()` increments captureGen and removes visual overlay, but the special
+  prime coroutine does not consult captureGen and is not a child of an
+  engine-owned Job. The old prime can therefore continue after engine destroy.
+- On null prime capture, this engine resets its local prime guard to -1, allowing
+  a retry from that engine. This retry policy is implicit/local rather than a
+  stable exact-cycle decision.
+
+Generic continuity capture coupling:
+- `beginContinuityCapture()` refuses a generic inner continuity capture only if
+  this engine's local primedContinuityCycleId matches active closeCycleId.
+- A replacement engine loses that knowledge too, so generic capture arbitration
+  is also engine-local.
+
+B. app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+Blob SHA: e590b40f2c839ecc05d856f6e0f9b57a10dce6ad
+
+Current causal flow:
+- Service owns `scope = MainScope()`.
+- Service owns `gen2 = Fold7Gen2Kernel<Bitmap>(serviceEpoch)`.
+- `syncDisplays()` removes engines for logical displays that disappeared and
+  creates fresh PanelEngine instances for current live displays.
+- Each new engine receives shared `gen2.frames` and a lambda for
+  `gen2.activeCycle`, but NOT shared prime-attempt state.
+- `primeContinuityFrameIfNeeded()` finds the first engine whose fresh physical
+  mode is 1968x2184 and invokes that engine's prime method.
+- This is called on hinge updates, topology fast lane, and syncDisplays().
+
+Consequence:
+A topology/remap callback can destroy/recreate the inner engine and immediately
+call primeContinuityFrameIfNeeded() again for the same gen2.activeCycle.
+
+C. app/src/full/java/com/duoopen/overlay/Fold7Gen2Kernel.kt
+Blob SHA: f5fa04446b96b4f1d2ea99745d21fb339681b71c
+
+Current role:
+- Service-stable composition root.
+- Owns cycles, coverAuthority, coverReadiness, frames.
+- Starts/invalidate exact Fold7 close cycles.
+- DOES NOT own prime lifecycle today.
+
+This is the natural stable home for prime authority or for a sibling
+service-stable component owned by the kernel.
+
+D. app/src/full/java/com/duoopen/overlay/Fold7CycleEnvelope.kt
+Blob SHA: 25ae3f2820de4351ea7c9d1387e598c1f24a1320
+
+Current identity:
+- CloseCycle(serviceEpoch, closeCycleId, startedUptimeMs).
+- closeCycleId remains stable across controller policy-state transitions.
+- Explicitly designed to differ from controller generation.
+- This is the correct base identity for once-per-close-cycle priming.
+
+E. app/src/full/java/com/duoopen/overlay/Fold7ContinuityFrameStore.kt
+Blob SHA: 2f9a6e0790678546aa5f544e635389f954a78177
+
+Current concurrency/provenance behavior:
+- `beginCycle()` resets capture sequence and latest frame.
+- `beginCapture()` increments captureSequence and immediately clears `latest`.
+- Comment states a newer capture attempt supersedes the previous frame
+  immediately.
+- `publish()` rejects a ticket with sequence <= CURRENT PUBLISHED latest
+  sequence, but it does not remember the newest STARTED sequence.
+
+Ordering hole:
+- if #2 starts before #1 publishes, latest is null;
+- #1 can still publish successfully;
+- #2 failure does not automatically clear #1 afterward because #1 became latest
+  after the #2 beginCapture clear.
+
+F. PRIVILEGED / SYSTEM OPERATIONS
+- Prime screenshot calls ShizukuBridge.capture(displayId, excludedLayers(),
+  INITIAL_SHELL_SCALE) on Dispatchers.IO.
+- This work does not change physical panel authority, raw panel power, task
+  movement, or display routing.
+
+G. CURRENT FALLBACK
+- Null prime capture locally clears the engine guard, permitting implicit retry.
+- Generic inner visual capture can also enter Fold7ContinuityFrameStore when the
+  engine-local prime guard is not set.
+- Gen2 recommendation makes retry/fallback explicit and cycle-owned.
+
+======================================================================
+5. CLAIM / EVIDENCE LEDGER
+======================================================================
+
+CLAIM C1
+A replacement PanelEngine can issue a second prime for the same active close
+cycle.
+EVIDENCE=SOURCE CONFIRMED + REDUCED MODEL REPRODUCED + PRIOR DEVICE SYMPTOM
+SOURCE=PanelEngine local primedContinuityCycleId; FoldOverlayService engine
+recreation and repeated primeContinuityFrameIfNeeded calls.
+DEVICE=Primary reconciliation carries a V9 second prime near ~5 degrees during
+remap. This workstream did not independently reproduce it on hardware.
+
+CLAIM C2
+PanelEngine.destroy() does not cancel/orphan the special prime coroutine.
+EVIDENCE=SOURCE CONFIRMED
+SOURCE=destroy() increments captureGen; prime coroutine does not check captureGen
+and runs in the service MainScope.
+
+CLAIM C3
+An older capture ticket may publish after a newer capture has started but before
+that newer capture publishes.
+EVIDENCE=SOURCE CONFIRMED + REDUCED MODEL REPRODUCED
+SOURCE=FrameStore beginCapture clears latest and increments sequence; publish
+compares only to current published latest.
+
+CLAIM C4
+If newer attempt #2 fails after older #1 is accepted in that ordering, an older
+same-cycle frame can remain current despite #2 having superseded it at start.
+EVIDENCE=SOURCE LOGIC + REDUCED MODEL REPRODUCED
+
+CLAIM C5
+A generic Accessibility continuity capture can start before the prime guard is
+set, then a later Shizuku prime can start on the same engine/cycle; the older
+generic callback does not re-check primedContinuityCycleId before publish.
+EVIDENCE=SOURCE CONFIRMED + REDUCED MODEL REPRODUCED
+SOURCE=beginContinuityCapture() checks the local guard only when issuing the
+ticket; Accessibility callback later calls onCaptured()->FrameStore.publish().
+
+CLAIM C6
+A stable cycle-scoped prime owner plus newest-started ticket fencing prevents
+remap and generic-vs-prime stale authority in the reduced model.
+EVIDENCE=MODEL TESTED
+RESULT=14/14 deterministic/adversarial + 100,000 randomized events PASS.
+
+CLAIM C7
+This change will reduce Fold7 latency by a specific number of milliseconds.
+EVIDENCE=UNVERIFIED
+No latency number is claimed.
+
+======================================================================
+6. CONFIRMED FINDINGS
+======================================================================
+
+SOURCE
+- Mutable PanelEngine owns prime-once state: CONFIRMED.
+- Service can recreate PanelEngine during display topology changes: CONFIRMED.
+- Prime coroutine uses service scope and survives PanelEngine.destroy() unless
+  cycle/local-guard checks later fail it: CONFIRMED.
+- Replacement engine has independent local guard: CONFIRMED.
+- FrameStore does not fence against newest-started capture sequence: CONFIRMED.
+- Generic Accessibility capture can cross a later Shizuku prime on the same
+  engine/cycle without re-checking the now-set prime guard: CONFIRMED from
+  current source and independently reproduced in the local baseline model.
+- Staged Phase 1 V2 CAS package does not patch the prime owner/PanelEngine/
+  FoldOverlayService/Fold7Gen2Kernel/Fold7ContinuityFrameStore: CONFIRMED by
+  package inspection.
+- Phase 1 V2 already propagates ownerServiceEpoch + ownerCloseCycleId in cover
+  authority, which is compatible with the same cycle identity: CONFIRMED.
+
+TEST
+- Baseline duplicate-prime model: REPRODUCED.
+- Baseline stale-old-publish-after-newer-start model: REPRODUCED.
+- Proposed owner model: 14/14 PASS.
+- Proposed randomized model: 100,000 events PASS.
+
+DEVICE
+- Independent device run by this workstream: NONE.
+- Prior primary-carried evidence: second prime near ~5 degrees after remap.
+
+AOSP / OFFICIAL PLATFORM
+- NONE required for the decisive ownership result. This defect is internal to
+  Duo Open lifecycle/ordering and is provable from current source plus model.
+
+======================================================================
+7. HYPOTHESES / UNVERIFIED RISKS
+======================================================================
+
+H1 — Real remap/capture ordering frequency
+Hypothesis: the stale publish ordering is reachable often enough on Fold7 to
+matter visually, not merely theoretically.
+Resolve with: instrument attemptSequence + source instance + captureSequence and
+force/observe a Samsung logical-display remap while prime #1 is in flight.
+
+H2 — Best retry timing after source loss
+Hypothesis: an immediate retry on replacement inner source is best.
+Alternative: a very short bounded grace period may avoid pointless duplicate
+shell work when the source merely remaps transiently.
+Resolve with: device timing distribution for source-loss-to-new-inner-host and
+capture completion.
+
+H3 — Generic capture fallback policy
+Hypothesis: generic inner shader capture should remain blocked while prime is
+ELIGIBLE/IN_FLIGHT/RETRYABLE, and only become eligible after an explicit
+FALLBACK_ALLOWED decision.
+Resolve with: integration tests plus secure/null-capture fault injection and
+visual latency on device.
+
+H4 — Whether successful READY prime should permanently block generic same-cycle
+continuity captures
+Expected YES for deterministic frozen mode, matching current intent to preserve
+the early exact-cycle prime. Verify against current visual path once Gen3 visual
+owner integration is concrete.
+
+======================================================================
+8. GENERATION-2 DESIGN
+======================================================================
+
+RESPONSIBILITIES
+
+1. Fold7CycleEnvelope
+Owns stable serviceEpoch + closeCycleId. Unchanged.
+
+2. New service-stable prime owner
+Recommended name: Fold7ContinuityPrimeOwner (exact name primary may choose).
+Recommended owner: Fold7Gen2Kernel.
+Owns authorization/state for one prime lifecycle per current close cycle.
+
+3. Capture source / PanelEngine
+Provides a currently valid inner physical source capable of executing the
+screenshot. It does NOT own whether a prime may exist.
+
+4. Fold7ContinuityFrameStore
+Owns content ticket/lease ordering and must independently reject an older ticket
+once any newer capture attempt has started.
+
+STATE MODEL
+
+NO_CYCLE
+  no active close cycle
+
+ELIGIBLE
+  current close cycle exists; no attempt yet
+
+IN_FLIGHT(attemptSequence, sourceEpoch)
+  one exact attempt reserved
+
+RETRYABLE(previousAttemptSequence, reason)
+  exact current attempt failed/was abandoned; retry requires explicit begin
+
+READY(attemptSequence, contentLeaseId)
+  exact prime published; no duplicate prime in same cycle
+
+FALLBACK_ALLOWED(reason)
+  prime path intentionally yielded; generic continuity capture may proceed
+
+IDENTITY
+PrimeAttempt:
+- serviceEpoch
+- closeCycleId
+- attemptSequence
+- optional sourceEpoch/hostEpoch for attribution and exact callback source
+
+Do NOT use logical display ID as persistent authority. A logical ID can be
+recorded for diagnostics but must not be the cycle identity.
+
+LIFECYCLE
+- beginClose -> owner.beginCycle(cycle) => ELIGIBLE.
+- service wants prime -> owner.tryBegin(cycle,currentSourceEpoch) atomically
+  returns exact token or null.
+- only after token reservation may capture start.
+- source remap alone does NOT grant replacement source a token.
+- source loss can explicitly abandon exact in-flight token -> RETRYABLE.
+- retry increments attemptSequence and reserves a new exact token.
+- successful current token publish -> READY.
+- reversal/native takeover/service stop -> invalidate cycle; old callbacks inert.
+- new close cycle -> fresh identity, independent sequence.
+
+CONCURRENCY / CANCELLATION
+- Completion first checks prime owner token exactness.
+- FrameStore publish then checks capture ticket is newest-started for the cycle.
+- Both must pass. One fence is not a substitute for the other.
+- A destroyed source cannot mutate the owner merely because its coroutine
+  returns. It can only complete/fail/abandon with the exact token.
+- If source destruction can be synchronously observed, explicit abandon makes
+  retry immediate. Otherwise stale callback is harmless and a timeout can move
+  current token to RETRYABLE.
+
+FRAME-STORE HARDENING
+Add per-cycle newestStartedCaptureSequence (or exact active ticket identity).
+On beginCapture:
+- increment sequence;
+- set newestStartedCaptureSequence to ticket sequence;
+- clear latest.
+On publish:
+- require ticket.serviceEpoch/closeCycleId current;
+- require ticket.captureSequence == newestStartedCaptureSequence;
+- retain existing timestamp/provenance checks.
+This makes "newer attempt supersedes older immediately" true in code, not only
+in comment.
+
+RECOVERY
+- Failed current attempt -> RETRYABLE.
+- Primary can choose bounded retry count/time policy separately.
+- Explicit FALLBACK_ALLOWED permits generic current-cycle capture without
+  accidentally racing the prime.
+- Never resurrect a pre-supersession frame after a failed newer attempt.
+
+DEGRADATION
+- If no valid inner source or repeated capture failure, mark explicit fallback
+  reason and allow the existing safe downstream/native path.
+- No stale prior-cycle substitution.
+
+INVARIANTS
+I1. At most one authoritative prime attempt is IN_FLIGHT per exact close cycle.
+I2. Engine/display remap alone never creates a new prime attempt.
+I3. Every retry has strictly greater attemptSequence.
+I4. Only exact current attempt token may transition owner to READY/RETRYABLE.
+I5. Once a newer capture starts, older capture tickets can never publish.
+I6. Old service/cycle callbacks are inert.
+I7. READY blocks duplicate same-cycle prime.
+I8. Generic continuity capture requires explicit owner policy, not an engine-
+    local boolean reset.
+I9. Logical display ID is source metadata, not persistent physical identity.
+I10. No changes to physical panel power, task migration, or hinge thresholds.
+
+======================================================================
+9. PROTOTYPE / PROPOSED CHANGES
+======================================================================
+
+FILE=Fold7ContinuityPrimeOwnerGen2.kt
+PURPOSE=Pure Kotlin model of service-stable close-cycle prime ownership, exact
+attempt identity, retry/abandon/fallback semantics, and newest-started frame
+store fencing.
+BASELINE_OR_NEW=NEW EXPERIMENTAL MODEL
+COMPILED=YES
+TESTED=YES
+PRODUCTION_READY=NO
+SHA256=843389cb8b0e053810043584f4cf9b07e181642f3e4defb9211b6ebf5b813799
+
+FILE=CloseCyclePrimeGen2Test.kt
+PURPOSE=Source-faithful baseline reproducers plus deterministic/adversarial tests
+for proposed owner and frame-store invariants, including 100,000 randomized
+events.
+BASELINE_OR_NEW=NEW EXPERIMENTAL TEST MODEL
+COMPILED=YES
+TESTED=YES
+PRODUCTION_READY=NO
+SHA256=75cea9ff4f50d6d870763806d62092eb1c85f943b8f5be5b56fc95c68562861f
+
+FILE=TEST_OUTPUT.txt
+PURPOSE=Exact local model execution result.
+BASELINE_OR_NEW=GENERATED TEST EVIDENCE
+COMPILED=N/A
+TESTED=N/A
+PRODUCTION_READY=NO
+SHA256=ef9ab80265ac6fd0d994e60f88244df46ecb59c9c0a0f5dbff279a272b6e1e00
+
+GENERATED LOCAL JAR
+close-cycle-prime-gen2-tests.jar
+SHA256=2b9265ca822034bb6f8bd75043e2f2f8226dcbc2079bbe4f83235fd8a5ac22bd
+Not included in proposal ZIP per clean R&D package policy.
+
+NO production repository file was modified.
+
+======================================================================
+10. EXECUTION EVIDENCE
+======================================================================
+
+E1 — LIVE AGENT BUS DISCOVERY
+METHOD=ChatGPT Library files list/read
+RESULT=SUCCESS
+LIVE_LAYOUT=legacy v1 /messages + /artifacts
+ACTION=followed deployed protocol; did not create/migrate V6 /states.
+
+E2 — CURRENT MAIN BASELINE
+METHOD=GitHub connector recent commits/fetch commit
+RESULT=45bb0d326899c0e08415928224cfea0ff58d2d4e
+TITLE=Fix Fold7 Gen2 field transitions and render ownership
+
+E3 — CURRENT SOURCE INSPECTION
+METHOD=GitHub connector fetch_file at exact SHA
+FILES:
+- PanelEngine.kt blob c0d23a7f2f2febe54a4a711ebffd1a23a97b37d5
+- FoldOverlayService.kt blob e590b40f2c839ecc05d856f6e0f9b57a10dce6ad
+- Fold7Gen2Kernel.kt blob f5fa04446b96b4f1d2ea99745d21fb339681b71c
+- Fold7CycleEnvelope.kt blob 25ae3f2820de4351ea7c9d1387e598c1f24a1320
+- Fold7ContinuityFrameStore.kt blob 2f9a6e0790678546aa5f544e635389f954a78177
+RESULT=source-level race path confirmed.
+
+E4 — PRIMARY PHASE 1 V2 COMPATIBILITY CHECK
+ARTIFACT=DUO_OPEN_GEN3_PHASE1_AUTHORITY_V2.zip
+SHA256=7fbde59acf9dc5f8befca875658c72f878c7bf1e34df4ed7d717cec088150b7b
+RESULT=package hash verified; package touches coordinator/cover-lease gate/shell
+protocol/bridge/lease tests, not this workstream's core ownership files.
+DEPENDENCY=both use same serviceEpoch + closeCycleId identity; compatible layering.
+
+E5 — PURE KOTLIN COMPILE
+COMMAND=kotlinc Fold7ContinuityPrimeOwnerGen2.kt CloseCyclePrimeGen2Test.kt -include-runtime -d close-cycle-prime-gen2-tests.jar
+RESULT=PASS
+
+E6 — PURE KOTLIN EXECUTION
+COMMAND=java -jar close-cycle-prime-gen2-tests.jar
+RESULT=14 passed / 0 failed / 14 total
+
+E7 — RANDOMIZED ADVERSARIAL STREAM
+EVENTS=100000
+RESULT=PASS
+COVERAGE=duplicates, remaps/source changes, stale completion/failure/abandon,
+cycle rollover, service epoch rollover, retry/fallback state invariants.
+
+E8 — ANDROID/GRADLE BUILD
+EXECUTED=NO
+REASON=no production integration patch in secondary R&D silo.
+
+E9 — PHYSICAL FOLD7 TEST
+EXECUTED=NO
+REASON=not available inside this workstream; required after primary integration.
+
+======================================================================
+11. ADVERSARIAL BACK-TEST RESULTS
+======================================================================
+
+SCENARIO: replacement engine asks to prime same close cycle
+BASELINE=second engine starts with local guard -1 and can issue second prime.
+GEN2=stable owner returns no second token while current attempt IN_FLIGHT/READY.
+RESULT=BASELINE REPRODUCED; GEN2 PASS.
+
+SCENARIO: capture #1 starts, capture #2 starts, #1 completes first
+BASELINE=FrameStore can accept #1 because `latest` is null.
+GEN2=frame store rejects #1 because newestStartedCaptureSequence == #2.
+RESULT=BASELINE REPRODUCED; GEN2 PASS.
+
+SCENARIO: generic Accessibility ticket starts, later Shizuku prime starts on same engine
+BASELINE=older generic callback can still publish because it does not re-check
+prime guard and FrameStore lacks newest-started fencing.
+GEN2=generic exact-cycle admission is controlled by stable owner policy; if a
+newer authoritative capture starts, ticket ordering independently rejects old one.
+RESULT=BASELINE REPRODUCED; GEN2 architecture covers the race.
+
+SCENARIO: old source destroyed while capture coroutine continues
+BASELINE=destroy() does not directly invalidate special prime coroutine.
+GEN2=old callback lacks current token after explicit abandon/retry and is inert.
+RESULT=GEN2 PASS in model.
+
+SCENARIO: exact current capture fails
+GEN2=owner becomes RETRYABLE only via exact current token; no implicit authority
+reset attached to source object.
+RESULT=PASS.
+
+SCENARIO: explicit retry
+GEN2=new attemptSequence > previous; older callback cannot complete owner or store.
+RESULT=PASS.
+
+SCENARIO: READY then duplicate callbacks/remap
+GEN2=READY blocks duplicate same-cycle prime.
+RESULT=PASS.
+
+SCENARIO: reversal invalidates close cycle during capture
+GEN2=old exact token cannot mutate new/no-cycle state.
+RESULT=PASS.
+
+SCENARIO: close -> open -> close
+GEN2=new closeCycle identity independent; previous tokens rejected.
+RESULT=PASS.
+
+SCENARIO: service epoch rollover
+GEN2=old cycle/token rejected.
+RESULT=PASS.
+
+SCENARIO: 100,000 mixed stale/duplicate/remap operations
+RESULT=PASS.
+
+NOT TESTED IN REDUCED MODEL
+- actual Shizuku/Binder cancellation timing;
+- Android display callback ordering;
+- real screenshot latency/black-frame behavior;
+- bitmap lifecycle/recycle interactions in production integration;
+- Fold7 physical/logical route remap frequency;
+- full visual integration with future Gen3 compositor.
+
+======================================================================
+12. BASELINE VS GENERATION-2
+======================================================================
+
+BEHAVIOR: once-per-cycle ownership
+BASELINE=per PanelEngine local long.
+GEN2=service-stable exact-cycle owner.
+BENEFIT=remap cannot silently reset authority.
+PROOF=source + model.
+
+BEHAVIOR: retry
+BASELINE=null capture locally resets engine guard to -1.
+GEN2=exact attempt transitions to RETRYABLE; retry gets explicit sequence.
+BENEFIT=observable/idempotent stale-safe retry semantics.
+PROOF=model.
+
+BEHAVIOR: source/engine replacement
+BASELINE=new engine has fresh guard and can re-prime.
+GEN2=new source is only a capture executor; it cannot mint authority.
+BENEFIT=separates resource identity from cycle intent.
+PROOF=model; device validation required.
+
+BEHAVIOR: frame publication ordering
+BASELINE=publish fenced against newest published frame only.
+GEN2=publish fenced against newest started capture ticket.
+BENEFIT=completion order cannot resurrect superseded attempt.
+PROOF=source + baseline repro + model.
+
+BEHAVIOR: generic inner continuity capture
+BASELINE=blocked by per-engine prime flag.
+GEN2=allowed/blocked by explicit cycle-owned policy state.
+BENEFIT=remap-safe arbitration; no accidental capture race.
+PROOF=model; integration semantics require primary review.
+
+BEHAVIOR: physical cover authority
+BASELINE=Gen2/V3 currently; primary staged V4 CAS Phase1.
+GEN2 PRIME DESIGN=unchanged; consumes same closeCycle identity only.
+BENEFIT=no authority layering collapse.
+
+======================================================================
+13. REGRESSION RISKS
+======================================================================
+
+CORRECTNESS
+- Overly strict store fencing could reject a legitimate independent capture path
+  if multiple capture classes share one sequence without explicit policy.
+  Mitigation: make all exact-cycle frame attempts use a deliberate unified
+  arbitration contract or distinguish capture purpose while maintaining a
+  single newest-authoritative sequence.
+
+LATENCY
+- Explicitly serializing prime attempts could delay fallback if timeout/retry
+  policy is too conservative. Measure before choosing timeout.
+
+POWER
+- Expected improvement from eliminating duplicate screenshots during remap, but
+  no device power measurement exists.
+
+SAMSUNG INTERFERENCE
+- Remap may happen while old capture remains usable. Architecture rejects stale
+  authority safely but retry timing must be measured on Fold7.
+
+LIFECYCLE
+- Must invalidate owner before stale service/source callbacks can act during
+  reversal/service destruction.
+
+RACES
+- Owner exact-token check and frame-store newest-started check must both exist.
+- Do not rely only on coroutine cancellation; Binder/shell work may complete
+  after cancellation intent.
+
+RENDERING
+- Frame-store hardening changes which frame survives races; fallback visuals may
+  show no exact frozen frame rather than an older superseded one. This is
+  intentional correctness but must degrade cleanly.
+
+RESTART BEHAVIOR
+- serviceEpoch must invalidate prior attempt identity and store state.
+
+======================================================================
+14. TESTS REQUIRED
+======================================================================
+
+UNIT / JVM
+- duplicate begin same cycle while IN_FLIGHT -> denied/idempotent.
+- remap/source replacement does not create new attempt.
+- exact failure -> RETRYABLE.
+- stale failure cannot mark current retry failed.
+- exact abandon -> RETRYABLE.
+- retry sequence strictly increases.
+- old completion after retry -> rejected.
+- READY blocks new same-cycle prime.
+- explicit fallback permits generic path only when intended.
+- reversal invalidates token.
+- new cycle and service epoch reject prior tokens.
+- FrameStore rejects ticket older than newest STARTED ticket even if latest null.
+- randomized callback storm/property test >=100k operations.
+
+ANDROID INTEGRATION
+- Kernel owner survives PanelEngine removal/recreation.
+- Engine/source lifecycle reports explicit abandon only for exact current token.
+- No use-after-recycle/double-recycle when stale bitmap completion is rejected.
+- Generic capture cannot supersede READY prime in deterministic frozen mode.
+- Full existing FrameStore/cycle/coordinator tests still pass.
+- `./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace`.
+
+FAULT INJECTION
+- destroy source immediately after capture starts.
+- create replacement source before old screenshot returns.
+- null screenshot on first attempt, success on retry.
+- first attempt success arrives after retry started.
+- retry null after old success returns.
+- Shizuku loss/recovery.
+- reversal at every owner state.
+- service restart with queued callback.
+
+TIMING
+Instrument:
+- closeCycle start;
+- prime attempt reservation;
+- sourceEpoch/display observation;
+- Shizuku request start/return;
+- frame captureSequence start/publish/reject;
+- explicit retry/fallback decision;
+- host remap callbacks.
+Do not infer causality from temporal proximity alone; align with performance-rd
+correlation work when integrated.
+
+DEVICE
+See Section 15.
+
+======================================================================
+15. FOLD7 FIELD TEST PLAN
+======================================================================
+
+TEST A — SLOW OPEN -> CLOSE WITH NORMAL TOPOLOGY
+START=fully open, inner active, non-secure visually distinct content.
+ACTION=close slowly to 0.
+EXPECT=exactly one authoritative prime START for one closeCycle unless a logged
+explicit failure/retry occurs; one READY content lease; no duplicate prime after
+display callbacks.
+CAPTURE=Transition Lab/logcat, cycle/attempt/capture IDs, external high-fps video.
+PASS=no unexplained second prime; content lease belongs to current attempt.
+
+TEST B — REMAP DURING IN-FLIGHT PRIME
+ACTION=use transition pattern known from prior V9 logs to trigger Samsung logical
+inner/cover route remap while prime screenshot is in flight.
+EXPECT=old source may finish, but replacement source does not automatically mint
+a second attempt. If integration explicitly abandons and retries, retry has
+attemptSequence+1 and old callback is rejected.
+PASS=no two simultaneous authoritative attempts; no stale old publish.
+
+TEST C — FIRST CAPTURE FAILURE + RETRY
+FAULT=force/null first Shizuku capture where practical.
+EXPECT=RETRYABLE with reason; explicit second attempt; no stale #1 completion can
+win after #2 starts.
+PASS=current content comes only from newest exact attempt.
+
+TEST D — MID-CLOSE REVERSAL
+ACTION=close through prime start then reopen.
+EXPECT=cycle invalidated; pending callback inert; no frame from cancelled close
+appears in reopening/new close.
+
+TEST E — CLOSE -> OPEN -> CLOSE
+EXPECT=new closeCycle receives fresh attempt sequence namespace/identity; prior
+callbacks rejected.
+
+TEST F — SHIZUKU LOSS/RECOVERY
+EXPECT=current attempt fails/abandons deterministically; no implicit duplicate;
+new connection/service state does not accept stale callback.
+
+TEST G — FAST CLOSE
+EXPECT=prime ownership does not add a hot-path Binder round trip; local in-process
+reservation precedes the existing screenshot request. Measure reveal timing and
+compare to V9 baseline.
+
+FIELD PASS CRITERIA
+- zero unexplained duplicate prime attempts in same exact closeCycle;
+- zero accepted publish from a capture older than newest started attempt;
+- no stale prior-cycle frame presentation;
+- retry/fallback reason explicit;
+- no regression to V9 early-frame capture quality or inner wake behavior.
+
+======================================================================
+16. PERFORMANCE / LATENCY IMPACT
+======================================================================
+
+No aggregate latency number is claimed.
+
+OWNER RESERVATION
+TYPE=EXPECTED
+COST=small in-process state mutation/check; exact device microcost UNKNOWN.
+
+DUPLICATE SCREENSHOTS ON REMAP
+TYPE=EXPECTED IMPROVEMENT
+CHANGE=eliminates unauthorized duplicate screenshot work in the common no-failure
+case. Saved milliseconds/power UNKNOWN until device trace.
+
+RETRY AFTER REAL FAILURE
+TYPE=POLICY-DEPENDENT / UNKNOWN
+CHANGE=explicit retry may be immediate or bounded. Timeout choice can affect
+latency and must be measured.
+
+FRAME-STORE FENCING
+TYPE=EXPECTED
+COST=single sequence equality check; practical cost expected negligible but not
+measured.
+
+BINDER / SHIZUKU WORK
+TYPE=UNCHANGED for one valid attempt.
+GEN2 must not add an extra Binder/subprocess operation at visual threshold.
+
+GPU / RENDERING
+TYPE=UNCHANGED directly by this subsystem.
+Any indirect benefit from avoiding wrong/stale frame churn is UNKNOWN.
+
+POWER
+TYPE=EXPECTED IMPROVEMENT if duplicate captures are eliminated; MEASURED=NO.
+
+======================================================================
+17. IMPLEMENTATION PRIORITY
+======================================================================
+
+P0 — integrate only after/with primary's P0.1 authority baseline reconciliation
+- Do not bypass staged exact CAS authority work.
+- Prime design is independent but should consume the same exact CloseCycle.
+
+P1 — THIS WORKSTREAM
+1. Add service-stable Fold7ContinuityPrimeOwner to Gen2 kernel (or equivalent).
+2. Move prime reservation/retry/fallback state out of PanelEngine.
+3. Pass exact attempt token into capture execution.
+4. Harden FrameStore with newest-started ticket fencing.
+5. Make generic exact-cycle capture arbitration consult stable owner policy.
+6. Add focused unit/property tests.
+7. Run full Gradle gates.
+
+P1/P2 FOLLOW-ON
+- Connect attempt/capture identity to performance-rd observability.
+- Ensure future Gen3 visual owner consumes only exact current content lease.
+- Tune retry timing only after Fold7 measurements.
+
+DEPENDENCIES
+- Requires existing Fold7CycleEnvelope stable identity.
+- Compatible with Phase 1 V2 cover-authority ownerServiceEpoch/ownerCloseCycleId.
+- Does not require visual compositor implementation to establish ownership
+correctness.
+
+======================================================================
+18. WHAT NOT TO CHANGE
+======================================================================
+
+- Do not move prime-once state into another mutable engine/host/display object.
+- Do not use logical display ID as persistent physical/cycle identity.
+- Do not "fix" duplicates with a global boolean lacking exact cycle/attempt ID.
+- Do not rely solely on coroutine cancellation or a captureGen check; that can
+  fence one destroyed executor callback but does not fix duplicate admission or
+  same-engine generic->prime crossover.
+- Do not harden FrameStore alone; that prevents stale publication but still
+  permits duplicate expensive capture work and implicit retry/source authority.
+- Do not add only a stable owner while leaving FrameStore's newest-started
+  supersession hole intact; defense-in-depth is required.
+- Do not allow an older capture to publish after any newer authoritative capture
+  has started.
+- Do not resurrect an older same-cycle frame if the superseding attempt fails.
+- Do not allow generic capture fallback merely because a replacement engine's
+  local state is empty.
+- Do not change 3/8/174/135/140/172/166 degree thresholds for this fix.
+- Do not change right-pane geometry.
+- Do not add raw physical panel OFF behavior.
+- Do not move Android tasks to secondary displays.
+- Do not collapse prime ownership into cover-authority CAS or visual ownership;
+  they are separate layers sharing cycle identity.
+- Do not commit/push from this R&D handoff without primary review.
+
+======================================================================
+19. SUPERVISOR INTEGRATION NOTES
+======================================================================
+
+LIKELY PRODUCTION FILES TO MODIFY
+- app/src/full/java/com/duoopen/overlay/Fold7Gen2Kernel.kt
+- app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+- app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityFrameStore.kt
+
+LIKELY NEW FILE
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityPrimeOwner.kt
+  (or equivalent pure owner)
+
+LIKELY TEST FILES
+- focused prime-owner tests
+- FrameStore ordering tests
+- kernel/service integration tests as appropriate
+
+PHASE 1 V2 OVERLAP CHECK
+Primary's staged `DUO_OPEN_GEN3_PHASE1_AUTHORITY_V2.zip` modifies:
+- Fold7ContinuityCoordinator.kt
+- Fold7CoverLeaseSnapshotGate.kt
+- DuoShellService.kt
+- Fold7CoverPanelLease.kt
+- ShellProtocol.kt
+- ShizukuBridge.kt
+- Fold7CoverPanelLeaseV4Test.kt
+
+No direct core-file overlap with the four prime ownership files above was found.
+Conceptual dependency exists because coordinator Phase1 uses the same
+serviceEpoch + closeCycleId to identify cover-authority owner. Preserve that
+identity separation; do not combine authority token and prime token into one
+state machine.
+
+CURRENT MAIN CONFLICT
+At the starting SHA, no conflict beyond replacing/moving current
+`primedContinuityCycleId` behavior.
+FINAL main drift must be rechecked before implementation.
+
+MECHANICALLY APPLICABLE VS MANUAL
+- Pure owner and FrameStore fencing algorithm are mechanically small.
+- Moving capture/retry/fallback orchestration out of PanelEngine requires manual
+  architectural integration because generic visual capture and bitmap recycling
+  lifecycles must remain correct.
+- Primary must independently inspect current main and Phase1-applied tree before
+  authorizing production edits.
+
+RECHECKS REQUIRED
+1. Fetch current main.
+2. If Phase1 V2 has landed, inspect coordinator/kernel interface and rerun owner
+   model assumptions.
+3. Search for any new FrameStore/capture arbitration changes from other agents.
+4. Run focused JVM tests then full Gradle gates.
+5. Perform Fold7 field tests before calling production-ready.
+
+DEFAULT=MANUAL REVIEW REQUIRED
+
+======================================================================
+20. ARTIFACT IDENTITY
+======================================================================
+
+HANDOFF_FILENAME=DUO_OPEN_CLOSE_CYCLE_PRIME_GEN2_RND_HANDOFF.txt
+HANDOFF_SHA256=DETACHED_IN_SHA256SUMS_AND_FINAL_BUS_MESSAGE
+
+PROPOSAL_ZIP_FILENAME=DUO_OPEN_CLOSE_CYCLE_PRIME_GEN2_PROPOSAL.zip
+PROPOSAL_ZIP_SHA256=DETACHED_AFTER_ZIP_CREATION_AND_IN_FINAL_BUS_MESSAGE
+
+UNATTACHED_GIT_BLOB_SHA=N/A
+
+Rationale for detached self hashes: embedding a file's own SHA-256 in that file
+or a ZIP's own SHA-256 inside its contained handoff would create a circular
+self-reference. Exact detached hashes are published only after bytes are frozen.
+
+======================================================================
+21. BOTTOM LINE
+======================================================================
+
+PROVEN
+- Current main's once-per-close-cycle prime guard is scoped to mutable
+  PanelEngine instances rather than the stable close cycle.
+- PanelEngine replacement can therefore authorize another prime in the same
+  close cycle.
+- The original prime coroutine can survive engine destroy because it uses the
+  service scope and does not consult the engine's captureGen invalidation.
+- FrameStore currently fences against newest PUBLISHED frame, not newest STARTED
+  capture, so an older attempt can publish after a newer one starts.
+- Reduced source-faithful baseline models reproduce both defects.
+- A stable exact-cycle prime owner + newest-started frame ticket fence passes
+  14/14 tests and 100,000 randomized adversarial events.
+
+EXPECTED
+- Moving authority to the Gen2 kernel/cycle layer will eliminate remap-induced
+  duplicate prime authorization and make retries explicit/idempotent.
+- Newest-started ticket fencing will prevent completion-order resurrection of
+  superseded frames.
+- Avoiding duplicate screenshots should reduce unnecessary work, but no numeric
+  latency/power improvement is claimed.
+
+UNKNOWN
+- Exact Fold7 remap/capture overlap frequency and optimal retry timing.
+- Full Android integration behavior, bitmap lifecycle effects, and field visual
+  impact until primary integrates and runs device tests.
+
+NEXT BEST ENGINEERING ACTION
+Primary should integrate a small pure cycle-scoped prime owner into
+Fold7Gen2Kernel, harden Fold7ContinuityFrameStore publication against the newest
+STARTED ticket, then adapt service/PanelEngine capture execution to require the
+exact attempt token. Run focused tests, full Gradle gates, and a Fold7 remap
+field test before any production authorization.
+
+PRODUCTION_STATUS=R&D ONLY
+DEVICE_VALIDATION_REQUIRED=YES
+MANUAL_INTEGRATION_REVIEW_REQUIRED=YES
+INSTALLATION_AUTHORIZED=NO

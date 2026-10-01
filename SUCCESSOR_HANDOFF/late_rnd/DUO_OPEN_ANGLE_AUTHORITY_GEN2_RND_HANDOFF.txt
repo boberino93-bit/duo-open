@@ -1,0 +1,438 @@
+DUO OPEN — FOLD7 PRECISE-ANGLE AUTHORITY / FAILOVER R&D HANDOFF
+================================================================
+
+AGENT_ID: state-rd
+WORKSTREAM_ID: ws-state-rd-angle-authority-20261001T231043Z
+ROLE: Secondary R&D only; no production authority
+REPOSITORY: boberino93-bit/duo-open
+STARTING_MAIN_SHA: 45bb0d326899c0e08415928224cfea0ff58d2d4e
+MAIN_SHA_AT_LAST_RECONCILIATION: 45bb0d326899c0e08415928224cfea0ff58d2d4e
+TARGET: Samsung Galaxy Z Fold7 only, Android 16 / One UI
+TARGET_GEOMETRY: INNER 1968x2184; COVER 1080x2520
+PRODUCTION_WRITES: NONE
+
+1. EXECUTIVE SUMMARY
+--------------------
+The current Fold7 angle path has strong identity protection for Samsung/Shizuku polling: reader sessions, poll sequences, and latest-only control delivery are explicit. The remaining weakness is a different kind of ownership problem: angle authority is still represented in HingeAngleSource as a naked `externalActive` boolean plus a receiver-time freshness stamp.
+
+The most important confirmed source-level failure is deterministic:
+
+1) A precise Samsung angle is accepted and activates external authority.
+2) The Samsung precise feed then goes silent without Shizuku itself necessarily becoming unavailable.
+3) A public/coarse hinge sensor event arrives while external authority is inside its 3,000 ms freshness window.
+4) HingeAngleSource returns immediately and discards that public event before retaining it as a fallback candidate.
+5) WallpaperAngleFeed later detects stale precise callbacks and calls `hinge.clearExternal()`.
+6) `clearExternal()` only clears the boolean; it does not replay or promote the discarded public angle.
+7) If the hinge is now stationary, an on-change/coarse sensor may not emit another event, leaving the authoritative angle stale until the next physical hinge movement.
+
+This is upstream of display remap, mirror ownership, presentation ownership, and opening-terminal handoff. It can therefore make otherwise-correct downstream state machines operate on stale geometry.
+
+A reduced source-faithful model plus a proposed source-stamped authority lease/buffer passes 11/11 focused cases, including a deterministic 100,000-event adversarial stream. No production files were changed.
+
+The recommended Gen3 integration shape is a single control-thread angle-authority owner that:
+- treats current reader session/poll identity as necessary but not sufficient for precise authority;
+- makes source age part of precise lease validity;
+- always retains the freshest eligible public sensor sample even while precise geometry owns presentation;
+- atomically promotes a still-fresh buffered public sample when the precise lease expires or the source is revoked;
+- keeps DeviceStateManager edges wake-only, never visual geometry;
+- scopes synthetic endpoint samples to the exact precise session/generation;
+- exposes source-age/authority transitions to TransitionLab/diagnostics.
+
+The 96 ms freshness value used in the model is NOT a requested production threshold change. It is the existing WallpaperAngleFeed `POLL_TIMEOUT_MS`, used only as a concrete test budget. The production lease/acceptance budget should be selected from Fold7 measurements and primary architectural judgment.
+
+2. LIVE COORDINATION / PRIOR WORK RECONCILIATION
+-------------------------------------------------
+The uploaded V6.3 bootstrap describes `/states/current` + `/states/future`, but the live deployed Library board remains the legacy append-only layout:
+
+- /DuoOpen-AgentBus/messages
+- /DuoOpen-AgentBus/artifacts
+
+Per the bootstrap compatibility rule, this workstream used the live legacy protocol and did not invent missing V6 paths.
+
+Relevant live work observed before/during this investigation included:
+- primary Gen3 alpha1 ownership integration;
+- state-rd opening attempt ownership/remap race;
+- reviewer presentation ownership;
+- display-rd terminal/native inner handoff;
+- reviewer launcher/content freshness;
+- reviewer Shizuku recovery;
+- performance-rd transition observability;
+- prior close-cycle prime arbitration and cover visual composition.
+
+This workstream intentionally avoided those scopes. The selected boundary is upstream input authority/failover between Samsung precise angle, public/vendor hinge sensors, and wake-only device-state edges.
+
+Agent Bus claim:
+- msg-state-rd-angle-authority-claim-20261001t231043z-de9be1
+- /DuoOpen-AgentBus/messages/20261001T231043Z__state-rd__all__target-claim-angle-authority.json
+
+Primary finding message:
+- /DuoOpen-AgentBus/messages/20261001T231650Z__state-rd__primary__finding-angle-authority-failover.json
+
+3. CURRENT SOURCE RECONSTRUCTION
+--------------------------------
+3.1 HingeAngleSource.kt
+Path: app/src/main/java/com/duoopen/fold/HingeAngleSource.kt
+
+Responsibilities today:
+- discovers/registers standard TYPE_HINGE_ANGLE and plausible vendor hinge/fold sensors;
+- picks the finest reporting public sensor;
+- accepts Samsung/Shizuku continuous angle through `feedExternal(angle)`;
+- gives the external angle precedence while `externalActive` is fresh;
+- calls the service's onAngle callback only for the currently accepted source.
+
+Key behavior:
+- `feedExternal()` sets `externalActive = true` and `externalLastUptime = SystemClock.uptimeMillis()`.
+- the precise sample's original source timestamp is not passed into HingeAngleSource.
+- `onSensorChanged()` checks external authority first. If external is still fresh, it returns immediately before observing/retaining the public reading.
+- `EXTERNAL_STALE_MS = 3000L`.
+- `clearExternal()` only sets `externalActive = false`.
+- the file's own design comments note that target public sensors may report only coarse stops / on-change behavior, so no callback is guaranteed while the hinge is stationary.
+
+3.2 WallpaperAngleFeed.kt
+Path: app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
+
+Strong existing protections:
+- one reader session per feed lifetime;
+- one poll in flight;
+- poll sequences encoded in Samsung wallpaper action identity;
+- stale reader-session callback rejection;
+- wrong/no-current-poll rejection;
+- completion-paced scheduling;
+- current target period 8 ms;
+- current poll timeout 96 ms.
+
+Important remaining behavior:
+- accepted callback includes `sourceUptime` and records delivery lag;
+- source age is observability only: after pipeline acceptance, `hinge.feedExternal(angle)` is unconditional;
+- HingeAngleSource then restamps freshness using consumer receipt time rather than source time;
+- stale-feed detection runs via `statusTick` every 1,000 ms with `STALE_MS = 2500L`, and eventually posts `hinge.clearExternal()` to the control Handler.
+
+Therefore precise source identity can be current while precise source freshness is stale, and source loss revocation is not coupled to recovery of a suppressed public sample.
+
+3.3 Fold7AnglePipelineGen2.kt
+Path: app/src/full/java/com/duoopen/shell/Fold7AnglePipelineGen2.kt
+
+This is already good identity ownership and should be preserved:
+- session token;
+- PollToken(session, sequence, startedUptimeMs);
+- rejected old-session samples/completions;
+- rejected wrong-poll samples;
+- monotonic sample sequence;
+- latest-only presentation coalescing.
+
+The missing invariant is source-age authority; pipeline identity currently proves *which request* a sample belongs to, not *whether the geometry is still timely enough to acquire/refresh authority*.
+
+3.4 DuoShellService AngleReader
+Path: app/src/full/java/com/duoopen/shell/DuoShellService.kt
+
+The shell reader:
+- tails Samsung FoldInteractive logcat;
+- requires matching action prefix / poll sequence;
+- requires visible=true;
+- parses mCurrentAngle in 0..180;
+- rejects buffered lines older than 1,500 ms based on logcat epoch time;
+- returns angle, derived source uptime, and poll sequence through Binder.
+
+This substantially reduces unrelated/buffered log contamination. It does not eliminate the app-side authority gap because 1,500 ms is much larger than the 8 ms target / 96 ms poll timeout, and app-side freshness is not used to decide authority after a current poll is accepted.
+
+3.5 Fold7DeviceStateObserver / early wake
+Path: app/src/full/java/com/duoopen/overlay/Fold7DeviceStateObserver.kt
+Path: app/src/full/java/com/duoopen/overlay/Fold7EarlyWakeIngress.kt
+
+The architecture correctly treats device-state as infrastructure/wake evidence, not visual geometry. Folded state IDs are semantic/OEM-configured; learned fallback IDs require corroboration from native-cover topology + precise <=12°. This separation should remain.
+
+3.6 FoldOverlayService / coordinator
+Path: app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+
+- HingeAngleSource callbacks are serialized on `duo-fold7-angle-control`.
+- `enqueueHingeFromControl` coalesces latest angle to main.
+- continuity, render reconciliation, frame priming, and PanelEngine then consume that angle.
+- device-state opening edge can kick a precise burst and wake infrastructure without synthesizing geometry.
+
+This makes the angle-authority point especially important: one upstream accepted angle fans out to multiple downstream owners.
+
+4. CONFIRMED DOMINANT LIMITATION
+--------------------------------
+CONFIDENCE: HIGH (source-confirmed + deterministic reduced model)
+DEVICE-FREQUENCY: NOT YET MEASURED ON THE USER'S FOLD7
+
+Failure sequence A — lost fallback event:
+
+- Precise Samsung sample A arrives and sets `externalActive=true`.
+- Samsung callbacks stop silently while Shizuku may remain connected.
+- Public/coarse sensor reports movement B during the 3 s external window.
+- `HingeAngleSource.onSensorChanged()` returns before storing B.
+- stale handling later calls `clearExternal()`.
+- B is gone.
+- if the hinge is at rest, there may be no new event to restore current geometry.
+
+This is a state-loss bug: an event needed for failover is intentionally ignored rather than retained as a shadow candidate.
+
+Failure sequence B — delayed current precise sample:
+
+- session and poll identity remain current;
+- callback carries an old `sourceUptime` / large delivery lag;
+- pipeline accepts by identity;
+- `feedExternal` stamps freshness at receive time;
+- stale geometry can reacquire/refresh precise authority and suppress public geometry from that later receipt time.
+
+This second sequence is a real architectural hole, but its device frequency depends on control-loop/process scheduling. It is lower-confidence as an explanation of current user-visible regressions than sequence A.
+
+5. WHY CURRENT TESTS DO NOT CATCH IT
+------------------------------------
+`Fold7AnglePipelineGen2Test` covers:
+- one poll in flight;
+- 8 ms completion pacing;
+- no catch-up burst;
+- old-session sample/completion rejection;
+- invalid angles;
+- latest-only coalescing.
+
+It does not assert any maximum accepted source age or authority lease semantics.
+
+`Fold7EarlyWakeIngressTest` correctly asserts wake-only semantics and precise geometry authority, but it does not model the public-sensor shadow/fallback loss after a precise source goes silent.
+
+No dedicated unit test was found for source arbitration inside HingeAngleSource / WallpaperAngleFeed failover.
+
+6. REDUCED MODEL / TEST RESULTS
+-------------------------------
+Artifacts:
+- angle_authority_model.py
+- ANGLE_AUTHORITY_TEST_RESULTS.txt
+- ANGLE_AUTHORITY_FAILURE_TRACE.txt
+
+Current results: 11/11 PASS.
+
+Covered scenarios:
+1. delayed current precise sample is rejected by source-age authority;
+2. fresh precise sample wins over public geometry;
+3. public fallback becomes eligible after precise source lease expiry;
+4. a public/on-change event suppressed for presentation is retained and later promoted;
+5. old reader-session precise callback rejected;
+6. duplicate/out-of-order sequence rejected;
+7. synthetic endpoint is exact-session scoped;
+8. impossible negative source age rejected;
+9. boundary source age / lease expiry behavior;
+10. monotonic latest precise sequence;
+11. deterministic fixed-seed 100,000-event adversarial stream.
+
+Most important model delta:
+- baseline behavior loses the public 90° event and remains at stale 5° after `clearExternal()` if there is no new movement;
+- proposed model buffers the public 90° event, lets precise own presentation while its lease is valid, then promotes the buffered 90° event on lease expiry without needing a second hinge movement.
+
+7. PROPOSED GEN3 ANGLE-AUTHORITY ARCHITECTURE
+---------------------------------------------
+The primary architectural change should be ownership, not broad threshold retuning.
+
+7.1 One owner
+Introduce a pure, control-thread-owned authority object, conceptually:
+
+`Fold7AngleAuthority`
+
+It is the only component allowed to decide which geometry sample becomes authoritative/presented.
+
+HingeAngleSource becomes a producer of public/vendor candidates rather than owning a separate `externalActive` state machine.
+WallpaperAngleFeed becomes a producer of precise candidates with explicit identity and source timing.
+
+7.2 Immutable sample envelopes
+Precise sample envelope should include at least:
+- source = SAMSUNG_PRECISE or SYNTHETIC_ENDPOINT;
+- readerSession;
+- pollSequence;
+- sampleSequence;
+- angle;
+- sourceTime;
+- receiveTime;
+- synthetic flag / reason where applicable.
+
+Public sample envelope should include at least:
+- source = PUBLIC_STANDARD or PUBLIC_VENDOR;
+- sensor identity / resolution metadata if useful;
+- angle;
+- SensorEvent.timestamp;
+- receive time.
+
+Android documents SensorEvent.timestamp as monotonically increasing on the same time base as `SystemClock.elapsedRealtimeNanos()`, making it appropriate for public-sample freshness checks.
+
+7.3 Required invariants
+A1. One serialized authority owner decides presentation.
+A2. Session/poll identity remains mandatory for Samsung precise acceptance.
+A3. Current identity is not sufficient: source age must be inside a measured precise acceptance budget.
+A4. A precise sample's lease is based on source freshness, not merely consumer receipt time.
+A5. Public samples are always observed and the latest eligible candidate is retained even while precise presentation authority is alive.
+A6. Precise source expiry/revocation atomically promotes the freshest eligible public candidate when one exists.
+A7. Promotion must not require a second physical hinge movement.
+A8. Reader stop/restart/Shizuku authority loss invalidates old precise session ownership immediately.
+A9. Synthetic endpoint samples cannot outlive their exact precise source session/generation and cannot overwrite a newer real sample.
+A10. DeviceStateManager edges remain wake-only and never become geometry.
+A11. Existing visual thresholds and direction thresholds are not changed by this workstream.
+A12. Every authority change is observable in diagnostics/TransitionLab.
+
+7.4 Public fallback buffer
+While precise owns presentation:
+- continue accepting/recording public hinge events into a single latest shadow slot;
+- do not send them downstream unless authority changes;
+- record event source time and receive time;
+- if precise expires, promote only if the public candidate is still fresh enough for the target behavior;
+- if no public candidate exists, retain current geometry but mark authority as stale/none rather than pretending precise remains live.
+
+This separates "observe" from "present". The current early return conflates them.
+
+7.5 Precise freshness budget
+R&D model uses 96 ms because current production already defines `POLL_TIMEOUT_MS=96L`.
+
+This should NOT be blindly hard-coded as the final authority lease. Before integration, measure on the real Fold7:
+- Samsung source -> Binder arrival;
+- Binder arrival -> control consumer;
+- total source -> consumer age;
+- p50/p95/p99/p99.9 under normal open/close/reversal;
+- wake-from-cover and display-remap cases.
+
+Then primary can choose an explicit budget with justified margin. The important architectural property is that it is finite, measured, source-based, and vastly different from a naked receive-time boolean that can discard the only fallback event.
+
+7.6 Timebase
+Avoid comparing unrelated clocks directly.
+- public SensorEvent.timestamp can be aged against elapsedRealtimeNanos;
+- Samsung precise callback can continue using its current source timebase if source and consumer age are measured using a compatible monotonic clock;
+- poll scheduling may continue to use Handler/uptime semantics.
+
+Secondary hardening opportunity: DuoShellService currently parses `logcat -v epoch` and uses `System.currentTimeMillis()` to derive age. Android documents wall clock as adjustable, while monotonic clock formats exist in logcat. Do not change this blindly; validate the Fold7's logcat monotonic semantics/timebase first. This is secondary to the confirmed fallback-loss bug.
+
+8. OBSERVABILITY REQUIRED WITH INTEGRATION
+------------------------------------------
+Add low-overhead structured events, for example:
+
+ANGLE_AUTH PRECISE_ACCEPT session=... poll=... sample=... sourceAgeMs=... leaseBudgetMs=... angle=...
+ANGLE_AUTH PRECISE_DROP reason=stale-source-age|old-session|old-poll|old-sequence ageMs=...
+ANGLE_AUTH PUBLIC_BUFFER sensor=... angle=... sourceAgeMs=... preciseLeaseRemainingMs=...
+ANGLE_AUTH PUBLIC_PROMOTE reason=precise-expired|source-revoked angle=... bufferedAgeMs=...
+ANGLE_AUTH AUTHORITY source=PRECISE|PUBLIC|NONE previous=... reason=...
+ANGLE_AUTH SYNTHETIC_DROP reason=old-session|superseded-real-sample ...
+
+TransitionLab should expose source-age distributions so the precise lease can be measured rather than guessed.
+
+9. FOLD7 DEVICE VALIDATION PLAN
+-------------------------------
+Test on the physical Galaxy Z Fold7; do not generalize from emulator behavior.
+
+V1 — healthy precise path
+- start closed/native-cover;
+- open/close normally with Shizuku precise reader healthy;
+- expect Samsung precise authority continuously;
+- public candidates may be buffered but must not perturb geometry while precise lease remains valid.
+
+V2 — silent precise callback loss while Shizuku remains connected
+- use a debug-only fault injection to stop/withhold Samsung angle delivery without tearing down the service connection;
+- move hinge enough to generate a public/coarse event, then hold it still;
+- baseline expectation: candidate can be lost and geometry can remain stale;
+- proposed expectation: public candidate is retained and promoted at precise lease expiry without another movement.
+
+V3 — delayed current callback
+- debug-only inject control-consumer delay around a current poll callback;
+- verify a sample older than the measured acceptance budget cannot acquire/refresh precise authority even though session/poll IDs are current.
+
+V4 — Shizuku disconnect/reconnect mid-motion
+- old session callback must remain inert;
+- public fallback must remain available;
+- new precise session may reacquire authority only with a fresh sample.
+
+V5 — opening from fully closed
+- confirm device-state edge remains wake-only;
+- confirm early wake/precise burst still occurs;
+- no synthetic geometry from device-state.
+
+V6 — close/open reversal
+- reverse direction before endpoint;
+- no stale synthetic endpoint or buffered candidate may override a newer real sample/generation.
+
+V7 — logical display remap during movement
+- ensure angle authority is independent of display logical ID remap;
+- downstream ownership agents remain responsible for host/visual remap.
+
+V8 — stationary fallback
+- after failover promotion, hold at 0/90/180 for several seconds;
+- no second movement should be required to correct authoritative geometry.
+
+Acceptance criteria should be phrased in terms of measured authority/source age, not visual magic numbers:
+- no accepted precise authority older than configured budget;
+- no old session/poll/sequence mutates authority;
+- latest eligible public event survives precise ownership and can be promoted;
+- source loss does not require a second hinge movement for fallback recovery;
+- no duplicate reversal or synthetic endpoint ownership across sessions.
+
+10. PLATFORM EVIDENCE
+---------------------
+Android Developers — SensorEvent:
+- TYPE_HINGE_ANGLE values[0] is a measured hinge angle in degrees.
+- SensorEvent.timestamp is the event time and uses the same time base as SystemClock.elapsedRealtimeNanos().
+Reference: developer.android.com/reference/android/hardware/SensorEvent
+
+Android Developers — Sensor:
+- TYPE_HINGE_ANGLE exists since API 30.
+Reference: developer.android.com/reference/android/hardware/Sensor
+
+Android Developers — fold-aware guidance:
+- FoldingFeature exposes posture/state but not precise hinge angle; reporting ranges/accuracy vary by device, so precise-angle logic must be device-tuned.
+Reference: developer.android.com/develop/adaptive-apps/guides/foldables/make-your-app-fold-aware
+
+AOSP WindowManager Extensions:
+- OEM/internal DeviceState identifiers are mapped into common folding states such as no-folding-feature / half-opened / flat.
+- This supports the current design choice to treat DeviceState as semantic posture/wake evidence, not exact visual geometry.
+Reference: source.android.com/docs/core/display/windowmanager-extensions
+
+Android Developers — SystemClock:
+- `System.currentTimeMillis()` is wall clock and can jump;
+- `uptimeMillis()` is monotonic but excludes deep sleep;
+- `elapsedRealtime()` includes deep sleep and is recommended for general interval timing.
+Reference: developer.android.com/reference/android/os/SystemClock
+
+Android Developers — logcat:
+- logcat supports `monotonic` as a formatting modifier in addition to `epoch`.
+Reference: developer.android.com/tools/logcat
+
+11. RISKS / NON-GOALS
+---------------------
+- This investigation does not claim the authority bug is the sole cause of the user's current cover-animation regression. Device debug evidence is still required for causal attribution.
+- Do not discard the existing reader-session and poll-sequence protections; they solve a different and necessary problem.
+- Do not convert DeviceState to geometry.
+- Do not change fold/reversal/visual thresholds as part of this fix unless separate measured evidence justifies it.
+- Do not couple the angle owner to cached logical display IDs.
+- Do not let the stale/fallback watchdog become a second independent state machine; it should feed one authority owner.
+- A buffered public sample itself needs a freshness bound; never promote an arbitrarily old fallback.
+- A low-resolution public fallback may produce stepped geometry. Stepped-but-current fallback is preferable to pretending a stale precise sample is current, but product behavior should remain under primary control.
+
+12. RECOMMENDED PRIMARY INTEGRATION ORDER
+-----------------------------------------
+P0. Add pure `Fold7AngleAuthority` model + tests first, no Android side effects.
+P1. Route precise accepted samples into the authority owner with reader/poll/sample identity + source age.
+P2. Route public sensor events into a shadow candidate path that never drops observation solely because precise owns presentation.
+P3. Add precise expiry/source-revoke promotion to fresh public candidate.
+P4. Scope endpoint bridge samples to the exact precise source session/authority generation.
+P5. Wire authority output to existing `enqueueHingeFromControl` only; downstream continuity remains unchanged.
+P6. Add TransitionLab authority/source-age telemetry.
+P7. Run Fold7 V1–V8 before tuning any freshness budget.
+
+13. FINAL RECONCILIATION STATUS
+-------------------------------
+At the last reconciliation during this R&D session, GitHub `main` remained:
+45bb0d326899c0e08415928224cfea0ff58d2d4e
+
+No production GitHub write was made by this agent.
+No commit, branch, pull request, or merge was created by this workstream.
+The live Agent Bus remained the legacy `/messages` + `/artifacts` deployment.
+
+14. ARTIFACT MANIFEST
+---------------------
+The final proposal package contains:
+- DUO_OPEN_ANGLE_AUTHORITY_GEN2_RND_HANDOFF.txt — this document
+- angle_authority_model.py — reduced baseline/proposed authority model
+- ANGLE_AUTHORITY_TEST_RESULTS.txt — 11/11 test output
+- ANGLE_AUTHORITY_FAILURE_TRACE.txt — source-faithful failure sequences
+- SHA256SUMS.txt — package content hashes
+
+Pre-package hashes already measured:
+- angle_authority_model.py: d0ea3ce1620df0b3bcafcf721adbfcd27e0be80744ce859e1ee8c9e4bc19bb42
+- ANGLE_AUTHORITY_TEST_RESULTS.txt: 607d198e3c716c412d52804e04f4caa8c0ec88e3e39f4922e5ce42015cb4d9e6
+- ANGLE_AUTHORITY_FAILURE_TRACE.txt: ec0ce94f9fe749af590df4a8a3348821cd79e58f3fd1785962dcf196bfb61c87
+
+END OF HANDOFF

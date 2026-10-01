@@ -1,0 +1,13 @@
+{
+  "schema": "duoopen-primary-successor-handoff/v1",
+  "created_utc": "2026-10-01T23:31:46Z",
+  "production_main_at_packaging": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+  "deployable_candidate": {
+    "version": "3.0.0-alpha1-zfold7",
+    "versionCode": 38,
+    "original_package_sha256": "70cbb13815856b2bb106c6bcd3c0a83037afaf0d55e2a83805269f839a29456d",
+    "status": "FUTURE_STATE_CI_GATED"
+  },
+  "late_rnd_auto_applied": false,
+  "late_rnd_policy": "Bundled for successor review; must be rebased and independently validated after Alpha1 CI."
+}

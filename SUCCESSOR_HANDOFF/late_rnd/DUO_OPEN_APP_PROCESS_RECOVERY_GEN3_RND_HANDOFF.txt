@@ -1,0 +1,604 @@
+DUO OPEN — APP / ACCESSIBILITY PROCESS RECOVERY — GEN3 R&D HANDOFF
+==================================================================
+
+WORKSTREAM_ID
+-------------
+ws-state-rd-process-recovery-20261001
+
+AGENT / AUTHORITY
+-----------------
+Agent: state-rd (secondary R&D only)
+Production authority: primary
+Production GitHub writes by this workstream: NONE
+
+BASELINE / DRIFT
+----------------
+Repo: boberino93-bit/duo-open
+STARTING_MAIN_SHA: 45bb0d326899c0e08415928224cfea0ff58d2d4e
+FINAL_MAIN_SHA:    45bb0d326899c0e08415928224cfea0ff58d2d4e
+MAIN_CHANGED_DURING_RND: NO
+Commit message: Fix Fold7 Gen2 field transitions and render ownership
+
+LIVE BOARD
+----------
+The deployed /DuoOpen-AgentBus is the legacy duoopen-agentbus/v1 layout
+(/messages + /artifacts). The V6 /states/current + /states/future tree bundled
+in the bootstrap ZIP is not deployed, so this workstream obeyed the live v1
+protocol and did not invent or migrate state-tree paths.
+
+CLAIM MESSAGE
+-------------
+msg-state-rd-process-recovery-claim-20261001t231108z-5ad6e9f8
+/DuoOpen-AgentBus/messages/20261001T231108Z__state-rd__primary__target-claim-process-recovery.json
+
+EARLY FINDING + CORRECTION
+--------------------------
+Initial finding:
+  msg-state-rd-process-restart-lease-adoption-20261001t232020z
+
+Superseding/narrowing message after primary Phase1 V2 reconciliation:
+  msg-state-rd-process-restart-supersede-20261001t232545z
+
+IMPORTANT: Primary's staged DUO_OPEN_GEN3_PHASE1_AUTHORITY_V2.zip already adds
+ownerServiceEpoch + ownerCloseCycleId and exact-CAS prewarm. Do NOT duplicate
+that identity work. The remaining gap identified here is startup recovery and
+cleanup-before-arm.
+
+EXECUTIVE RESULT
+----------------
+A source-confirmed app-process recovery gap remains even after reconciling the
+staged Gen3 Phase1 V2 CAS design.
+
+Duo's Shizuku UserService is configured daemon(true). Shizuku documents daemon
+UserService mode as continuing after the app process dies until explicitly
+unbound. Therefore the privileged DuoShellService process and its in-memory
+Fold7CoverPanelLease can outlive the app/accessibility process.
+
+A fresh app process creates a new FoldOverlayService serviceEpoch and a fresh
+Fold7Gen2Kernel, but its startup sequence can query and accept a surviving
+non-IDLE daemon-side cover lease before continuity.arm(). On current main the
+lease token has no app serviceEpoch. Primary Phase1 V2 correctly adds
+ownerServiceEpoch/ownerCloseCycleId and prevents a prior-process lease from
+being treated as the new close cycle without exact CAS. However, Phase1 V2 does
+not change the startup recovery flow: a foreign HELD lease may remain resident
+while the fresh process enables renderOwnershipArmed and has no local active
+close cycle.
+
+The recommended Gen3 addition is a small service-start recovery gate that runs
+before normal render ownership is armed. It classifies a non-IDLE token owned
+by another serviceEpoch as FOREIGN_PRIOR_SERVICE, cleans/reconciles it exactly,
+and only then permits stable-rest startup. If restart occurs mid-transition,
+the new process should not reconstruct/join the dead process's semantic attempt
+from one instantaneous angle/topology sample; after cleanup it should wait for
+a fresh semantic movement/edge before creating new continuity authority.
+
+This composes with, rather than replaces:
+- primary Phase1 V2/V4 exact-CAS cover authority,
+- reviewer Shizuku daemon-restart UNKNOWN_RECOVERY work,
+- state-rd exact close-cycle prime ownership,
+- state-rd opening-attempt ownership,
+- reviewer presentation ownership,
+- display-rd terminal handoff/readiness,
+- state-rd angle-authority/failover work.
+
+CURRENT IMPLEMENTATION RECONSTRUCTION
+-------------------------------------
+1. App and accessibility service lifetime
+
+DuoApplication.onCreate():
+- initializes diagnostics/settings/OverlayFeature;
+- logs the previous process exit using ActivityManager historical exit reasons;
+- OverlayFeature.initProcess() initializes ShizukuBridge once per app process.
+
+FoldOverlayService:
+- AccessibilityService in the normal app process;
+- serviceEpoch = SystemClock.elapsedRealtimeNanos() at service instance creation;
+- creates a fresh Fold7Gen2Kernel(serviceEpoch);
+- all close-cycle/frame/readiness owners are in-memory and therefore lost when
+  the app process dies.
+
+PersistentRuntimeService:
+- a foreground service in the same app process (no android:process override);
+- returns START_STICKY;
+- therefore Android may recreate it after the app process is killed.
+
+FoldOverlayService.onServiceConnected() startup order relevant to this finding:
+- ensure foreground runtime;
+- construct Fold7ContinuityCoordinator with the fresh Gen2 kernel;
+- start hinge + DeviceState + Shizuku integrations;
+- collect ShizukuBridge.state;
+- on Ready:
+    continuity.onPrivilegedReady();
+    if first ready for this accessibility-service lifetime: continuity.arm();
+    primeCoverRoute();
+- syncDisplays().
+
+2. Daemon-side lifetime
+
+ShizukuBridge.UserServiceArgs:
+- .daemon(true)
+- .processNameSuffix("shell")
+
+Shizuku documents daemon UserService mode as independent of the app process:
+non-daemon stops when app process dies; daemon continues until unbind.
+
+DuoShellService therefore has a distinct lifetime and owns:
+- shellSession = elapsedRealtimeNanos();
+- Fold7CoverPanelLease instance;
+- serialized cover mutation executor;
+- mirror lease/session state.
+
+An abrupt app-process death does not imply DuoShellService was destroyed.
+
+3. Current main first reconcile
+
+Fold7ContinuityCoordinator.onPrivilegedReady():
+- coverAuthority.onConnectionEpoch(ShizukuBridge.connectionEpoch)
+- ensureMirrorSession("shizuku-ready")
+- reconcileCoverLease("shizuku-ready")
+
+A fresh app-side Fold7CoverLeaseSnapshotGate has no accepted snapshot, so
+reconcileCoverLease sends shellSession=0.
+
+DuoShellService COVER_PANEL_LEASE_V3 reconcile treats requestShellSession=0 as
+a wildcard:
+- only a nonzero mismatching session is rejected;
+- otherwise reconcileCoverLeaseV2() runs and current shell snapshot is returned.
+
+Fold7CoverPanelLease.onTopology() only reconciles RELEASE_PENDING and
+UNKNOWN_RECOVERY. HELD is deliberately left HELD.
+
+The app acceptance gate accepts the first valid shell session/revision and a
+non-IDLE token. On current main the token contains:
+- shellSession
+- leaseId
+- leaseEpoch
+- ownerGeneration
+- physicalDisplayId
+but no app serviceEpoch / closeCycleId.
+
+Thus current main cannot distinguish "HELD by my fresh service instance" from
+"HELD by the dead app process" at the app token boundary.
+
+4. arm() does not clean a foreign cover lease
+
+continuity.arm():
+- gen2.cancelActiveCycle()      // fresh process has none
+- renderOwnershipArmed = true
+- ensureMirrorSession("arm")
+- controller.reset(one current angle or inferred rest angle, topology)
+- hideMirror(... stopShellMirror=true)
+
+The explicit source comment says arm clears a stale mirror but does not issue a
+power command. hideMirror is mirror cleanup; it is not Fold7CoverPanelLease
+release. Therefore a daemon-side HELD cover lease can remain resident through
+fresh-process arm.
+
+Later topology reconcile still does nothing to a HELD lease.
+
+5. Controller bootstrap is intentionally non-provenance-preserving
+
+Fold7ContinuityController.reset():
+- assigns state from one instantaneous angle/topology snapshot;
+- does not emit a normal transition callback;
+- therefore does not begin a new Fold7CycleEnvelope close cycle.
+
+This is good in one respect: a fresh process does not automatically invent a
+new close cycle from a mid-fold sample. But it also means there is no explicit
+RECOVERING state that blocks normal render authority while surviving privileged
+state is reconciled.
+
+PRIMARY PHASE1 V2 RECONCILIATION
+--------------------------------
+Primary artifact inspected:
+  /DuoOpen-AgentBus/artifacts/primary/20261001T213903Z/
+  DUO_OPEN_GEN3_PHASE1_AUTHORITY_V2.zip
+  SHA256 7fbde59acf9dc5f8befca875658c72f878c7bf1e34df4ed7d717cec088150b7b
+
+Phase1 V2 fixes the deterministic stale PREWARM race by adding V4 exact CAS.
+Important additions:
+- ownerServiceEpoch
+- ownerCloseCycleId
+- ownerGeneration
+- expected exact shellSession / leaseId / leaseEpoch / owner identity
+- requested new exact owner identity
+- coordinator validates returned token belongs to exact requested
+  serviceEpoch + closeCycleId + generation before prewarm succeeds.
+
+This materially improves the process-restart boundary:
+- a prior-process token can no longer simply count as ownership of the new
+  process's new close cycle;
+- transfer/reuse on a later close must be an explicit exact CAS.
+
+But Phase1 V2 does not alter:
+- onPrivilegedReady startup reconcile;
+- the shellSession=0 first reconcile behavior;
+- continuity.arm() ordering/semantics;
+- renderOwnershipArmed startup gate;
+- cleanup of a foreign HELD token at stable rest.
+
+Therefore the remaining target is not token identity. It is startup recovery.
+
+DOMINANT LIMITATION
+-------------------
+There is no explicit app-process startup recovery barrier between:
+
+  "fresh process has connected to a daemon that may still carry prior-process
+   privileged cover state"
+
+and
+
+  "normal continuity render ownership is armed."
+
+Source-confirmed failure sequence:
+
+A. Old app serviceEpoch E1 is in a close cycle; shell cover lease is HELD.
+B. Android app process dies abruptly. FoldOverlayService.onDestroy is not
+   guaranteed to run on process kill, so its graceful release path may not run.
+C. daemon(true) DuoShellService survives with the HELD lease / shellSession.
+D. Android recreates/rebinds app components; new FoldOverlayService has E2 and
+   no active local close cycle.
+E. Shizuku Ready arrives. onPrivilegedReady() starts reconcile before arm.
+F. Fresh app sends shellSession=0 wildcard; daemon returns HELD lease from E1.
+G. Current main accepts it without E1/E2 distinction. Phase1 V2 accepts the
+   structurally valid token while preserving ownerServiceEpoch=E1.
+H. arm() enables renderOwnershipArmed, cancels no local cycle, resets policy
+   from instantaneous posture, hides mirror, but does not release cover lease.
+I. Foreign HELD authority can remain resident after startup. In Phase1 V2 it is
+   correctly not the owner of a new close cycle without V4 CAS, but it is still
+   not resolved before normal startup completes.
+
+Why this matters architecturally:
+- privileged state outlives semantic/content/presentation provenance;
+- a new process should not silently inherit an unfinished physical attempt;
+- stable-open startup should not carry an old secondary cover hold indefinitely;
+- mid-transition startup cannot reconstruct the exact dead-process frame,
+  presentation attempt, opening attempt, or movement identity from one sample.
+
+EVIDENCE CLASSIFICATION
+-----------------------
+SOURCE-CONFIRMED (repo main):
+- fresh FoldOverlayService creates fresh serviceEpoch/Gen2 kernel;
+- ShizukuBridge configures daemon(true);
+- onPrivilegedReady reconciles before arm;
+- first fresh reconcile uses shellSession=0;
+- shell accepts zero as wildcard;
+- HELD lease is not reconciled by Fold7CoverPanelLease.onTopology();
+- arm enables renderOwnershipArmed and does not release cover lease;
+- controller.reset does not begin a close cycle.
+
+SOURCE-CONFIRMED (primary staged Phase1 V2):
+- ownerServiceEpoch + ownerCloseCycleId are already added;
+- V4 PREWARM requires exact CAS and coordinator verifies exact requested owner;
+- startup reconcile/arm recovery barrier is not added in that package.
+
+PLATFORM-CONFIRMED:
+- Android app process lifetime is system-controlled and process death may occur;
+- onDestroy is not guaranteed when the process is killed;
+- START_STICKY causes a started service to be recreated after process kill;
+- AccessibilityService lifecycle is system-managed and onServiceConnected is
+  the post-bind setup callback;
+- Shizuku daemon UserService is documented to continue after app-process death
+  until explicit unbind.
+
+MODEL-VALIDATED:
+- current main accepts surviving HELD authority with prior app identity erased;
+- Phase1 V2 preserves prior serviceEpoch and blocks false new-cycle ownership,
+  but foreign HELD state can remain resident through arm;
+- proposed recovery gate blocks normal render arm until foreign lease cleanup;
+- ambiguous mid-transition bootstrap waits for fresh semantic edge.
+
+DEVICE-UNCONFIRMED:
+- whether this exact Fold7/Shizuku build leaves DuoShellService alive across the
+  chosen method of app-process kill in field testing;
+- whether Samsung's cover physical/logical state remains visibly/powerfully
+  altered across that kill;
+- user-visible symptom severity (flash, temporary route, battery/panel wake,
+  black cover, or no visible symptom).
+
+No user-visible defect is claimed without the device test.
+
+PROPOSED GEN3 RECOVERY OWNER
+----------------------------
+Suggested pure owner: Fold7ProcessRecoveryGate (name flexible).
+
+Phases:
+  RECOVERING
+  WAIT_FRESH_EDGE
+  READY
+
+Inputs:
+- current app serviceEpoch Enew;
+- Shizuku connection epoch + exact shell snapshot;
+- accepted Phase1 V2 token including ownerServiceEpoch/ownerCloseCycleId;
+- current physical posture/topology;
+- angle-authority freshness when available;
+- cleanup completion / shell state.
+
+Rule 1 — startup starts fail-closed
+----------------------------------
+On a fresh FoldOverlayService instance:
+- renderOwnershipArmed must remain false until recovery gate reaches READY;
+- no new close/open visual attempt is created from startup snapshot alone.
+
+Rule 2 — classify first shell snapshot
+--------------------------------------
+IDLE:
+- no foreign privileged mutation is resident;
+- continue posture bootstrap.
+
+NON-IDLE, ownerServiceEpoch == Enew:
+- may only occur for an already-initialized same service instance/re-entry;
+- keep normal exact-owner checks.
+
+NON-IDLE, ownerServiceEpoch != Enew:
+- FOREIGN_PRIOR_SERVICE.
+- Do not claim it as the current semantic attempt.
+- Do not allow it to satisfy current readiness/presentation/content ownership.
+- initiate exact cleanup/reconcile.
+
+Legacy/non-IDLE snapshot with no valid service epoch:
+- treat as foreign/unknown, never as current.
+
+Rule 3 — exact cleanup
+----------------------
+If a valid exact old token is available, use exact release semantics for that
+actual token; do not issue raw physical OFF.
+
+Phase1 V2 already makes token identity stronger. A minimal implementation can
+reuse the accepted old token for exact release, then keep RECOVERING until a
+new accepted shell snapshot proves IDLE (or an explicitly designed native-safe
+terminal state has cleared shell ownership).
+
+If daemon itself restarted / UNKNOWN_RECOVERY applies:
+- delegate to the existing reviewer Shizuku-recovery design;
+- do not create a second conflicting recovery state machine.
+
+Cleanup must be idempotent because the app may die again during cleanup.
+
+Rule 4 — bootstrap posture only after privileged cleanup
+--------------------------------------------------------
+Stable OPEN_INNER:
+- arm after shell is clean.
+
+Stable NATIVE_COVER:
+- arm after shell is clean/native-safe.
+
+MID_TRANSITION / ambiguous posture:
+- prior semantic provenance is gone;
+- do not join old close/open attempt;
+- enter WAIT_FRESH_EDGE and let Samsung native behavior own the immediate state;
+- require a fresh movement/semantic edge under the new process before starting
+  a new cycle/visual attempt.
+
+This is intentionally conservative. The new process cannot reproduce the exact
+old frozen frame/presentation/opening attempt after process death, so pretending
+continuity is intact would be false provenance.
+
+Rule 5 — compose with AngleAuthority
+------------------------------------
+The separate state-rd angle-authority work found stale/failover hazards.
+Therefore recovery should not decide "stable vs mid-transition" from an
+unqualified stale precise sample. Prefer:
+- physical topology endpoint authority where unambiguous;
+- otherwise a fresh AngleAuthority sample/edge once that owner lands;
+- otherwise WAIT_FRESH_EDGE.
+
+Do not introduce synthetic visual geometry just to exit recovery.
+
+MINIMAL INTEGRATION SHAPE
+-------------------------
+Conceptually:
+
+onServiceConnected:
+  recovery = Fold7ProcessRecoveryGate(serviceEpoch)
+  continuity.startDisarmedForRecovery()
+
+on Shizuku Ready:
+  snapshot = reconcile/status
+  recovery.observe(snapshot, topology, freshAngleEvidence)
+  if recovery.action == RELEASE_FOREIGN(token):
+      exactRelease(token)
+      remain disarmed
+  if recovery.state == READY:
+      continuity.armRecovered(...)
+  if recovery.state == WAIT_FRESH_EDGE:
+      remain disarmed for visual/secondary ownership
+
+on exact release/status result:
+  recovery.observe(...)
+
+on fresh semantic edge:
+  if recovery == WAIT_FRESH_EDGE and privileged state clean:
+      recovery -> READY
+      begin only a NEW serviceEpoch-scoped attempt
+
+Do not move this into PanelEngine. Process recovery is service/authority scope.
+
+MODEL / VALIDATION
+------------------
+Artifact: process_recovery_model.py
+SHA256: b480727c0ae4621364b84035bc8ed4fb710e383d74e482d9d15755921008f98f
+
+Artifact: PROCESS_RECOVERY_TEST_RESULTS.txt
+SHA256: fe46ee4d6213d96815a36a7ebc325f3a8ff5c93b2137aa4a66b51904b24c404e
+
+Deterministic model:
+  13/13 PASS
+
+Covered:
+- current main accepts daemon-surviving HELD lease;
+- current main loses prior service identity;
+- fresh process has no local close cycle but arms;
+- Phase1 V2 preserves old ownerServiceEpoch;
+- Phase1 V2 refuses to treat old token as new-cycle ownership without CAS;
+- Phase1 V2 still leaves foreign HELD resident through startup arm;
+- proposed gate marks prior-epoch HELD as foreign;
+- stable OPEN_INNER arms only after cleanup;
+- legacy no-epoch HELD is foreign;
+- stable NATIVE_COVER arms after cleanup;
+- MID_TRANSITION does not join prior attempt;
+- fresh semantic edge enables new-process authority;
+- cleanup failure remains fail-closed.
+
+Fixed-seed adversarial model:
+  seed: 0xD00F7
+  iterations: 100,000
+  Phase1 V2 foreign HELD resident cases: 66,734
+  proposed recovery invariant failures: 0
+
+Interpretation:
+The 66,734 number is NOT a probability estimate for real-world process death.
+The random generator deliberately samples foreign HELD vs IDLE input classes.
+It demonstrates that whenever the modeled startup input is foreign HELD, Phase1
+V2 identity correctness alone does not clean it before arm. The proposed gate
+maintains the target invariant across the generated input space.
+
+PERFORMANCE
+-----------
+No frame-budget or animation-throughput claim is made. Recovery runs only on a
+new app/accessibility process lifetime or privileged reconnect boundary.
+Correctness should dominate startup latency.
+
+Implementation should remain asynchronous; never block Android main thread on
+shell I/O. Keep rendering disarmed while recovery runs rather than blocking UI.
+
+DEVICE VALIDATION PLAN
+----------------------
+Goal: determine whether the platform realization actually produces the
+source-valid cross-process lifetime: new app process + same daemon shell
+session + surviving non-IDLE cover lease.
+
+Instrumentation before test:
+- app process PID / serviceEpoch;
+- shell UserService PID / shellSession;
+- cover lease state + leaseId/leaseEpoch + ownerServiceEpoch (Phase1+);
+- current topology and physical/logical cover route;
+- controller state + active closeCycleId;
+- renderOwnershipArmed / recovery phase;
+- mirror session/visual attempt identity.
+
+Scenarios:
+1. Stable OPEN_INNER, lease IDLE, kill/recreate app process.
+   Expected: recovery sees IDLE; clean startup.
+
+2. Close until shell lease is HELD/route ready, then terminate only the app
+   process without intentionally unbinding/stopping the daemon UserService.
+   Observe whether shell PID/session and lease survive.
+
+3. If shell survives:
+   Current/Phase1 expected reconstruction: first reconcile sees prior HELD.
+   Recovery-gate expected: classify foreign, release/reconcile exactly, stay
+   disarmed until shell clean, then arm only from stable rest/fresh edge.
+
+4. Repeat while process termination occurs during opening / partial fold.
+   Expected Gen3 behavior: no resurrection of the old semantic attempt; after
+   cleanup, wait for fresh edge if posture cannot be proven stable.
+
+5. Kill daemon as well as app process.
+   Expected: this falls into existing Shizuku daemon-restart recovery, not the
+   surviving-daemon branch from this workstream.
+
+6. Re-kill app during recovery cleanup.
+   Expected: exact release/reconcile remains idempotent; next process again
+   starts RECOVERING and does not arm early.
+
+PASS invariants:
+- no foreign prior-service non-IDLE lease counts as current cycle authority;
+- normal render ownership is not armed while foreign cleanup is unresolved;
+- no raw physical OFF;
+- no stale old-process visual/frame/presentation attempt is resurrected;
+- stable rest recovers automatically after exact cleanup;
+- ambiguous mid-transition requires fresh new-process semantic evidence;
+- Shizuku daemon-restart path remains compatible.
+
+PLATFORM REFERENCES
+-------------------
+Android Service / START_STICKY:
+https://developer.android.com/reference/android/app/Service
+
+Android process lifecycle / system process death / onDestroy not guaranteed:
+https://developer.android.com/guide/components/activities/process-lifecycle
+
+Android AccessibilityService lifecycle / onServiceConnected:
+https://developer.android.com/reference/android/accessibilityservice/AccessibilityService
+
+Shizuku UserService daemon semantics (source docs in Shizuku API):
+https://github.com/RikkaApps/Shizuku-API/blob/master/api/src/main/java/rikka/shizuku/Shizuku.java
+
+RELATION TO OTHER LIVE WORKSTREAMS
+----------------------------------
+Primary Gen3 alpha1 checkpoint:
+- exact visual owner, frame admission, Shizuku authority revocation, etc.
+- This recovery gate should sit before those owners become active on a new
+  process lifetime.
+
+Reviewer Shizuku recovery:
+- handles privilege/daemon restart and UNKNOWN_RECOVERY.
+- This work handles the complementary branch: daemon survives while app dies.
+
+State-rd angle authority:
+- may supply reliable fresh edge/sample criteria for WAIT_FRESH_EDGE.
+
+Display/reviewer presentation/handoff work:
+- process recovery must invalidate old process visual/presentation provenance;
+  it must not attempt to rejoin old host/presentation identity.
+
+RISKS / TRADEOFFS
+-----------------
+1. Conservative visible degradation after a mid-transition process restart.
+   Accepted: provenance is gone; a short native Samsung handoff is safer than
+   inventing stale continuity.
+
+2. Cleanup can add startup latency.
+   Bound it, keep asynchronous, expose diagnostics, but do not arm ahead of
+   unresolved foreign privileged state.
+
+3. Prior HELD lease may still be physically safe/usable.
+   Phase1 V4 can exact-CAS transfer it on a future fresh close cycle. That is
+   different from silently inheriting it at startup. Keep transfer explicit.
+
+4. Repeated process death during cleanup.
+   Exact tokens/revisions and fail-closed startup make this naturally retryable.
+
+5. Deployment compatibility.
+   Phase1 V2 is staged, not current main. Recovery integration should target the
+   post-Phase1 ownerServiceEpoch token shape rather than reimplementing it.
+
+NEGATIVE RESULTS / THINGS NOT TO DO
+------------------------------------
+- Do NOT add ownerServiceEpoch again; primary Phase1 V2 already does it.
+- Do NOT treat ActivityManager historical process-exit logs as ownership proof;
+  they are diagnostics, not exact lease identity.
+- Do NOT restore autonomous PanelEngine behavior to mask recovery.
+- Do NOT issue raw physical cover OFF.
+- Do NOT infer an exact old transition from one startup hinge/topology sample.
+- Do NOT merge this with the shell-daemon UNKNOWN_RECOVERY state machine;
+  compose with it at the boundary.
+- Do NOT relax exact CAS to make startup appear seamless.
+
+STOP CONDITION STATUS
+---------------------
+Current implementation reconstructed: YES
+Dominant limitation isolated: YES
+Primary staged Phase1 reconciled: YES
+Smallest useful local model executed: YES
+Adversarial validation executed: YES
+Remaining uncertainty device/platform-instance-specific: YES
+Production write required from this R&D agent: NO
+Ready for primary integration review: YES
+
+PRIMARY INTEGRATION RECOMMENDATION
+----------------------------------
+After Phase1 V4 authority lands, add the process-start recovery gate before
+Phase2 visual/compositor ownership is allowed to arm. The clean architectural
+contract is:
+
+  serviceEpoch establishes app-process semantic authority;
+  shell lease identity establishes privileged mutation authority;
+  startup recovery proves the two lifetimes are reconciled;
+  only then may content/visual/presentation owners become live.
+
+The key acceptance criterion is not "did startup produce a plausible state?"
+It is "has every non-IDLE privileged state from another app serviceEpoch been
+explicitly resolved before this process claims normal continuity authority?"

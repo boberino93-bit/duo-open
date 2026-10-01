@@ -1,0 +1,709 @@
+DUO OPEN — GEN3 P1.2 EXACT PRESENTATION OWNERSHIP R&D HANDOFF
+Target: Samsung Galaxy Z Fold7 / Android 16 / Samsung One UI
+Role: reviewer (secondary R&D; no production integration authority)
+Prepared: 2026-10-01 UTC
+
+==================================================
+1. EXECUTIVE SUMMARY
+==================================================
+
+WORKSTREAM_ID=ws-reviewer-presentation-owner-20261001T230350Z
+AGENT_ID=reviewer
+AGENT_BUS_AVAILABLE=YES
+LIVE_AGENT_BUS_LAYOUT=legacy duoopen-agentbus/v1 (/messages + /artifacts)
+STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+MAIN_CHANGED_DURING_RND=NO
+
+SUBSYSTEM
+Gen3 P1.2 exact presentation ownership: the boundary between controller visual demand, host/content binding, and evidence that the exact current visual attempt was physically presented.
+
+WHY THIS IS A DISTINCT TARGET
+- display-rd owns fold-effect/compositor and exact CoverVisualLease/visual-intent design.
+- performance-rd owns causal latency instrumentation/correlation.
+- state-rd owns close-cycle prime/capture arbitration and current opening one-shot ownership work.
+- reviewer previously completed Shizuku recovery.
+- This work does NOT redesign those subsystems. It defines the exact presentation authority beneath the visual owner and the rules by which visible ownership can be asserted or revoked.
+
+STRONGEST SOURCE-CONFIRMED FINDING
+CURRENT main exposes `visualMirrorActive` as:
+  mirrorRequested && controller.state == COVER_VISUAL
+
+`showMirror()` sets mirrorRequested=true before a mirror session, usable host, content bind, transaction submission, or physical-presentation callback exists. `syncMirrorHost()` can return because the mirror session is not open, topology is incomplete, source/destination IDs collide, host construction fails, attach fails, or later content binding fails. Therefore CURRENT can report the visual as active when no visual has been presented and, in some paths, when no usable host exists at all.
+
+The mismatch is architectural, not merely diagnostic: `Fold7CoverRenderPolicy` gives privileged Gen2 blanket cover ownership, and `FoldOverlayService.syncDisplays()` suppresses ordinary engine evaluation while `visualMirrorActive` is true. Thus demand/state is allowed to stand in for presentation evidence while fallback rendering is already constrained by Gen2 ownership.
+
+SECOND SOURCE-CONFIRMED FINDING
+`Fold7PresentationLease` is instantiated inside each `DisplayMirrorHost`. Its `hostEpoch` and `attemptSequence` both start from zero in each new host object. Every new host calls `openHost()`, yielding hostEpoch=1. For the FROZEN_VIEW path, a replacement host can consume the same exact-cycle contentLeaseId. The tuple:
+  serviceEpoch + closeCycleId + contentLeaseId + hostEpoch + attemptSequence + renderPath
+can therefore be identical across two distinct host objects after remap/recreation.
+
+CURRENT stale callbacks are still locally fenced because each callback closes over its own host-local lease object and detach invalidates that local owner. This finding is NOT evidence of current cross-host state corruption. It means the current identity is host-local rather than service-global and is unsafe as a future cross-host visible-ownership token or globally unique causal join key without adding a stable external host lease identity.
+
+PLATFORM EVIDENCE DISTINCTION
+- ViewTreeObserver.registerFrameCommitCallback: frame rendered and submitted to swap chain; Android explicitly says the frame may not yet be visible.
+- SurfaceControl.Transaction.addTransactionCommittedListener: transaction applied/ready to be presented; not proof of physical presentation.
+- SurfaceControl.Transaction.addTransactionCompletedListener (API 35): invoked when the transaction is presented.
+- A valid presentFence signal gives stronger timing evidence (an actual presentation timestamp); absence of a usable fence must not erase the fact that TransactionCompleted itself is presentation evidence.
+
+DOMINANT LIMITATION
+There is no service-stable exact presentation owner connecting:
+  visual demand -> exact visual attempt -> exact host -> exact content -> render submission -> terminal presented evidence.
+
+GEN3 DIRECTION
+Introduce a service-stable PresentationOwner beneath the display-rd CoverVisualLease. Controller COVER_VISUAL becomes demand, not proof. A visual attempt becomes PRESENTED only when the exact current presentation attempt receives render-path-appropriate presentation evidence. Host replacement/retry/content replacement creates a new exact presentation identity. Old callbacks remain observable but inert.
+
+MODEL VALIDATION
+Pure Kotlin model compiled and passed 13/13 deterministic/adversarial tests, including a fixed-seed 100,000-event stream.
+
+CONFIDENCE
+- HIGH: source-level requested-vs-presented gap.
+- HIGH: host-local identity collision across newly constructed frozen hosts.
+- HIGH: Android evidence-strength distinctions described above.
+- MODEL-LEVEL: proposed service-stable owner invariants.
+- DEVICE VALIDATION REQUIRED: exact Fold7 callback timing, frozen-view draw-synchronized presentation proof, fallback behavior, and user-visible transition quality.
+
+==================================================
+2. SOURCE BASELINE RECONSTRUCTION
+==================================================
+
+Repository: boberino93-bit/duo-open
+Branch: main
+Baseline commit: 45bb0d326899c0e08415928224cfea0ff58d2d4e
+
+Directly re-read from GitHub at the exact baseline SHA:
+- app/src/full/java/com/duoopen/overlay/Fold7PresentationLease.kt
+  blob=87481dbcad644dc534b9cfba4ec7f77811e70991
+- app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+  blob=07374ef27144169166e960e53db3fb0bb521e21b
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+  blob=89946633e5a796b9fb63a85e392455170ba31d6f
+- app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+  blob=e590b40f2c839ecc05d856f6e0f9b57a10dce6ad
+- app/src/full/java/com/duoopen/overlay/Fold7CoverRenderPolicy.kt
+  blob=57d09fb8161c06948abafa0b089ac9f14068e955
+- app/src/full/java/com/duoopen/overlay/Fold7Gen2Kernel.kt
+  blob=f5fa04446b96b4f1d2ea99745d21fb339681b71c
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+  current source read at exact baseline SHA
+- app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt
+  blob=287a4e52146307ac2e6c349f99ecbd2711423a92
+
+CURRENT closing causal path relevant to P1.2:
+1. Fold7ContinuityController reaches COVER_VISUAL at the existing visual threshold.
+2. Controller emits Action.ShowMirror(generation).
+3. Fold7ContinuityCoordinator.showMirror validates generation/state.
+4. showMirror immediately sets:
+     mirrorRequested = true
+     mirrorGeneration = generation
+5. showMirror calls syncMirrorHost.
+6. syncMirrorHost may return before a host exists if mirrorSession <= 0, topology is incomplete, or source/destination are unsuitable.
+7. If topology is usable, it constructs DisplayMirrorHost, calls attach(), then stores mirrorHost=created.
+8. DisplayMirrorHost attach success only means WindowManager.addView succeeded. Its attach-state callback posts bind("window-attached") asynchronously.
+9. bind prefers a current exact-cycle frozen frame, otherwise starts an asynchronous Shizuku live mirror.
+10. FROZEN_VIEW begins a Fold7PresentationLease attempt, registers a frame-commit callback, invalidates the View, and records draw/frame-commit stages.
+11. LIVE_MIRROR starts a shell mirror, constructs a SurfaceControl geometry transaction, begins a Fold7PresentationLease attempt, registers transaction committed/completed callbacks, and queues the transaction on draw.
+12. These presentation callbacks update only the host-local Fold7PresentationLease and diagnostics/TransitionLab. They do not advance controller state and do not gate `visualMirrorActive`.
+
+CURRENT `visualMirrorActive`:
+  mirrorRequested && controller.state == COVER_VISUAL
+
+It does not require:
+- mirrorHost != null;
+- mirrorHost.isUsable;
+- an active presentation attempt;
+- content binding;
+- frame submission;
+- transaction commit;
+- transaction completed callback;
+- present-fence evidence.
+
+==================================================
+3. CURRENT OWNERSHIP LAYERS AND THE MISSING LINK
+==================================================
+
+Existing strong layers:
+- Fold7ContinuityController: legal transition state + generation.
+- Fold7CycleEnvelope: service/cycle identity.
+- Fold7CoverLeaseSnapshotGate: privileged cover authority snapshot acceptance.
+- Fold7CoverReadiness: exact route/topology readiness.
+- Fold7ContinuityFrameStore: exact-cycle frozen content provenance.
+- display-rd proposed CoverVisualLease: exact visual intent/effect owner (R&D, not in main).
+- Fold7PresentationLease: host-local presentation callback validity.
+
+Missing layer:
+A service-stable presentation authority that can answer:
+  “Is the exact current visual attempt on the exact current host/content identity actually presented?”
+
+CURRENT Fold7PresentationLease answers a narrower question:
+  “Is this callback current inside this DisplayMirrorHost object?”
+
+That is useful and should be preserved, but it is not sufficient for service-level visible ownership or cross-host handoff completion.
+
+==================================================
+4. EVIDENCE LEDGER
+==================================================
+
+C1 — visualMirrorActive can be true without a host or presentation.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=Coordinator source: showMirror sets mirrorRequested before syncMirrorHost; visualMirrorActive checks only request + controller state; syncMirrorHost has multiple early returns/failure paths.
+DEVICE FAILURE CLAIM=NO. Source proves the state can diverge; it does not prove which exact field failure occurred on the Fold7.
+
+C2 — current privileged render policy does not wait for presentation proof.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=Fold7CoverRenderPolicy returns gen2OwnsCover=true whenever privileged Gen2 is ready; FoldOverlayService applies continuity cover ownership independently of presentation callbacks.
+
+C3 — host-local presentation identity can collide across replacement FROZEN_VIEW hosts.
+CATEGORY=CONFIRMED SOURCE IDENTITY ISSUE + MODEL REPRODUCTION
+EVIDENCE=Each DisplayMirrorHost constructs a fresh Fold7PresentationLease and calls openHost(); hostEpoch and attemptSequence restart. FROZEN_VIEW may reuse same exact-cycle contentLeaseId. Model reproduces identical LegacyIdentity across two host objects.
+CURRENT STATE CORRUPTION CLAIM=NO. Current callbacks close over separate owner objects; detach invalidates the old local lease. The problem is global identity uniqueness/ownership semantics.
+
+C4 — frame commit is weaker than physical presentation.
+CATEGORY=CONFIRMED PLATFORM CONTRACT
+EVIDENCE=Android ViewTreeObserver API: frame commit means rendered/submitted to swap chain; frame may not yet be visible.
+
+C5 — SurfaceControl transaction completed callback is presentation evidence.
+CATEGORY=CONFIRMED PLATFORM CONTRACT
+EVIDENCE=Android SurfaceControl.Transaction API 35: TransactionCompletedListener is invoked when transaction is presented.
+
+C6 — valid present-fence signal is stronger timestamp evidence than callback arrival.
+CATEGORY=PLATFORM/MEASUREMENT INFERENCE CONSISTENT WITH CURRENT API DESIGN
+EVIDENCE=Current code reads TransactionStats.presentFence.signalTime; performance-rd independently recommended preserving that timestamp. A completed callback without valid fence should still count as PRESENTED_CALLBACK, while PRESENT_FENCE records stronger timing quality.
+
+C7 — service-stable exact owner can reject stale callbacks after host remap/reversal.
+CATEGORY=ISOLATED MODEL RESULT
+EVIDENCE=13/13 Kotlin tests + 100,000-event adversarial stream.
+LIMITATION=Not Android-integrated or Fold7-tested.
+
+==================================================
+5. DOMINANT FAILURE MODE
+==================================================
+
+CURRENT has REQUESTED STATE masquerading as PRESENTED STATE.
+
+The problematic chain is:
+  controller enters COVER_VISUAL
+  -> ShowMirror issued
+  -> mirrorRequested=true
+  -> visualMirrorActive=true
+  -> service may suppress/avoid other rendering work
+  -> host/session/content/presentation can still be absent or fail later
+
+A robust architecture must never let “we asked for a visual” become “the user is seeing that visual.”
+
+This is especially important during:
+- first session open;
+- display topology churn;
+- logical-ID remap;
+- host construction/attach failure;
+- frozen-frame rejection;
+- live mirror creation failure;
+- geometry transaction failure;
+- close->open reversal while callbacks are queued;
+- content replacement within the same close cycle;
+- service/privilege epoch changes.
+
+==================================================
+6. GEN3 PRESENTATION OWNER DESIGN
+==================================================
+
+6.1 Placement
+
+Preferred location:
+  Fold7Gen2Kernel (or the Gen3 successor composition root)
+
+Reason:
+- lifetime is service-stable rather than DisplayMirrorHost-stable;
+- it can correlate cycle, visual owner, host, content, and callback state;
+- it survives host replacement while invalidating old attempts deterministically;
+- it remains independent from Android side effects.
+
+Do not make DisplayMirrorHost the service-level presentation authority.
+
+6.2 Identity
+
+Conceptual immutable Identity:
+
+PresentationIdentity(
+  serviceEpoch,
+  closeCycleId,
+  transitionGeneration,
+  visualAttemptId,
+  hostLeaseId,
+  contentLeaseId,
+  presentationAttemptSequence,
+  renderPath
+)
+
+Identity rules:
+- serviceEpoch comes from service/Gen3 kernel lifetime.
+- closeCycleId comes from the exact active close cycle where applicable.
+- transitionGeneration is captured at visual demand/attempt creation, not looked up later in callbacks.
+- visualAttemptId comes from display-rd CoverVisualLease (or the exact accepted visual owner equivalent).
+- hostLeaseId is allocated monotonically by the service-stable owner/coordinator BEFORE DisplayMirrorHost construction.
+- contentLeaseId is the exact frozen-frame lease or live mirror content lease.
+- presentationAttemptSequence is service-stable/owner-stable and never restarts with a new host object.
+- renderPath is explicit: FROZEN_VIEW, LIVE_MIRROR, and any future compositor path.
+
+Do not use Android logical display ID as physical identity.
+Do not reconstruct identity from “current” mutable state inside callbacks.
+
+6.3 State
+
+Recommended state model:
+- IDLE
+- REQUESTED
+- HOST_READY
+- SUBMITTED
+- PRESENTED
+- FAILED
+- INVALIDATED
+
+State semantics:
+REQUESTED: visual owner demanded this exact attempt; no physical presentation claim.
+HOST_READY: exact host exists and can accept/bind content; no physical presentation claim.
+SUBMITTED: content/frame/transaction has entered the rendering/presentation pipeline; no physical presentation claim.
+PRESENTED: terminal evidence proves the exact current attempt was presented according to its render-path contract.
+FAILED: current attempt could not proceed; visual owner must decide fallback/retry.
+INVALIDATED: reversal/remap/new attempt/authority loss/service lifecycle made the attempt stale.
+
+6.4 Evidence strength
+
+Recommended explicit evidence enum:
+- NONE
+- DRAWN
+- FRAME_COMMITTED
+- TRANSACTION_COMMITTED
+- PRESENTED_CALLBACK
+- PRESENT_FENCE
+
+Rules:
+- DRAWN is not presented.
+- FRAME_COMMITTED is not presented.
+- TRANSACTION_COMMITTED is not presented.
+- PRESENTED_CALLBACK can assert PRESENTED when the platform contract says callback occurs on presentation.
+- PRESENT_FENCE is PRESENTED plus stronger actual presentation timestamp quality.
+- Callback arrival timestamp and presentFence.signalTime are separate values.
+
+6.5 LIVE_MIRROR terminal evidence
+
+On API 35+:
+- transaction committed callback -> SUBMITTED/TRANSACTION_COMMITTED only.
+- transaction completed callback -> PRESENTED/PRESENTED_CALLBACK.
+- if presentFence is valid/signaled -> evidence=PRESENT_FENCE and store exact signal time.
+- if presentFence is invalid/empty but completed callback fired -> remain PRESENTED/PRESENTED_CALLBACK; do not incorrectly downgrade to “not presented.”
+
+Current code only calls Fold7PresentationLease.onPresented when a valid fence signal is obtained. For ownership semantics, this is too strict because the API completed callback itself is documented as presentation completion. Keep fence validity as timestamp quality, not as the binary visibility test.
+
+6.6 FROZEN_VIEW terminal evidence
+
+Current frame-commit callback is insufficient to assert PRESENTED.
+
+Recommended Gen3 direction:
+- preserve frame-commit as SUBMITTED/FRAME_COMMITTED evidence;
+- add a real presentation primitive for the frozen View path.
+
+Best candidate to prototype:
+- create a tiny transaction tied to the host root SurfaceControl;
+- schedule it on the same draw using the existing draw-synchronized transaction mechanism;
+- register API35 TransactionCompletedListener;
+- capture exact PresentationIdentity before registration;
+- completion may assert PRESENTED_CALLBACK; valid present fence upgrades timing evidence.
+
+This must be validated on Fold7. The R&D model proves the ownership semantics, not that a specific no-op/root transaction is guaranteed to track the desired View buffer on Samsung. If that coupling cannot be proven, keep FROZEN_VIEW as PRESENTATION_UNCONFIRMED and let the visual owner choose an explicit degraded policy rather than falsely asserting visibility.
+
+6.7 Host remap/recreation
+
+On every new DisplayMirrorHost construction:
+- allocate a new service-stable hostLeaseId first;
+- invalidate any current attempt bound to the replaced host;
+- construct the new host with hostLeaseId and the shared PresentationOwner;
+- rebinding the same visual/content demand creates a new presentation attempt identity;
+- old host callbacks may be logged as stale but must not mutate current ownership.
+
+6.8 Content/path replacement
+
+Changing any of:
+- frozen contentLeaseId;
+- live mirror lease/content identity;
+- renderPath;
+- visualAttemptId;
+creates a new presentation attempt.
+
+A newer attempt must invalidate the older one before callbacks can race.
+
+6.9 Reversal/authority loss/service restart
+
+Before releasing route/host on reversal or authority loss:
+- invalidate current exact presentation attempt synchronously in the service-stable owner;
+- then detach/release Android resources.
+
+This ordering guarantees late callback inertness.
+
+Service restart changes serviceEpoch, so old callbacks cannot match even if numeric cycle/content counters restart.
+
+==================================================
+7. RELATIONSHIP TO DISPLAY-RD COVER VISUAL LEASE
+==================================================
+
+DO NOT merge visual intent and presentation evidence into one owner.
+
+Accepted layering should be:
+
+cover authority
+  -> cover readiness
+  -> content provenance
+  -> CoverVisualLease / exact visual intent + compositor ownership
+  -> PresentationOwner / exact host-content attempt + presented evidence
+
+CoverVisualLease answers:
+  “Which exact visual attempt is authorized and demanded?”
+
+PresentationOwner answers:
+  “Has that exact visual attempt actually been presented on its current exact host/content path?”
+
+This work therefore strengthens, rather than competes with, display-rd’s proposal.
+
+PresentationIdentity.visualAttemptId should be copied from the accepted visual lease. Never discover “current visual” at callback time.
+
+==================================================
+8. IMPORTANT INTEGRATION WARNING
+==================================================
+
+Do NOT implement P1.2 as only:
+  rename visualMirrorActive -> visualMirrorPresented
+or
+  change FoldOverlayService to evaluate PanelEngine when not presented.
+
+That is insufficient and may create renderer contention.
+
+CURRENT Fold7CoverRenderPolicy grants privileged Gen2 blanket cover ownership, and PanelEngine is deliberately suppressed under that ownership. Primary has already accepted the Gen3 direction of one exact privileged cover visual owner/compositor rather than restoring autonomous competing cover renderers.
+
+Recommended integration ordering:
+1. P0.2 exact CoverVisualLease/compositor owns visual fallback/degradation.
+2. P1.2 PresentationOwner reports pending/presented/failed beneath that owner.
+3. Visual owner chooses retry, static degraded presentation, or native handoff explicitly.
+4. Never implicitly revive legacy autonomous cover rendering merely because presentation is pending.
+
+The PresentationOwner foundation can be coded/tested independently, but behavior changes should be reconciled with P0.2.
+
+==================================================
+9. CONTROLLER / COORDINATOR API SEMANTICS
+==================================================
+
+Recommended semantic split:
+
+visualDemandActive
+  = controller.state == COVER_VISUAL && exact visual lease is demanded/current
+
+visualPresentationActive
+  = PresentationOwner current identity matches exact visual lease/cycle/generation
+    && stage == PRESENTED
+
+Do not call demand “active mirror” if downstream code interprets active as visible.
+
+Controller COVER_VISUAL should remain a policy/demand state unless primary intentionally introduces explicit requested/presented substates. A separate presentation owner is less invasive and preserves controller threshold semantics.
+
+Potential status API:
+
+PresentationStatus(
+  demandActive,
+  currentIdentity,
+  stage,
+  evidence,
+  actualPresentNs,
+  failureReason
+)
+
+==================================================
+10. ADVERSARIAL MODEL
+==================================================
+
+Artifact: PresentationOwnerModel.kt
+Compiler: kotlinc-jvm 1.9.0 / JRE 21
+Result: 13/13 PASS
+
+Tests:
+1. legacy intent can claim visual active without host or presentation — PASS
+2. legacy frozen identity collides across new host objects — PASS
+3. Gen3 demand is not presented — PASS
+4. service-stable host lease prevents remap collision — PASS
+5. stale callback after remap is inert — PASS
+6. frame commit does not assert visibility — PASS
+7. transaction commit does not assert visibility — PASS
+8. completed callback is presentation evidence without fence — PASS
+9. present fence upgrades timestamp quality — PASS
+10. frozen draw-synchronized transaction can confirm present in the model — PASS
+11. reversal invalidates late present — PASS
+12. new attempt rejects old present — PASS
+13. 100,000-event fixed-seed adversarial stream preserves current identity/invariants — PASS
+
+The fuzz stream mixes:
+- new attempts;
+- host readiness;
+- draw/frame commits;
+- transaction commits;
+- completed callbacks with/without fence timestamps;
+- invalidation;
+- deliberately stale callback identities.
+
+Invariant checked continuously:
+PRESENTED state is reachable only with PRESENTED_CALLBACK or PRESENT_FENCE evidence.
+
+==================================================
+11. REJECTED / NEGATIVE DIRECTIONS
+==================================================
+
+REJECTED: treat mirrorRequested/COVER_VISUAL as proof of visibility.
+Reason: source directly demonstrates pre-host/failure windows.
+
+REJECTED: treat View frame commit as physical presentation.
+Reason: Android explicitly says frame may not yet be visible.
+
+REJECTED: treat transaction committed callback as physical presentation.
+Reason: committed means applied/ready to present, not presented.
+
+REJECTED: require valid presentFence before acknowledging TransactionCompleted as presentation.
+Reason: API contract says completed listener is invoked when presented; fence availability should affect timestamp quality, not erase presentation evidence.
+
+REJECTED: infer exact attempt by callback timing proximity.
+Reason: remap/retry/reversal callbacks can cross.
+
+REJECTED: keep hostEpoch local to each DisplayMirrorHost if identity is used outside that host.
+Reason: frozen remaps can recreate identical identity tuples.
+
+REJECTED: synchronize/block waiting on fences.
+Reason: would contaminate rendering latency and risk jank/deadlock.
+
+REJECTED: change 174-degree prewarm / 135-degree visible threshold to hide presentation failures.
+Reason: ownership/evidence bug must be fixed directly; preserve established threshold semantics unless device evidence changes them.
+
+REJECTED: reactivate autonomous legacy cover PanelEngine as an implicit fallback.
+Reason: conflicts with accepted single exact visual owner/compositor direction and can reintroduce renderer contention.
+
+==================================================
+12. PRIMARY IMPLEMENTATION SKETCH
+==================================================
+
+A. New/refactored pure owner
+Suggested file:
+  app/src/full/java/com/duoopen/overlay/Fold7PresentationOwner.kt
+or evolve Fold7PresentationLease into service-stable ownership while retaining callback-fencing semantics.
+
+Responsibilities:
+- allocate hostLeaseId monotonically per service epoch;
+- allocate presentationAttemptSequence monotonically;
+- store one current exact PresentationIdentity;
+- accept exact stage callbacks only for current identity;
+- classify evidence strength;
+- expose immutable snapshot/status;
+- invalidate before host/reversal/authority teardown.
+
+B. Fold7Gen2Kernel / Gen3 kernel
+Add:
+  val presentations = Fold7PresentationOwner(serviceEpoch)
+
+Invalidate on:
+- active cycle cancellation;
+- service destroy;
+- privilege/authority epoch invalidation;
+- explicit visual lease cancellation where appropriate.
+
+C. Fold7ContinuityCoordinator
+Before constructing a host:
+- allocate stable hostLeaseId;
+- pass it into DisplayMirrorHost.
+
+Replace ambiguous state API:
+- visualDemandActive
+- visualPresentationActive/status
+
+Do not use presentation status to alter hinge thresholds.
+
+D. DisplayMirrorHost
+Constructor receives:
+- stable hostLeaseId;
+- shared PresentationOwner;
+- exact visualAttempt identity/correlation supplied by coordinator/visual owner.
+
+FROZEN_VIEW:
+- begin exact presentation attempt after exact content selection;
+- draw/frame commit remain non-terminal;
+- prototype draw-synchronized transaction completion for real presentation proof.
+
+LIVE_MIRROR:
+- begin exact attempt before listener registration;
+- transaction committed -> non-terminal;
+- transaction completed -> PRESENTED_CALLBACK;
+- valid presentFence -> PRESENT_FENCE + actualPresentNs.
+
+On detach:
+- invalidate exact host/attempt before resource release.
+
+E. TransitionLab
+performance-rd already owns instrumentation design. Feed the exact same PresentationIdentity/correlation into TransitionLab rather than inventing another ID. Keep ownership and measurement separate: instrumentation observes the owner; instrumentation does not determine ownership.
+
+F. CoverVisualLease integration
+Presentation attempt identity must contain/copy visualAttemptId from the exact visual owner. If primary changes the final visual lease field names, preserve the invariant rather than this exact DTO shape.
+
+==================================================
+13. UNIT / INTEGRATION TEST MATRIX
+==================================================
+
+Pure owner tests:
+- demand does not imply presented;
+- host allocation monotonic across remap;
+- presentation attempt monotonic;
+- same frozen content/new host -> new identity;
+- same host/new content -> new identity;
+- same content/new visual attempt -> new identity;
+- stale old draw/frame/commit/completed rejected;
+- reversal invalidates before late completion;
+- cycle replacement rejects old completion;
+- serviceEpoch replacement rejects old completion;
+- frame commit cannot mark presented;
+- transaction commit cannot mark presented;
+- completed callback marks presented without valid fence;
+- valid fence stores actualPresentNs and strongest evidence;
+- failure state cannot later become presented;
+- 100k+ random event invariant run.
+
+Android host tests where practical:
+- host attach succeeds but root SurfaceControl temporarily null -> remains pending.
+- frozen frame invalid/recycled/dimension mismatch -> no presented claim.
+- shell mirror creation fails -> attempt fails/pending, no presented claim.
+- geometry apply fails -> invalidated/failed, no presented claim.
+- completed callback after detach -> stale.
+- new host same frozen frame -> distinct hostLeaseId/attempt.
+- transaction completed with invalid/empty fence -> PRESENTED_CALLBACK, no actualPresentNs.
+- valid fence -> PRESENT_FENCE with actualPresentNs.
+
+==================================================
+14. FOLD7 DEVICE VALIDATION
+==================================================
+
+Required after primary integrates P0.2/P1.2 into a debug build:
+
+1. Slow close, frozen path
+- verify demand starts at current threshold;
+- verify no PRESENTED status before real terminal evidence;
+- high-FPS external video aligned with logs.
+
+2. Fast close
+- ensure early prewarm/capture gains remain;
+- no delayed pending state that causes blank cover.
+
+3. Live-mirror fallback
+- deliberately make frozen frame unavailable where safe;
+- verify TransactionCompleted -> PRESENTED_CALLBACK;
+- capture valid/invalid present-fence cases.
+
+4. Reversal
+- close past visual demand then reopen before presentation completion;
+- stale callbacks must be logged stale and never restore presented state.
+
+5. Host/topology remap
+- reproduce logical display remap/recreation if possible;
+- new stable hostLeaseId must be visible in logs;
+- old attempt must never complete current owner.
+
+6. Repeated close/open cycles
+- verify serviceEpoch/cycle/visual/host/attempt identities remain unique/current.
+
+7. Privilege/daemon loss
+- reconcile with reviewer Shizuku recovery design;
+- presentation must be invalidated before recovery/reacquisition.
+
+8. User-visible quality
+- verify exact visual/compositor remains continuous while pending presentation status changes internally;
+- do not trade a correct state model for visible flicker.
+
+==================================================
+15. PERFORMANCE / CONCURRENCY RULES
+==================================================
+
+- owner methods should be pure/small and invoked on the service/main serialized control path where possible;
+- callbacks capture immutable identities at registration time;
+- no callback may query mutable “current visual” and synthesize an identity later;
+- no blocking fence waits;
+- no synchronous JSON/file writes on render/main callbacks;
+- stale callbacks may be logged but never mutate current owner;
+- host/cycle invalidation occurs before Android resource release;
+- status observers receive immutable snapshots/deltas.
+
+==================================================
+16. COMPATIBILITY WITH PARALLEL GEN3 WORK
+==================================================
+
+Primary Phase 1 V2 CAS authority package:
+- complementary;
+- not represented in current main during this R&D;
+- presentation identity should consume whatever final exact cover/visual authority IDs primary lands.
+
+Display-rd exact CoverVisualLease/compositor:
+- directly complementary;
+- PresentationOwner is downstream, not a replacement.
+
+Performance-rd transition observability:
+- directly complementary;
+- reuse exact identity for telemetry correlation.
+
+State-rd close-cycle prime owner:
+- complementary;
+- contentLeaseId/cycle provenance feed presentation identity.
+
+State-rd opening owner (completed during this workstream):
+- intentionally excluded from implementation overlap;
+- final handoff confirms one immutable opening attempt survives host/remap and binds host identity beneath it;
+- this is compatible with PresentationOwner: the exact opening visualAttemptId/host binding can feed the same downstream presentation contract.
+
+Reviewer Shizuku recovery:
+- complementary;
+- privilege epoch loss invalidates presentation owner before recovery.
+
+Primary Gen3 Alpha1 integration checkpoint (arrived during final reconciliation):
+- primary is already assembling a unified exact visual owner and shader host against this same production baseline plus staged CAS;
+- host-remap demand preservation and stale-host rejection are already accepted Alpha1 invariants;
+- this P1.2 handoff adds the downstream service-stable presentation identity and evidence-strength contract; it does not reopen the accepted visual-owner architecture.
+
+Concurrent terminal-handoff R&D:
+- display-rd explicitly reconciled its terminal native-handoff prototype to service-stable hostLeaseId + global visualAttemptId after reading this workstream's findings;
+- performance-rd explicitly scoped itself to terminal native-destination evidence/timing and declared reviewer presentation-owner correctness as separate ownership;
+- no competing presentation-owner design was found.
+
+==================================================
+17. ARTIFACTS
+==================================================
+
+PresentationOwnerModel.kt
+SHA256=f5a836882d0300581b0d1c4b33ee95e7756d294da367b9f00910f376ff9ef97c
+
+presentation-owner-model.jar
+SHA256=d8c11e1b587ecbcb6ecc1b74732ad2168884e8c49366918b4300b791479264e8
+
+PRESENTATION_OWNER_MODEL_TEST_OUTPUT.txt
+SHA256=c6787d2e8ea1dc7405b6293d828b7111e0a8b2959814dd8c843addfd696d407b
+
+Final handoff/proposal hashes are recorded in the detached SHA256 manifest and Agent Bus handoff message after packaging.
+
+==================================================
+18. HANDOFF DECISION
+==================================================
+
+PRIMARY CAN ACT WITHOUT THIS CONVERSATION=YES
+PRODUCTION INTEGRATION AUTHORIZED BY reviewer=NO
+MANUAL_PRIMARY_REVIEW_REQUIRED=YES
+DEVICE_VALIDATION_REQUIRED=YES
+
+RECOMMENDED PRIMARY DECISION:
+Adopt the invariants, not necessarily the exact class names:
+- demand != presentation;
+- exact presentation ownership is service-stable;
+- host identity is externally monotonic, not host-local;
+- stale callbacks are inert;
+- render-path evidence strength is explicit;
+- API35 completed callback is presentation evidence even without a usable fence timestamp;
+- View frame commit is not presentation proof;
+- PresentationOwner sits beneath CoverVisualLease and reuses the same exact visual identity;
+- no threshold changes and no autonomous-renderer fallback regression.
+

@@ -1,0 +1,671 @@
+DUO OPEN — TERMINAL NATIVE-COVER HANDOFF / LANDING LEASE R&D HANDOFF
+Generated UTC: 2026-10-01T23:14:58Z
+AGENT_ID=display-rd
+WORKSTREAM_ID=ws-display-rd-terminal-handoff-20261001t230353z
+AGENT_BUS_LIVE_SCHEMA=duoopen-agentbus/v1
+PRODUCTION_AUTHORITY=primary only
+PRODUCTION_GITHUB_WRITES=NONE
+
+======================================================================
+1. EXECUTIVE SUMMARY
+======================================================================
+
+This workstream isolates the terminal CLOSED-side handoff from Duo's visible
+cover visual to Samsung/native cover steady state.
+
+Source-confirmed gap on current main:
+- Fold7ContinuityController.Topology.nativeCover means only:
+    coverActive && coverIsDefault && !innerActive
+- At <= NATIVE_COVER_MAX_DEG (12 degrees), that topology immediately drives
+  COVER_VISUAL -> NATIVE_COVER.
+- The transition emits HideMirror + ReleaseSecondary.
+- Fold7Gen2Kernel simultaneously invalidates the exact close cycle, frozen frame,
+  and cover readiness when NATIVE_COVER is entered.
+- Fold7ContinuityCoordinator.hideMirror() detaches DisplayMirrorHost immediately.
+- DisplayMirrorHost.detach() invalidates presentation identity, clears the frozen
+  frame, releases the mirror and removes the overlay window immediately.
+
+There is no destination/native-frame presentation acknowledgement in that path.
+Therefore the current architecture can causally tear down Duo's final cover frame
+as soon as logical/power topology says the native cover owns the display, even if
+the first native steady-state composition has not yet visually landed.
+
+This is a source-confirmed ordering gap. Whether it creates a visible flash/jump
+on every physical Fold7 close is DEVICE-UNVERIFIED.
+
+Proposed Gen3 correction:
+- add a terminal SamsungNativeHandoffOwner / landing lease after current visual
+  ownership and presentation ownership;
+- treat native topology as ADMISSION, not presentation proof;
+- retain the exact current Duo visual and exact-cycle content while native topology
+  stabilizes;
+- use API 35+ SurfaceControl.Transaction.addTransactionCompletedListener presentation
+  callbacks as compositor landing barriers;
+- after the configured landing barriers, submit an exact fade-to-native transaction;
+- only after the fade transaction itself is presented may the close cycle/content,
+  Duo host, and privileged secondary lease be released as CLEAN;
+- reversal, topology loss, host replacement, service restart, or a newer visual
+  attempt cancels the old terminal handoff token;
+- watchdog escape is explicitly DEGRADED_TIMEOUT, never mislabeled clean.
+
+Pure Kotlin model result: 11/11 focused tests PASS + 100,000 deterministic adversarial
+events PASS. The first adversarial run exposed a test-harness invariant bug; that
+failure is preserved rather than erased.
+
+======================================================================
+2. REPOSITORY / COORDINATION BASELINE
+======================================================================
+
+Repository: boberino93-bit/duo-open
+STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e
+Target: Samsung Galaxy Z Fold7 only
+Target OS: Android 16 / Samsung One UI
+INNER=1968x2184
+COVER=1080x2520
+
+Live Agent Bus was inspected before work. The deployed board is the legacy
+append-only duoopen-agentbus/v1 layout:
+  /DuoOpen-AgentBus/messages
+  /DuoOpen-AgentBus/artifacts
+No live V6 /states lane was invented.
+
+Primary baseline/decision already names SamsungNativeHandoff as the terminal layer
+in the Gen3 target architecture but did not define an exact terminal landing
+protocol. Existing parallel work already covered:
+- exact visual-attempt/compositor ownership;
+- service-stable presentation owner and evidence strength;
+- exact-cycle capture/prime arbitration;
+- Shizuku privilege/daemon recovery;
+- transition observability/causal correlation.
+
+This workstream intentionally did not duplicate those owners.
+
+During this R&D, primary posted a Gen3 alpha1 integration checkpoint against the
+same production SHA. It reconciles prime ownership, visual ownership, Shizuku
+recovery and observability. It does not close this terminal native-handoff gap.
+
+Concurrent reviewer presentation-owner work found that current DisplayMirrorHost
+hostEpoch/attemptSequence are host-local and can collide after host recreation.
+This workstream therefore reconciled its model identity to consume service-stable
+hostLeaseId + global visualAttemptId from that higher-level Gen3 presentation/
+visual owner rather than relying on current host-local counters.
+
+======================================================================
+3. PRIOR-WORK / DUPLICATION CHECK
+======================================================================
+
+Reviewed live Agent Bus work included:
+- display-rd cover visual composition handoff;
+- display-rd presentation-readiness finding;
+- state-rd close-cycle prime/capture arbitration handoff;
+- reviewer Shizuku recovery handoff;
+- performance-rd transition observability handoff;
+- reviewer service-stable presentation-owner findings/model;
+- primary Gen3 final decision and alpha1 checkpoint.
+
+Boundary distinction:
+- PresentationOwner answers: did THIS Duo visual attempt get drawn/submitted/presented?
+- TerminalNativeHandoffOwner answers: once Samsung/native topology takes over at
+  the closed endpoint, when is it safe to remove the LAST Duo-owned visual and
+  release its supporting lifetime?
+
+The terminal owner consumes presentation primitives; it does not replace the
+presentation owner.
+
+======================================================================
+4. CURRENT IMPLEMENTATION RECONSTRUCTION
+======================================================================
+
+A. Native-cover predicate
+File: app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+
+Topology.nativeCover:
+  coverActive && coverIsDefault && !innerActive
+
+This is logical/power-route evidence. It does not encode a native buffer, native
+SurfaceControl transaction, launcher frame, present fence, or destination content
+provenance.
+
+B. Terminal state transition
+Same file, current close endpoint logic:
+- when topology.nativeCover && angle <= 12 degrees;
+- transition directly to NATIVE_COVER;
+- if previous state was COVER_VISUAL -> HideMirror;
+- if previous state held secondary cover -> ReleaseSecondary.
+
+C. Close-cycle invalidation
+File: app/src/full/java/com/duoopen/overlay/Fold7Gen2Kernel.kt
+
+When a closing state transitions to NATIVE_COVER:
+- invalidate close cycle;
+- invalidate continuity frame;
+- invalidate cover readiness.
+
+D. Immediate visual teardown
+File: app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+
+hideMirror():
+- mirrorRequested=false;
+- mirrorHost=null;
+- old?.detach().
+
+releaseSecondary():
+- hides locally again;
+- releases privileged cover lease asynchronously.
+
+E. Host teardown
+File: app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+
+detach():
+- invalidate presentation host;
+- clear active presentation;
+- request shell mirror stop;
+- clear frozen frame;
+- release app mirror;
+- removeViewImmediate(hostView).
+
+F. Already-existing stronger presentation primitive
+DisplayMirrorHost already uses API 35+:
+- SurfaceControl.Transaction.addTransactionCompletedListener(...)
+- TransactionStats.presentFence
+for LIVE_MIRROR presentation instrumentation.
+
+Android public API contract:
+- addTransactionCommittedListener: transaction applied / updates ready to be
+  presented; NOT proof that it has been presented.
+- addTransactionCompletedListener (API 35): callback invoked when transaction is
+  presented.
+- TransactionStats.getPresentFence(): fence signals when transaction has been
+  presented; empty fence may be returned on devices without present-fence support.
+
+Official references:
+https://developer.android.com/reference/android/view/SurfaceControl.Transaction
+https://developer.android.com/reference/kotlin/android/view/SurfaceControl.TransactionStats
+
+======================================================================
+5. CLAIM / EVIDENCE LEDGER
+======================================================================
+
+CLAIM C1 — CONFIRMED BY SOURCE
+Current nativeCover is topology/power-route state, not destination presentation proof.
+Evidence: Fold7ContinuityController.Topology.nativeCover + coordinator topology().
+
+CLAIM C2 — CONFIRMED BY SOURCE
+Current main immediately hides/releases on native topology at <=12 degrees.
+Evidence: controller terminal branch + coordinator apply/hide/release.
+
+CLAIM C3 — CONFIRMED BY SOURCE
+Current terminal transition destroys the exact-cycle content/readiness lifetime before
+any explicit native destination presentation acknowledgement.
+Evidence: Fold7Gen2Kernel.onTransition() + DisplayMirrorHost.detach().
+
+CLAIM C4 — CONFIRMED BY PLATFORM API + CURRENT SOURCE
+API 35+ transaction-completed provides stronger presentation timing than transaction-
+committed, and current project already uses it in DisplayMirrorHost.
+
+CLAIM C5 — MODELED, NOT DEVICE-MEASURED
+Retaining the opaque Duo terminal visual for multiple presentation-completed compositor
+opportunities before a presented fade prevents the specific release-before-landing
+ordering represented by the current model.
+Evidence: TerminalNativeHandoffOwner 11/11 + 100k adversarial tests.
+
+CLAIM C6 — NOT CLAIMED
+A Duo-owned overlay transaction completion does NOT prove Samsung Launcher/SystemUI
+has produced a fresh matching buffer below the overlay. It only proves our transaction
+was presented in the compositor. Native content freshness remains unobservable from
+this app-level mechanism without additional privileged instrumentation.
+
+======================================================================
+6. CONFIRMED FINDINGS
+======================================================================
+
+1. Current endpoint ownership is overloaded: logical native-route ownership is treated
+   as sufficient permission to tear down the last visual cover.
+
+2. Current close-cycle invalidation timing makes delayed terminal validation impossible:
+   by the time NATIVE_COVER is entered, the exact frame/readiness lifetime is already
+   invalidated.
+
+3. A clean terminal protocol therefore needs a PENDING terminal state/lifetime, not
+   merely a delayed hide call after NATIVE_COVER.
+
+4. The project already has the correct platform class of primitive for a compositor
+   barrier on Android 16: transaction-completed/presentation callback. A new hidden
+   API is not required for this concept.
+
+5. The terminal handoff token must be built from service-stable Gen3 identities. Current
+   DisplayMirrorHost-local epoch/attempt counters are insufficient as global identity.
+
+======================================================================
+7. HYPOTHESES / UNVERIFIED RISKS
+======================================================================
+
+H1 — DEVICE-UNVERIFIED
+A visible close-end flash/jump is actually caused, in whole or in part, by current
+release-before-native-landing ordering on the Fold7.
+
+H2 — DEVICE-UNVERIFIED
+Two presented compositor barriers are enough for Samsung's native cover stack to settle
+behind the opaque Duo visual under normal close conditions.
+
+H3 — DEVICE-UNVERIFIED
+The optimum fade duration/step count is one presented transaction. Multi-frame crossfade
+may look better but adds terminal latency.
+
+H4 — DEVICE-UNVERIFIED
+API 35 transaction-completed callbacks and present fences remain reliable across the
+Fold7's exact display remap/closed transition. Current source already uses them for live
+mirror, but the terminal boundary needs physical validation.
+
+H5 — CONTENT-MATCH RISK
+If cover launcher/home content intentionally differs from the right inner pane, even a
+perfect landing protocol can reveal a semantic jump when the overlay fades. That is a
+launcher/content-continuity problem, not a terminal presentation-order bug.
+
+======================================================================
+8. PROPOSED GEN3 DESIGN
+======================================================================
+
+Recommended owner:
+  SamsungNativeHandoffOwner (or TerminalNativeHandoffOwner)
+
+Identity:
+  serviceEpoch
+  closeCycleId
+  transitionGeneration / movement identity
+  hostLeaseId            [SERVICE-STABLE from Gen3 visual/presentation owner]
+  visualAttemptId        [SERVICE-GLOBAL monotonic attempt identity]
+  handoffSequence        [terminal-owner monotonic attempt]
+
+Suggested states:
+  IDLE
+  VISUAL_ACTIVE
+  NATIVE_PENDING
+  FADING_TO_NATIVE
+  RELEASED_CLEAN
+  RELEASED_DEGRADED_TIMEOUT
+
+Admission:
+- controller detects native topology near closed endpoint using existing policy;
+- do NOT enter steady NATIVE_COVER yet;
+- do NOT invalidate close cycle/frame/readiness yet;
+- do NOT hide/detach/release secondary yet;
+- enter NATIVE_PENDING and retain exact current opaque Duo terminal visual.
+
+Landing barriers:
+- submit a draw-synchronized/no-op-or-alpha=1 SurfaceControl transaction on the exact
+  current visual host/root;
+- attach addTransactionCompletedListener;
+- completion is the minimum evidence that counts as a PRESENTED barrier;
+- valid present-fence timestamp upgrades evidence quality/timing but is not required
+  for the API's presented callback itself;
+- repeat for configured barrier count;
+- prototype uses 2 barriers ONLY as a MODELED starting safety floor, not a field-tuned
+  production constant.
+
+Fade:
+- after required barriers, native topology still must be current/stable;
+- submit exact overlay fade-to-native transaction;
+- clean release is forbidden until that fade transaction completes as PRESENTED;
+- after fade-presented:
+    1. mark terminal handoff CLEAN;
+    2. transition to steady NATIVE_COVER;
+    3. invalidate close cycle/frame/readiness;
+    4. detach/release Duo visual host;
+    5. release privileged secondary display lease.
+
+Cancellation:
+Any of these invalidate the terminal token and retain/rebind visual ownership as needed:
+- opening reversal;
+- native topology loss;
+- new movement/close cycle;
+- host replacement/remap;
+- new visual attempt;
+- service epoch change;
+- Shizuku authority epoch loss.
+Old barrier/fade callbacks become inert.
+
+Watchdog:
+- bounded escape is required to prevent a permanently opaque overlay if presentation
+  callbacks fail;
+- timeout value MUST come from Fold7 measurements;
+- watchdog release is RELEASED_DEGRADED_TIMEOUT with explicit diagnostics;
+- never call timeout a clean native handoff.
+
+Fallback evidence:
+- On target Android 16, transaction-completed should be the primary barrier.
+- If present fence is empty but transaction-completed fires, record PRESENTED_CALLBACK
+  evidence and continue according to field-validated policy.
+- Transaction-committed alone must not be upgraded to presented.
+
+======================================================================
+9. PROTOTYPE / PROPOSED FILES
+======================================================================
+
+FILE=TerminalNativeHandoffModel.kt
+PURPOSE=Pure terminal ownership/landing state model and command protocol.
+BASELINE_OR_NEW=NEW R&D MODEL
+COMPILED=YES, local kotlinc
+TESTED=YES
+PRODUCTION_READY=NO
+
+FILE=TerminalNativeHandoffModelTest.kt
+PURPOSE=Focused and deterministic adversarial validation.
+BASELINE_OR_NEW=NEW R&D TEST
+COMPILED=YES
+TESTED=YES
+PRODUCTION_READY=NO
+
+No production Android file was modified or committed.
+
+Likely primary integration touchpoints, subject to Gen3 alpha architecture:
+- Fold7ContinuityController / replacement TransitionIntentOwner
+- Fold7Gen2Kernel / replacement stable movement owner
+- Fold7ContinuityCoordinator / visual-owner integration
+- DisplayMirrorHost or new privileged CoverVisualHost
+- service-stable PresentationOwner from reviewer work
+- TransitionLab terminal-handoff events
+
+======================================================================
+10. EXECUTION EVIDENCE
+======================================================================
+
+Local compiler/runtime:
+- kotlinc compiled model + test into executable JAR.
+- final focused result: PASS_COUNT=11/11.
+- deterministic randomized stream: RANDOM_EVENTS=100000 PASS.
+
+Final source/test hashes are carried in SHA256SUMS.txt.
+
+No APK built because this silo intentionally stops at a pure ownership model and primary
+owns production integration/build authority.
+
+======================================================================
+11. ADVERSARIAL BACK-TEST RESULTS
+======================================================================
+
+PASS cases:
+1. Current-main logical-native immediate-release ordering is reproducible as baseline risk.
+2. Logical native admission alone never releases Duo visual.
+3. Barrier #1 alone is insufficient.
+4. Required barriers enter FADING but still do not release.
+5. Only presented fade emits clean release.
+6. Prior-cycle token cannot affect new cycle.
+7. Old host token cannot affect replacement host.
+8. Native topology flap cancels pending landing.
+9. Opening reversal cancels pending landing.
+10. Duplicate barrier ordinal is idempotently rejected.
+11. Premature fade callback cannot release.
+12. Watchdog release is explicitly degraded.
+13. 100,000 randomized events preserve exact-token/cancellation/release invariants.
+
+Preserved negative result:
+- Initial run passed 9 focused tests and then failed randomized step 1097.
+- Failure reason: test harness asserted nativeTopologyStable forever while state remained
+  RELEASED_CLEAN, including after later synthetic topology loss.
+- This was a historical-state assertion bug in the test, not a model permission escape.
+- Fix: assert barrier/native evidence at the exact instant a clean-release command is
+  emitted.
+- Core owner release conditions were NOT weakened.
+- TEST_OUTPUT_INITIAL_FAIL.txt is retained in the proposal package.
+
+======================================================================
+12. BASELINE VS PROPOSED GEN3
+======================================================================
+
+BASELINE:
+  native topology <=12 degrees
+    -> NATIVE_COVER immediately
+    -> cycle/frame/readiness invalidated
+    -> HideMirror
+    -> ReleaseSecondary
+    -> DisplayMirrorHost detached immediately
+
+PROPOSED:
+  native topology <=12 degrees
+    -> NATIVE_PENDING
+    -> retain exact terminal Duo visual + exact cycle
+    -> PRESENTED barrier(s)
+    -> FADING_TO_NATIVE
+    -> presented fade
+    -> NATIVE_COVER steady state
+    -> invalidate cycle/frame/readiness
+    -> detach host
+    -> release secondary
+
+The proposed change is an ordering/lifetime correction, not a new hinge threshold.
+
+======================================================================
+13. REGRESSION RISKS
+======================================================================
+
+R1. Lingering overlay if terminal callbacks never arrive.
+Mitigation: bounded, explicitly degraded watchdog; strong diagnostics.
+
+R2. Added terminal latency.
+Mitigation: presentation-count policy rather than arbitrary long sleep; field-tune number
+of barriers and fade duration using TransitionLab.
+
+R3. Reversal during pending/fade.
+Mitigation: exact identity invalidation and restore/rebind current visual authority.
+
+R4. Host remap after admission.
+Mitigation: service-stable hostLeaseId/visualAttemptId; old token inert; new owner decides
+whether to restart terminal handoff.
+
+R5. Native content differs from Duo frame.
+Mitigation: outside this owner's authority; coordinate with launcher-content-continuity
+workstream. Do not hide content mismatch with stale frame substitution.
+
+R6. Releasing privileged lease changes topology after fade.
+Mitigation: release only after overlay fade is presented and steady native topology is
+still current; instrument post-release topology.
+
+======================================================================
+14. TESTS REQUIRED FOR PRODUCTION INTEGRATION
+======================================================================
+
+Unit/model:
+- terminal admission does not end cycle;
+- exact serviceEpoch/cycle/movement/host/visual/handoff token checks;
+- stale presented barrier ignored;
+- duplicate completion ignored;
+- host remap cancellation/restart;
+- reversal during barrier #1/#2/fade;
+- new close cycle while old callbacks queued;
+- service restart/Shizuku loss;
+- watchdog DEGRADED_TIMEOUT path;
+- no clean release from transaction-commit only;
+- no clean release from frame-commit only;
+- presentation-completed/no-valid-fence policy explicit;
+- clean release only after exact fade-presented callback.
+
+Integration:
+- close at slow/normal/fast velocities;
+- close then reopen before 12 degrees;
+- close topology flap around default-display remap;
+- host remap while terminal pending;
+- frozen and live render paths;
+- secure-content/capture-degraded path;
+- launcher and app foreground cases;
+- locked/unlocked cases if supported by product behavior;
+- Shizuku loss/reconnect during terminal pending.
+
+======================================================================
+15. FOLD7 FIELD TEST PLAN
+======================================================================
+
+Instrumentation events should include:
+- terminal-native-admitted
+- terminal-barrier-submitted {ordinal, token}
+- terminal-barrier-presented {ordinal, callback time, presentFence signal when valid}
+- terminal-fade-submitted
+- terminal-fade-presented
+- terminal-cancel {reason}
+- terminal-release-clean
+- terminal-release-degraded {reason}
+- post-release topology snapshot
+
+For each test close, correlate:
+- hinge ingress;
+- native topology first observed;
+- exact current visual identity;
+- barrier transaction sequence;
+- transaction-completed time;
+- present-fence time when valid;
+- fade completion;
+- host detach;
+- privileged lease release;
+- first visible native content via high-speed camera/manual frame inspection.
+
+High-speed camera is important because app telemetry cannot directly prove content of the
+native layer beneath an opaque overlay.
+
+Acceptance target is qualitative until field measurements exist:
+- no black/blank frame;
+- no obvious terminal flash;
+- no stale-frame linger;
+- no overlay remaining after close;
+- reversal remains immediate;
+- no added noticeable close-end stall.
+
+======================================================================
+16. PERFORMANCE / LATENCY IMPACT
+======================================================================
+
+MEASURED (local model):
+- 11/11 tests pass.
+- 100,000 adversarial events pass.
+- This is CPU/state-model validation only; it is not device rendering latency.
+
+MODELED:
+- 2 landing barriers + 1 fade presentation require at least 3 compositor presentation
+  opportunities in the clean path.
+- If operating at 120 Hz, three ideal frame intervals are about 25 ms.
+- If operating at 60 Hz, three ideal frame intervals are about 50 ms.
+- These are simple frame-interval illustrations, NOT measured Fold7 overhead and NOT a
+  promised end-to-end delay. Callbacks/scheduling may make the real interval longer.
+
+EXPECTED:
+- CPU cost of the owner itself is negligible compared with display/compositor work.
+- Additional visual latency is concentrated at the last closed-side handoff, while the
+  existing Duo frame remains visible, so the user should see continuity rather than a
+  blank wait if the architecture works as intended.
+
+UNKNOWN:
+- exact Fold7 terminal callback latency distribution;
+- cover refresh rate during this transition;
+- number of barriers actually needed;
+- ideal fade duration;
+- behavior under thermal/load/60-Hz modes;
+- whether native layer is ready by barrier 1, 2, or later.
+
+======================================================================
+17. IMPLEMENTATION PRIORITY
+======================================================================
+
+Recommended priority: P1 immediately after service-stable visual/presentation ownership.
+
+Reason:
+- current primary Gen3 alpha is already building the exact owner layers that terminal
+  handoff must consume;
+- doing terminal handoff before service-stable host/visual identity would bake in the
+  known host-local identity collision;
+- doing it after owner stabilization is a small, isolated lifecycle stage rather than
+  another rewrite.
+
+Suggested order:
+1. finish service-stable visual + presentation owner integration;
+2. add terminal NATIVE_PENDING owner/state;
+3. move cycle invalidation/HideMirror/ReleaseSecondary behind terminal completion;
+4. implement presented barrier/fade transactions;
+5. add TransitionLab terminal correlation;
+6. compile/unit/integration tests;
+7. build first field APK;
+8. tune barrier/fade/watchdog only from Fold7 evidence.
+
+======================================================================
+18. WHAT NOT TO CHANGE
+======================================================================
+
+Do NOT:
+- alter established hinge thresholds merely to mask terminal latency;
+- reintroduce DualScreen/WindowArea experiment;
+- issue raw physical panel OFF;
+- weaken exact-cycle content provenance;
+- use stale prior-cycle frames to hide a mismatch;
+- treat Display.STATE_ON/default-display identity as presentation proof;
+- treat transaction-commit as presentation proof;
+- make current host-local hostEpoch/attemptSequence the Gen3 global token;
+- introduce fixed arbitrary sleeps as the normal handoff protocol;
+- claim native content is proven by our overlay transaction completion.
+
+Preserve:
+- right-side canonical portal geometry;
+- V9 early inner wake;
+- exact-cycle close capture;
+- hidden readiness separate from visible demand;
+- one privileged visual owner;
+- Samsung native ownership after clean handoff;
+- reversal as first-class.
+
+======================================================================
+19. PRIMARY / SUPERVISOR INTEGRATION NOTES
+======================================================================
+
+The proposed owner should sit downstream of the Gen3 visual/presentation owner and before
+steady SamsungNativeHandoff completion.
+
+Do not copy this model's names blindly if primary's integrated Gen3 owner has different
+nomenclature. Preserve invariants instead:
+- exact token;
+- native topology = admission only;
+- visual retained while pending;
+- presented compositor barriers;
+- fade-presented gate;
+- release/invalidation last;
+- explicit degraded watchdog;
+- cancellation on reversal/remap/new owner identity.
+
+Reviewer presentation-owner work is complementary and should be consumed, specifically
+its service-stable hostLeaseId/global visualAttemptId and evidence-strength separation.
+
+Launcher-content-continuity work is also complementary: terminal ordering can prevent an
+empty/early teardown but cannot make two intentionally different launcher pages match.
+
+======================================================================
+20. ARTIFACT IDENTITY
+======================================================================
+
+Repository baseline:
+  45bb0d326899c0e08415928224cfea0ff58d2d4e
+
+Files in proposal package:
+  TerminalNativeHandoffModel.kt
+  TerminalNativeHandoffModelTest.kt
+  TEST_OUTPUT_INITIAL_FAIL.txt
+  TEST_OUTPUT.txt
+  DUO_OPEN_TERMINAL_NATIVE_HANDOFF_GEN2_RND_HANDOFF.txt
+  README.txt
+  BASELINE-SHA.txt
+  FINAL-MAIN-SHA.txt
+  SHA256SUMS.txt
+
+Package and detached artifact SHA-256 values are published in the Agent Bus handoff.
+
+======================================================================
+21. BOTTOM LINE
+======================================================================
+
+Current main knows when Samsung/native cover topology becomes logically authoritative,
+but it does not know that native steady-state pixels have visually landed before it
+tears Duo down.
+
+The clean architectural fix is not another angle threshold or arbitrary sleep. It is a
+short exact-identity terminal landing lease: hold the final Duo frame, cross one or more
+presentation-completed compositor barriers, present the fade to native, then release
+visual/content/secondary lifetimes in that order.
+
+The pure ownership model is strong under adversarial sequencing, but the decisive next
+step is physical Fold7 integration/measurement. Native-content freshness underneath the
+overlay remains unproven and must not be overstated.
