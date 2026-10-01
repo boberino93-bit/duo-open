@@ -197,6 +197,9 @@ internal object TransitionLab {
         binderArrivalTimeNs: Long,
         consumerDeliveryTimeNs: Long =
             TransitionClock.nowNs(),
+        angleSession: Long? = null,
+        pollSequence: Long? = null,
+        sampleSequence: Long? = null,
     ): HingeSampleRecord? {
         if (
             level == LabLevel.OFF ||
@@ -247,6 +250,10 @@ internal object TransitionLab {
             record.toEvent(
                 reason =
                     "Samsung FoldInteractive logcat sample",
+            ).copy(
+                angleSession = angleSession,
+                pollSequence = pollSequence,
+                sampleSequence = sampleSequence,
             )
         )
 
@@ -276,6 +283,58 @@ internal object TransitionLab {
         }
 
         return record
+    }
+
+    /** Gen2 sparse ingress/ownership event with immutable IDs. */
+    fun recordIngressStage(
+        type: String,
+        timeNs: Long = TransitionClock.nowNs(),
+        angleSession: Long? = null,
+        pollSequence: Long? = null,
+        sampleSequence: Long? = null,
+        serviceEpoch: Long? = null,
+        closeCycleId: Long? = null,
+        shellSession: Long? = null,
+        shellRevision: Long? = null,
+        leaseId: Long? = null,
+        leaseEpoch: Long? = null,
+        contentLeaseId: Long? = null,
+        captureSequence: Long? = null,
+        hostEpoch: Long? = null,
+        presentationAttemptSequence: Long? = null,
+        renderPath: String? = null,
+        staleAtCallback: Boolean? = null,
+        rejectionReason: String? = null,
+        reason: String? = null,
+        valueNs: Long? = null,
+        valueFloat: Float? = null,
+    ) {
+        if (level == LabLevel.OFF) return
+        writer?.record(
+            TransitionEvent(
+                timeNs = timeNs,
+                type = type,
+                serviceEpoch = serviceEpoch,
+                closeCycleId = closeCycleId,
+                angleSession = angleSession,
+                pollSequence = pollSequence,
+                sampleSequence = sampleSequence,
+                shellSession = shellSession,
+                shellRevision = shellRevision,
+                leaseId = leaseId,
+                leaseEpoch = leaseEpoch,
+                contentLeaseId = contentLeaseId,
+                captureSequence = captureSequence,
+                hostEpoch = hostEpoch,
+                presentationAttemptSequence = presentationAttemptSequence,
+                renderPath = renderPath,
+                staleAtCallback = staleAtCallback,
+                rejectionReason = rejectionReason,
+                reason = reason,
+                valueNs = valueNs,
+                valueFloat = valueFloat,
+            )
+        )
     }
 
     fun recordSyntheticEndpoint(

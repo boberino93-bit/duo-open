@@ -51,9 +51,17 @@ object ShizukuBridge {
     private val captureSeq =
         java.util.concurrent.atomic.AtomicLong()
 
+    private val connectionEpochCounter =
+        java.util.concurrent.atomic.AtomicLong()
+
+    @Volatile
+    var connectionEpoch: Long = 0L
+        private set
+
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             service = binder
+            connectionEpoch = connectionEpochCounter.incrementAndGet()
             binding = false
             Log.i(TAG, "shell service connected")
             refresh()
@@ -61,6 +69,7 @@ object ShizukuBridge {
 
         override fun onServiceDisconnected(name: ComponentName) {
             service = null
+            connectionEpoch = connectionEpochCounter.incrementAndGet()
             binding = false
             Log.i(TAG, "shell service disconnected")
             refresh()
@@ -68,7 +77,11 @@ object ShizukuBridge {
     }
 
     private val binderListener = Shizuku.OnBinderReceivedListener { refresh() }
-    private val deadListener = Shizuku.OnBinderDeadListener { service = null; refresh() }
+    private val deadListener = Shizuku.OnBinderDeadListener {
+        service = null
+        connectionEpoch = connectionEpochCounter.incrementAndGet()
+        refresh()
+    }
     private val permissionListener = Shizuku.OnRequestPermissionResultListener { _, result ->
         refresh()
         if (result == PackageManager.PERMISSION_GRANTED) bind()
@@ -132,6 +145,7 @@ object ShizukuBridge {
     fun unbind() {
         runCatching { Shizuku.unbindUserService(args(), connection, true) }
         service = null
+        connectionEpoch = connectionEpochCounter.incrementAndGet()
     }
 
     private fun call(code: Int, write: (Parcel) -> Unit = {}): Bundle? {
@@ -458,6 +472,70 @@ object ShizukuBridge {
             parcel.writeInt(5)
             parcel.writeLong(ownerGeneration)
             parcel.writeString(reason)
+        }
+
+    fun prewarmSecondaryDisplayV3(
+        ownerGeneration: Long,
+        reason: String = "prewarm",
+    ): Bundle? =
+        call(ShellProtocol.COVER_PANEL_LEASE_V3) { parcel ->
+            parcel.writeInt(1)
+            parcel.writeLong(0L)
+            parcel.writeLong(0L)
+            parcel.writeLong(0L)
+            parcel.writeLong(ownerGeneration)
+            parcel.writeString(reason)
+        }
+
+    internal fun ensureSecondaryDisplayHeldV3(
+        token: com.duoopen.overlay.Fold7CoverLeaseSnapshotGate.LeaseToken,
+        reason: String,
+    ): Bundle? =
+        call(ShellProtocol.COVER_PANEL_LEASE_V3) { parcel ->
+            parcel.writeInt(5)
+            parcel.writeLong(token.shellSession)
+            parcel.writeLong(token.leaseId)
+            parcel.writeLong(token.leaseEpoch)
+            parcel.writeLong(token.ownerGeneration)
+            parcel.writeString(reason)
+        }
+
+    internal fun releaseSecondaryDisplayV3(
+        token: com.duoopen.overlay.Fold7CoverLeaseSnapshotGate.LeaseToken,
+        reason: String,
+    ): Bundle? =
+        call(ShellProtocol.COVER_PANEL_LEASE_V3) { parcel ->
+            parcel.writeInt(2)
+            parcel.writeLong(token.shellSession)
+            parcel.writeLong(token.leaseId)
+            parcel.writeLong(token.leaseEpoch)
+            parcel.writeLong(token.ownerGeneration)
+            parcel.writeString(reason)
+        }
+
+    fun reconcileSecondaryDisplayLeaseV3(
+        shellSession: Long,
+        reason: String,
+    ): Bundle? =
+        call(ShellProtocol.COVER_PANEL_LEASE_V3) { parcel ->
+            parcel.writeInt(3)
+            parcel.writeLong(shellSession)
+            parcel.writeLong(0L)
+            parcel.writeLong(0L)
+            parcel.writeLong(-1L)
+            parcel.writeString(reason)
+        }
+
+    fun secondaryDisplayLeaseStatusV3(
+        shellSession: Long,
+    ): Bundle? =
+        call(ShellProtocol.COVER_PANEL_LEASE_V3) { parcel ->
+            parcel.writeInt(4)
+            parcel.writeLong(shellSession)
+            parcel.writeLong(0L)
+            parcel.writeLong(0L)
+            parcel.writeLong(-1L)
+            parcel.writeString("status")
         }
 
     fun requestDisplayPower(

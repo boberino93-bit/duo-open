@@ -6,6 +6,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Build
+import android.os.Handler
 import android.os.SystemClock
 import android.util.Log
 import kotlin.math.abs
@@ -32,6 +33,7 @@ import kotlin.math.roundToInt
 class HingeAngleSource(
     context: Context,
     private val onAngle: (Float) -> Unit,
+    private val callbackHandler: Handler? = null,
 ) : SensorEventListener {
 
     private class Stats(val sensor: Sensor) {
@@ -185,7 +187,11 @@ class HingeAngleSource(
             // needs com.samsung.permission.SSENSOR); that throws instead of
             // returning false.
             c.registered = try {
-                sm.registerListener(this, c.sensor, SAMPLING_PERIOD_US)
+                if (callbackHandler != null) {
+                    sm.registerListener(this, c.sensor, SAMPLING_PERIOD_US, callbackHandler)
+                } else {
+                    sm.registerListener(this, c.sensor, SAMPLING_PERIOD_US)
+                }
             } catch (e: SecurityException) {
                 Log.w(TAG, "register denied for ${c.sensor.name}: ${e.message}")
                 false

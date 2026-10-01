@@ -21,6 +21,7 @@ object ShellProtocol {
     const val OPEN_MIRROR_SESSION = 13
     const val MIRROR_DISPLAY_V2 = 14
     const val COVER_PANEL_LEASE_V2 = 15
+    const val COVER_PANEL_LEASE_V3 = 16
 
     const val CB_ANGLE = 1
 }

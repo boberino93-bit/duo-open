@@ -47,7 +47,7 @@ import kotlinx.coroutines.withContext
  * cross-window blur — the system blur over the live screen, which needs no
  * capture at all and so starts the instant a phase begins.
  */
-class PanelEngine(
+internal class PanelEngine(
     private val service: AccessibilityService,
     val display: Display,
     private val hinge: HingeAngleSource,
@@ -58,6 +58,9 @@ class PanelEngine(
     private val onShowingChanged: () -> Unit,
     /** Last capture of each panel kind, shared by all engines (see [SnapshotCache]). */
     private val cache: SnapshotCache,
+    /** Exact-cycle Fold7 continuity authority; separate from generic visual bridging. */
+    private val continuityFrames: Fold7ContinuityFrameStore<Bitmap>,
+    private val activeCloseCycle: () -> Fold7CycleEnvelope.CloseCycle?,
 ) {
     private enum class Phase { IDLE, CAPTURING, SHOWING }
 
@@ -338,6 +341,22 @@ class PanelEngine(
                 )
     }
 
+    private fun beginContinuityCapture(
+        source: Fold7ContinuityFrameStore.Source,
+        requestStartedUptimeMs: Long,
+    ): Fold7ContinuityFrameStore.CaptureTicket? {
+        if (!innerPanel || !deterministicFrozenFrameMode()) return null
+        val cycle = activeCloseCycle() ?: return null
+        val mode = runCatching { display.mode }.getOrNull() ?: return null
+        return continuityFrames.beginCapture(
+            cycle = cycle,
+            width = mode.physicalWidth,
+            height = mode.physicalHeight,
+            requestStartedUptimeMs = requestStartedUptimeMs,
+            source = source,
+        )
+    }
+
     /** Live blur is intentionally disabled on Fold7. */
     private fun liveMode(): Boolean =
         !deterministicFrozenFrameMode() &&
@@ -399,6 +418,11 @@ class PanelEngine(
         // ~50 ms even on a waking panel. Falls back to the accessibility
         // screenshot if it fails.
         if (shellCapture()) {
+            val continuityTicket =
+                beginContinuityCapture(
+                    source = Fold7ContinuityFrameStore.Source.SHIZUKU,
+                    requestStartedUptimeMs = t0,
+                )
             scope.launch {
                 val bitmap = withContext(Dispatchers.IO) {
                     ShizukuBridge.capture(displayId, excludedLayers(), INITIAL_SHELL_SCALE)
@@ -418,7 +442,15 @@ class PanelEngine(
                         return@launch
                     }
                 }
-                onCaptured(bitmap, afterSwap, startTilt, t0)
+                onCaptured(
+                    bitmap = bitmap,
+                    afterSwap = afterSwap,
+                    startTilt = startTilt,
+                    t0 = t0,
+                    continuityTicket = continuityTicket,
+                    capturedUptimeMs = t0,
+                    timestampQuality = Fold7ContinuityFrameStore.TimestampQuality.REQUEST_BOUNDED,
+                )
             }
             return
         }
@@ -442,6 +474,12 @@ class PanelEngine(
         retry: () -> Unit,
         stale: () -> Boolean,
     ) {
+        val continuityRequestStarted = SystemClock.uptimeMillis()
+        val continuityTicket =
+            beginContinuityCapture(
+                source = Fold7ContinuityFrameStore.Source.ACCESSIBILITY,
+                requestStartedUptimeMs = continuityRequestStarted,
+            )
         service.takeScreenshot(displayId, service.mainExecutor, object : AccessibilityService.TakeScreenshotCallback {
             override fun onSuccess(result: AccessibilityService.ScreenshotResult) {
                 val buffer = result.hardwareBuffer
@@ -458,7 +496,18 @@ class PanelEngine(
                     return
                 }
                 if (!afterSwap || attempt >= MAX_CAPTURE_ATTEMPTS) {
-                    onCaptured(bitmap, afterSwap, startTilt, t0)
+                    onCaptured(
+                        bitmap = bitmap,
+                        afterSwap = afterSwap,
+                        startTilt = startTilt,
+                        t0 = t0,
+                        continuityTicket = continuityTicket ?: beginContinuityCapture(
+                            source = Fold7ContinuityFrameStore.Source.ACCESSIBILITY,
+                            requestStartedUptimeMs = continuityRequestStarted,
+                        ),
+                        capturedUptimeMs = result.timestamp,
+                        timestampQuality = Fold7ContinuityFrameStore.TimestampQuality.EXACT_CAPTURE,
+                    )
                     return
                 }
                 scope.launch {
@@ -472,7 +521,18 @@ class PanelEngine(
                         Log.i(TAG, "display $displayId: capture $attempt is black after ${SystemClock.uptimeMillis() - t0}ms; retrying")
                         retry()
                     } else {
-                        onCaptured(bitmap, afterSwap, startTilt, t0)
+                        onCaptured(
+                        bitmap = bitmap,
+                        afterSwap = afterSwap,
+                        startTilt = startTilt,
+                        t0 = t0,
+                        continuityTicket = continuityTicket ?: beginContinuityCapture(
+                            source = Fold7ContinuityFrameStore.Source.ACCESSIBILITY,
+                            requestStartedUptimeMs = continuityRequestStarted,
+                        ),
+                        capturedUptimeMs = result.timestamp,
+                        timestampQuality = Fold7ContinuityFrameStore.TimestampQuality.EXACT_CAPTURE,
+                    )
                     }
                 }
             }
@@ -495,8 +555,42 @@ class PanelEngine(
         })
     }
 
-    private fun onCaptured(bitmap: Bitmap, afterSwap: Boolean, startTilt: Float?, t0: Long) {
+    private fun onCaptured(
+        bitmap: Bitmap,
+        afterSwap: Boolean,
+        startTilt: Float?,
+        t0: Long,
+        continuityTicket: Fold7ContinuityFrameStore.CaptureTicket?,
+        capturedUptimeMs: Long,
+        timestampQuality: Fold7ContinuityFrameStore.TimestampQuality,
+    ) {
         cache.put(innerPanel, bitmap)
+
+        if (continuityTicket != null) {
+            val lease =
+                continuityFrames.publish(
+                    ticket = continuityTicket,
+                    capturedUptimeMs = capturedUptimeMs,
+                    completedUptimeMs = SystemClock.uptimeMillis(),
+                    timestampQuality = timestampQuality,
+                    payload = bitmap,
+                )
+
+            com.duoopen.debug.DuoDiagnostics.event(
+                "snapshot-transition",
+                if (lease != null) {
+                    "Gen2 continuity frame published " +
+                        "serviceEpoch=${lease.serviceEpoch} closeCycle=${lease.closeCycleId} " +
+                        "capture=${lease.captureSequence} content=${lease.contentLeaseId} " +
+                        "source=${lease.source} quality=${lease.timestampQuality}"
+                } else {
+                    "Gen2 continuity frame rejected as stale " +
+                        "serviceEpoch=${continuityTicket.serviceEpoch} " +
+                        "closeCycle=${continuityTicket.closeCycleId} " +
+                        "capture=${continuityTicket.captureSequence}"
+                },
+            )
+        }
         if (bridging) {
             bridging = false
             val s = surface as? SnapshotSurface
