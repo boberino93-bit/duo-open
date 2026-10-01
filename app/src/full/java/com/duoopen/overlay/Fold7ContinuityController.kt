@@ -170,6 +170,53 @@ internal class Fold7ContinuityController(
             sampleMotion = true,
         )
 
+    /**
+     * Infrastructure-only opening edge.
+     *
+     * DeviceStateManager can report fully-closed -> not-fully-closed before
+     * Samsung's precise wallpaper angle resumes. This may wake the physical
+     * inner panel, but never supplies visual geometry.
+     */
+    fun onEarlyOpeningEdge(
+        nowMs: Long,
+        topology: Topology,
+    ): Decision {
+        if (
+            state != State.NATIVE_COVER ||
+            !topology.nativeCover
+        ) {
+            return decision()
+        }
+
+        direction =
+            Direction.OPENING
+
+        lastSampleMs =
+            nowMs
+
+        val angle =
+            lastAngle
+                .takeIf {
+                    it.isFinite()
+                }
+                ?: 0f
+
+        transition(
+            to = State.OPENING_FROM_CLOSED,
+            angle = angle,
+            reason = "device-state-opening-edge",
+            topology = topology,
+        )
+
+        return decision(
+            listOf(
+                Action.WakeInner(
+                    generation
+                )
+            )
+        )
+    }
+
     fun onPrewarmResult(
         requestGeneration: Long,
         ok: Boolean,

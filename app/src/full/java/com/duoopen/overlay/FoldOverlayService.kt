@@ -52,6 +52,10 @@ class FoldOverlayService : AccessibilityService() {
     private val snapshots = SnapshotCache(maxAgeMs = SNAPSHOT_MAX_AGE_MS)
     private var angleFeed: WallpaperAngleFeed? = null
 
+    private var deviceStateObserver:
+        Fold7DeviceStateObserver? =
+        null
+
     private lateinit var continuity: Fold7ContinuityCoordinator
 
     /**
@@ -170,6 +174,26 @@ class FoldOverlayService : AccessibilityService() {
             handler = handler,
             scope = scope,
             currentHingeAngle = { hinge.lastAngle },
+            frozenInnerFrame = {
+                val age =
+                    snapshots.ageMs(
+                        true
+                    )
+
+                if (
+                    age != null &&
+                    age <=
+                        FOLD7_FROZEN_FRAME_MAX_AGE_MS
+                ) {
+                    snapshots.get(
+                        innerPanel = true,
+                        width = 1968,
+                        height = 2184,
+                    )
+                } else {
+                    null
+                }
+            },
             onStatus = { message -> _secondaryDisplayStatus.value = message },
         )
         displayManager.registerDisplayListener(displayListener, handler)
@@ -177,8 +201,50 @@ class FoldOverlayService : AccessibilityService() {
         hinge.start()
         ShizukuBridge.init(this)
         angleFeed = WallpaperAngleFeed(this, handler, hinge)
+
+        deviceStateObserver =
+            Fold7DeviceStateObserver(
+                context = this,
+                handler = handler,
+            ) {
+                    previousStateId,
+                    currentStateId,
+                ->
+                val reason =
+                    "device-state:$previousStateId->$currentStateId"
+
+                DuoDiagnostics.event(
+                    "early-wake",
+                    "opening edge reason=$reason " +
+                        "continuity=${continuity.state} " +
+                        "precise=${hinge.lastAngle}",
+                )
+
+                angleFeed
+                    ?.kickPreciseBurst(
+                        reason
+                    )
+
+                continuity
+                    .onEarlyOpeningEdge(
+                        reason
+                    )
+            }.also {
+                it.start()
+            }
+
+        DuoDiagnostics.event(
+            "service-lifecycle",
+            "accessibility-connected",
+        )
+
         scope.launch {
             ShizukuBridge.state.collect { state ->
+                DuoDiagnostics.event(
+                    "service-lifecycle",
+                    "shizuku-state=${state.javaClass.simpleName}",
+                )
+
                 syncAngleFeed()
 
                 if (
@@ -217,7 +283,18 @@ class FoldOverlayService : AccessibilityService() {
     }
 
     override fun onDestroy() {
+        DuoDiagnostics.event(
+            "service-lifecycle",
+            "accessibility-destroy begin",
+        )
+
         instance = null
+
+        deviceStateObserver
+            ?.stop()
+
+        deviceStateObserver =
+            null
 
         if (::continuity.isInitialized) {
             continuity.destroy()
@@ -247,6 +324,15 @@ class FoldOverlayService : AccessibilityService() {
 
     private fun onHinge(angle: Float) {
         continuity.onHinge(angle)
+
+        deviceStateObserver
+            ?.corroborateFoldedRest(
+                nativeCover =
+                    continuity.state ==
+                        Fold7ContinuityController.State.NATIVE_COVER,
+                preciseAngle =
+                    angle,
+            )
 
         for (engine in engines.values.toList()) {
             engine.onHinge(angle)
@@ -292,6 +378,15 @@ class FoldOverlayService : AccessibilityService() {
         continuity.onTopologyChanged(
             "sync-displays"
         )
+
+        deviceStateObserver
+            ?.corroborateFoldedRest(
+                nativeCover =
+                    continuity.state ==
+                        Fold7ContinuityController.State.NATIVE_COVER,
+                preciseAngle =
+                    hinge.lastAngle,
+            )
     }
 
     /** Samsung continuous angle via Shizuku + fold wallpaper, when everything lines up. */
@@ -584,6 +679,13 @@ class FoldOverlayService : AccessibilityService() {
 
         /** How old a panel's last picture may be and still bridge the next fold. */
         private const val SNAPSHOT_MAX_AGE_MS = 15 * 60_000L
+
+        /**
+         * Continuity may reuse only a snapshot taken near the current physical
+         * fold. This avoids showing a minutes-old app state on the cover.
+         */
+        private const val FOLD7_FROZEN_FRAME_MAX_AGE_MS =
+            10_000L
 
         /** The connected service, for in-process control from the app. */
         @Volatile

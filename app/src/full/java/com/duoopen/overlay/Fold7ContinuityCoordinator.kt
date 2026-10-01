@@ -26,6 +26,7 @@ internal class Fold7ContinuityCoordinator(
     private val handler: Handler,
     private val scope: CoroutineScope,
     private val currentHingeAngle: () -> Float,
+    private val frozenInnerFrame: () -> android.graphics.Bitmap?,
     private val onStatus: (String) -> Unit,
 ) {
     private val controller =
@@ -94,6 +95,42 @@ internal class Fold7ContinuityCoordinator(
         if (visualMirrorActive) {
             mirrorHost?.onHinge(angle)
         }
+    }
+
+    /**
+     * Wake-only ingress from DeviceStateManager.
+     *
+     * The controller refuses this unless native cover ownership is currently
+     * confirmed. No synthetic hinge value is generated.
+     */
+    fun onEarlyOpeningEdge(
+        reason: String,
+    ) {
+        val decision =
+            controller.onEarlyOpeningEdge(
+                nowMs =
+                    SystemClock.uptimeMillis(),
+                topology =
+                    topology(),
+            )
+
+        if (
+            decision.actions.isNotEmpty()
+        ) {
+            DuoDiagnostics.event(
+                "early-wake",
+                "accepted reason=$reason generation=${decision.generation} " +
+                    "precise=${currentHingeAngle()}",
+            )
+        } else {
+            DuoDiagnostics.event(
+                "early-wake",
+                "ignored reason=$reason state=${controller.state} " +
+                    "precise=${currentHingeAngle()}",
+            )
+        }
+
+        apply(decision)
     }
 
     fun onTopologyChanged(reason: String) {
@@ -506,6 +543,7 @@ internal class Fold7ContinuityCoordinator(
                     mirrorSession = session,
                     mirrorLeaseId = mirrorLeaseCounter.incrementAndGet(),
                     nextMirrorSequence = { mirrorSequence.incrementAndGet() },
+                    frozenFrameProvider = frozenInnerFrame,
                     onStatus = onStatus,
                 )
             }.onFailure { error ->

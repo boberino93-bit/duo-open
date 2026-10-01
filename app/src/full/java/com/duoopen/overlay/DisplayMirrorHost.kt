@@ -1,7 +1,10 @@
 package com.duoopen.overlay
 
 import android.accessibilityservice.AccessibilityService
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.hardware.display.DisplayManager
@@ -35,6 +38,7 @@ class DisplayMirrorHost(
     private val mirrorSession: Long,
     private val mirrorLeaseId: Long,
     private val nextMirrorSequence: () -> Long,
+    private val frozenFrameProvider: () -> Bitmap?,
     private val onStatus: (String) -> Unit,
 ) {
     val displayId: Int = display.displayId
@@ -68,11 +72,49 @@ class DisplayMirrorHost(
     private var lastLoggedAngleBucket = Int.MIN_VALUE
     private var lastLoggedDirection = ""
 
+    /**
+     * Snapshot path for Fold7 continuity.
+     *
+     * The bitmap is normally owned by SnapshotCache, so this host never
+     * recycles it. The reference is dropped on detach.
+     */
+    private var frozenFrame: Bitmap? = null
+
+    private val frozenPaint =
+        Paint(
+            Paint.ANTI_ALIAS_FLAG or
+                Paint.FILTER_BITMAP_FLAG
+        )
+
+    private val frozenPaneView =
+        object : View(context) {
+            override fun onDraw(
+                canvas: Canvas,
+            ) {
+                drawFrozenFrame(
+                    canvas
+                )
+            }
+        }.apply {
+            visibility =
+                View.GONE
+            importantForAccessibility =
+                View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }
+
     private val hostView =
         FrameLayout(context).apply {
             setBackgroundColor(Color.TRANSPARENT)
             importantForAccessibility =
                 View.IMPORTANT_FOR_ACCESSIBILITY_NO
+
+            addView(
+                frozenPaneView,
+                FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                ),
+            )
 
             addOnAttachStateChangeListener(
                 object : View.OnAttachStateChangeListener {
@@ -85,6 +127,7 @@ class DisplayMirrorHost(
                         attached = false
                         generation++
                         mirrorSourceKey = null
+                        clearFrozenFrame()
                         releaseAppMirror()
 
                         com.duoopen.debug.DuoDiagnostics.event(
@@ -227,6 +270,153 @@ class DisplayMirrorHost(
         }
     }
 
+    /**
+     * Draw the same canonical left-pane crop used by setGeometry:
+     * 1968x2184 inner -> left 984px pane -> crop outer edge to 936x2184,
+     * which is exactly the cover's 3:7 aspect ratio.
+     */
+    private fun drawFrozenFrame(
+        canvas: Canvas,
+    ) {
+        val bitmap =
+            frozenFrame
+                ?.takeIf {
+                    !it.isRecycled
+                }
+                ?: return
+
+        val destinationWidth =
+            frozenPaneView.width
+
+        val destinationHeight =
+            frozenPaneView.height
+
+        if (
+            destinationWidth <= 0 ||
+            destinationHeight <= 0
+        ) {
+            return
+        }
+
+        val paneWidth =
+            (bitmap.width / 2)
+                .coerceAtLeast(1)
+
+        val paneHeight =
+            bitmap.height
+                .coerceAtLeast(1)
+
+        val canonicalPaneWidth =
+            (
+                paneHeight.toLong() *
+                    destinationWidth.toLong() /
+                    destinationHeight.toLong()
+                )
+                .toInt()
+                .coerceIn(
+                    1,
+                    paneWidth,
+                )
+
+        val sourceLeft =
+            paneWidth -
+                canonicalPaneWidth
+
+        val sourceRect =
+            Rect(
+                sourceLeft,
+                0,
+                paneWidth,
+                paneHeight,
+            )
+
+        val destinationRect =
+            Rect(
+                0,
+                0,
+                destinationWidth,
+                destinationHeight,
+            )
+
+        canvas.drawBitmap(
+            bitmap,
+            sourceRect,
+            destinationRect,
+            frozenPaint,
+        )
+    }
+
+    private fun clearFrozenFrame() {
+        frozenFrame =
+            null
+
+        frozenPaneView.visibility =
+            View.GONE
+
+        frozenPaneView.invalidate()
+    }
+
+    private fun tryBindFrozenFrame(
+        sourceKey: String,
+        sourceWidth: Int,
+        sourceHeight: Int,
+        reason: String,
+    ): Boolean {
+        val candidate =
+            runCatching {
+                frozenFrameProvider()
+            }.getOrNull()
+                ?: return false
+
+        if (
+            candidate.isRecycled ||
+            candidate.width !=
+                sourceWidth ||
+            candidate.height !=
+                sourceHeight
+        ) {
+            com.duoopen.debug.DuoDiagnostics.event(
+                "snapshot-transition",
+                "continuity frame rejected reason=$reason " +
+                    "expected=${sourceWidth}x$sourceHeight " +
+                    "actual=${candidate.width}x${candidate.height} " +
+                    "recycled=${candidate.isRecycled}",
+            )
+            return false
+        }
+
+        if (appMirror != null) {
+            requestShellStop(
+                "promote-frozen:$reason"
+            )
+            releaseAppMirror()
+        }
+
+        frozenFrame =
+            candidate
+
+        mirrorSourceKey =
+            sourceKey
+
+        frozenPaneView.visibility =
+            View.VISIBLE
+
+        frozenPaneView.invalidate()
+
+        onStatus(
+            "FROZEN LEFT PANE: inner snapshot → cover $displayId."
+        )
+
+        com.duoopen.debug.DuoDiagnostics.event(
+            "snapshot-transition",
+            "continuity frozen frame bound reason=$reason " +
+                "source=${candidate.width}x${candidate.height} " +
+                "destination=$displayId hinge=$latestHingeAngle",
+        )
+
+        return true
+    }
+
     private fun findInnerDisplay(): Display? =
         displayManager.displays
             .firstOrNull { candidate ->
@@ -279,6 +469,52 @@ class DisplayMirrorHost(
         val sourceKey =
             "inner=${source.displayId}:${sourceWidth}x$sourceHeight;" +
                 "cover=$displayId"
+
+        val existingFrozen =
+            frozenFrame
+
+        if (
+            mirrorSourceKey ==
+                sourceKey &&
+            existingFrozen != null &&
+            !existingFrozen.isRecycled
+        ) {
+            frozenPaneView.invalidate()
+            return
+        }
+
+        if (
+            frozenFrame != null &&
+            mirrorSourceKey !=
+                sourceKey
+        ) {
+            clearFrozenFrame()
+        }
+
+        /*
+         * Deterministic Fold7 path. The snapshot was captured by PanelEngine
+         * near the start of hinge travel, before Samsung can continue mutating
+         * the live inner composition underneath a stationary fold.
+         *
+         * If no fresh snapshot exists, retain the old live mirror path as a
+         * compatibility fallback (secure-content/capture failure).
+         */
+        if (
+            tryBindFrozenFrame(
+                sourceKey = sourceKey,
+                sourceWidth = sourceWidth,
+                sourceHeight = sourceHeight,
+                reason = reason,
+            )
+        ) {
+            return
+        }
+
+        com.duoopen.debug.DuoDiagnostics.event(
+            "snapshot-transition",
+            "continuity frozen frame unavailable; " +
+                "falling back to live mirror reason=$reason",
+        )
 
         val current = appMirror
 
@@ -364,6 +600,7 @@ class DisplayMirrorHost(
                     return@post
                 }
 
+                clearFrozenFrame()
                 releaseAppMirror()
                 appMirror = mirror
                 mirrorSourceKey = sourceKey
@@ -608,6 +845,7 @@ class DisplayMirrorHost(
         requestShellStop("host-detach")
         generation++
         mirrorSourceKey = null
+        clearFrozenFrame()
         releaseAppMirror()
 
         if (!attached) {
