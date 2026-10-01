@@ -119,10 +119,17 @@ internal class Fold7ContinuityController(
 
         state = when {
             topology.nativeCover ||
-                (angle.isFinite() && angle <= NATIVE_COVER_MAX_DEG && topology.coverActive && !topology.innerActive) ->
+                (
+                    angle.isFinite() &&
+                        angle <= NATIVE_COVER_MAX_DEG &&
+                        topology.coverActive &&
+                        !topology.innerActive
+                    ) ->
                 State.NATIVE_COVER
 
-            angle.isFinite() && angle >= OPEN_LATCH_DEG && topology.innerActive ->
+            angle.isFinite() &&
+                angle >= OPEN_LATCH_DEG &&
+                topology.innerActive ->
                 State.OPEN_INNER
 
             topology.innerActive ->
@@ -230,10 +237,12 @@ internal class Fold7ContinuityController(
 
         if (sampleMotion) {
             direction = when {
-                previous.isFinite() && angle - previous >= SAMPLE_EPSILON_DEG ->
+                previous.isFinite() &&
+                    angle - previous >= SAMPLE_EPSILON_DEG ->
                     Direction.OPENING
 
-                previous.isFinite() && previous - angle >= SAMPLE_EPSILON_DEG ->
+                previous.isFinite() &&
+                    previous - angle >= SAMPLE_EPSILON_DEG ->
                     Direction.CLOSING
 
                 else ->
@@ -263,12 +272,14 @@ internal class Fold7ContinuityController(
             if (wasVisual) {
                 actions += Action.HideMirror(generation)
             }
+
             if (hadSecondary) {
                 actions += Action.ReleaseSecondary(generation)
             }
 
             activePrewarmGeneration = -1L
             resetIntent()
+
             return decision(actions)
         }
 
@@ -285,8 +296,10 @@ internal class Fold7ContinuityController(
                 reason = "inner-open-latched",
                 topology = topology,
             )
+
             activePrewarmGeneration = -1L
             resetIntent()
+
             return decision(actions)
         }
 
@@ -326,8 +339,11 @@ internal class Fold7ContinuityController(
             -> {
                 if (sampleMotion) {
                     val gapMs =
-                        if (previousSampleMs == 0L) 0L
-                        else (nowMs - previousSampleMs).coerceAtLeast(0L)
+                        if (previousSampleMs == 0L) {
+                            0L
+                        } else {
+                            (nowMs - previousSampleMs).coerceAtLeast(0L)
+                        }
 
                     if (
                         consumeClosingIntent(
@@ -343,7 +359,38 @@ internal class Fold7ContinuityController(
                             reason = "deliberate-close-detected",
                             topology = topology,
                         )
+
                         closingFloorAngle = angle
+
+                        /*
+                         * Fast-close path.
+                         *
+                         * A single hinge callback may both:
+                         *
+                         * 1. prove deliberate closing intent, and
+                         * 2. already be below the 150 degree prewarm threshold.
+                         *
+                         * Waiting for another callback here adds avoidable latency
+                         * and was the reason the fast-close unit tests failed.
+                         *
+                         * PREWARM still does NOT imply visibility. Successful
+                         * completion enters COVER_READY_HIDDEN, and the mirror is
+                         * independently gated by COVER_VISUAL_START_DEG.
+                         */
+                        if (
+                            angle <= COVER_PREWARM_DEG &&
+                            nowMs >= prewarmRetryAfterMs
+                        ) {
+                            transition(
+                                to = State.COVER_PREWARMING,
+                                angle = angle,
+                                reason = "cover-prewarm-threshold",
+                                topology = topology,
+                            )
+
+                            activePrewarmGeneration = generation
+                            actions += Action.BeginPrewarm(generation)
+                        }
                     }
                 }
             }
@@ -353,8 +400,11 @@ internal class Fold7ContinuityController(
 
                 if (hasOpeningReversal(angle)) {
                     val target =
-                        if (angle >= OPEN_REARM_DEG) State.OPEN_INNER
-                        else State.INNER_HANDOFF
+                        if (angle >= OPEN_REARM_DEG) {
+                            State.OPEN_INNER
+                        } else {
+                            State.INNER_HANDOFF
+                        }
 
                     transition(
                         to = target,
@@ -362,7 +412,9 @@ internal class Fold7ContinuityController(
                         reason = "closing-intent-reversed",
                         topology = topology,
                     )
+
                     resetIntent()
+
                     return decision(actions)
                 }
 
@@ -376,6 +428,7 @@ internal class Fold7ContinuityController(
                         reason = "cover-prewarm-threshold",
                         topology = topology,
                     )
+
                     activePrewarmGeneration = generation
                     actions += Action.BeginPrewarm(generation)
                 }
@@ -391,6 +444,7 @@ internal class Fold7ContinuityController(
                         reason = "prewarm-reversed",
                         topology = topology,
                     )
+
                     activePrewarmGeneration = -1L
                     actions += Action.ReleaseSecondary(generation)
                 }
@@ -406,7 +460,9 @@ internal class Fold7ContinuityController(
                         reason = "hidden-cover-reversed",
                         topology = topology,
                     )
+
                     actions += Action.ReleaseSecondary(generation)
+
                     return decision(actions)
                 }
 
@@ -420,6 +476,7 @@ internal class Fold7ContinuityController(
                         reason = "cover-visual-threshold",
                         topology = topology,
                     )
+
                     actions += Action.ShowMirror(generation)
                 }
             }
@@ -437,6 +494,7 @@ internal class Fold7ContinuityController(
                         reason = "cover-visual-reversed",
                         topology = topology,
                     )
+
                     actions += Action.HideMirror(generation)
                     actions += Action.ReleaseSecondary(generation)
                 }
@@ -452,7 +510,10 @@ internal class Fold7ContinuityController(
         nowMs: Long,
         sampleGapMs: Long,
     ): Boolean {
-        if (direction != Direction.CLOSING || !previous.isFinite()) {
+        if (
+            direction != Direction.CLOSING ||
+            !previous.isFinite()
+        ) {
             if (
                 direction == Direction.OPENING &&
                 intentLastAngle.isFinite() &&
@@ -460,6 +521,7 @@ internal class Fold7ContinuityController(
             ) {
                 resetIntent()
             }
+
             return false
         }
 
@@ -499,7 +561,10 @@ internal class Fold7ContinuityController(
     }
 
     private fun updateClosingFloor(angle: Float) {
-        if (closingFloorAngle.isNaN() || angle < closingFloorAngle) {
+        if (
+            closingFloorAngle.isNaN() ||
+            angle < closingFloorAngle
+        ) {
             closingFloorAngle = angle
         }
     }
@@ -526,6 +591,7 @@ internal class Fold7ContinuityController(
         if (state == to) return
 
         val from = state
+
         state = to
         generation++
 
@@ -563,13 +629,16 @@ internal class Fold7ContinuityController(
         const val OPEN_REARM_DEG = 166f
 
         const val SAMPLE_EPSILON_DEG = 0.35f
+
         const val INTENT_TRAVEL_DEG = 3f
         const val INTENT_SAMPLE_COUNT = 3
         const val INTENT_WINDOW_MS = 1_800L
         const val INTENT_MAX_SAMPLE_GAP_MS = 700L
         const val INTENT_REVERSAL_RESET_DEG = 1.25f
+
         const val STRONG_CLOSE_SAMPLE_DEG = 5f
         const val REVERSAL_HYSTERESIS_DEG = 1.5f
+
         const val PREWARM_RETRY_MS = 180L
 
         private val SECONDARY_STATES =
