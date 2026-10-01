@@ -1,2 +1,2 @@
-c9fa8638b275bb7301257a7ca4ab3dedeca5baa95523be15cebdc2cfad4bacf8  .github/workflows/apply-gen2-production.yml
-c8f7ca8d0e407b5bd4a631aa1a04a29d63eaccaf06c32cd2c75540626b65e16b  README.md
+eff04433c81bb8f73d3245e4b221f08222e2be1e727c837b10d1024ac93bc4a7  .github/workflows/apply-gen2-production-v2.yml
+74fd696bf7865c52b6cb5dd6f08b709364e97217f9a5a3faebbbbbe315ee2ceb  README.md
