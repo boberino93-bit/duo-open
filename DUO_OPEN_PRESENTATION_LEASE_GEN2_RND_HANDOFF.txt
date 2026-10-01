@@ -1,0 +1,1337 @@
+DUO OPEN — GALAXY Z FOLD7 — FIRST-VISIBLE-FRAME / PRESENTATION LEASE GENERATION-2 R&D HANDOFF
+
+R&D STATUS=R&D ONLY
+PRODUCTION_READY=NO
+INSTALLATION_AUTHORIZED=NO
+MANUAL_REVIEW_REQUIRED=YES
+
+This handoff is self-contained. It was produced in an isolated R&D role. No production branch, ref, release tag, production APK, or production source file was modified by this R&D work.
+
+==================================================
+1. EXECUTIVE SUMMARY
+==================================================
+
+SUBSYSTEM CHOSEN
+Fold7 first-visible-frame / compositor-presentation ownership for continuity content, spanning DisplayMirrorHost frozen View/Canvas rendering, the live SurfaceControl mirror path, and Transition Lab transaction/presentation telemetry.
+
+WHY CURRENT main MADE THIS THE HIGHEST-VALUE TARGET
+CURRENT main already contains or has imported deep work in three immediately adjacent areas:
+1. Cover Lease Protocol Gen2: privileged cover mutation authority and ordered app↔shell snapshot identity.
+2. Cover Readiness Gen2: proof that the leased cover route is topologically/display-state ready to host continuity content.
+3. Frozen Frame Provenance Gen2: proof that a frozen bitmap belongs to the current physical close cycle.
+
+Those solve, or propose to solve, “who owns the panel?”, “is the destination ready?”, and “are these pixels authorized for this fold?” They do not own the final question: “did THIS exact authorized content attempt actually reach Android’s presentation boundary?”
+
+CURRENT 1.3.29 has two asymmetric rendering paths:
+- FROZEN_VIEW is the preferred deterministic Fold7 path. tryBindFrozenFrame() sets the bitmap, makes the child View VISIBLE, calls invalidate(), logs that the frozen frame was bound, and returns true. It has no frame-commit or transaction-presented identity.
+- LIVE_MIRROR uses SurfaceControl geometry and Transition Lab transaction callbacks, but those callbacks are observational only. SurfaceTransactionProbe.Token contains transactionSequence + nearest vsyncId, not the fold/controller generation, host lifetime, content/frame lease, or presentation attempt identity. TransitionLab.recordTransaction() correlates the callback with latestHingeSample at callback time.
+
+DOMINANT LIMITATION
+Presentation is currently an unowned terminal side effect. The frozen path can report binding success before any proof that a frame containing the target bitmap was rendered/submitted/presented. The live path can measure transaction presentation, but the transaction callback is not end-to-end correlated to the immutable fold/content/host attempt that created it. A late callback therefore cannot be proven to belong to the currently active continuity attempt from the callback token itself.
+
+GENERATION-2 DIRECTION
+Introduce a small, deterministic Presentation Lease owner with immutable identity:
+- serviceEpoch;
+- closeCycleId;
+- hostEpoch;
+- contentLeaseId;
+- attemptSequence;
+- path = FROZEN_VIEW | LIVE_MIRROR.
+
+For FROZEN_VIEW:
+- record that the intended content actually participated in onDraw;
+- register ViewTreeObserver.registerFrameCommitCallback for the attempt;
+- queue a visually inert, identity-bearing SurfaceControl marker transaction with AttachedSurfaceControl.applyTransactionOnDraw();
+- add transaction committed/completed listeners to the marker transaction;
+- confirm the presentation attempt only when DRAW + FRAME_COMMITTED + TRANSACTION_PRESENTED all belong to the same current identity.
+
+For LIVE_MIRROR:
+- reuse the existing SurfaceControl geometry transaction as the presentation transaction;
+- carry immutable PresentationIdentity into the production callback path;
+- transaction completion/presentation confirms only that exact current attempt.
+
+No fixed delay, sleep, hinge-threshold change, task movement, panel-power change, or new subprocess is proposed.
+
+STRONGEST EVIDENCE
+1. CURRENT DisplayMirrorHost.tryBindFrozenFrame() returns success immediately after VISIBLE + invalidate() with no frame-commit/present callback.
+2. CURRENT DisplayMirrorHost.applyGeometry() instruments the LIVE_MIRROR SurfaceControl transaction, but the preferred FROZEN_VIEW Canvas path does not go through that transaction instrumentation.
+3. CURRENT SurfaceTransactionProbe.Token has only transactionSequence and vsyncId; it does not carry controller generation, host identity, content identity, or close-cycle identity.
+4. CURRENT TransitionLab.recordTransaction() reads latestHingeSample when the callback arrives, not immutable transition/presentation identity captured when the transaction was created.
+5. A source-faithful reduced baseline model reproduces “bound=true with zero presentation proof” and “late callback attributed to newer current generation.”
+6. The Generation-2 pure Kotlin presentation-lease model compiled and passed 23/23 deterministic tests, including all 24 callback-order permutations, close→open→close stale-completion fencing, a 1,000-callback duplicate storm, and a fixed-seed 100,000-operation fuzz run.
+7. Android’s public ViewTreeObserver.registerFrameCommitCallback contract reports when current rendering content has been rendered and submitted to the swap chain, while explicitly stating that it may not yet be visible.
+8. Android’s public AttachedSurfaceControl.applyTransactionOnDraw contract states that the supplied transaction is merged with the ViewRoot buffer transaction and shown atomically synchronized with the next draw.
+9. Android’s public SurfaceControl.Transaction.addTransactionCompletedListener contract states that the listener is invoked when the transaction is presented.
+
+CONFIDENCE LEVEL
+HIGH for the source-level ownership/observability gap and the deterministic model properties.
+MEDIUM for the marker-transaction integration approach until Android project compilation and Fold7 runtime traces prove it behaves as intended in this accessibility-overlay ViewRoot.
+LOW/UNKNOWN for any claim that this is presently causing a user-visible Fold7 glitch. No device trace in this silo establishes that.
+
+LARGEST REMAINING UNKNOWN
+The exact timing relationship on the physical Galaxy Z Fold7 among View onDraw, frame-commit callback, marker transaction commit/completion, present-fence signal, and photons visible on the cover. Framework presentation evidence is not proof of physical photons; external high-frame-rate video remains required.
+
+==================================================
+2. REPOSITORY BASELINE
+==================================================
+
+REPOSITORY=https://github.com/boberino93-bit/duo-open
+TARGET_DEVICE=Samsung Galaxy Z Fold7 only
+TARGET_INNER_GEOMETRY=1968x2184
+TARGET_COVER_GEOMETRY=1080x2520
+TARGET_PLATFORM=Android 16 / Samsung One UI on Galaxy Z Fold7
+
+STARTING_MAIN_SHA=331878fc851069dc8b79d5343b371494f64ee1fd
+FINAL_MAIN_SHA=331878fc851069dc8b79d5343b371494f64ee1fd
+MAIN_CHANGED_DURING_RND=NO
+OVERLAPPING_CHANGE=NO
+
+CURRENT APP VERSION AT START
+versionCode=34
+versionName=1.3.29-zfold7-deterministic-early-wake
+compileSdk=35
+targetSdk=35
+minSdk=33
+
+STARTING main 331878fc is two commits ahead of the prior production behavior baseline 8f844ba. Direct compare 8f844ba..331878fc showed only R&D package artifacts added/updated. Production blobs for SnapshotCache, FoldOverlayService, DisplayMirrorHost, Fold7ContinuityCoordinator and app/build.gradle.kts remained identical to 8f844ba.
+
+IMPORTANT STARTING BLOBS
+- app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+  blob=810edd929ab020b32f171ca0338acf975d91fd92
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+  blob=50b602a32d70ac00e0b1fec251fab1e55c53a999
+- app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+  blob=0a6c3e85d0b3f4531eac504170be0e38a8a290de
+- app/src/full/java/com/duoopen/overlay/SnapshotCache.kt
+  blob=4b1b6bb9837de4fb77cdc1bdc26f4a39aa72ab26
+- app/src/full/java/com/duoopen/lab/TransitionLab.kt
+  blob=ae60f8cfaff1632c2676266d7fad203e4f101893
+- app/src/full/java/com/duoopen/lab/SurfaceTransactionProbe.kt
+  blob=71887824f2ebf0c60d62724ee0bbd25f35ff1078
+- app/src/full/java/com/duoopen/lab/FrameTimelineProbe.kt
+  blob=8f40ac80c87ec0ad5acca2406c06bbfc59e40938
+- app/build.gradle.kts
+  blob=0ae3ead1edc3e181db0d4608edb108ed353df2cc
+
+RELEVANT RECENT COMMITS INSPECTED
+- 331878fc851069dc8b79d5343b371494f64ee1fd — merge containing the Frozen Frame Provenance R&D import; no net production changes relative to 8f844ba.
+- df02204f101741bee10e8300c4189777a90d9ff2 — imported Frozen Frame Provenance R&D artifacts/model/tests.
+- 8f844ba8aadd8417a92ec8b568288fd0dd9e06e3 — Fold7 1.3.29: freeze continuity frames and wake inner early.
+- b3179244f236230652e43150f67742b3babbc4cd — Fold7 1.3.28: keep lease-owned cover route alive.
+- 37be3060880f01590bfb7d5b4f6f442a7b47de92 — Fold7 1.3.27: restore lease-owned cover route wake.
+- 7f5af1917508abae1472ddbc91e82663fdb6252e — Fold7 1.3.26 Gen2: single-owner mirror and cover leases.
+
+VISIBLE BRANCHES AT START
+- main
+- generated/fold7-1.3.16-baseline
+
+CI / WORKFLOW STATUS AT STARTING HEAD
+- get_commit_combined_status(331878fc...) returned no statuses.
+- fetch_commit_workflow_runs(331878fc...) returned no workflow runs.
+- This silo therefore does not claim direct CI validation of STARTING_MAIN_SHA.
+- Production Android compilation was not executed in this silo.
+
+==================================================
+3. PRIOR WORK / DUPLICATION CHECK
+==================================================
+
+PRIOR WORK INDEX
+
+A. DUO_OPEN_COVER_READINESS_GEN2_PROPOSAL.zip / handoff
+ZIP SHA256=ebadeb1958f43ae5b869115bea88c2bf04e882323214947897cfca8177dd90c3
+HANDOFF SHA256=924964eb42f248d50af3504671dd50980c00a5cd34819f378c454686e26e6e32
+Subsystem: cover route/display readiness and fast topology ingress.
+Status: R&D proposal, not production integration at STARTING main.
+This silo independently rechecked the package file hashes and ZIP integrity in the current session.
+Key relevant prior conclusion: readiness is not equivalent to command acceptance; presentation boundaries should be instrumented. It explicitly left transaction presentation and photons as measurement boundaries rather than owning first-presentation identity.
+Duplication decision: do not re-propose readiness owner, fast topology lane, route-late semantics, reassert ticket, or removal of the normal 32 ms readiness timer.
+
+B. DUO_OPEN_COVER_LEASE_PROTOCOL_GEN2_PROPOSAL.zip / handoff
+ZIP SHA256=60f08ec267e2679acac8660a41e2dc15fda03638648b3674f31894eccdadef29
+HANDOFF SHA256=ccc6b257d993818adabe013f7c82d3db108263e6cb3a2f1a734a7d05fdf850ce
+Subsystem: app↔shell cover-lease mutation identity/order/reconnect fencing.
+Status: R&D proposal, not production integration at STARTING main.
+Current-session hash and ZIP-integrity recheck passed.
+Duplication decision: do not re-propose shellSession, shellRevision, exact cover lease token, coordinator snapshot gate, or cover mutation authorization.
+
+C. DUO_OPEN_FROZEN_FRAME_PROVENANCE_GEN2_PROPOSAL.zip / handoff
+ZIP SHA256=1cad531544a8cf3901dcae66eee94791ae952aa28ae8f7afc19beb4ed1a1f007
+HANDOFF SHA256=c327b6dc866d4d427d7cc5c6ebf0e4ea7125345351c1b2882a259add92449d54
+Subsystem: transition-scoped frozen-frame content provenance/lifecycle.
+Status: proposal artifacts imported into current repository root via df02204f; not production runtime integration.
+Current-session hash and ZIP-integrity recheck passed.
+Duplication decision: do not re-propose closeCycleId/content frame lease/capture provenance. Presentation Lease consumes those identities when available.
+
+D. CURRENT Transition Lab
+Files inspected directly:
+- TransitionLab.kt
+- SurfaceTransactionProbe.kt
+- FrameTimelineProbe.kt
+Status: represented in CURRENT production source.
+Strength: live SurfaceControl transaction timing already observes instrumented/submitted/committed/completed boundaries and present-fence timestamps when valid.
+Remaining gap selected here: transaction timing tokens are not immutable continuity-presentation identities, and the preferred frozen View path is outside that transaction path.
+
+E. 8f844ba / FOLD7_1_3_29_README.md
+Subsystem: deterministic frozen frames + early inner wake.
+Status: represented in production source.
+Duplication decision: preserve deterministic frozen rendering. This work does not restore live recapture or redesign early wake.
+
+F. 7f5af19 / single-owner mirror and cover leases
+Subsystem: mirror/cover resource ownership.
+Status: represented.
+Duplication decision: preserve mirror session/sequence/lease and shell cover lease ownership. PresentationLease is a distinct render-attempt identity.
+
+REPOSITORY SEARCH
+Searches for PresentationLease, first-visible, frame-commit, presentation lease, and transaction presented found no matching current-default-branch artifact through the connected GitHub code-search action.
+No visible branch duplicated the proposed presentation owner.
+
+HOW THIS R&D DIFFERS
+- Cover Lease Protocol: “Is this privileged cover mutation/snapshot authorized and ordered?”
+- Cover Readiness: “Is the leased physical/logical cover destination presently ready?”
+- Frozen Frame Provenance: “Do these pixels belong to this physical close cycle?”
+- Presentation Lease (this R&D): “Did this exact current authorized content/host attempt reach Android’s presentation boundary, and can late callbacks be proven stale?”
+
+==================================================
+4. CURRENT IMPLEMENTATION
+==================================================
+
+CURRENT IMPLEMENTATION BASIS
+STARTING main 331878fc; production runtime blobs equal the 1.3.29 8f844ba behavior for the selected subsystem.
+
+IMPORTANT FILES / CLASSES
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+  - showMirror()
+  - syncMirrorHost()
+  - mirrorRequested / mirrorGeneration / mirrorHost
+- app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+  - attach()
+  - frozenPaneView.onDraw()
+  - tryBindFrozenFrame()
+  - bind()
+  - applyGeometry()
+  - detach()
+- app/src/full/java/com/duoopen/lab/TransitionLab.kt
+  - instrumentTransaction()
+  - markTransactionSubmitted()
+  - recordTransaction()
+  - latestHingeSample / latestFramePlan
+- app/src/full/java/com/duoopen/lab/SurfaceTransactionProbe.kt
+  - Token(transactionSequence, vsyncId)
+  - instrument()
+  - markSubmittedOnDraw()
+- app/src/full/java/com/duoopen/lab/FrameTimelineProbe.kt
+  - Choreographer.VsyncCallback / FramePlanRecord
+
+CURRENT CAUSAL PATH — FROZEN VIEW
+PHYSICAL HINGE
+→ controller reaches COVER_VISUAL
+→ coordinator ShowMirror
+→ syncMirrorHost()
+→ current topology resolves active inner + active cover
+→ construct DisplayMirrorHost
+→ WindowManager.addView(hostView)
+→ onViewAttachedToWindow
+→ post bind("window-attached")
+→ find current inner display
+→ frozenFrameProvider()
+→ tryBindFrozenFrame()
+→ validate Bitmap not recycled + source dimensions
+→ frozenFrame = candidate
+→ mirrorSourceKey = sourceKey
+→ frozenPaneView.visibility = VISIBLE
+→ frozenPaneView.invalidate()
+→ log/status “continuity frozen frame bound”
+→ return true
+→ later Android ViewRoot/RenderThread draw/present lifecycle
+→ physical cover pixels
+
+QUEUE / RACE BOUNDARIES — FROZEN VIEW
+- main Handler / View attach scheduling;
+- bind() posted after attachment;
+- View invalidation does not itself prove the target draw has completed;
+- RenderThread / BufferQueue / SurfaceFlinger are asynchronous downstream boundaries;
+- no PresentationIdentity follows this path;
+- detach/reversal can occur before downstream callbacks that would theoretically describe the earlier draw.
+
+CURRENT FROZEN SUCCESS SEMANTIC
+tryBindFrozenFrame() returns true immediately after VISIBLE + invalidate(). It does not wait for or observe:
+- frozenPaneView.onDraw for this specific content lease;
+- View frame commit;
+- ViewRoot buffer submission identity;
+- SurfaceFlinger transaction presentation;
+- present fence;
+- physical photons.
+
+CURRENT frozenPaneView.onDraw()
+drawFrozenFrame(canvas) reads the mutable frozenFrame field and draws it. It carries no closeCycleId/contentLeaseId/presentation attempt identity and emits no presentation milestone.
+
+CURRENT CAUSAL PATH — LIVE MIRROR
+bind()
+→ no acceptable frozen frame
+→ ShizukuBridge.startDisplayMirrorV2(session, sequence, mirrorLeaseId, sourceDisplayId)
+→ shell returns SurfaceControl mirror
+→ hostView.post completion
+→ stale local generation check
+→ appMirror = mirror
+→ applyGeometry()
+→ build root reparent transaction or new SurfaceControl.Transaction
+→ hidden setGeometry reflection
+→ set layer/alpha/visibility
+→ TransitionLab.instrumentTransaction(transaction)
+→ root.applyTransactionOnDraw(transaction)
+→ TransitionLab.markTransactionSubmitted(token, accepted)
+→ hostView.invalidate()
+→ SurfaceTransactionProbe committed/completed callbacks in FULL_LAB
+→ TransitionLab.recordTransaction()
+
+CURRENT LIVE TRANSACTION TOKEN
+SurfaceTransactionProbe.Token contains:
+- transactionSequence
+- vsyncId
+
+It does NOT contain:
+- controller generation;
+- closeCycleId;
+- mirror host epoch;
+- mirror lease/content lease in the token;
+- service epoch;
+- path identity;
+- immutable hinge sample sequence captured as ownership identity.
+
+CURRENT TELEMETRY CORRELATION
+TransitionLab.recordTransaction(record) obtains:
+  val hinge = latestHingeSample
+at callback-recording time, then writes the event with that latest hinge context. This is useful observational telemetry but cannot independently prove that a late callback belongs to the latest fold state/content attempt.
+
+CURRENT HOST USABILITY SEMANTIC
+DisplayMirrorHost.isUsable = attached && hostView.isAttachedToWindow.
+This proves the host window is attached; it does not mean the desired continuity content has been presented.
+
+CURRENT COORDINATOR SEMANTIC
+The coordinator tracks mirrorRequested, mirrorGeneration and mirrorHost. It does not maintain presentation states such as DRAW_PENDING, FRAME_COMMITTED, PRESENTED, CANCELLED, or PRESENTATION_UNCONFIRMED.
+
+OPENING / REVERSAL
+Controller generation and DisplayMirrorHost local generation already fence several stale shell/live-mirror completions. PresentationLease does not replace those checks. It extends ownership through the later draw/commit/present callbacks that current production does not model.
+
+SERVICE / PROCESS RESTART
+Current host state is in-process and disappears with service/process restart. Transition Lab callbacks already queued on another executor can still be conceptually late relative to newer context; current transaction token itself does not encode service epoch.
+
+FALLBACK
+Frozen path falls back to live mirror only when no acceptable frozen frame is bound. No proposal here changes Samsung-native fallback, panel power, route ownership, or user task placement.
+
+==================================================
+5. CLAIM / EVIDENCE LEDGER
+==================================================
+
+CLAIM 1
+CURRENT frozen binding returns true before any explicit frame-commit or presentation proof.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=DisplayMirrorHost.tryBindFrozenFrame(): assigns candidate, sets VISIBLE, invalidate(), logs bound, returns true.
+LIMITATION=The Android framework may render/present promptly in practice; source fact does not prove a visible defect.
+VALIDATION REQUIRED=Fold7 trace correlating bind, onDraw, frame commit, transaction presentation and video.
+
+CLAIM 2
+CURRENT preferred frozen View path is not instrumented by the SurfaceControl transaction timing path used by applyGeometry().
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=TransitionLab.instrumentTransaction() is invoked from DisplayMirrorHost.applyGeometry(); tryBindFrozenFrame()/drawFrozenFrame() do not call it.
+LIMITATION=Other global FrameTimeline data still exists but is not exact content-attempt ownership.
+VALIDATION REQUIRED=Integration trace after Gen2 instrumentation.
+
+CLAIM 3
+CURRENT SurfaceTransactionProbe.Token lacks immutable fold/content/host presentation identity.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=Token fields are transactionSequence and vsyncId only.
+LIMITATION=Existing local generation checks upstream reduce some stale-operation risks; this claim is about presentation callback identity.
+VALIDATION REQUIRED=None for source fact.
+
+CLAIM 4
+CURRENT TransitionLab transaction callback correlation uses latestHingeSample at callback time.
+CATEGORY=CONFIRMED SOURCE ISSUE
+EVIDENCE=TransitionLab.recordTransaction() reads latestHingeSample when recording the callback.
+LIMITATION=This affects attribution/analysis today; no production mutation currently depends on this callback.
+VALIDATION REQUIRED=Delayed callback fault-injection to quantify real misattribution frequency.
+
+CLAIM 5
+A late callback can be attributed to newer current context in a reduced CURRENT-equivalent correlation model.
+CATEGORY=CONFIRMED TEST ISSUE
+EVIDENCE=BaselineLatestContextCorrelation deterministic test: transaction created conceptually under generation 100, current changes to 200, callback is attributed to 200.
+LIMITATION=Reduced model; not a captured Fold7 lab session.
+VALIDATION REQUIRED=Delay transaction callback executor in an Android integration test.
+
+CLAIM 6
+The current frozen semantic can claim “bound” without draw/presentation evidence in a reduced model.
+CATEGORY=CONFIRMED TEST ISSUE
+EVIDENCE=BaselineFrozenPresentationModel returns bound=true with no downstream evidence.
+LIMITATION=Models source semantic, not physical visibility.
+VALIDATION REQUIRED=Device timing trace.
+
+CLAIM 7
+ViewTreeObserver.registerFrameCommitCallback reports when current rendering content has been rendered into a frame and submitted to the swap chain; it does not prove that the frame is currently visible.
+CATEGORY=ANDROID API CONTRACT / AOSP-CONFIRMED BEHAVIOR
+EVIDENCE=Android Developers ViewTreeObserver API; AOSP ViewTreeObserver/ViewRootImpl.
+LIMITATION=Hardware rendering required; no Fold7 timing guarantee.
+VALIDATION REQUIRED=Verify callback occurs for TYPE_ACCESSIBILITY_OVERLAY host on Fold7.
+
+CLAIM 8
+AttachedSurfaceControl.applyTransactionOnDraw merges the supplied transaction with the ViewRoot buffer transaction so the transaction and View hierarchy draw show atomically synchronized.
+CATEGORY=ANDROID API CONTRACT / AOSP-CONFIRMED BEHAVIOR
+EVIDENCE=Android Developers AttachedSurfaceControl API; Android 16 ViewRootImpl implementation.
+LIMITATION=Does not prove physical panel photons or Samsung timing.
+VALIDATION REQUIRED=Fold7 transaction + video correlation.
+
+CLAIM 9
+SurfaceControl.Transaction.addTransactionCompletedListener is invoked when the transaction is presented.
+CATEGORY=ANDROID API CONTRACT
+EVIDENCE=Android Developers SurfaceControl.Transaction API, added API 35.
+LIMITATION=Presented transaction is a framework/compositor boundary, not proof of photons.
+VALIDATION REQUIRED=External high-speed video for physical visibility delta.
+
+CLAIM 10
+The Gen2 PresentationLease model prevents cross-attempt proof mixing and stale completion mutation in all executed scenarios.
+CATEGORY=CONFIRMED TEST ISSUE (positive validation)
+EVIDENCE=23/23 tests passed; all 24 callback permutations; 1,000-callback storm; 100,000-operation fuzz.
+LIMITATION=Pure Kotlin model does not execute Android ViewRoot/SurfaceFlinger code.
+VALIDATION REQUIRED=Android JVM/instrumentation/device integration.
+
+CLAIM 11
+The marker transaction can be kept visually inert and still provide a useful transaction presentation callback when queued on draw.
+CATEGORY=HIGH-CONFIDENCE ARCHITECTURAL RISK / HYPOTHESIS
+EVIDENCE=Public SurfaceControl APIs permit app-owned hidden surfaces; applyTransactionOnDraw and completed listener contracts support the architecture.
+LIMITATION=No Android runtime prototype in this silo proves an invisible marker produces the desired callback/fence behavior on Fold7.
+VALIDATION REQUIRED=Instrumented overlay integration experiment.
+
+CLAIM 12
+A SurfaceControl completed callback/present fence equals first visible photons on the Fold7 cover.
+CATEGORY=MEASUREMENT REQUIRED
+EVIDENCE=NONE sufficient for photons.
+LIMITATION=Display pipeline/hardware scanout remains downstream.
+VALIDATION REQUIRED=240 fps or higher external video correlated to monotonic timestamps.
+
+==================================================
+6. CONFIRMED FINDINGS
+==================================================
+
+SOURCE-CONFIRMED
+1. Preferred Fold7 frozen continuity rendering uses a normal View/Canvas child inside DisplayMirrorHost.
+2. Frozen binding sets visibility/invalidate and returns true without explicit draw/commit/present ownership.
+3. Live mirror applyGeometry() does use SurfaceControl transaction instrumentation.
+4. Frozen path does not use that transaction instrumentation.
+5. SurfaceTransactionProbe token identity is transactionSequence + vsyncId only.
+6. TransitionLab callback correlation reads latestHingeSample at callback time.
+7. DisplayMirrorHost.isUsable means attached window, not presented content.
+8. Coordinator has no explicit presentation state owner.
+9. Existing generation/lease logic upstream should remain; the selected gap is later in the causal path.
+
+TEST-CONFIRMED
+1. Baseline reduced frozen model can claim bind success without presentation proof.
+2. Baseline latest-context correlation model can attribute a late callback to a newer generation.
+3. Frozen Gen2 does not confirm before draw + frame-commit + transaction-presented are all present for the same identity.
+4. Transaction-presented arriving before frame-commit is tolerated without premature confirmation.
+5. Frame-commit without draw cannot confirm frozen content.
+6. Transaction committed is not treated as transaction presented.
+7. Live mirror confirms only on identity-bearing transaction presentation.
+8. Old attempt cannot confirm after a newer attempt starts.
+9. Reversal invalidation makes old callbacks inert.
+10. Explicit cancellation is fail-closed.
+11. Service epoch mismatch cannot begin/mutate state.
+12. Duplicate callbacks are idempotent.
+13. Stale host epoch cannot mutate replacement host.
+14. Stale content lease cannot mutate newer content.
+15. Attempt sequence must monotonically increase.
+16. All 24 callback-order permutations converge correctly when the complete frozen proof set exists.
+17. Missing completed callback never produces false PRESENTED for frozen path.
+18. Missing completed callback never produces false PRESENTED for live path.
+19. Stale completion cannot overwrite current attempt present timestamp.
+20. close→open→close makes first-cycle completions inert while second cycle remains confirmable.
+21. 1,000 duplicate callback storm produced one confirmation only.
+22. Cross-attempt interleaving cannot combine proof from different attempts.
+23. 100,000 randomized operations preserved current-attempt proof invariants.
+
+DEVICE-CONFIRMED
+NONE for this selected presentation-ownership issue.
+
+AOSP / API-CONFIRMED
+1. View frame-commit callback is a rendered/submitted-to-swap-chain boundary, not necessarily visible.
+2. applyTransactionOnDraw atomically synchronizes the transaction with the next ViewRoot draw.
+3. Transaction committed callback means applied/ready-to-present, not presented.
+4. Transaction completed callback is invoked when the transaction is presented.
+5. Android 16 ViewRootImpl captures frame-commit callbacks and forwards them through the hardware renderer when hardware rendering is enabled.
+
+EXTERNAL RESEARCH RECORD
+
+SOURCE=Android Developers — ViewTreeObserver
+VERSION/API=public Android API; registerFrameCommitCallback added API 29
+DATE_ACCESSED=2026-10-01
+RELEVANT_SYMBOL=registerFrameCommitCallback / unregisterFrameCommitCallback
+WHAT_IT_PROVES=callback after current rendering content rendered and submitted to swap chain; may not yet be visible; hardware rendering required.
+WHAT_IT_DOES_NOT_PROVE=Fold7 physical presentation time or photons.
+
+SOURCE=AOSP frameworks/base — ViewRootImpl.java
+VERSION=android-16.0.0_r1
+DATE_ACCESSED=2026-10-01
+RELEVANT_SYMBOL=addFrameCommitCallbackIfNeeded(); applyTransactionOnDraw()
+WHAT_IT_PROVES=ViewRootImpl captures frame-commit callbacks for hardware rendering; pending SurfaceControl transaction is merged/applied with ViewRoot rendering path.
+WHAT_IT_DOES_NOT_PROVE=Samsung unchanged behavior/timing beyond Android framework contract.
+
+SOURCE=Android Developers — AttachedSurfaceControl
+VERSION/API=public Android API, added API 31
+DATE_ACCESSED=2026-10-01
+RELEVANT_SYMBOL=applyTransactionOnDraw()
+WHAT_IT_PROVES=transaction is merged with ViewRoot buffer transaction and shown atomically synchronized with next draw.
+WHAT_IT_DOES_NOT_PROVE=target bitmap identity unless Duo carries its own attempt identity and draw evidence.
+
+SOURCE=Android Developers — SurfaceControl.Transaction
+VERSION/API=public Android API; committed listener API 33; completed listener API 35
+DATE_ACCESSED=2026-10-01
+RELEVANT_SYMBOL=addTransactionCommittedListener(); addTransactionCompletedListener()
+WHAT_IT_PROVES=committed=applied/ready-to-present; completed listener invoked when transaction presented.
+WHAT_IT_DOES_NOT_PROVE=photons visible on the physical Fold7 panel.
+
+SOURCE=Android Developers — SurfaceControl.Builder
+VERSION/API=public Android API, builder API 29; setHidden API 33
+DATE_ACCESSED=2026-10-01
+RELEVANT_SYMBOL=Builder(), setName(), setHidden(), build()
+WHAT_IT_PROVES=app-owned hidden SurfaceControl marker can be constructed through public APIs.
+WHAT_IT_DOES_NOT_PROVE=that a visually inert marker transaction will always expose a valid present fence on this Fold7 path.
+
+==================================================
+7. HYPOTHESES / UNVERIFIED RISKS
+==================================================
+
+H1 — FROZEN BIND→FIRST PRESENT LATENCY IS MATERIAL
+Hypothesis: the gap between tryBindFrozenFrame() returning true and actual presentation sometimes spans enough time to matter during rapid close/reversal.
+Experiment: timestamp bind start, onDraw, frame commit, transaction commit/completed, present-fence signal and external first-visible frame for 100 closes at multiple speeds.
+
+H2 — LATE CALLBACK MISATTRIBUTION OCCURS IN REAL TRANSITION LAB EXPORTS
+Hypothesis: executor/callback latency can cause a transaction callback created under fold attempt N to be recorded after latestHingeSample/controller context has advanced to N+1.
+Experiment: inject callback executor delay; add immutable attempt identity; compare old “latest context” attribution versus token identity.
+
+H3 — INVISIBLE MARKER TRANSACTION COMPLETION TRACKS THE SAME VIEWROOT FRAME
+Hypothesis: an app-owned hidden marker SurfaceControl, reparented to the attached ViewRoot and mutated in a transaction queued with applyTransactionOnDraw, produces commit/completed callbacks for the same ViewRoot draw containing the frozen bitmap.
+Experiment: alternate obvious test patterns/content IDs; compare onDraw identity, frame commit, marker callbacks, PixelCopy/debug capture, and external video.
+
+H4 — COMPLETED CALLBACK MAY OCCUR WITHOUT A VALID PRESENT-FENCE SIGNAL TIMESTAMP
+Hypothesis: transaction-completed callback remains useful presentation evidence even when TransactionStats.presentFence is invalid or signal timestamp unavailable.
+Experiment: record completed callback count, presentFence validity and signal timestamps across 500 transitions.
+
+H5 — FRAME COMMIT CALLBACK COULD BE ABSENT UNDER AN ABNORMAL NON-HARDWARE-RENDERED HOST
+Hypothesis: production Fold7 accessibility overlay is always hardware rendered because the window requests FLAG_HARDWARE_ACCELERATED, but the API contract states frame-commit callback does nothing without hardware rendering.
+Experiment: record View.isHardwareAccelerated / callback receipt; degradation must remain PRESENTATION_UNCONFIRMED rather than blocking content.
+
+H6 — PRODUCTION RECOVERY SHOULD NOT WAIT FOR PRESENTATION ACK
+Hypothesis: gating actual visibility on callback receipt would add unnecessary latency/risk; callbacks should establish ownership/telemetry and enable later recovery policies, not hold back the first draw.
+Experiment: A/B device test with observation-only PresentationLease first; only add recovery behavior if traces prove a missing-present failure mode.
+
+==================================================
+8. GENERATION-2 DESIGN
+==================================================
+
+DESIGN NAME
+Presentation Lease Gen2 — Attempt-Scoped Draw/Commit/Presented Ownership.
+
+RESPONSIBILITIES
+A. Fold7ContinuityController remains owner of fold intent, thresholds, direction and transition generation.
+B. Cover Lease Protocol remains owner of privileged panel mutation authority.
+C. Cover Readiness remains owner of destination readiness.
+D. Frozen Frame Provenance remains owner of frozen content authorization and closeCycleId/contentLeaseId.
+E. NEW PresentationLeaseStore owns the evidence that an exact content/host attempt reached the framework presentation boundary.
+F. DisplayMirrorHost owns platform binding of View/SurfaceControl evidence to PresentationLeaseStore.
+G. Transition Lab records immutable presentation identity rather than reconstructing ownership from latest mutable context.
+
+PRESENTATION IDENTITY
+PresentationIdentity {
+  serviceEpoch
+  closeCycleId
+  hostEpoch
+  contentLeaseId
+  attemptSequence
+}
+
+PATH
+PresentationPath {
+  FROZEN_VIEW
+  LIVE_MIRROR
+}
+
+PROPOSED PRESENTATION PHASES
+- NONE
+- ATTEMPT_STARTED
+- DRAW_OBSERVED (frozen only)
+- FRAME_COMMITTED (frozen only)
+- TRANSACTION_COMMITTED
+- TRANSACTION_PRESENTED
+- PRESENTATION_CONFIRMED
+- PRESENTATION_UNCONFIRMED
+- CANCELLED/STALE
+
+Do not require callback arrival ordering. Store facts idempotently and evaluate the invariant set.
+
+FROZEN_VIEW CONFIRMATION PREDICATE
+PRESENTATION_CONFIRMED only if all are true for the exact current PresentationIdentity:
+- drawObserved == true;
+- frameCommitted == true;
+- transactionPresented == true;
+- attempt not cancelled;
+- serviceEpoch current;
+- hostEpoch current;
+- closeCycleId current;
+- contentLeaseId current.
+
+TRANSACTION_COMMITTED is useful latency evidence but is NOT sufficient for PRESENTATION_CONFIRMED.
+
+LIVE_MIRROR CONFIRMATION PREDICATE
+The live mirror pixels are controlled by the SurfaceControl transaction itself. For a current attempt:
+- transactionPresented == true;
+- attempt not cancelled;
+- exact PresentationIdentity current.
+No View frame-commit proof is required for LIVE_MIRROR.
+
+FROZEN MARKER TRANSACTION
+1. Create/reuse one app-owned SurfaceControl marker for the host.
+2. Keep it visually inert/hidden.
+3. Reparent it to the current AttachedSurfaceControl root using buildReparentTransaction or equivalent safe setup.
+4. For each frozen presentation attempt, build a small marker transaction containing a harmless marker mutation plus committed/completed listeners that close over immutable PresentationIdentity.
+5. Queue it with hostView.rootSurfaceControl.applyTransactionOnDraw(transaction).
+6. Register frame-commit callback before invalidating frozenPaneView.
+7. In frozenPaneView.onDraw, record the exact current draw identity only after drawing the expected content lease.
+8. On completed callback, record presentation for that identity. If present fence is valid, record signal timestamp separately.
+
+The marker transaction must not manipulate Samsung physical display state, task state, user app surfaces, or privileged shell ownership.
+
+CALLBACK THREADING
+- View onDraw: UI/View render scheduling context.
+- frame-commit callback: framework invokes after rendering submission; callback code must stay tiny and hand off to the main/owner thread if needed.
+- transaction callbacks: dedicated existing transaction executor is acceptable.
+- mutation of PresentationLeaseStore should either be thread-safe or serialized onto one owner thread. Preferred production design: callback captures immutable event and posts to one coordinator/host owner Handler; pure model remains thread-agnostic.
+
+CANCELLATION / STALE CALLBACKS
+Never try to “unsend” already submitted SurfaceFlinger work. Instead invalidate authority immediately and make late callbacks inert.
+Invalidate presentation attempt on:
+- opening reversal;
+- native cover takeover;
+- mirror host detach;
+- mirror host replacement/logical remap;
+- content frame lease replacement;
+- FROZEN_VIEW↔LIVE_MIRROR path switch;
+- service destruction;
+- service/process epoch change.
+
+DEGRADATION
+- Do not delay rendering while waiting for evidence.
+- If marker transaction cannot be constructed/submitted, render through current path and mark PRESENTATION_UNCONFIRMED.
+- If frame commit callback never arrives, do not falsely mark PRESENTED.
+- If transaction completed callback is unavailable, preserve content but mark proof degraded.
+- Samsung-native behavior remains fallback when privileged continuity infrastructure is unavailable.
+
+TRANSITION LAB EXTENSION
+Every presentation event should include immutable:
+- serviceEpoch;
+- closeCycleId;
+- hostEpoch;
+- contentLeaseId;
+- attemptSequence;
+- path;
+- controller generation as diagnostic (not the only identity);
+- source display physical/logical facts;
+- destination display physical/logical facts;
+- drawNs;
+- frameCommitNs;
+- transactionSubmitNs;
+- transactionCommitNs;
+- transactionCompletedCallbackNs;
+- presentFenceSignalNs if valid;
+- staleAtCallback;
+- cancellationReason.
+
+Do not replace captured identity with latestHingeSample at callback time. Latest hinge can remain an additional observation field.
+
+EXPLICIT INVARIANTS
+1. No presentation callback may mutate an attempt with a different PresentationIdentity.
+2. An operation from serviceEpoch N cannot confirm serviceEpoch N+1.
+3. A hostEpoch N callback cannot confirm a replacement hostEpoch N+1.
+4. A contentLeaseId N callback cannot confirm replacement contentLeaseId N+1.
+5. A prior closeCycleId cannot confirm the next physical close.
+6. FROZEN_VIEW cannot be PRESENTATION_CONFIRMED without drawObserved.
+7. FROZEN_VIEW cannot be PRESENTATION_CONFIRMED without frameCommitted.
+8. Neither path can be PRESENTATION_CONFIRMED without transactionPresented.
+9. transactionCommitted is not transactionPresented.
+10. Duplicate callbacks are idempotent.
+11. Callback order is not assumed.
+12. Cancellation makes all later callbacks for the attempt observational-only/stale.
+13. Presentation instrumentation must not add sleeps or change hinge thresholds.
+14. Presentation confirmation is framework evidence, not physical-photon proof.
+15. Logical display ID is never stable physical identity.
+16. Current user task remains on Android’s normal/default display architecture.
+17. No raw physical panel OFF command is introduced.
+
+==================================================
+9. PROTOTYPE / PROPOSED CHANGES
+==================================================
+
+FILE=Fold7PresentationLeaseGen2.kt
+PURPOSE=Pure Kotlin reduced baseline models plus Generation-2 PresentationLeaseStore and immutable PresentationIdentity.
+BASELINE OR NEW=NEW R&D PROTOTYPE
+COMPILED=YES
+TESTED=YES
+PRODUCTION_READY=NO
+
+FILE=Fold7PresentationLeaseGen2Test.kt
+PURPOSE=Deterministic adversarial harness for frozen/live presentation evidence, stale callbacks, cancellation, replacement, permutations, storms and fuzz.
+BASELINE OR NEW=NEW R&D TEST
+COMPILED=YES
+TESTED=YES
+PRODUCTION_READY=NO
+
+FILE=INTEGRATION_SKETCH.txt
+PURPOSE=Concrete Android integration sketch for DisplayMirrorHost, marker transaction, callback identity, Transition Lab and dependencies.
+BASELINE OR NEW=NEW R&D DESIGN ARTIFACT
+COMPILED=NO
+TESTED=NO
+PRODUCTION_READY=NO
+
+FILE=timing_model.py
+PURPOSE=Stage-by-stage timing classification without invented device numbers.
+BASELINE OR NEW=NEW R&D MODEL
+COMPILED=NO
+TESTED=EXECUTED
+PRODUCTION_READY=NO
+
+FILE=TEST_OUTPUT.txt
+PURPOSE=Captured execution output from the pure Kotlin model.
+BASELINE OR NEW=NEW EXECUTION ARTIFACT
+COMPILED=N/A
+TESTED=N/A
+PRODUCTION_READY=NO
+
+FILE=TIMING_MODEL_OUTPUT.txt
+PURPOSE=Captured timing-model output.
+BASELINE OR NEW=NEW EXECUTION ARTIFACT
+COMPILED=N/A
+TESTED=N/A
+PRODUCTION_READY=NO
+
+No production Android file was patched by this R&D.
+
+==================================================
+10. EXECUTION EVIDENCE
+==================================================
+
+EXECUTION 1 — PROTOTYPE COMPILE
+COMMAND OR TOOL=kotlinc Fold7PresentationLeaseGen2.kt Fold7PresentationLeaseGen2Test.kt -include-runtime -d presentation-gen2-tests.jar
+WORKING DIRECTORY=/mnt/data/duo_presentation_gen2
+EXIT STATUS=0
+TEST COUNT=N/A
+PASS COUNT=N/A
+FAIL COUNT=N/A
+IMPORTANT OUTPUT=jar compiled successfully; final clean compile emitted no warning.
+ARTIFACT PATH=/mnt/data/duo_presentation_gen2/presentation-gen2-tests.jar
+
+EXECUTION 2 — DETERMINISTIC / ADVERSARIAL TESTS
+COMMAND OR TOOL=java -jar presentation-gen2-tests.jar
+WORKING DIRECTORY=/mnt/data/duo_presentation_gen2
+EXIT STATUS=0
+TEST COUNT=23
+PASS COUNT=23
+FAIL COUNT=0
+IMPORTANT OUTPUT=RESULT passed=23 failed=0 total=23
+ARTIFACT PATH=/mnt/data/duo_presentation_gen2/TEST_OUTPUT.txt
+
+EXECUTION 3 — FUZZ
+COMMAND OR TOOL=embedded in Fold7PresentationLeaseGen2Test main run
+WORKING DIRECTORY=/mnt/data/duo_presentation_gen2
+EXIT STATUS=0 as part of Execution 2
+TEST COUNT=100,000 randomized operations inside one named test
+PASS COUNT=all operations maintained asserted invariants
+FAIL COUNT=0
+IMPORTANT OUTPUT=PASS 100000-operation fuzz preserves current-attempt proof invariants
+ARTIFACT PATH=/mnt/data/duo_presentation_gen2/TEST_OUTPUT.txt
+
+EXECUTION 4 — CALLBACK PERMUTATIONS
+COMMAND OR TOOL=embedded deterministic permutation test
+WORKING DIRECTORY=/mnt/data/duo_presentation_gen2
+EXIT STATUS=0 as part of Execution 2
+TEST COUNT=24 permutations of draw/frame/commit/present order
+PASS COUNT=24
+FAIL COUNT=0
+IMPORTANT OUTPUT=every complete proof set converged to confirmed without assuming callback order
+ARTIFACT PATH=/mnt/data/duo_presentation_gen2/TEST_OUTPUT.txt
+
+EXECUTION 5 — TIMING MODEL
+COMMAND OR TOOL=python3 timing_model.py
+WORKING DIRECTORY=/mnt/data/duo_presentation_gen2
+EXIT STATUS=0
+TEST COUNT=N/A
+PASS COUNT=N/A
+FAIL COUNT=N/A
+IMPORTANT OUTPUT=INTENTIONAL_GEN2_SLEEP_OR_DELAY_MS=0; DEVICE_MEASURED_LATENCY_NUMBERS=NONE
+ARTIFACT PATH=/mnt/data/duo_presentation_gen2/TIMING_MODEL_OUTPUT.txt
+
+EXECUTION 6 — PRIOR PACKAGE HASH CHECK
+COMMAND OR TOOL=sha256sum on Readiness, Lease Protocol and Frozen Frame Provenance ZIP/handoff artifacts
+WORKING DIRECTORY=/mnt/data
+EXIT STATUS=0
+TEST COUNT=6 files
+PASS COUNT=6 hashes match supplied manifests
+FAIL COUNT=0
+IMPORTANT OUTPUT=all three prior proposal ZIP and handoff hashes matched expected values
+ARTIFACT PATH=/mnt/data/duo_presentation_gen2/PRIOR_ARTIFACT_HASH_CHECK.txt
+
+EXECUTION 7 — PRIOR ZIP INTEGRITY
+COMMAND OR TOOL=unzip -t on all three prior proposal ZIPs
+WORKING DIRECTORY=/mnt/data
+EXIT STATUS=0 for all three
+TEST COUNT=3 archives
+PASS COUNT=3
+FAIL COUNT=0
+IMPORTANT OUTPUT=No errors detected in compressed data for each archive
+ARTIFACT PATH=console evidence; hashes retained in PRIOR_ARTIFACT_HASH_CHECK.txt
+
+EXECUTION 8 — CURRENT REPOSITORY / SOURCE INSPECTION
+COMMAND OR TOOL=connected GitHub repository actions (fetch_commit, compare_commits, fetch_file, search_branches, search code)
+TARGET=boberino93-bit/duo-open main
+EXIT STATUS=successful for cited retrievals
+IMPORTANT OUTPUT=STARTING main 331878fc; relevant source blobs recorded; no visible presentation-lease branch/artifact found.
+ARTIFACT PATH=N/A
+
+PRODUCTION ANDROID BUILD
+NOT COMPILED
+Reason: this silo produced a pure model/design only and did not patch production Android source.
+
+==================================================
+11. ADVERSARIAL BACK-TEST RESULTS
+==================================================
+
+SCENARIO=Frozen bind with no downstream callbacks
+CURRENT BASELINE=Source-equivalent bind reports success after visibility/invalidate.
+GEN2 EXPECTED=Attempt remains unconfirmed.
+ACTUAL MODEL=PASS; no false PRESENTED.
+REVISION=None required.
+
+SCENARIO=Callback order present→draw→frame
+CURRENT BASELINE=No frozen attempt state owner.
+GEN2 EXPECTED=No confirmation until all frozen proof facts exist; ordering not assumed.
+ACTUAL MODEL=PASS.
+
+SCENARIO=Frame commit + transaction commit but no completed/presented callback
+GEN2 EXPECTED=Unconfirmed.
+ACTUAL MODEL=PASS.
+
+SCENARIO=Transaction committed but not presented
+GEN2 EXPECTED=Commit retained as telemetry only; no confirmation.
+ACTUAL MODEL=PASS.
+
+SCENARIO=Live mirror transaction completed
+GEN2 EXPECTED=Current exact live attempt confirms without View frame-commit requirement.
+ACTUAL MODEL=PASS.
+
+SCENARIO=Old attempt completion after newer attempt starts
+GEN2 EXPECTED=Old completion stale/inert.
+ACTUAL MODEL=PASS.
+
+SCENARIO=Immediate opening reversal
+GEN2 EXPECTED=Invalidate current presentation; all old callbacks inert.
+ACTUAL MODEL=PASS.
+
+SCENARIO=close→open→close
+GEN2 EXPECTED=First close callbacks cannot confirm second close; second remains independently confirmable.
+ACTUAL MODEL=PASS.
+
+SCENARIO=Multiple replacement hosts within same cycle
+GEN2 EXPECTED=hostEpoch prevents old host callback from confirming replacement host.
+ACTUAL MODEL=PASS for stale host epoch.
+
+SCENARIO=Content replacement within same host/cycle
+GEN2 EXPECTED=contentLeaseId prevents old pixels’ callbacks from confirming replacement content.
+ACTUAL MODEL=PASS.
+
+SCENARIO=Service restart
+GEN2 EXPECTED=serviceEpoch mismatch rejects old callbacks.
+ACTUAL MODEL=PASS.
+
+SCENARIO=Duplicate callbacks
+GEN2 EXPECTED=Idempotent; confirmation count increments once.
+ACTUAL MODEL=PASS with duplicates and 1,000-callback storm.
+
+SCENARIO=Cross-attempt proof mixing
+GEN2 EXPECTED=Cannot combine draw/frame evidence from A with presentation evidence from B.
+ACTUAL MODEL=PASS.
+
+SCENARIO=All callback-order permutations
+GEN2 EXPECTED=24/24 permutations converge when the exact same attempt eventually receives all required facts.
+ACTUAL MODEL=PASS 24/24.
+
+SCENARIO=100,000 randomized operations
+GEN2 EXPECTED=Confirmed current attempt always satisfies path-specific invariant; cancelled/stale attempts never become current confirmed state.
+ACTUAL MODEL=PASS.
+
+SCENARIO=Transaction completed callback missing on real Android
+GEN2 EXPECTED=Render may continue but proof degrades to PRESENTATION_UNCONFIRMED; do not block user-visible content solely to obtain telemetry.
+ACTUAL MODEL=Missing callback produces no false confirmation.
+DEVICE VALIDATION=Required.
+
+SCENARIO=Marker transaction does not produce useful completed callback/present fence
+GEN2 EXPECTED=Fail open for rendering, fail closed for proof; log unconfirmed and retain current visual fallback.
+ACTUAL MODEL=Architecture supports unconfirmed state; Android marker behavior not executed.
+DEVICE VALIDATION=Required.
+
+SCENARIO=Physical photons lag framework present event
+GEN2 EXPECTED=Never claim photons from framework callback.
+ACTUAL MODEL=No physical claim exists.
+DEVICE VALIDATION=External video required.
+
+NEGATIVE FINDINGS
+1. The pure model cannot prove the Android marker transaction will produce the desired presentation callback on the real accessibility overlay.
+2. The model cannot quantify latency or visual improvement.
+3. The proposal does not eliminate Samsung/display hardware latency.
+4. Presentation ownership alone does not solve cover readiness, content provenance or shell lease identity; those remain separate dependencies.
+
+==================================================
+12. BASELINE VS GENERATION-2
+==================================================
+
+BEHAVIOR=Frozen frame bind
+CURRENT MAIN=Bitmap validity/dimensions accepted; View visible+invalidate; bind returns true.
+GENERATION 2=Begin immutable PresentationIdentity; draw/render/presentation evidence accumulated asynchronously.
+WHY DIFFERENT=Presentation becomes explicit state instead of inferred from bind request.
+EXPECTED BENEFIT=No false claim that current content is presented before evidence exists; exact timing boundary for field analysis.
+REGRESSION RISK=Additional lifecycle/callback code; marker setup could fail.
+PROOF LEVEL=Source + pure test + Android API contract.
+VALIDATION REQUIRED=Android/Fold7.
+
+BEHAVIOR=Frozen View first-presentation timing
+CURRENT MAIN=No exact content-attempt transaction presentation marker.
+GENERATION 2=View frame commit + applyTransactionOnDraw marker completion tied to exact identity.
+WHY DIFFERENT=Marker transaction is synchronized with ViewRoot draw; immutable token survives callback delay.
+EXPECTED BENEFIT=Comparable draw→commit→present metrics for preferred frozen path.
+REGRESSION RISK=Marker transaction may not behave as expected on OEM stack; must remain observational initially.
+PROOF LEVEL=API contract + architecture hypothesis.
+VALIDATION REQUIRED=Fold7.
+
+BEHAVIOR=Live mirror timing
+CURRENT MAIN=Transition Lab transaction sequence/vsync timing exists.
+GENERATION 2=Existing transaction also carries PresentationIdentity to production ownership/telemetry.
+WHY DIFFERENT=Late callback can be classified stale using immutable original identity.
+EXPECTED BENEFIT=No proof attribution to newer fold/content attempt.
+REGRESSION RISK=More metadata/state plumbing.
+PROOF LEVEL=Source + pure tests.
+VALIDATION REQUIRED=Integration.
+
+BEHAVIOR=Late callback after reversal
+CURRENT MAIN=Upstream host/controller generation checks handle many operations, but lab transaction callback itself has no presentation lease identity.
+GENERATION 2=Cancelled token remains stale forever.
+WHY DIFFERENT=Exact identity gate.
+EXPECTED BENEFIT=Deterministic analysis and safe future recovery logic.
+REGRESSION RISK=Incorrect invalidation wiring could discard valid evidence.
+PROOF LEVEL=Test-confirmed model.
+VALIDATION REQUIRED=Fault-injection integration.
+
+BEHAVIOR=Callback ordering
+CURRENT MAIN=No combined frozen presentation evidence owner.
+GENERATION 2=Evidence facts are idempotent and order-independent.
+WHY DIFFERENT=State reduction instead of ordering assumption.
+EXPECTED BENEFIT=Executor timing does not change correctness.
+REGRESSION RISK=Thread-safety/serialization mistakes if integration bypasses owner thread.
+PROOF LEVEL=24/24 permutation tests.
+VALIDATION REQUIRED=Threaded integration test.
+
+BEHAVIOR=Service restart
+CURRENT MAIN=Transaction token has no service epoch.
+GENERATION 2=serviceEpoch is mandatory identity.
+WHY DIFFERENT=Old callback cannot authorize new process/service lifetime.
+EXPECTED BENEFIT=Restart-safe telemetry/ownership.
+REGRESSION RISK=Epoch source must be correctly regenerated.
+PROOF LEVEL=Pure test.
+VALIDATION REQUIRED=Service restart test.
+
+BEHAVIOR=Physical visibility claim
+CURRENT MAIN=Transition Lab can expose framework presentation timestamps for live transaction where fence is valid.
+GENERATION 2=Same boundary, more exact identity; explicitly does not equate it with photons.
+WHY DIFFERENT=Evidence classification is explicit.
+EXPECTED BENEFIT=Cleaner measurements and no overclaiming.
+REGRESSION RISK=None if kept observational.
+PROOF LEVEL=API contract.
+VALIDATION REQUIRED=External video.
+
+==================================================
+13. REGRESSION RISKS
+==================================================
+
+CORRECTNESS REGRESSIONS
+- If closeCycleId/contentLeaseId wiring is wrong, valid callbacks may be discarded.
+- If PresentationIdentity is derived from controller.generation alone, the design loses its intended cross-subsystem separation.
+- If frame-commit callback is registered for the wrong draw, proof could be associated incorrectly; exact attempt identity and onDraw evidence are mandatory.
+
+LATENCY REGRESSIONS
+- Gen2 must not wait before drawing. If an implementation accidentally gates visibility on callback receipt, it could add one or more frames of latency. That is explicitly not proposed.
+- Marker transaction setup adds some CPU/object overhead; magnitude is UNKNOWN and should be measured.
+
+POWER IMPACT
+- Expected low if one marker transaction per first presentation attempt. Actual impact UNKNOWN.
+- Do not register continuous presentation listeners beyond active transition windows.
+
+SAMSUNG INTERFERENCE
+- No Samsung panel state is mutated by the marker design, but OEM compositor behavior/timing is unverified.
+
+LIFECYCLE REGRESSIONS
+- Marker SurfaceControl must be released with host detach/service destruction.
+- Frame commit callback may already be pending; identity must make it inert if unregister cannot remove it.
+
+RACE INTRODUCTION
+- Callbacks arrive on different threads/executors. Do not mutate an unsynchronized PresentationLeaseStore from arbitrary threads in production. Serialize onto owner Handler or implement thread safety.
+
+RENDERING REGRESSIONS
+- Marker must remain visually inert. No visible buffer/content should be attached to it.
+- Do not alter root View surface alpha/crop/position as part of initial implementation.
+
+SERVICE-RESTART BEHAVIOR
+- All old serviceEpoch tokens must be rejected after restart.
+
+INSTRUMENTATION REGRESSION
+- Do not replace existing Transition Lab transaction sequence/vsync fields; extend them with immutable presentation identity.
+
+==================================================
+14. TESTS REQUIRED
+==================================================
+
+UNIT TESTS
+1. Frozen cannot confirm without draw.
+2. Frozen cannot confirm without frame commit.
+3. Frozen cannot confirm without transaction presented.
+4. Transaction commit alone does not confirm.
+5. Live confirms with exact current presented transaction.
+6. Duplicate callbacks idempotent.
+7. callback ordering permutations.
+8. close→open→close stale completion.
+9. hostEpoch replacement.
+10. contentLease replacement.
+11. serviceEpoch restart.
+12. attemptSequence monotonicity.
+13. explicit cancel.
+14. marker submission failure → unconfirmed, not confirmed.
+
+JVM TESTS
+- Port supplied pure model into project test source.
+- Run multiple fuzz seeds and increase randomized operations in CI.
+- Assert every confirmed frozen snapshot has draw && frameCommit && transactionPresented for same identity.
+- Assert every confirmed live snapshot has transactionPresented for same identity.
+
+INTEGRATION TESTS
+1. Fake callback executor delays completed callback beyond reversal/new close.
+2. Fake View frame commit delayed relative to transaction callback.
+3. Host detach between onDraw and transaction completion.
+4. Frozen content lease replacement before callback.
+5. Live fallback starts while old frozen callback is pending.
+6. Marker SurfaceControl creation/reparent failure.
+7. applyTransactionOnDraw false/exception path.
+8. transaction completion with invalid present fence.
+9. hardware rendering disabled test environment: frame commit absent → unconfirmed.
+
+FAULT-INJECTION TESTS
+- executor delay 500 ms;
+- callback storm 10,000 duplicates;
+- callback reordering;
+- service destroy/recreate;
+- topology remap replacing DisplayMirrorHost;
+- forced frozen capture failure causing live fallback;
+- Shizuku loss during live mirror start;
+- native cover takeover during pending presentation.
+
+TIMING TESTS
+Record monotonic timestamps at:
+- visual demand;
+- host construction;
+- addView return;
+- onViewAttached;
+- bind begin;
+- frozen frame selected;
+- presentation attempt begin;
+- frozen onDraw;
+- View frame commit;
+- marker/live transaction queued;
+- transaction committed;
+- transaction completed callback;
+- present fence signal if valid;
+- external-video first visible frame alignment.
+
+DEVICE TESTS
+See Section 15.
+
+==================================================
+15. FOLD7 FIELD TEST PLAN
+==================================================
+
+COMMON STARTING STATE
+- Galaxy Z Fold7 running the instrumented R&D integration build.
+- Inner panel default and active unless test says otherwise.
+- Shizuku ready for tests requiring live mirror/privileged continuity.
+- Transition Lab FULL_LAB enabled in debug build.
+- Known test pattern on the inner display with a visible frame/cycle identifier if possible.
+- External 240 fps or higher camera aimed at both hinge motion and cover when available.
+
+COMMON ARTIFACTS
+- Transition Lab export.
+- logcat DuoDiagnostics.
+- presentation identity event stream.
+- dumpsys display before/after anomalies.
+- screen recording only as supplementary evidence.
+- high-frame-rate external video for physical visibility.
+
+TEST 1 — NORMAL MEDIUM CLOSE / FROZEN PATH
+STARTING PHONE STATE=fully open, inner default, current-cycle frozen capture available.
+HINGE START ANGLE≈180°.
+HINGE MOVEMENT=continuous close through established 174° prewarm and 135° visual threshold to closed.
+HINGE SPEED=medium, repeat 20 times.
+EXPECTED LOG SEQUENCE=attempt begin → onDraw(identity) → frameCommit(identity) → transaction commit/present(identity).
+EXPECTED PHYSICAL RESULT=authorized current-cycle frame appears on cover; no prior-cycle content.
+PASS CONDITION=one current attempt confirms; callbacks retain same immutable identity; external video ordering is physically plausible.
+FAIL CONDITION=confirmation without required evidence, stale identity confirms, marker causes visible artifact, or callbacks never arrive consistently.
+
+TEST 2 — FAST CLOSE
+STARTING STATE=same.
+MOVEMENT=fast close with sparse hinge samples.
+PASS=PresentationLease correctness independent of hinge sample density; no threshold changes used to improve result.
+
+TEST 3 — IMMEDIATE REVERSAL AFTER VISUAL DEMAND
+STARTING STATE=open.
+MOVEMENT=close through visual threshold then immediately reopen before expected presentation callback.
+EXPECTED=attempt cancellation/invalidation; late frame/transaction callbacks logged stale; never confirm current state.
+PASS=no stale confirmation.
+
+TEST 4 — CLOSE→OPEN→CLOSE
+MOVEMENT=first close triggers presentation, reopen before callback completion, second close immediately starts new cycle.
+EXPECTED=first identity stale forever; second independent and confirmable.
+PASS=no proof mixing.
+
+TEST 5 — HOST REPLACEMENT / LOGICAL REMAP
+STARTING=secondary cover continuity active.
+ACTION=induce topology remap or host recreation during pending presentation using controlled test/fault injection.
+EXPECTED=new hostEpoch; old callback stale.
+PASS=only replacement host can become confirmed.
+
+TEST 6 — CURRENT-CYCLE FROZEN CAPTURE FAILURE → LIVE FALLBACK
+STARTING=force/choose condition where frozen frame unavailable or rejected.
+EXPECTED=FROZEN attempt cancelled or never started; LIVE_MIRROR receives a new identity; old frozen callbacks cannot confirm live attempt.
+PASS=path switch is clean and exact.
+
+TEST 7 — DELAYED TRANSACTION CALLBACK
+ACTION=debug-only callback executor delay 250/500/1000 ms.
+EXPECTED=telemetry still attributes callback to immutable original attempt, while staleAtCallback accurately reflects current state.
+PASS=no latest-context misattribution.
+
+TEST 8 — PRESENT FENCE VALIDITY SURVEY
+RUNS=minimum 200 frozen + 200 live presentations.
+RECORD=completed callback received, fence validity, fence signal timestamp availability.
+PASS=characterize actual behavior; no pass/fail architecture claim based solely on validity.
+
+TEST 9 — FRAME COMMIT CALLBACK AVAILABILITY
+RECORD=View.isHardwareAccelerated and frame-commit callback success rate.
+PASS=normal production configuration produces callbacks consistently OR degradation remains unconfirmed without blocking rendering.
+
+TEST 10 — FRAMEWORK PRESENTATION VS PHOTONS
+RUNS=minimum 50 instrumented closes with external high-speed video.
+RECORD=completed callback/present-fence timestamp aligned to video clock marker.
+PASS=derive measured distribution; do not assume zero delta.
+FAIL CONDITION=claim photons without external evidence.
+
+==================================================
+16. PERFORMANCE / LATENCY IMPACT
+==================================================
+
+No Fold7 latency numbers were measured in this silo.
+Every stage below is explicitly classified.
+
+STAGE=physical hinge movement → visual demand
+CURRENT=outside selected subsystem; existing controller/Readiness work.
+GEN2=unchanged.
+TYPE=UNKNOWN here.
+
+STAGE=visual demand → host construction
+CURRENT=UNKNOWN.
+GEN2=UNKNOWN; no new deliberate delay.
+TYPE=UNKNOWN.
+
+STAGE=host addView → attached callback
+CURRENT=UNKNOWN.
+GEN2=UNKNOWN.
+TYPE=ANDROID/WindowManager scheduling; MEASUREMENT REQUIRED.
+
+STAGE=frozen bind → invalidate
+CURRENT=immediate source call sequence; no deliberate timer.
+GEN2=same.
+TYPE=SOURCE-CONFIRMED ordering, not device latency.
+
+STAGE=invalidate → frozen onDraw
+CURRENT=UNKNOWN.
+GEN2=UNKNOWN; Gen2 observes it.
+TYPE=MEASUREMENT REQUIRED.
+
+STAGE=onDraw → View frame commit
+CURRENT=unobserved in selected frozen path.
+GEN2=observed via frame-commit callback.
+TYPE=MEASUREMENT REQUIRED.
+
+STAGE=same ViewRoot draw → marker transaction application
+CURRENT=no marker.
+GEN2=applyTransactionOnDraw, no intentional sleep.
+TYPE=API-CONTRACT architecture; actual latency UNKNOWN.
+
+STAGE=transaction submit → committed
+CURRENT=instrumentation exists for LIVE_MIRROR only.
+GEN2=identity-bearing instrumentation for both paths.
+TYPE=MEASUREMENT REQUIRED.
+
+STAGE=committed → transaction completed/presented
+CURRENT=instrumentation exists for LIVE_MIRROR where completed listener is active.
+GEN2=identity-bearing for both paths.
+TYPE=MEASUREMENT REQUIRED.
+
+STAGE=transaction presented → physical photons
+CURRENT=UNKNOWN.
+GEN2=UNKNOWN.
+TYPE=FOLD7 FIELD MEASUREMENT REQUIRED.
+
+INTENTIONAL_GEN2_SLEEP_OR_DELAY_MS=0
+EXPECTED SOFTWARE LATENCY IMPACT=small callback/metadata/transaction overhead; no additional intentional frame wait. Magnitude UNKNOWN until device profiling.
+MODELED NUMERIC DEVICE LATENCY=NONE.
+
+==================================================
+17. IMPLEMENTATION PRIORITY
+==================================================
+
+P0 — IMMUTABLE PRESENTATION IDENTITY + PURE OWNER
+- Add production-equivalent PresentationIdentity/PresentationLeaseStore behind tests.
+- Depend on stable service epoch + closeCycleId/contentLeaseId when Frozen Frame Provenance is integrated.
+- If Frozen Frame Provenance is not yet integrated, do not fake closeCycleId using raw controller generation. Sequence integration accordingly.
+
+P0 — LIVE MIRROR IDENTITY PLUMBING
+- Extend existing transaction instrumentation/production callbacks so live mirror completion carries immutable PresentationIdentity.
+- Preserve current Transition Lab fields.
+
+P1 — FROZEN VIEW FRAME-COMMIT + MARKER PROTOTYPE
+- Add exact onDraw identity.
+- Register frame commit callback.
+- Create/reuse visually inert marker SurfaceControl.
+- Queue transaction on draw; record commit/completion.
+- Initially observation-only: never block first draw waiting for callback.
+
+P1 — TRANSITION LAB SCHEMA EXTENSION
+- Write immutable presentation identity and staleAtCallback fields.
+- Retain latest hinge as observation, not ownership.
+
+P1 — FOLD7 DEVICE VALIDATION
+- Run field matrix before recovery behavior depends on presentation status.
+
+P2 — RECOVERY POLICY ONLY IF EVIDENCE JUSTIFIES IT
+- If device data proves missing presentation callbacks correlate with visible failures, design bounded recovery separately.
+- Do not add blind timer/retry now.
+
+DEPENDENCY ORDER
+Recommended integration order across all current R&D:
+1. Cover Lease Protocol Gen2 (authority/order) where supervisor accepts it.
+2. Cover Readiness Gen2 (destination readiness).
+3. Frozen Frame Provenance Gen2 (content ownership / closeCycleId).
+4. Presentation Lease Gen2 (draw/presentation ownership).
+The supervisor may stage these differently, but shared identity fields must not collapse into one generic “generation.”
+
+==================================================
+18. WHAT NOT TO CHANGE
+==================================================
+
+1. Do not change 174° cover prewarm threshold.
+2. Do not change 135° cover visual threshold to mask presentation latency.
+3. Do not move the real Android task to the secondary display.
+4. Do not cache logical display ID as physical panel identity.
+5. Do not introduce raw physical-panel OFF commands.
+6. Do not replace Fold7CoverPanelLease authority semantics with PresentationLease.
+7. Do not replace Cover Readiness state with PresentationLease.
+8. Do not replace Frozen Frame Provenance closeCycle/content authority with PresentationLease.
+9. Do not restore Fold7 live recapture that 1.3.29 intentionally suppressed for deterministic frozen frames.
+10. Do not remove live mirror fallback.
+11. Do not block content visibility solely to wait for instrumentation callbacks in the first integration.
+12. Do not treat transaction committed as transaction presented.
+13. Do not treat frame commit as physical visibility.
+14. Do not treat transaction completed/presented as proof of photons.
+15. Do not remove Transition Lab; extend it.
+16. Do not make callback ordering a correctness requirement.
+17. Do not create a new subprocess on the presentation hot path.
+
+==================================================
+19. SUPERVISOR INTEGRATION NOTES
+==================================================
+
+MANUAL REVIEW REQUIRED
+
+LIKELY PRODUCTION FILES TO MODIFY
+- app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt (presentation identity source/lifecycle notifications; exact extent depends on other Gen2 integrations)
+- app/src/full/java/com/duoopen/lab/TransitionLab.kt
+- app/src/full/java/com/duoopen/lab/SurfaceTransactionProbe.kt
+- Transition event/record schema file(s) used by Transition Lab
+
+LIKELY NEW FILES
+- app/src/full/java/com/duoopen/overlay/Fold7PresentationLease.kt or equivalent
+- app/src/test/java/com/duoopen/overlay/Fold7PresentationLeaseTest.kt
+
+OPTIONAL / DEPENDENCY FILES
+- Frozen Frame Provenance integration output that supplies serviceEpoch/closeCycleId/contentLeaseId.
+- Cover Readiness integration output if presentation start should consume a typed ready-destination token.
+
+CURRENT MAIN CONFLICT
+At STARTING main, no production presentation-lease implementation was found. Imported root R&D artifacts do not change production runtime behavior.
+
+RELATION TO COVER READINESS GEN2
+Complementary. Readiness says destination is eligible to host content. PresentationLease says an exact content attempt reached framework presentation. Keep separate state owners.
+
+RELATION TO COVER LEASE PROTOCOL GEN2
+Complementary. Shell lease token authorizes privileged panel mutation. PresentationIdentity authorizes/attributes rendering evidence. Do not reuse one as the other.
+
+RELATION TO FROZEN FRAME PROVENANCE GEN2
+Direct dependency for the strongest frozen path. Frame Provenance supplies closeCycleId/contentLeaseId. PresentationLease consumes those fields and adds hostEpoch/attemptSequence plus draw/commit/present evidence.
+
+MECHANICAL PATCH STATUS=NO
+The supplied Kotlin is a pure model, not an Android patch.
+
+RECHECK IMMEDIATELY BEFORE INTEGRATION
+1. main HEAD and changed production blobs.
+2. Whether Readiness/Lease/Frame Provenance have landed.
+3. DisplayMirrorHost frozen binding path.
+4. TransitionLab / SurfaceTransactionProbe token schema.
+5. compileSdk/target API and completed-listener availability.
+6. whether a different presentation marker/instrumentation implementation has landed.
+7. current service/host/content identity ownership so duplicate epochs are not invented.
+
+==================================================
+20. ARTIFACT IDENTITY
+==================================================
+
+HANDOFF_FILENAME=DUO_OPEN_PRESENTATION_LEASE_GEN2_RND_HANDOFF.txt
+HANDOFF_SHA256=SEE_SHA256SUMS.txt (detached hash; embedding the final file hash inside the file would change that hash)
+PROPOSAL_ZIP_FILENAME=DUO_OPEN_PRESENTATION_LEASE_GEN2_PROPOSAL.zip
+PROPOSAL_ZIP_SHA256=SEE_EXTERNAL_ARTIFACT_HASHES.txt (ZIP contains this handoff; final ZIP hash is detached)
+UNATTACHED_GIT_BLOB_SHA=N/A
+
+==================================================
+21. BOTTOM LINE
+==================================================
+
+WHAT IS ACTUALLY PROVEN
+- CURRENT preferred frozen path returns binding success before explicit draw/commit/presentation proof.
+- CURRENT frozen path is not covered by the existing SurfaceControl transaction presentation probe used by live mirror geometry.
+- CURRENT transaction probe token lacks immutable fold/content/host presentation identity.
+- CURRENT transaction callback telemetry correlates against latest hinge context at callback time.
+- Public Android APIs expose a frame-commit boundary, an atomic transaction-on-draw boundary, and a transaction-presented callback.
+- The pure PresentationLease model eliminates the tested proof-mixing/stale-callback failures and passed 23/23 tests, all 24 callback permutations, a 1,000-callback storm and 100,000 randomized operations.
+
+WHAT IS EXPECTED
+An explicit PresentationLease should make final rendering ownership and Transition Lab evidence deterministic across callback reordering, reversal, host replacement, content replacement and service restart without adding an intentional presentation delay.
+
+WHAT REMAINS UNKNOWN
+- real Fold7 bind→draw→commit→present→photon timing;
+- real marker SurfaceControl callback/fence behavior on the accessibility overlay;
+- whether current callback misattribution is frequent in field traces;
+- whether presentation status should ever drive recovery behavior rather than remain observation/ownership only.
+
+NEXT BEST ENGINEERING ACTION
+The primary supervisor should compare this proposal against current main and the three adjacent Gen2 packages, integrate the pure identity owner/tests first, then build an observation-only frozen View frame-commit + marker-transaction prototype. Run Fold7 field tests before making presentation confirmation control user-visible behavior.
+
+DO NOT AUTHORIZE INSTALLATION BASED ON THIS R&D PACKAGE.

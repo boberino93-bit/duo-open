@@ -1,6 +1,39 @@
-FRAME PROVENANCE TIMING MODEL
-All values below are architectural classification, not Fold7 measurements.
-CURRENT_MAIN frame eligibility check: local cache lookup + dimensions + age <= 10,000 ms [source-derived]
-GEN2 frame eligibility check: local metadata comparisons + dimensions + existing age cap [expected O(1); unmeasured]
-No new Binder call, subprocess, hinge threshold, panel-power command, or fixed delay is required by the P0 design.
-If no exact-cycle frame exists, Gen2 deliberately falls back instead of replaying a prior-cycle bitmap; live-mirror startup latency remains UNKNOWN and requires Fold7 measurement.
+DUO OPEN PRESENTATION GEN2 TIMING BUDGET
+1. STAGE=visual demand -> host construction
+   CURRENT=UNKNOWN
+   GEN2=UNKNOWN
+   NOTE=No new Gen2 delay proposed
+2. STAGE=host addView -> attached callback
+   CURRENT=UNKNOWN
+   GEN2=UNKNOWN
+   NOTE=Android/WindowManager scheduling
+3. STAGE=frozen bind -> invalidate
+   CURRENT=SOURCE: immediate call sequence
+   GEN2=SOURCE: immediate call sequence
+   NOTE=No timer
+4. STAGE=invalidate -> frozen onDraw
+   CURRENT=UNKNOWN
+   GEN2=UNKNOWN
+   NOTE=Choreographer/ViewRoot scheduling
+5. STAGE=onDraw -> View frame commit
+   CURRENT=UNOBSERVED in current frozen path
+   GEN2=MEASUREMENT REQUIRED
+   NOTE=Gen2 registerFrameCommitCallback; no intentional delay
+6. STAGE=same draw -> marker transaction submit
+   CURRENT=UNOBSERVED in current frozen path
+   GEN2=MEASUREMENT REQUIRED
+   NOTE=Gen2 applyTransactionOnDraw marker, atomically synced with ViewRoot draw
+7. STAGE=transaction submit -> committed
+   CURRENT=MEASUREMENT exists only for live mirror
+   GEN2=MEASUREMENT REQUIRED
+   NOTE=Gen2 identity-bearing for both paths
+8. STAGE=committed -> completed/presented
+   CURRENT=MEASUREMENT exists only for live mirror
+   GEN2=MEASUREMENT REQUIRED
+   NOTE=API 35 completed listener; no intentional delay
+9. STAGE=framework presented -> photons visible
+   CURRENT=UNKNOWN
+   GEN2=UNKNOWN
+   NOTE=Requires Fold7 external high-speed video
+INTENTIONAL_GEN2_SLEEP_OR_DELAY_MS=0
+DEVICE_MEASURED_LATENCY_NUMBERS=NONE

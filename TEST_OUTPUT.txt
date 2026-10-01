@@ -1,16 +1,24 @@
-PASS baseline accepts previous-cycle frame when age and geometry match
-PASS gen2 new close cycle starts without inheriting previous frame
-PASS gen2 accepts exact same-cycle accessibility capture
-PASS gen2 rejects exact capture timestamp before cycle start
-PASS gen2 rejects shizuku request that began before cycle even if it completes later
-PASS gen2 accepts shizuku capture request begun after cycle start
-PASS late capture from reversed cycle is inert
-PASS late prior-cycle capture cannot populate newer close
-PASS service restart epoch rejects old-process capture
-PASS geometry mismatch is never eligible
-PASS older sequence cannot replace newer exact-cycle frame
-PASS state transitions inside one close cycle do not invalidate frame lease
-PASS existing 10s freshness cap can remain independent of provenance
-PASS current-cycle absence fails closed instead of replaying prior content
-PASS fixed-seed fuzz never leases stale provenance
-RESULT passed=15 failed=0 total=15
+PASS baseline frozen bind claims success without presentation proof
+PASS baseline late callback can be attributed to newer generation
+PASS frozen path requires draw frame-commit and transaction-presented
+PASS transaction presented before frame commit does not prematurely confirm
+PASS frame commit without draw cannot confirm frozen content
+PASS transaction commit is useful telemetry but not presentation
+PASS live mirror confirms on identity-bearing transaction presentation
+PASS old attempt cannot confirm after newer attempt starts
+PASS reversal invalidation makes all old callbacks inert
+PASS explicit cancellation is fail closed
+PASS service epoch mismatch cannot begin or mutate
+PASS duplicate callbacks are idempotent
+PASS same cycle but stale host epoch cannot mutate replacement host
+PASS same host but stale content lease cannot mutate newer content
+PASS attempt sequence must increase monotonically
+PASS callback permutation converges only when frozen proof set is complete
+PASS no completed callback means no false frozen PRESENTED state
+PASS no completed callback means no false live PRESENTED state
+PASS stale completion cannot overwrite present timestamp of current attempt
+PASS close-open-close makes first-cycle completions inert and second cycle confirmable
+PASS callback storm remains idempotent and cannot inflate confirmation count
+PASS cross-attempt callback interleave cannot combine proof from different attempts
+PASS 100000-operation fuzz preserves current-attempt proof invariants
+RESULT passed=23 failed=0 total=23

@@ -1,0 +1,91 @@
+DUO OPEN — PRESENTATION LEASE GEN2 — INTEGRATION SKETCH
+R&D ONLY — NOT A MECHANICAL PATCH
+
+GOAL
+Make first-presentation evidence belong to the exact current fold/content/host attempt. Do not add a new sleep, threshold, or panel command.
+
+IDENTITY
+PresentationIdentity =
+- serviceEpoch
+- closeCycleId (from Frozen Frame Provenance Gen2; stable for the physical close cycle)
+- hostEpoch (increments whenever DisplayMirrorHost is replaced/detached)
+- contentLeaseId (frame lease for FROZEN_VIEW; mirror lease/content identity for LIVE_MIRROR)
+- attemptSequence (strictly monotonic within service epoch)
+
+FROZEN_VIEW PATH
+1. DisplayMirrorHost receives an authorized current-cycle FrameLease, not a raw Bitmap.
+2. Create PresentationIdentity and begin PresentationLeaseStore(FROZEN_VIEW).
+3. Set frozenFrame + currentDrawIdentity.
+4. Register ViewTreeObserver.registerFrameCommitCallback for that exact identity.
+5. Build/reuse one app-owned hidden SurfaceControl marker child for this host.
+6. Build an identity-bearing marker transaction. Keep marker visually inert/hidden.
+7. Add transaction committed/completed listeners carrying PresentationIdentity.
+8. Queue marker transaction with hostView.rootSurfaceControl.applyTransactionOnDraw(transaction).
+9. invalidate() frozenPaneView.
+10. frozenPaneView.onDraw records onDraw(identity) only after it actually draws the expected current frame.
+11. frame-commit callback records onFrameCommitted(identity).
+12. transaction completion records onTransactionPresented(identity, presentFence signal if valid).
+13. PresentationLeaseStore confirms FROZEN_VIEW only when DRAW + FRAME_COMMITTED + TRANSACTION_PRESENTED all belong to the current identity.
+14. Callback ordering is not assumed; evidence may arrive in any executor order.
+
+WHY THE MARKER TRANSACTION
+AttachedSurfaceControl.applyTransactionOnDraw() is documented to merge the transaction with the ViewRoot buffer transaction so they show on-screen atomically synchronized. The marker provides SurfaceControl transaction callbacks for the otherwise ordinary View/Canvas frozen-frame draw without changing pixels.
+
+LIVE_MIRROR PATH
+1. Reuse the existing SurfaceControl geometry transaction as the presentation transaction.
+2. Attach PresentationIdentity to production-side listeners, not only TransitionLab's anonymous transaction sequence.
+3. TRANSACTION_PRESENTED for the current identity confirms the live-mirror attempt.
+4. A late completion from a detached/replaced host is logged stale and cannot mutate the current presentation state.
+
+CANCELLATION / REVERSAL
+Immediately invalidate the current PresentationIdentity on:
+- opening reversal;
+- native-cover takeover;
+- DisplayMirrorHost detach/replacement;
+- content lease replacement;
+- service destruction/restart;
+- presentation path switch FROZEN_VIEW <-> LIVE_MIRROR.
+Do not attempt to cancel SurfaceFlinger work already submitted. Make late callbacks inert by identity.
+
+DEGRADATION
+- Never delay initial drawing to wait for callbacks.
+- If frame-commit or completed callback is unavailable/missing, content may still render, but state remains PRESENTATION_UNCONFIRMED.
+- Do not call that state PRESENTED.
+- Preserve live-mirror/native Samsung fallback behavior.
+- Do not introduce a fixed presentation delay as a substitute for evidence.
+
+TRANSITION LAB
+Extend transaction/frame records with the captured immutable PresentationIdentity:
+- serviceEpoch
+- closeCycleId
+- hostEpoch
+- contentLeaseId
+- attemptSequence
+- path FROZEN_VIEW/LIVE_MIRROR
+- staleAtCallback boolean
+- drawNs
+- frameCommitNs
+- transactionSubmitNs
+- transactionCommitNs
+- transactionCompletedCallbackNs
+- presentFenceSignalNs when valid
+Do not correlate a late callback using only latestHingeSample/latest controller state.
+
+IMPORTANT BOUNDARY
+SurfaceControl transaction completion is framework presentation evidence. It is NOT proof of photons emitted by the physical Fold7 cover. Correlate with 240 fps external video for physical validation.
+
+LIKELY PRODUCTION FILES
+- app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+- app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+- app/src/full/java/com/duoopen/lab/TransitionLab.kt
+- app/src/full/java/com/duoopen/lab/SurfaceTransactionProbe.kt
+- new app/src/full/java/com/duoopen/overlay/Fold7PresentationLease.kt
+- new JVM tests
+
+DEPENDENCIES
+- Cover Readiness Gen2 can supply the destination-ready identity/state, but PresentationLease remains separate.
+- Cover Lease Protocol Gen2 supplies privileged mutation authority; do not reuse shell lease token as content presentation authority.
+- Frozen Frame Provenance Gen2 should supply closeCycleId/contentLeaseId for FROZEN_VIEW. If not integrated yet, do not invent them from controller.generation alone.
+
+PRODUCTION STATUS=R&D ONLY
+MANUAL REVIEW REQUIRED=YES
