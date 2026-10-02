@@ -1,0 +1,233 @@
+name: Apply Duo Open Gen3 Alpha1 Integrated V3
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/apply-gen3-alpha1-integrated-v3.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: duo-open-gen3-alpha1-integrated-v3
+  cancel-in-progress: false
+
+jobs:
+  apply-test-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Verify exact production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="45bb0d326899c0e08415928224cfea0ff58d2d4e"
+          git merge-base --is-ancestor "$BASE" HEAD
+
+          check_blob() {
+            local path="$1"
+            local expected="$2"
+            local actual
+            actual="$(git hash-object "$path")"
+            if [[ "$actual" != "$expected" ]]; then
+              echo "ERROR: production source drift: $path"
+              echo "expected=$expected"
+              echo "actual=$actual"
+              exit 1
+            fi
+          }
+
+          check_blob app/build.gradle.kts 9589615b79d61a8273d30a26a3637a06a7238a5d
+          check_blob app/src/full/java/com/duoopen/overlay/Fold7Gen2Kernel.kt f5fa04446b96b4f1d2ea99745d21fb339681b71c
+          check_blob app/src/full/java/com/duoopen/overlay/Fold7ContinuityFrameStore.kt 2f9a6e0790678546aa5f544e635389f954a78177
+          check_blob app/src/full/java/com/duoopen/overlay/PanelEngine.kt c0d23a7f2f2febe54a4a711ebffd1a23a97b37d5
+          check_blob app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt e590b40f2c839ecc05d856f6e0f9b57a10dce6ad
+          check_blob app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt 89946633e5a796b9fb63a85e392455170ba31d6f
+          check_blob app/src/main/java/com/duoopen/MainActivity.kt b5c6f2f7ffa137e71ec5d2c76a869b9a42b4b86d
+          check_blob app/src/main/java/com/duoopen/ui/DuoApp.kt 644ec2cbbe5b78c273fdd5b06cbf5ebf30797ee4
+          check_blob app/src/main/java/com/duoopen/ui/ControlSheet.kt 74c6865d7e02c18208428e203f9572ac5af5d905
+          check_blob app/src/main/java/com/duoopen/DualScreen.kt 5c89b33a4970ee87a08671f47b1edebaf57c5d90
+
+          echo "GEN3 ALPHA1 BASELINE: PASS"
+
+      - name: Apply Gen3 Phase1 exact cover-authority CAS
+        run: python3 tools/apply_gen3_phase1_authority.py
+
+      - name: Apply integrated Gen3 Alpha1
+        run: python3 tools/apply_gen3_alpha1_v2.py
+
+      - name: Validate Gen3 architecture invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          grep -F 'versionCode = 38' app/build.gradle.kts
+          grep -F 'versionName = "3.0.0-alpha1-zfold7"' app/build.gradle.kts
+
+          grep -F 'COVER_PANEL_LEASE_V4 = 17' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+          grep -F 'fun beginPrewarmV4(' app/src/full/java/com/duoopen/shell/Fold7CoverPanelLease.kt
+          grep -F 'prewarmSecondaryDisplayV4(' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+
+          grep -F 'val primeOwner = Fold7ContinuityPrimeOwner()' app/src/full/java/com/duoopen/overlay/Fold7Gen2Kernel.kt
+          grep -F 'newestStartedCaptureSequence' app/src/full/java/com/duoopen/overlay/Fold7ContinuityFrameStore.kt
+          grep -F 'attempt: Fold7ContinuityPrimeOwner.AttemptToken' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          if grep -Fq 'primedContinuityCycleId' app/src/full/java/com/duoopen/overlay/PanelEngine.kt; then
+            echo "ERROR: mutable PanelEngine prime authority survived"
+            exit 1
+          fi
+
+          grep -F 'class Fold7CoverVisualAttemptOwner' app/src/full/java/com/duoopen/overlay/Fold7CoverVisualAttemptOwner.kt
+          grep -F 'class Fold7Gen3VisualCoordinator' app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt
+          grep -F 'SnapshotSurface(' app/src/full/java/com/duoopen/overlay/Fold7CoverVisualHost.kt
+          grep -F 'LiveBlurSurface(' app/src/full/java/com/duoopen/overlay/Fold7CoverVisualHost.kt
+          grep -F 'RIGHT_PANE_LEFT = 984' app/src/full/java/com/duoopen/overlay/Fold7CoverVisualHost.kt
+          grep -F 'RIGHT_PANE_RIGHT = 1920' app/src/full/java/com/duoopen/overlay/Fold7CoverVisualHost.kt
+
+          if grep -A45 -F 'private fun showMirror(' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt | grep -Fq 'syncMirrorHost('; then
+            echo "ERROR: legacy DisplayMirrorHost still reachable from ShowMirror"
+            exit 1
+          fi
+
+          grep -F 'cycle/readiness/visual authority revoked' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+
+          test ! -e app/src/main/java/com/duoopen/DualScreen.kt
+          if grep -R -n -F 'Both screens at once (experimental)' app/src/main; then
+            echo "ERROR: experimental dual-screen UI survived"
+            exit 1
+          fi
+          if grep -R -n -F 'presentContentOnWindowArea' app/src/main; then
+            echo "ERROR: experimental WindowArea execution survived"
+            exit 1
+          fi
+
+          # Regression guards for the V1 packaging failure.
+          if [[ "$(grep -c '^    val pickImage =$' app/src/main/java/com/duoopen/ui/DuoApp.kt)" -ne 1 ]]; then
+            echo "ERROR: DuoApp pickImage declaration was duplicated or removed"
+            exit 1
+          fi
+          if [[ "$(grep -c '                "Hinge sensor",' app/src/main/java/com/duoopen/ui/ControlSheet.kt)" -ne 1 ]]; then
+            echo "ERROR: ControlSheet Hinge sensor section was duplicated or removed"
+            exit 1
+          fi
+
+          grep -F 'INNER_WAKE_MIN_DEG = 3f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'INNER_HANDOFF_MIN_DEG = 8f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'COVER_PREWARM_DEG = 174f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'COVER_VISUAL_START_DEG = 135f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'COVER_VISUAL_HIDE_OPEN_DEG = 140f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'OPEN_LATCH_DEG = 172f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'OPEN_REARM_DEG = 166f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+
+          if git diff | grep -E 'STATE_OFF|setDisplayPower.*OFF|moveTaskToDisplay'; then
+            echo "ERROR: forbidden raw OFF/task migration behavior introduced"
+            exit 1
+          fi
+
+          git diff --check
+          git diff --stat
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+
+      - name: Run focused Gen3 ownership tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew testFullDebugUnitTest --tests '*Fold7ContinuityPrimeOwnerGen3Test' --stacktrace
+          ./gradlew testFullDebugUnitTest --tests '*Fold7CoverVisualAttemptOwnerGen3Test' --stacktrace
+          ./gradlew testFullDebugUnitTest --tests '*Fold7ContinuityFrameStoreGen3OrderingTest' --stacktrace
+          ./gradlew testFullDebugUnitTest --tests '*Fold7CoverPanelLeaseV4Test' --stacktrace
+
+      - name: Run full Gen3 Alpha1 gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Commit and push validated Gen3 Alpha1 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add app
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+
+          if git diff --cached --name-only | grep -q '^\.github/workflows/'; then
+            echo "ERROR: workflow unexpectedly staged"
+            exit 1
+          fi
+          if git diff --cached --name-only | grep -q '^tools/'; then
+            echo "ERROR: tooling unexpectedly staged"
+            exit 1
+          fi
+
+          git commit -m "Introduce Fold7 Gen3 transition architecture alpha1"
+          git push origin HEAD:main
+
+      - name: Prepare Gen3 Alpha1 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          OUT="fold7-gen3-alpha1"
+          mkdir -p "$OUT"
+
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+
+          DEST="$OUT/DuoOpen-ZFold7-3.0.0-alpha1-v3-debug.apk"
+          cp "$APK" "$DEST"
+
+          sha256sum "$DEST" > "$OUT/APK-SHA256.txt"
+
+          {
+            echo "version=3.0.0-alpha1-zfold7"
+            echo "versionCode=38"
+            echo "commit=$(git rev-parse HEAD)"
+            echo "baseline=45bb0d326899c0e08415928224cfea0ff58d2d4e"
+            echo "target=Samsung Galaxy Z Fold7"
+            echo "gen3=exact-v4-cover-authority-cas"
+            echo "gen3=service-stable-prime-owner"
+            echo "gen3=newest-started-frame-fence"
+            echo "gen3=exact-cover-visual-attempt-owner"
+            echo "gen3=single-privileged-shader-host"
+            echo "gen3=opening-live-blur-backend"
+            echo "gen3=closing-frozen-right-pane-backend"
+            echo "gen3=privilege-loss-recovery-fence"
+            echo "removed=experimental-windowarea-dualscreen"
+            echo
+            sha256sum "$DEST"
+          } > "$OUT/BUILD-INFO.txt"
+
+          cat "$OUT/BUILD-INFO.txt"
+
+      - name: Upload Gen3 Alpha1 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-3.0.0-alpha1-v3
+          path: |
+            fold7-gen3-alpha1/DuoOpen-ZFold7-3.0.0-alpha1-v3-debug.apk
+            fold7-gen3-alpha1/APK-SHA256.txt
+            fold7-gen3-alpha1/BUILD-INFO.txt
+          if-no-files-found: error
+          retention-days: 30

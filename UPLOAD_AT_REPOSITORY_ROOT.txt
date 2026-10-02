@@ -1,0 +1,21 @@
+DUO OPEN GEN3 ALPHA1 V3 — REPOSITORY ROOT UPLOAD
+
+Extract the contents of this ZIP directly into the root of the duo-open repository.
+
+After extraction, these paths must exist at repository root:
+  .github/workflows/apply-gen3-alpha1-integrated-v3.yml
+  tools/apply_gen3_alpha1_v2.py
+  tools/apply_gen3_phase1_authority.py
+  payload/Fold7ContinuityPrimeOwner.kt
+  payload/Fold7ContinuityPrimeOwnerGen3Test.kt
+  payload/Fold7ContinuityFrameStoreGen3OrderingTest.kt
+  payload/Fold7CoverPanelLease.kt
+  payload/Fold7CoverPanelLeaseV4Test.kt
+  payload/Fold7CoverVisualAttemptOwner.kt
+  payload/Fold7CoverVisualAttemptOwnerGen3Test.kt
+  payload/Fold7CoverVisualHost.kt
+  payload/Fold7Gen3VisualCoordinator.kt
+
+Do NOT upload the containing folder itself. Upload/extract the CONTENTS of the ZIP at repository root.
+
+Commit and push these support files. The V3 workflow is configured to trigger when its workflow file lands on main.
