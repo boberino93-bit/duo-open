@@ -1,4 +1,4 @@
-name: Build Gen6 Alpha 1 V2 Fold7
+name: Build Gen6 Alpha 2 Hotfix Fold7
 
 on:
   workflow_dispatch:
@@ -8,6 +8,7 @@ on:
     paths:
       - ".github/workflows/build-gen6-alpha1-v2.yml"
       - "GEN6_ALPHA1_DEV_ROUND_V2/**"
+      - "GEN6_BETA_HOTFIX_V1/**"
       - "START_HERE_GEN6_ALPHA1_V2.md"
       - "GEN6_ALPHA1_V2_SHA256SUMS.txt"
 
@@ -15,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: build-gen6-alpha1-v2-${{ github.ref }}
+  group: build-gen6-alpha2-hotfix-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -40,11 +41,19 @@ jobs:
           set -euo pipefail
           python3 GEN6_ALPHA1_DEV_ROUND_V2/validate_package.py
 
-      - name: Apply Gen6 Alpha 1 V2 to CI workspace
+      - name: Validate Gen6 Beta Hotfix V1
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 GEN6_BETA_HOTFIX_V1/validate_hotfix.py
+          python3 GEN6_BETA_HOTFIX_V1/tools/apply_gen6_beta_hotfix.py --self-test
+
+      - name: Apply Gen6 V2 and Beta Hotfix V1 to CI workspace
         shell: bash
         run: |
           set -euo pipefail
           python3 GEN6_ALPHA1_DEV_ROUND_V2/tools/apply_gen6_alpha1.py
+          python3 GEN6_BETA_HOTFIX_V1/tools/apply_gen6_beta_hotfix.py
           git diff --check
           git status --short
           git diff --stat
@@ -60,11 +69,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p gen6-alpha1-v2-artifact
-          find app/build/outputs/apk/full/debug -maxdepth 1 -type f -name "*.apk" -print -exec cp {} gen6-alpha1-v2-artifact/ \;
-          test -n "$(find gen6-alpha1-v2-artifact -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          mkdir -p gen6-alpha2-hotfix1-artifact
+          find app/build/outputs/apk/full/debug -maxdepth 1 -type f -name "*.apk" -print -exec cp {} gen6-alpha2-hotfix1-artifact/ \;
+          test -n "$(find gen6-alpha2-hotfix1-artifact -maxdepth 1 -type f -name '*.apk' -print -quit)"
           (
-            cd gen6-alpha1-v2-artifact
+            cd gen6-alpha2-hotfix1-artifact
             sha256sum *.apk > SHA256SUMS.txt
           )
           {
@@ -73,12 +82,12 @@ jobs:
             echo "workflow_attempt=${GITHUB_RUN_ATTEMPT}"
             grep -F 'versionCode =' app/build.gradle.kts
             grep -F 'versionName =' app/build.gradle.kts
-          } > gen6-alpha1-v2-artifact/BUILD-INFO.txt
+          } > gen6-alpha2-hotfix1-artifact/BUILD-INFO.txt
 
-      - name: Upload Gen6 Alpha 1 V2 APK
+      - name: Upload Gen6 Alpha 2 Hotfix APK
         uses: actions/upload-artifact@v4
         with:
-          name: DuoOpen-ZFold7-6.0.0-alpha1-v2
-          path: gen6-alpha1-v2-artifact/
+          name: DuoOpen-ZFold7-6.0.0-alpha2-hotfix1
+          path: gen6-alpha2-hotfix1-artifact/
           if-no-files-found: error
           retention-days: 14
