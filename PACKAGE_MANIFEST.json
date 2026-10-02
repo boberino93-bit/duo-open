@@ -18,5 +18,7 @@
     "simplified app home UI"
   ],
   "runtime_commit_policy": "CI commits only after focused and full Android gates pass",
-  "closing_path": "preserved"
+  "closing_path": "preserved",
+  "package_revision": 2,
+  "revision_reason": "Correct focused CI selector to existing Fold7CoverVisualAttemptOwnerGen3Test; runtime payload unchanged."
 }

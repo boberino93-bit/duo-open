@@ -15,3 +15,4 @@ Key implementation constraints:
 - front-page UI is simplified without removing settings functionality.
 
 If baseline hashes drift, stop and reconcile against main rather than forcing the patch.
+V2 CI correction: focused regression selector now targets existing Fold7CoverVisualAttemptOwnerGen3Test. Runtime payload is unchanged from V1.

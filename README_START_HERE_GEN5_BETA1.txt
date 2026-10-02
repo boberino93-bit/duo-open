@@ -9,3 +9,4 @@ DUO OPEN GEN5 BETA1 — VIRTUAL HINGE OPENING BUILD
 This package also changes the obsolete `Build Z Fold 7 Motion-Gated Cover Power 1.3.16` workflow to manual-only so a successful Gen5 runtime commit is not followed by a meaningless historical red workflow.
 
 Do not treat import alone as a successful build. The dedicated workflow result is authoritative.
+V2 CI correction: focused regression selector now targets existing Fold7CoverVisualAttemptOwnerGen3Test. Runtime payload is unchanged from V1.

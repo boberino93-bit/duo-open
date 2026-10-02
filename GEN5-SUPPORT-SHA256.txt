@@ -1,4 +1,4 @@
-c22d6494fb0ec73605aab19007a27e030c7c75361165644b61661cfe7b121025  .github/workflows/apply-gen5-beta1-virtual-hinge.yml
+31f277d38207feabf59b1598c486cac32844c6e8f844513d1c4bb7ead1647396  .github/workflows/apply-gen5-beta1-virtual-hinge.yml
 d292d295de68d3fafb9d4dae4062c766d83b413c6887c0b8062730a27e6ecf84  payload_gen5/full/com/duoopen/overlay/Fold7RightPaneComposer.kt
 19256b035530beed9dae592b769e7a2388e113ba068824a88d43d9f92eda9b19  payload_gen5/main/com/duoopen/fold/Fold7VirtualHingeGen5.kt
 87dfb8bacfae849167d35dab0e5b81bd7f45d3a1a00ddc1f8995e084e660970a  payload_gen5/main/com/duoopen/fold/Fold7VisualStateLut.kt

@@ -157,7 +157,7 @@ jobs:
           ./gradlew testFullDebugUnitTest --tests '*Fold7PanelAuthorityGen4Test' --stacktrace
           ./gradlew testFullDebugUnitTest --tests '*Fold7ContinuityControllerTest' --stacktrace
           ./gradlew testFullDebugUnitTest --tests '*Fold7HingeIngressBatchTest' --stacktrace
-          ./gradlew testFullDebugUnitTest --tests '*Fold7CoverVisualAttemptOwnerTest' --stacktrace
+          ./gradlew testFullDebugUnitTest --tests '*Fold7CoverVisualAttemptOwnerGen3Test' --stacktrace
 
       - name: Run full Gen5 Beta1 gate
         shell: bash
