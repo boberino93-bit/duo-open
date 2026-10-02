@@ -14,6 +14,8 @@ internal class Fold7CoverLeaseSnapshotGate {
         val leaseId: Long,
         val leaseEpoch: Long,
         val ownerGeneration: Long,
+        val ownerServiceEpoch: Long,
+        val ownerCloseCycleId: Long,
         val physicalDisplayId: Long,
     )
 
@@ -30,6 +32,8 @@ internal class Fold7CoverLeaseSnapshotGate {
         val physicalLeaseHeld: Boolean,
         val routeReady: Boolean,
         val ok: Boolean,
+        val ownerServiceEpoch: Long = 0L,
+        val ownerCloseCycleId: Long = 0L,
     ) {
         val token: LeaseToken?
             get() =
@@ -46,6 +50,8 @@ internal class Fold7CoverLeaseSnapshotGate {
                         leaseId = leaseId,
                         leaseEpoch = leaseEpoch,
                         ownerGeneration = ownerGeneration,
+                        ownerServiceEpoch = ownerServiceEpoch,
+                        ownerCloseCycleId = ownerCloseCycleId,
                         physicalDisplayId = physicalDisplayId,
                     )
                 } else {

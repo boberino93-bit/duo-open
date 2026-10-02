@@ -60,7 +60,9 @@ internal class PanelEngine(
     private val cache: SnapshotCache,
     /** Exact-cycle Fold7 continuity authority; separate from generic visual bridging. */
     private val continuityFrames: Fold7ContinuityFrameStore<Bitmap>,
+    private val continuityPrimeOwner: Fold7ContinuityPrimeOwner,
     private val activeCloseCycle: () -> Fold7CycleEnvelope.CloseCycle?,
+    private val onContinuityFrameChanged: (String) -> Unit,
 ) {
     private enum class Phase { IDLE, CAPTURING, SHOWING }
 
@@ -101,9 +103,6 @@ internal class PanelEngine(
 
     /** Explicit CLOSED -> OPEN visual started from the device-state opening edge. */
     private var continuityOpeningVisual = false
-
-    /** Close cycle whose capture-only continuity prime has already been issued. */
-    private var primedContinuityCycleId = -1L
 
     /** Stable opening/closing state, resistant to tiny hinge jitter. */
     private val travelEstimator =
@@ -504,6 +503,7 @@ internal class PanelEngine(
 
     fun primeContinuityFrame(
         cycle: Fold7CycleEnvelope.CloseCycle,
+        attempt: Fold7ContinuityPrimeOwner.AttemptToken,
         reason: String,
     ): Boolean {
         if (
@@ -511,7 +511,7 @@ internal class PanelEngine(
             !deterministicFrozenFrameMode() ||
             !ShizukuBridge.ready ||
             activeCloseCycle() != cycle ||
-            primedContinuityCycleId == cycle.closeCycleId
+            !continuityPrimeOwner.isCurrent(attempt)
         ) {
             return false
         }
@@ -532,16 +532,20 @@ internal class PanelEngine(
                 height = mode.physicalHeight,
                 requestStartedUptimeMs = startedUptimeMs,
                 source = Fold7ContinuityFrameStore.Source.SHIZUKU,
-            ) ?: return false
-
-        primedContinuityCycleId =
-            cycle.closeCycleId
+            )
+                ?: run {
+                    continuityPrimeOwner.markFailed(
+                        attempt,
+                        "frame-ticket-unavailable",
+                    )
+                    return false
+                }
 
         com.duoopen.debug.DuoDiagnostics.event(
             "snapshot-transition",
-            "Gen2 continuity prime START serviceEpoch=${cycle.serviceEpoch} " +
-                "closeCycle=${cycle.closeCycleId} capture=${ticket.captureSequence} " +
-                "hinge=${hinge.lastAngle} reason=$reason",
+            "Gen3 continuity prime START serviceEpoch=${cycle.serviceEpoch} " +
+                "closeCycle=${cycle.closeCycleId} attempt=${attempt.attemptSequence} " +
+                "capture=${ticket.captureSequence} hinge=${hinge.lastAngle} reason=$reason",
         )
 
         scope.launch {
@@ -556,7 +560,7 @@ internal class PanelEngine(
 
             if (
                 activeCloseCycle() != cycle ||
-                primedContinuityCycleId != cycle.closeCycleId
+                !continuityPrimeOwner.isCurrent(attempt)
             ) {
                 bitmap?.let {
                     runCatching {
@@ -567,13 +571,20 @@ internal class PanelEngine(
             }
 
             if (bitmap == null) {
-                primedContinuityCycleId = -1L
+                continuityPrimeOwner.markFailed(
+                    attempt,
+                    "capture-null",
+                )
 
                 com.duoopen.debug.DuoDiagnostics.event(
                     "snapshot-transition",
-                    "Gen2 continuity prime FAILED serviceEpoch=${cycle.serviceEpoch} " +
-                        "closeCycle=${cycle.closeCycleId} " +
+                    "Gen3 continuity prime FAILED serviceEpoch=${cycle.serviceEpoch} " +
+                        "closeCycle=${cycle.closeCycleId} attempt=${attempt.attemptSequence} " +
                         "latencyMs=${SystemClock.uptimeMillis() - startedUptimeMs}",
+                )
+
+                onContinuityFrameChanged(
+                    "prime-failed"
                 )
                 return@launch
             }
@@ -593,11 +604,28 @@ internal class PanelEngine(
                     bitmap.recycle()
                 }
 
+                continuityPrimeOwner.markFailed(
+                    attempt,
+                    "frame-publish-rejected",
+                )
+
                 com.duoopen.debug.DuoDiagnostics.event(
                     "snapshot-transition",
-                    "Gen2 continuity prime REJECTED closeCycle=${cycle.closeCycleId} " +
-                        "capture=${ticket.captureSequence}",
+                    "Gen3 continuity prime REJECTED closeCycle=${cycle.closeCycleId} " +
+                        "attempt=${attempt.attemptSequence} capture=${ticket.captureSequence}",
                 )
+
+                onContinuityFrameChanged(
+                    "prime-rejected"
+                )
+                return@launch
+            }
+
+            if (
+                !continuityPrimeOwner.markReady(
+                    attempt
+                )
+            ) {
                 return@launch
             }
 
@@ -608,10 +636,14 @@ internal class PanelEngine(
 
             com.duoopen.debug.DuoDiagnostics.event(
                 "snapshot-transition",
-                "Gen2 continuity prime READY serviceEpoch=${lease.serviceEpoch} " +
-                    "closeCycle=${lease.closeCycleId} capture=${lease.captureSequence} " +
-                    "content=${lease.contentLeaseId} " +
+                "Gen3 continuity prime READY serviceEpoch=${lease.serviceEpoch} " +
+                    "closeCycle=${lease.closeCycleId} attempt=${attempt.attemptSequence} " +
+                    "capture=${lease.captureSequence} content=${lease.contentLeaseId} " +
                     "latencyMs=${SystemClock.uptimeMillis() - startedUptimeMs}",
+            )
+
+            onContinuityFrameChanged(
+                "prime-ready"
             )
         }
 
@@ -646,24 +678,14 @@ internal class PanelEngine(
         source: Fold7ContinuityFrameStore.Source,
         requestStartedUptimeMs: Long,
     ): Fold7ContinuityFrameStore.CaptureTicket? {
-        if (!innerPanel || !deterministicFrozenFrameMode()) return null
-        val cycle = activeCloseCycle() ?: return null
-
-        if (
-            primedContinuityCycleId ==
-            cycle.closeCycleId
-        ) {
-            return null
-        }
-
-        val mode = runCatching { display.mode }.getOrNull() ?: return null
-        return continuityFrames.beginCapture(
-            cycle = cycle,
-            width = mode.physicalWidth,
-            height = mode.physicalHeight,
-            requestStartedUptimeMs = requestStartedUptimeMs,
-            source = source,
-        )
+        /*
+         * Gen3 exact-cycle continuity capture admission is service-stable and
+         * Shizuku-authorized through Fold7ContinuityPrimeOwner. Generic
+         * PanelEngine captures remain valid for ordinary rendering/cache use,
+         * but they are never allowed to publish into the privileged continuity
+         * frame store.
+         */
+        return null
     }
 
     /** Live blur is intentionally disabled on Fold7. */

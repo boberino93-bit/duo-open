@@ -57,9 +57,6 @@ fun ControlSheet(
     overlayAvailable: Boolean,
     overlayEnabled: Boolean,
     liveBlurSupported: Boolean,
-    dualStatus: String,
-    dualActive: Boolean,
-    onDualChange: (Boolean) -> Unit,
     shizukuAvailable: Boolean,
     shizukuStatus: String,
     shizukuReady: Boolean,
@@ -714,36 +711,6 @@ fun ControlSheet(
                         }
                     }
                 }
-            }
-
-            Divider()
-
-            Section(
-                "Both screens at once (experimental)",
-                "Some foldables can light the cover screen while the inner screen is in use. Turn this on with the phone open, then fold it: the whole-screen fold runs on both panels with no gap.",
-            )
-
-            Row(
-                verticalAlignment =
-                    Alignment.CenterVertically
-            ) {
-                Hint(
-                    dualStatus,
-                    modifier =
-                        Modifier.weight(1f),
-                )
-
-                Switch(
-                    checked =
-                        dualActive,
-                    onCheckedChange =
-                        onDualChange,
-                    enabled =
-                        dualStatus.startsWith(
-                            "Available"
-                        ) ||
-                            dualActive,
-                )
             }
 
             Divider()
