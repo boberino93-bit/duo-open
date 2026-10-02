@@ -5,9 +5,13 @@ import android.graphics.Bitmap
 import android.os.Handler
 import android.os.SystemClock
 import android.util.Log
+import android.view.Choreographer
 import android.view.Display
+import android.view.Surface
 import android.view.WindowManager
 import com.duoopen.fold.DuoShader
+import com.duoopen.fold.Fold7VirtualHingeGen5
+import com.duoopen.fold.Fold7VisualStateLut
 import com.duoopen.fold.HingeAngleSource
 import com.duoopen.fold.HingeTravel
 import com.duoopen.fold.HingeTravelEstimator
@@ -104,6 +108,68 @@ internal class PanelEngine(
     /** Explicit CLOSED -> OPEN visual started from the device-state opening edge. */
     private var continuityOpeningVisual = false
 
+    /** Gen5 is visual-only: it never owns continuity state or panel authority. */
+    private val gen5VirtualHinge = Fold7VirtualHingeGen5()
+    private val gen5VisualLut = Fold7VisualStateLut()
+    private var gen5FramePosted = false
+    private var gen5FrameCount = 0L
+    private var gen5LastMode: Fold7VirtualHingeGen5.Mode? = null
+    private var gen5RefreshRoot: SurfaceControl? = null
+    private var gen5OwnedOpeningBitmap: Bitmap? = null
+
+    private val gen5FrameCallback =
+        object : Choreographer.FrameCallback {
+            override fun doFrame(frameTimeNanos: Long) {
+                if (
+                    !continuityOpeningVisual ||
+                    phase != Phase.SHOWING ||
+                    !isFold7CoverGeometryNow()
+                ) {
+                    gen5FramePosted = false
+                    return
+                }
+
+                val nowNs = SystemClock.uptimeMillis() * 1_000_000L
+                val effectiveHz =
+                    runCatching { display.mode.refreshRate }
+                        .getOrDefault(60f)
+                        .takeIf { it.isFinite() && it >= 30f }
+                        ?: 60f
+                val frameNs = (1_000_000_000.0 / effectiveHz).toLong()
+                val target = gen5VirtualHinge.targetForFrame(
+                    callbackTimeNs = nowNs,
+                    expectedPresentationTimeNs = nowNs + frameNs,
+                )
+                val visual = gen5VisualLut.stateFor(target.angleDegrees)
+                val tilt =
+                    (visual.rightPaneTiltDegrees *
+                        DuoSettings.config.value.intensity.coerceAtMost(1f))
+                        .coerceIn(0f, DuoShader.MAX_TILT)
+
+                surface?.tilt = tilt
+                gen5FrameCount++
+
+                if (
+                    gen5LastMode != target.mode ||
+                    target.slewLimited ||
+                    gen5FrameCount % GEN5_TELEMETRY_EVERY_N_FRAMES == 0L
+                ) {
+                    com.duoopen.debug.DuoDiagnostics.event(
+                        "gen5-virtual-hinge",
+                        "frame=$gen5FrameCount physical=${hinge.lastAngle} " +
+                            "virtual=${target.angleDegrees} desired=${target.desiredAngleDegrees} " +
+                            "tilt=$tilt mode=${target.mode} confidence=${target.confidence} " +
+                            "ageMs=${target.measurementAgeMs} correction=${target.correctionDegrees} " +
+                            "slewLimited=${target.slewLimited} leadNs=${target.predictedLeadNs} " +
+                            "requestedHz=$GEN5_REQUESTED_HZ effectiveHz=$effectiveHz",
+                    )
+                }
+                gen5LastMode = target.mode
+
+                Choreographer.getInstance().postFrameCallback(this)
+            }
+        }
+
     /** Stable opening/closing state, resistant to tiny hinge jitter. */
     private val travelEstimator =
         HingeTravelEstimator()
@@ -158,7 +224,10 @@ internal class PanelEngine(
 
     private fun currentTilt(): Float = tiltFor(hinge.lastAngle)
 
-    fun onHinge(angle: Float) {
+    fun onHinge(
+        angle: Float,
+        observedUptimeMs: Long = SystemClock.uptimeMillis(),
+    ) {
         /*
          * Fold7 cover rendering has one owner at a time.
          *
@@ -172,7 +241,26 @@ internal class PanelEngine(
             continuityCoverOwned
         ) {
             lastRawHingeAngle = angle
-            lastHingeMoveMs = SystemClock.uptimeMillis()
+            val deliveredUptimeMs = SystemClock.uptimeMillis()
+            lastHingeMoveMs = deliveredUptimeMs
+
+            if (continuityOpeningVisual && angle.isFinite()) {
+                val result = gen5VirtualHinge.addSample(
+                    Fold7VirtualHingeGen5.Sample(
+                        sourceTimeNs = observedUptimeMs.coerceAtMost(deliveredUptimeMs) * 1_000_000L,
+                        deliveryTimeNs = deliveredUptimeMs * 1_000_000L,
+                        angleDegrees = angle,
+                    )
+                )
+                if (result.reversal || result.oscillationGuardEntered || result.reacquiring) {
+                    com.duoopen.debug.DuoDiagnostics.event(
+                        "gen5-virtual-hinge",
+                        "sample angle=$angle observed=$observedUptimeMs delivered=$deliveredUptimeMs " +
+                            "reversal=${result.reversal} oscillation=${result.oscillationGuardEntered} " +
+                            "reacquiring=${result.reacquiring}",
+                    )
+                }
+            }
 
             if (
                 !continuityOpeningVisual &&
@@ -464,15 +552,54 @@ internal class PanelEngine(
         restArmed = false
         panelSwitched = false
 
+        val nowNs = SystemClock.uptimeMillis() * 1_000_000L
+        val seed =
+            hinge.lastAngle
+                .takeIf { it.isFinite() && it <= Fold7VirtualHingeGen5.BLIND_SEED_MAX_DEG }
+                ?: Fold7VirtualHingeGen5.CLOSED_SEED_DEG
+        gen5VirtualHinge.startOpening(nowNs, seed)
+        gen5FrameCount = 0L
+        gen5LastMode = null
+
         com.duoopen.debug.DuoDiagnostics.event(
             "cover-opening-visual",
-            "START display=$displayId reason=$reason precise=${hinge.lastAngle}",
+            "START display=$displayId reason=$reason precise=${hinge.lastAngle} seed=$seed gen5=true",
         )
 
-        startEffect(
-            afterSwap = false,
-            startTilt = COVER_OPEN_IMMEDIATE_TILT,
-        )
+        recycleGen5OpeningBitmap()
+        val cachedInner =
+            cache.get(
+                innerPanel = true,
+                width = Fold7RightPaneComposer.INNER_WIDTH,
+                height = Fold7RightPaneComposer.INNER_HEIGHT,
+            )
+        val canonicalRight =
+            cachedInner?.let(Fold7RightPaneComposer::fromInner)
+
+        if (canonicalRight != null) {
+            gen5OwnedOpeningBitmap = canonicalRight
+            phase = Phase.CAPTURING
+            present(
+                bitmap = canonicalRight,
+                afterSwap = false,
+                startTilt = COVER_OPEN_IMMEDIATE_TILT,
+                t0 = SystemClock.uptimeMillis(),
+            )
+            com.duoopen.debug.DuoDiagnostics.event(
+                "gen5-split-pane",
+                "opening bootstrap uses cached canonical right pane " +
+                    "crop=${Fold7RightPaneComposer.RIGHT_PANE_LEFT}..${Fold7RightPaneComposer.RIGHT_PANE_RIGHT}",
+            )
+        } else {
+            startEffect(
+                afterSwap = false,
+                startTilt = COVER_OPEN_IMMEDIATE_TILT,
+            )
+            com.duoopen.debug.DuoDiagnostics.event(
+                "gen5-split-pane",
+                "canonical right pane unavailable; falling back to current cover capture",
+            )
+        }
     }
 
     fun endContinuityOpeningVisual(
@@ -484,6 +611,7 @@ internal class PanelEngine(
 
         continuityOpeningVisual = false
         captureGen++
+        stopGen5OpeningClock()
 
         if (
             phase != Phase.IDLE ||
@@ -494,10 +622,11 @@ internal class PanelEngine(
 
         restArmed = true
         panelSwitched = false
+        recycleGen5OpeningBitmap()
 
         com.duoopen.debug.DuoDiagnostics.event(
             "cover-opening-visual",
-            "END display=$displayId reason=$reason precise=${hinge.lastAngle}",
+            "END display=$displayId reason=$reason precise=${hinge.lastAngle} gen5=true",
         )
     }
 
@@ -1040,29 +1169,32 @@ internal class PanelEngine(
             // Content was already live on this panel; ease the frost in.
             created.fadeIn(FADE_IN_MS)
         }
-        follower = TiltFollower { t ->
-            created.tilt = t
-            if (t < DuoShader.FLAT_EPSILON && !demoRunning) dismiss(fadeMs = FADE_OUT_FLAT_MS)
-        }.also {
-            it.snap(startTilt)
-
-            if (
-                hinge.externalActive &&
-                easeTo == null
-            ) {
-                it.tauS =
-                    SAMSUNG_LIVE_TAU_S
-            }
-        }
-        lastHingeMoveMs = SystemClock.uptimeMillis()
-
         val explicitOpeningVisual =
             continuityOpeningVisual &&
                 isFold7CoverGeometryNow()
 
-        val explicitOpeningPeak =
-            DuoShader.MAX_TILT *
-                config.intensity.coerceAtMost(1f)
+        if (explicitOpeningVisual) {
+            follower?.cancel()
+            follower = null
+            startGen5OpeningFrameLoop()
+            (created as? SnapshotSurface)?.let(::requestGen5RefreshRate)
+        } else {
+            follower = TiltFollower { t ->
+                created.tilt = t
+                if (t < DuoShader.FLAT_EPSILON && !demoRunning) dismiss(fadeMs = FADE_OUT_FLAT_MS)
+            }.also {
+                it.snap(startTilt)
+
+                if (
+                    hinge.externalActive &&
+                    easeTo == null
+                ) {
+                    it.tauS =
+                        SAMSUNG_LIVE_TAU_S
+                }
+            }
+        }
+        lastHingeMoveMs = SystemClock.uptimeMillis()
 
         timedResolve =
             easeTo != null ||
@@ -1070,18 +1202,11 @@ internal class PanelEngine(
 
         when {
             explicitOpeningVisual -> {
-                follower?.tauS =
-                    CONTINUITY_OPENING_TAU_S
-
-                follower?.setTarget(
-                    explicitOpeningPeak
-                )
-
                 /*
-                 * Lifetime is owned by FoldOverlayService, not this renderer.
-                 * The service owns the semantic opening latch and its one-shot
-                 * timeout, so display callbacks cannot restart a timed-out
-                 * animation behind our back.
+                 * Gen5 renders directly at vsync from the visual-only virtual
+                 * hinge. Do not feed the predicted angle back through the
+                 * legacy TiltFollower; double smoothing would reintroduce the
+                 * latency this path is designed to remove.
                  */
             }
 
@@ -1260,6 +1385,94 @@ internal class PanelEngine(
         )
     }
 
+
+    private fun startGen5OpeningFrameLoop() {
+        if (gen5FramePosted) return
+        gen5FramePosted = true
+        Choreographer.getInstance().postFrameCallback(gen5FrameCallback)
+    }
+
+    private fun stopGen5OpeningClock() {
+        if (gen5FramePosted) {
+            Choreographer.getInstance().removeFrameCallback(gen5FrameCallback)
+        }
+        gen5FramePosted = false
+        gen5VirtualHinge.stop()
+        clearGen5RefreshRate()
+    }
+
+    private fun requestGen5RefreshRate(snapshot: SnapshotSurface) {
+        snapshot.view.post {
+            if (!continuityOpeningVisual) return@post
+            val root = rootSurfaceControl(snapshot.view)
+            if (root == null) {
+                com.duoopen.debug.DuoDiagnostics.event(
+                    "gen5-refresh",
+                    "request skipped display=$displayId rootSurfaceControl=null",
+                )
+                return@post
+            }
+
+            val supported =
+                runCatching {
+                    display.supportedModes.joinToString(",") {
+                        "${it.modeId}:${it.refreshRate}"
+                    }
+                }.getOrDefault("unknown")
+
+            runCatching {
+                SurfaceControl.Transaction()
+                    .setFrameRate(
+                        root,
+                        GEN5_REQUESTED_HZ,
+                        Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                        Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS,
+                    )
+                    .apply()
+                gen5RefreshRoot = root
+            }.onSuccess {
+                com.duoopen.debug.DuoDiagnostics.event(
+                    "gen5-refresh",
+                    "requested=$GEN5_REQUESTED_HZ seamlessOnly=true " +
+                        "effective=${display.mode.refreshRate} supported=[$supported]",
+                )
+            }.onFailure {
+                com.duoopen.debug.DuoDiagnostics.event(
+                    "gen5-refresh",
+                    "request failed error=${it.javaClass.simpleName}:${it.message} " +
+                        "effective=${display.mode.refreshRate} supported=[$supported]",
+                )
+            }
+        }
+    }
+
+    private fun clearGen5RefreshRate() {
+        val root = gen5RefreshRoot ?: return
+        gen5RefreshRoot = null
+        runCatching {
+            SurfaceControl.Transaction()
+                .setFrameRate(
+                    root,
+                    0f,
+                    Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                    Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS,
+                )
+                .apply()
+        }
+        com.duoopen.debug.DuoDiagnostics.event(
+            "gen5-refresh",
+            "cleared requestedHz=$GEN5_REQUESTED_HZ effective=${runCatching { display.mode.refreshRate }.getOrNull()}",
+        )
+    }
+
+    private fun recycleGen5OpeningBitmap() {
+        val bitmap = gen5OwnedOpeningBitmap
+        gen5OwnedOpeningBitmap = null
+        if (bitmap != null && !bitmap.isRecycled) {
+            runCatching { bitmap.recycle() }
+        }
+    }
+
     private fun clearOverlayState() {
         liveLoop = false
         handler.removeCallbacks(settleCheck)
@@ -1276,7 +1489,9 @@ internal class PanelEngine(
     /** The display went away or the service is stopping. */
     fun destroy() {
         captureGen++ // orphan any capture in flight
+        stopGen5OpeningClock()
         removeOverlay()
+        recycleGen5OpeningBitmap()
         Log.i(TAG, "engine display=$displayId destroyed")
     }
 
@@ -1339,7 +1554,8 @@ internal class PanelEngine(
         /** Tilt hysteresis for leaving a rest pose, so hinge jitter doesn't fire. */
         const val REST_LEAVE_TILT = 2f
         const val COVER_OPEN_IMMEDIATE_TILT = 0.15f
-        const val CONTINUITY_OPENING_TAU_S = 0.09f
+        const val GEN5_REQUESTED_HZ = 120f
+        const val GEN5_TELEMETRY_EVERY_N_FRAMES = 4L
         const val INNER_OPEN_LATCH_DEG = 172f
         const val INNER_OPEN_REARM_DEG = 166f
         /** After a swap, don't bother if the fold is nearly finished by capture time. */

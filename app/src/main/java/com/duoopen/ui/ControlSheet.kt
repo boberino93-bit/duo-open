@@ -688,13 +688,15 @@ fun ControlSheet(
             OutlinedButton(
                 onClick =
                     onSendDebugBundle,
-                enabled =
-                    diagnosticUploadEnabled,
                 modifier =
                     Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    "Send diagnostic data"
+                    if (diagnosticUploadEnabled) {
+                        "Send diagnostic data"
+                    } else {
+                        "Share diagnostic data"
+                    }
                 )
             }
 
@@ -707,7 +709,7 @@ fun ControlSheet(
                     ?: if (diagnosticUploadEnabled) {
                         "Sends the same privacy-limited ZIP and only reports success after the server returns a checksum-matched Artifactory receipt."
                     } else {
-                        "Diagnostic upload is not configured in this build. Manual export still works."
+                        "Remote upload is not configured in this build. This button still creates the same diagnostic ZIP and opens Android sharing."
                     },
                 warn =
                     diagnosticUploadStatus

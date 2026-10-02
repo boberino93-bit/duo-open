@@ -303,6 +303,19 @@ fun DuoApp(
             paneTilt = paneTilt,
             simulated = simulate,
             wallpaperActive = wallpaperActive,
+            overlayEnabled = overlayEnabled,
+            shizukuReady = OverlayFeature.shizukuReady(),
+            onTest = {
+                scope.launch {
+                    if (!OverlayFeature.playDemo()) {
+                        Toast.makeText(
+                            context,
+                            "Turn on Duo Open accessibility first",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
+            },
             onSetWallpaper = setWallpaper,
             onTune = {
                 showSheet = true
@@ -449,29 +462,43 @@ fun DuoApp(
                     }
                 },
                 onSendDebugBundle = {
+                    val configured = DebugBundleUploader.isConfigured()
                     diagnosticUploadStatus =
-                        "Sending diagnostic data…"
+                        if (configured) {
+                            "Sending diagnostic data…"
+                        } else {
+                            "Preparing diagnostic bundle to share…"
+                        }
 
                     scope.launch {
+                        if (!configured) {
+                            val bundle =
+                                withContext(Dispatchers.IO) {
+                                    OverlayFeature.flushDebugLogs()
+                                    DebugBundleExporter.create(context.applicationContext)
+                                }
+                            runCatching {
+                                DebugBundleExporter.share(context, bundle.file)
+                            }.onSuccess {
+                                diagnosticUploadStatus =
+                                    "Upload endpoint is not configured; opened the Android share sheet instead."
+                            }.onFailure { error ->
+                                diagnosticUploadStatus =
+                                    "Share failed: ${error.message ?: error.javaClass.simpleName}"
+                            }
+                            return@launch
+                        }
+
                         val upload =
-                            withContext(
-                                Dispatchers.IO
-                            ) {
+                            withContext(Dispatchers.IO) {
                                 runCatching {
-                                    OverlayFeature
-                                        .flushDebugLogs()
-
+                                    OverlayFeature.flushDebugLogs()
                                     val bundle =
-                                        DebugBundleExporter
-                                            .create(
-                                                context.applicationContext
-                                            )
-
-                                    DebugBundleUploader
-                                        .upload(
-                                            context.applicationContext,
-                                            bundle.file,
-                                        )
+                                        DebugBundleExporter.create(context.applicationContext)
+                                    DebugBundleUploader.upload(
+                                        context.applicationContext,
+                                        bundle.file,
+                                    )
                                 }
                             }
 
