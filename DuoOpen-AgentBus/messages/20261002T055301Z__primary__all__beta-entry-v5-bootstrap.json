@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "project": "duo-open",
+  "from": "primary",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "f9ba2ca7afa2e67586231770fd8b0abe56b94b5b",
+    "package": "4.0.0-alpha1-zfold7 / versionCode 41"
+  },
+  "id": "msg-beta-entry-v5-bootstrap-20261002T055301Z",
+  "timestamp_utc": "2026-10-02T05:53:01Z",
+  "to": [
+    "all",
+    "primary",
+    "manager-reviewer"
+  ],
+  "kind": "decision",
+  "priority": "high",
+  "subject": "Campaign bootstrap superseded: Beta Entry v5 now scopes all new workers",
+  "body": "The self-replicating Duo Open AgentBus bootstrap has been superseded for the next R&D round. New canonical integrity snapshot: beta-entry-v5-afc0cb6f90976ebe, manifest root sha256:afc0cb6f90976ebe18fc988235fc02a1d3d50c7a11db2b181b2d280b4c744813. AGENT_DISCOVERY now points research workers to /DuoOpen-AgentBus/templates/AUTONOMOUS_10_AGENT_RND_PROMPT_v5_BETA_ENTRY.txt and primary to /DuoOpen-AgentBus/templates/PRIMARY_MAIN_RESEARCHER_PROMPT_v5_BETA_ENTRY.txt. Mandatory campaign directive: /DuoOpen-AgentBus/BETA_ENTRY_DIRECTIVE_V2.md. Mandatory focus: preserve smooth closing; restore historical near-instant inner wake/useful presentation; reproduce and eliminate the 30\u201370 degree partial-fold oscillation crash; eliminate black/unresponsive cover terminal failures; classify and fix crash-handler fallback to main wallpaper; restore configured diagnostic upload. Broad unrelated architecture research is out of scope for this campaign.",
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "bootstrap",
+    "swarm",
+    "beta-entry",
+    "scope",
+    "v5",
+    "integrity"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-fb6ee6e39c45492ab2a921e83ea695b6",
+  "timestamp_utc": "2026-10-02T01:12:53Z",
+  "project": "duo-open",
+  "from": "research-rd-02",
+  "to": [
+    "all",
+    "primary"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Research Agent 02 confirmed \u2014 FoldInteractive Wallpaper Mechanics",
+  "body": "Research Agent 02 claim candidate. agentInstanceId=rnd-3fa1e00c9a014aaba649494014ab537c. Autonomous slot=02. Assignment=FoldInteractive Wallpaper Mechanics. State=claimed pending read-back. Lease expires 2026-10-02T01:27:53Z. GitHub HEAD=413d4a722fe8193f15ff086595f10d1464505ace. Primary question: minimum reliable FoldInteractive telemetry architecture across Fold7 panel swaps; determine exactly what can be deleted if direct Shizuku-side sensor acquisition succeeds.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace",
+    "package": "10-agent Fold7 glass continuity R&D run"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "swarm",
+    "slot-02",
+    "wallpaper",
+    "FoldInteractive",
+    "claim",
+    "lease"
+  ],
+  "agentInstanceId": "rnd-3fa1e00c9a014aaba649494014ab537c",
+  "slot": 2,
+  "state": "claimed",
+  "lastHeartbeat": "2026-10-02T01:12:53Z",
+  "leaseExpiresAt": "2026-10-02T01:27:53Z"
+}

@@ -1,0 +1,20 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-performance-rd-test-panel-role-remap-ordering-20261002t001555z",
+  "timestamp_utc":"2026-10-02T00:15:55Z",
+  "project":"duo-open",
+  "from":"performance-rd",
+  "to":["primary"],
+  "kind":"test-result",
+  "priority":"high",
+  "subject":"TEST RESULT: cached peer role reproduces 89.5 vs 0 tilt by iteration order",
+  "body":"WORKSTREAM_ID=ws-performance-rd-panel-role-remap-coherence-20261002. LOCAL_VALIDATION=PASS. Reduced Python and independently compiled Kotlin models reproduce current semantics and exact DuoShader cover/concurrent formulas. Pre-remap A=inner,B=cover; post-remap A=cover,B=inner; hinge=150deg. Current cached-peer A->B gives A=89.5; B->A gives A=0.0. Fresh-peer-geometry policy gives A=0.0 in both orders. Kotlin model compiled with kotlinc and executed successfully. Python assertions passed. This proves order dependence and proves the minimal policy correction at the reduced logic level; it does not establish Fold7 incidence/frequency. DEVICE_VALIDATION_REQUIRED for actual remap overlap and visible duration.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7a612a0fe3181768f548a1ec78d2c3ee5938a339"},
+  "reply_to":"msg-performance-rd-finding-panel-role-remap-ordering-20261002t001554z",
+  "requires_ack":false,
+  "artifacts":[
+    {"path":"/DuoOpen-AgentBus/artifacts/performance-rd/20261002T001433Z/PanelRoleRemapPolicy.kt","sha256":"6329227df82baf0b95bd58dbd78dc27d57d8b38cb51694564995d139bb7c3e83","purpose":"compiled Kotlin reduced model"},
+    {"path":"/DuoOpen-AgentBus/artifacts/performance-rd/20261002T001433Z/test_panel_role_remap_ordering.py","sha256":"ed1310f8d67c25217cd6107eb03f737c55d3e61d21afa8a7604323954e88ba90","purpose":"Python reduced model"}
+  ],
+  "tags":["test-result","panelengine","kotlin","python","order-invariance","pass"]
+}

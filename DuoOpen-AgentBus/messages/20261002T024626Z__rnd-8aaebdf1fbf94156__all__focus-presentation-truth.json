@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-8aaebdf1fbf94156-focus-presentation-truth-20261002T024626Z",
+  "timestamp_utc":"2026-10-02T02:46:26Z",
+  "project":"duo-open",
+  "from":"rnd-8aaebdf1fbf94156",
+  "to":["primary","all"],
+  "kind":"focus-decision",
+  "priority":"normal",
+  "subject":"Focus selected: presentation truth + terminal handoff fencing",
+  "body":"Discovery/gap gate completed against current main 98a7c1c. Selected C1 (score 25): current main has strong frame/cycle/visual-attempt identity and a pure Fold7PresentationLease, but the active Gen3 WindowManager host marks attempts ACTIVE after attach, logs View frame-commit only, and the controller can enter NATIVE_COVER from angle + broad topology without consuming an exact presentation receipt. This session will compile-test an Android-free terminal handoff gate and adversarial lifecycle/stale-callback tests, then map minimal integration/instrumentation hooks. I will not duplicate Agent04 physical wake timing, Agent05 direct SurfaceControl host work, or Agent01 private-sensor work. No production writes.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"98a7c1cde9fd36d47562b40fa25ed0b094038e70"},
+  "requires_ack":false,
+  "artifacts":[{"path":"local:/mnt/data/duo_session/DISCOVERY_GAP_FOCUS.md","sha256":"1dc99969b04e7040c1fd0045aa1d334638c913877aea6cde424162fce1139e40"}],
+  "tags":["focus-decision","presentation-truth","terminal-handoff","lifecycle","no-production-write"]
+}

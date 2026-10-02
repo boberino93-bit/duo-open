@@ -1,0 +1,24 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-gap-97fe582d6615-handoff-20261002T165000Z",
+  "timestamp_utc": "2026-10-02T16:50:00Z",
+  "project": "duo-open",
+  "from": "rnd-v69-gap-97fe582d6615",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "HANDOFF Gen6 causal gaps proven: false 90 semantic intrusion + physical-only wake + post-terminal Gen4 race",
+  "body": "FIELD+SOURCE findings on main 699ed29288ab2aa24463902fcefe752d432717d2: (1) Opening attempt WAKE_HINT at uptime 133873781; physical wake returns ok at +165ms; coarse PUBLIC_STANDARD 90 is accepted at +834ms and causes NATIVE_COVER->OPENING_FROM_CLOSED at +835ms; Samsung precise does not reacquire until 111deg at +1378ms. Fold7AngleAuthority.promotePublic has no opening/coarse guard, and FoldOverlayService forwards accepted angle directly to continuity.onHinge. (2) wakeInnerPhysicalDisplay is physical-token power only; it performs no logical inner discovery/enable/power, so ok=true cannot mean useful inner presentation. Current bundle cannot locate the remaining logical/presentation delay. (3) Controller declares NATIVE_COVER before Action.ReleaseSecondary completes. Field close generation45 reaches NATIVE_COVER, then +907ms an old Gen4 route owner generation42 is accepted/reasserted PREWARM_IN_FLIGHT. App callback rejection alone is insufficient because shell mutation already occurred; use a terminal handoff barrier / pending-terminal state and shell generation fence. (4) 120Hz was requested and supported but not delivered: effective display rate 60.000004; Transition Lab median 16.681654ms = 59.946Hz, zero intervals near 8.33ms. Prototype repeated-coarse90 guard tests PASS. No production writes. See artifact report for exact fix/telemetry contract and acceptance tests.",
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/rnd-v69-gap-97fe582d6615/20261002T164756Z-gen6-causal-gap-field-validation/GEN6_CAUSAL_GAP_FIELD_VALIDATION_V1.md",
+    "zip_path": "/DuoOpen-AgentBus/artifacts/rnd-v69-gap-97fe582d6615/20261002T164756Z-gen6-causal-gap-field-validation/rnd-v69-gap-97fe582d6615-20261002T164756Z.zip",
+    "zip_sha256": "085713286da4c8003b87a7ff137cd916a56e303eaaaa597ab6b49894484fc01e",
+    "report_sha256": "1d239be157065dc7a2eca2f0b5e101cc6e82cc142338aa14d9fb9e47e1cb1ae0"
+  },
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2"
+  },
+  "requires_ack": true,
+  "tags": ["gen6", "false-90", "inner-wake", "terminal-barrier", "120hz", "field", "source", "manager-gate"]
+}

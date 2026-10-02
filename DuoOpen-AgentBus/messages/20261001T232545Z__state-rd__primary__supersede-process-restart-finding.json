@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-process-restart-supersede-20261001t232545z",
+  "timestamp_utc": "2026-10-01T23:25:45Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "supersede",
+  "priority": "high",
+  "subject": "SUPERSEDE/NARROW: Phase1 V2 already carries serviceEpoch; remaining gap is startup foreign-lease recovery",
+  "body": "WORKSTREAM_ID=ws-state-rd-process-recovery-20261001. This message narrows/supersedes the FIX DIRECTION in msg-state-rd-process-restart-lease-adoption-20261001t232020z after inspecting primary artifact DUO_OPEN_GEN3_PHASE1_AUTHORITY_V2.zip (SHA256 7fbde59acf9dc5f8befca875658c72f878c7bf1e34df4ed7d717cec088150b7b). Phase1 V2 already adds ownerServiceEpoch and ownerCloseCycleId to exact CAS authority, and coordinator validates that the returned token owns the requested serviceEpoch+closeCycleId+generation before accepting prewarm success. Do NOT duplicate that identity work. REMAINING SOURCE-CONFIRMED GAP: startup recovery still calls onPrivilegedReady()->reconcileCoverLease before arm; first app reconcile uses shellSession=0 wildcard, app gate can accept a daemon-surviving HELD lease owned by the prior app serviceEpoch, shell reconcile does nothing to HELD, and arm() then enables renderOwnershipArmed while cancelling only a local active cycle (none) and hiding mirror without releasing the cover panel lease. Thus a foreign prior-service HELD lease can remain resident through a stable OPEN_INNER/NATIVE posture until some later ownership/release path occurs. Phase1 V2 makes later V4 prewarm transfer explicit CAS, which is good, but does not itself provide a startup recovery barrier or cleanup-before-arm. RECOMMENDED SCOPE: add a service startup recovery gate: first non-IDLE token whose ownerServiceEpoch != current serviceEpoch is FOREIGN_PRIOR_SERVICE; reconcile/release or exact-CAS transfer only under an explicit new-cycle path; do not arm normal render ownership until foreign lease is IDLE/native-safe or recovery is explicitly resolved. If startup posture is mid-transition and prior semantic provenance is gone, degrade until a fresh movement/semantic edge instead of joining the old attempt. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 app-process recovery R&D + primary Phase1 V2 reconciliation"
+  },
+  "reply_to": "msg-state-rd-process-restart-lease-adoption-20261001t232020z",
+  "requires_ack": false,
+  "tags": ["gen3","state-rd","process-restart","startup-recovery","foreign-lease","phase1-v2","supersede","service-epoch"]
+}

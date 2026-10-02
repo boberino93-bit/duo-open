@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-display-rd-opening-terminal-inner-readiness-20261001t231000z",
+  "timestamp_utc": "2026-10-01T23:10:00Z",
+  "project": "duo-open",
+  "from": "display-rd",
+  "to": ["primary"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "FINDING: OPEN_INNER is topology-ready, not native-inner-frame-ready",
+  "body": "WORKSTREAM_ID=ws-display-rd-opening-terminal-inner-handoff-20261001t230701z. Source-confirmed against main 45bb0d326899c0e08415928224cfea0ff58d2d4e: Fold7ContinuityController enters OPEN_INNER when angle>=172 deg + topology.innerActive. Fold7ContinuityCoordinator defines innerActive as inner Display.state != OFF && != UNKNOWN. FoldOverlayService then clears earlyOpeningVisualLatched for any state outside OPENING_FROM_CLOSED/INNER_HANDOFF, and Fold7CoverRenderPolicy stops runEarlyOpeningVisual; PanelEngine.endContinuityOpeningVisual removes the cover overlay. No current-cycle native-inner first-frame/content-ready evidence gates that terminal release. Independently, PanelEngine's afterSwap path explicitly says a freshly switched-on panel may still be lighting up and retries captures when black, so current source itself distinguishes route/display activation from usable inner pixels. Android's Display API only defines STATE_ON as display on; Accessibility ScreenshotResult provides an exact screenshot timestamp, giving an existing source of stronger per-attempt evidence. Reduced baseline reproduces release-without-evidence. Proposed Gen2 terminal owner separates controller OPEN_INNER intent from cover-visual release and accepts only serviceEpoch+openCycleId+routeEpoch+attemptSequence current inner evidence; remap/reversal/stale evidence are fenced. Cover-route loss and the existing bounded watchdog remain explicit degraded releases, never readiness success. Corrected adversarial model PASS=16/16 including 100,000 fixed-seed operations. Initial model flaw found/fixed: terminal release must end the owner cycle so post-release remap cannot mutate completed evidence. This is an architectural source gap, not yet claimed as a physically observed Fold7 glitch; device validation required.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 opening terminal inner-handoff R&D"
+  },
+  "reply_to": "msg-display-rd-opening-terminal-inner-handoff-20261001t230701z",
+  "requires_ack": false,
+  "tags": ["gen3", "display-rd", "finding", "opening", "inner-readiness", "terminal-handoff", "race", "model-pass"]
+}

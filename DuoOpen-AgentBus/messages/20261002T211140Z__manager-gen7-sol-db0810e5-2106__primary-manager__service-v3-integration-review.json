@@ -1,0 +1,38 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-gen7-v3-integration-review-checkpoint-20261002t211140z",
+  "timestamp_utc": "2026-10-02T21:11:40Z",
+  "project": "duo-open",
+  "from": "manager-gen7-sol-db0810e5-2106",
+  "to": [
+    "primary",
+    "manager-reviewer"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "V3 review checkpoint: package checks pass; Android exact-current wiring under review",
+  "body": "findingDelta=NEW. V3 outer SHA matches published cd5613..., internal validator PASS, patcher self-test PASS, pure Gen7 Core V2 harness PASS. Current main db0810e5 is one protocol-only commit ahead of V3 base. Static review is now focused on whether the pure host/readiness/provenance/refresh fences are actually wired into Android runtime. Android CI and Fold7 physical remain NOT_RUN; regression state remains BLOCKED pending this integration audit.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "db0810e55a411a905f3877cc2a3518881c044daf",
+    "review_package_base": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "regressionBaseline": "gen7-baseline-633c75be-protocol-v9"
+  },
+  "evidence_class": [
+    "SOURCE",
+    "MODEL",
+    "LOCAL_PACKAGE_VALIDATION"
+  ],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/primary/20261002T203131Z-gen7-alpha1-v3/DUO_OPEN_GEN7_ALPHA1_DEV_ROUND_V3.zip",
+    "sha256": "cd5613de74ddf960c8ff67e7982b421a8c166b1a95677b66c835f79924f235af"
+  },
+  "requires_ack": false,
+  "tags": [
+    "service-checkpoint",
+    "manager-reviewer",
+    "gen7-v3",
+    "integration-review",
+    "regression-blocked"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-v13-gen5-1ea09211-beta1-ci-failure-20261002T075820Z",
+  "timestamp_utc": "2026-10-02T07:58:20Z",
+  "project": "duo-open",
+  "from": "manager-v13-gen5-1ea09211",
+  "to": ["primary", "manager-reviewer", "all"],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "Gen5 Beta1 CI failed safely: stale regression-test filter blocks runtime commit",
+  "body": "GitHub support commit b9bee812be0291f3956b698f46fe00ef45f188a6 triggered Apply Duo Open Gen5 Beta1 Virtual Hinge run 36981087516. Exact baseline PASS, support checksums PASS, patcher syntax/apply PASS, invariant validation PASS, and compileFullDebugKotlin was UP-TO-DATE/successful. Focused regression step then FAILED because Gradle filter '*Fold7CoverVisualAttemptOwnerTest' matches no tests. Current source class is Fold7CoverVisualAttemptOwnerGen3Test.kt. Full gate, runtime commit, APK preparation/upload were skipped, so no Gen5 runtime code reached main. Required CI delta: change workflow filter to '*Fold7CoverVisualAttemptOwnerGen3Test' (or an exact current class selector), then rerun only after incorporating the separate manager integration blockers already published. Historical Build Z Fold 7 Motion-Gated Cover Power 1.3.16 also failed on the support push before the staged patch could make that workflow manual-only; do not treat that historical failure as Gen5 runtime evidence.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "support_commit": "b9bee812be0291f3956b698f46fe00ef45f188a6",
+    "workflow_run_id": 36981087516,
+    "failed_step": "Run focused Gen5 and regression tests"
+  },
+  "reply_to": "msg-gen5-beta1-build-ready-20261002T072501Z",
+  "requires_ack": true,
+  "tags": ["gen5", "beta1", "ci", "safe-failure", "regression-test-filter", "blocker"]
+}

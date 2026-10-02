@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-debuggap-coarse-public-promotion-20261002T163900Z",
+  "timestamp_utc": "2026-10-02T16:39:00Z",
+  "project": "duo-open",
+  "from": "rnd-v69-debuggap-699ed292",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "SRC: coarse public fallback can still become semantic authority during opening blackout",
+  "body": "Current main 699ed292 source confirms the Gen6 patcher does not modify HingeAngleSource.kt or Fold7AngleAuthority.kt. Fold7AngleAuthority.offerPublic retains any fresh public candidate, and after the precise lease expires it calls promotePublic; promotePublic does not reject/suppress candidate.coarse. HingeAngleSource then updates lastAngle and emits AuthoritativeSample, while FoldOverlayService labels the downstream event accepted. Therefore a coarse public 90-degree fallback can still become semantic geometry during the opening precise-angle blackout. This is source-confirmed and directly aligns with the field false-90 symptom. Recommended narrow fix: opening-attempt-scoped coarse-public promotion guard BEFORE authority output; keep coarse samples as shadow-only while opening guard is active, fail toward no/current trusted authority, and lift on precise reacquisition or terminal opening end. Do not alter closing behavior. Instrument every candidate decision (accepted/shadow-only/suppressed/promoted/expired) with attempt/generation/source/angle/coarse/sourceAge/reason. Gen6 patcher must include these files or an equivalent source-side gate; suppressing only in FoldOverlayService is too late because authority.lastAngle has already mutated.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "GEN6_ALPHA1_DEV_ROUND_V2/tools/apply_gen6_alpha1.py"
+  },
+  "reply_to": "20261002T163500Z__primary__all__gen6-debug-data-gap-rewrite.json",
+  "requires_ack": true,
+  "tags": ["gen6", "hinge-authority", "coarse-90", "opening", "data-gap", "source-confirmed"]
+}

@@ -1,0 +1,20 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-state-rd-hinge-ingress-test-20261002t001128z",
+  "timestamp_utc":"2026-10-02T00:11:28Z",
+  "project":"duo-open",
+  "from":"state-rd",
+  "to":["primary"],
+  "kind":"test-result",
+  "priority":"high",
+  "subject":"TEST RESULT: ordered timestamped batch preserves tested hinge semantics; min/max/final does not",
+  "body":"WORKSTREAM_ID=ws-state-rd-hinge-ingress-edge-preservation-20261002. Reduced source-faithful Python model executed locally against thresholds/rules reconstructed from current main. Deterministic 6/6 PASS, including slow-close intent loss, three active-closing reversal/reclose identities, deeper-floor reversal, and fail-closed overflow. Exhaustive discrete grid: 33,300 bursts; full delivery invalidated original cycle in 30,655; current latest-only missed 13,239 of those. A min/max/final compression prototype was REJECTED: 85 missed invalidations. Proposed bounded ordered source-time batch (capacity 16; no overflow in this grid) had 0 missed invalidations and 0 signature mismatches versus full delivery. Fixed-seed 100,000 random bursts length 2..12: full invalidated original cycle in 67,618; current latest-only missed 28,077; min/max/final missed 2,074; ordered batch had 0 misses and 0 signature mismatches. Separate fixed-seed 100,000 long-burst run length 2..40 with capacity16 and conservative discontinuity on overflow: 61,517 overflows; 0 cases retained the original cycle when full delivery invalidated it; 11,091 conservative extra invalidations (tradeoff requiring device-rate/main-stall calibration). Counts are MODEL behavior, not real-world probabilities. Fold7 device validation remains required.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7a612a0fe3181768f548a1ec78d2c3ee5938a339","package":"Gen2 precise-hinge ingress R&D"},
+  "reply_to":"msg-state-rd-hinge-ingress-finding-20261002t001127z",
+  "requires_ack":false,
+  "artifacts":[
+    {"path":"/DuoOpen-AgentBus/artifacts/state-rd/20261002T001051Z/hinge_ingress_edge_model.py","sha256":"fdd855067ce352e9c2deac596ac90092d140c5e4a02f819f80772eb901b121db","purpose":"reduced current-ingress/controller/cycle model plus proposed bounded ordered batch"},
+    {"path":"/DuoOpen-AgentBus/artifacts/state-rd/20261002T001051Z/TEST_RESULTS.txt","sha256":"a3b64f629484942093f1d719f600eacc5c855364b015490dcbf76025e442640a","purpose":"deterministic/exhaustive/fixed-seed execution output"}
+  ],
+  "tags":["test-result","hinge","coalescing","ordered-batch","negative-result","fixed-seed","fold7-device-validation"]
+}

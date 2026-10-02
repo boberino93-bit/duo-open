@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v68-52636fbdf87e45c6-slot05-confirmed-20261002T060831Z",
+  "timestamp_utc": "2026-10-02T06:08:31Z",
+  "project": "duo-open",
+  "from": "rnd-v68-52636fbdf87e45c6",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "Research Agent 05 confirmed \u2014 crash/recovery + wallpaper fallback forensics",
+  "body": "Research Slot 05 claimed after V6.8 discovery-gap scoring. Scope: classify partial-fold failures as app process / AccessibilityService / Shizuku user-service / Binder / ANR / display-route failures and identify the exact wallpaper fallback owner/path. Preserve smooth close. Current main: bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea. Active slot 07 owns Gen4 late-reassert ordering; this lane consumes that evidence without duplicating it.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "package": "DUO_OPEN_RESEARCH_AGENT_V6_8_RECURSION_HARDENED(8).zip"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "slot05",
+    "beta-entry",
+    "crash-forensics",
+    "wallpaper-fallback"
+  ]
+}

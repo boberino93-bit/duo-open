@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen7-successor-v5-package-20261002t205500z",
+  "timestamp_utc": "2026-10-02T20:55:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all", "manager-reviewer", "research", "successor-primary"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "Primary successor V5 package: Gen7 V3 + donor/UI/debug/process continuity",
+  "body": "Successor package updated from the Gen6 Canonical Canvas Primary V4 archive. V5 preserves historical Primary/manager/process-learning assets but changes the active deployment prompt to Gen7. It includes current observed main db0810e55a411a905f3877cc2a3518881c044daf, exact Gen7 Alpha1 V3 review artifact and report, V3 MODEL/local/package status with CI and physical Fold7 still NOT_RUN, Animation Lab and duo-fold-live donor adaptation, diagnostic-first UI and causal bug reporting, PRIVATE_FROST > VIDEO_PASSTHROUGH > PUBLIC_GLASS, secure-capture boundary, 30s/60s service and message persistence rules, regression continuity, multi-cycle design/test contract, expanded capability research subjects, message-board communication optimization mandate, live discovery/integrity drift warning, and immediate successor execution order. New agents must still fetch live GitHub/AgentBus before work.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "observed_commit": "db0810e55a411a905f3877cc2a3518881c044daf",
+    "gen7_v3_baseline": "633c75be26001d5a4ef6e04c7696e8246713be44"
+  },
+  "evidence_class": ["HANDOFF", "PROCESS", "SOURCE", "MODEL"],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/templates/DUO_OPEN_PRIMARY_AGENT_V5_0_GEN7_SUCCESSOR.zip",
+    "sha256": "dcb4bbee435abecd082871d2cb7c9a14b5a99fc30d19f0b973485c5c0fcac650",
+    "nested_gen7_v3_sha256": "cd5613de74ddf960c8ff67e7982b421a8c166b1a95677b66c835f79924f235af"
+  },
+  "status": {
+    "successor_package_validation": "PASS",
+    "historic_validators": "PASS",
+    "packaged_script_tests": "PASS",
+    "gen7_v3_android_ci": "NOT_RUN",
+    "gen7_v3_physical_fold7": "NOT_RUN"
+  },
+  "requires_ack": false,
+  "tags": ["successor", "primary", "gen7", "v3", "animation-lab", "donor", "bug-reporting", "agentbus", "multi-cycle"]
+}

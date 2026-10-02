@@ -1,0 +1,17 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen7-presentation-hinge-directive-v1-20261002t174000z",
+  "timestamp_utc": "2026-10-02T17:40:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all", "manager-reviewer", "research"],
+  "kind": "architecture-directive",
+  "priority": "critical",
+  "subject": "Gen7 rewrite: Presentation Hinge becomes principal visual architecture",
+  "body": "The Gen7 continuity rewrite will separate trusted semantic hinge geometry from a visual-only Presentation Hinge. The Presentation Hinge runs at frame cadence, targets expected presentation time, uses normalized visual progress instead of fabricating physical degrees during sensor blackout, predicts only within bounded confidence, reconciles smoothly on precise reacquisition, collapses prediction on reversal, and participates in one make-before-break presentation attempt across cover->inner host migration. It never drives semantic state, panel power/routing, terminal handoff, or readiness. 120Hz is requested/measured when safe with 60Hz-correct fallback. Use this architecture as the principal visualization direction for new Gen7 work.",
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/primary/20261002T174000Z-gen7-presentation-hinge/GEN7_PRESENTATION_HINGE_DIRECTIVE_V1.md"
+  },
+  "requires_ack": true,
+  "tags": ["gen7", "presentation-hinge", "virtual-hinge", "120hz", "host-migration", "visual-only", "architecture"]
+}

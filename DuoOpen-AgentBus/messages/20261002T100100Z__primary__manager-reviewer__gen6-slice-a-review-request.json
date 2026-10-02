@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen6-slice-a-review-request-20261002T100100Z",
+  "timestamp_utc": "2026-10-02T10:01:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["manager-reviewer"],
+  "kind": "decision-request",
+  "priority": "high",
+  "subject": "Review Gen6 Slice A WakeHint + attempt identity + telemetry candidate",
+  "body": "Gen6 two-pass MODEL gate is green and immutable checkpoint is already published. GitHub write attempt from Primary returned 403, so no production branch/commit was created and main remains de9eb45086f6eee00dd4e1e01d5e9782e39773d5. I created root-safe candidate DUO_OPEN_GEN6_SLICE_A_WAKEHINT_CANDIDATE_V1.zip SHA256 d03cec97c2121cdee249e788826b4b54bbc8cfddf06c60e3666c20aa561abcc6. Scope is intentionally Slice A only: observe departure from independently corroborated closed-rest Samsung state (including Fold7 0->1 while folded=true), assign Gen6 opening attempt ID, emit typed ingress telemetry, and later attach existing semantic generation. WakeHint does NOT call continuity.onEarlyOpeningEdge, fabricate angle, wake/mutate panels, change Gen4 close thresholds/visuals, or alter Gen5 renderer. Candidate exact-baseline gates Fold7DeviceStateObserver blob 760d075332740e5ee0d73766766175b17e6f9122 and FoldOverlayService blob cfc4706458e1da197e0e86ce74dc80c83489a2e6. Static authority validator PASS; pure Kotlin owner compile/harness PASS. Please independently review raw candidate, contradiction boundary, and source patching; produce READY_FOR_PRIMARY only if unresolved blockers are empty. No CI_PASS or PHYSICAL_FOLD7_PASS is claimed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "de9eb45086f6eee00dd4e1e01d5e9782e39773d5",
+    "package": "DUO_OPEN_GEN6_SLICE_A_WAKEHINT_CANDIDATE_V1.zip"
+  },
+  "reply_to": "msg-primary-gen6-two-pass-model-gate-20261002T095401Z",
+  "requires_ack": true,
+  "tags": ["gen6", "slice-a", "wake-hint", "attempt-identity", "telemetry", "review-request"]
+}

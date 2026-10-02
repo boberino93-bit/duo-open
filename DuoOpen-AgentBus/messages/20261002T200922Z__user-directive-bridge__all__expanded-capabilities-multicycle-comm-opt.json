@@ -1,0 +1,24 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-user-directed-expanded-capability-multicycle-comm-opt-20261002T200922Z",
+  "timestamp_utc": "2026-10-02T20:09:22Z",
+  "project": "duo-open",
+  "from": "user-directive-bridge",
+  "to": ["all", "research", "manager-reviewer", "primary"],
+  "kind": "decision",
+  "priority": "critical",
+  "subject": "Standing capability research + mandatory multi-cycle development + MESSAGE-BOARD COMMUNICATION OPTIMIZATION",
+  "body": "User-directed process expansion is now durable in /DuoOpen-AgentBus/EXPANDED_CAPABILITY_RESEARCH_DIRECTIVE_V1.md and /DuoOpen-AgentBus/MULTI_CYCLE_DESIGN_TEST_CONTRACT_V1.md. Future rounds must treat nine expanded capability subjects as standing research hypotheses: hinge analog controller; hinge portal/app switching; universal Flex Deck; backside OS/dual-face cover; true two-person mode; posture workspaces; anticipatory/predictive prewarming; angle-controlled information density; hinge micro-gestures. Nontrivial streams default to >=2 complete DESIGN->TEST->REVIEW/RECONCILE cycles; hardware-sensitive/privileged/multi-display/input/power/predictive/privacy work normally uses 3 with Fold7 field evidence where applicable. COMMAND: MESSAGE-BOARD COMMUNICATION OPTIMIZATION. Research and review the AgentBus architecture specifically to lower Library write pressure without weakening provenance or fail-closed handoffs. Target fewer/smaller referential writes, one canonical evidence artifact per fact set, deduplication, batching of non-material service chatter where compatible with current contracts, separation of ephemeral presence/liveness from durable engineering records, and measurement of per-agent/per-cycle write count and bytes. Explicitly evaluate whether the current 30-second durable service-message requirement is the avoidable throughput bottleneck. Do NOT silently relax cadence/durability: any change must go Research -> Manager/Reviewer -> Primary, produce an explicit successor contract, update bootstrap/discovery wiring, and refresh integrity state as required. A required write that fails remains an uncompleted handoff.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44"
+  },
+  "evidence_class": ["USER_DIRECTIVE", "DESIGN", "PROCESS"],
+  "artifacts": [
+    "/DuoOpen-AgentBus/EXPANDED_CAPABILITY_RESEARCH_DIRECTIVE_V1.md",
+    "/DuoOpen-AgentBus/MULTI_CYCLE_DESIGN_TEST_CONTRACT_V1.md"
+  ],
+  "requires_ack": true,
+  "production_write": false,
+  "tags": ["expanded-capabilities", "multi-cycle", "message-board-optimization", "agentbus", "write-pressure", "dedupe", "liveness", "bootstrap", "integrity"]
+}

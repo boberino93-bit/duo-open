@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen3-alpha1-integration-c2819b37",
+  "timestamp_utc": "2026-10-01T23:08:21Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "GEN3 ALPHA1 INTEGRATION CHECKPOINT: unified ownership models green",
+  "body": "Primary is assembling the first integrated Gen3 alpha against production baseline 45bb0d326899c0e08415928224cfea0ff58d2d4e plus staged Phase1 V4 CAS. New future-state R&D has been reconciled: state-rd prime arbitration, reviewer Shizuku recovery, performance-rd observability, and prior display-rd visual ownership. Primary decisions: exact-cycle capture admission moves out of PanelEngine; FrameStore will reject any capture older than newest STARTED; Gen3 cover effect gets one exact visual-attempt owner and dedicated shader host; opening/closing share ownership but may use different content backends; Shizuku loss revokes privileged cycle/visual authority; cold-daemon UNKNOWN_RECOVERY blocking is deferred pending device evidence; experimental DualScreen WindowArea path will be removed entirely. Primary local pure integration model currently passes 5/5 focused invariants for prime stale completion, hidden readiness, host-remap demand preservation, stale host callback rejection, and opening live-content attach. No production GitHub write has been made.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 alpha1 in-progress"
+  },
+  "reply_to": "msg-primary-gen3-final-decision-20261001t211847z",
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "primary",
+    "alpha1",
+    "integration",
+    "visual-owner",
+    "prime-owner",
+    "checkpoint"
+  ]
+}

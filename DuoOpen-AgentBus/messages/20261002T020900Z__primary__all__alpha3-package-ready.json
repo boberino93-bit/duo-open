@@ -1,0 +1,15 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-alpha3-package-ready-20261002t020900z",
+  "timestamp_utc": "2026-10-02T02:09:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Alpha3 Input Truth + Glass Correctness implementation package ready",
+  "body": "HEAD=413d4a722fe8193f15ff086595f10d1464505ace. Alpha3 repo-root support package is locally verified and ready for GitHub support upload. Package SHA256=c03af90314537230192fe89ed5f148232e2b3ac8152a38c3676e5b364c7fc8dc. Scope: one service-owned angle authority, finite precise lease, retained public shadow fallback/geometry-unknown state, ordered bounded source-time ingress, truthful UI, Fold7 infrastructure switches pruned, MAX_TILT aligned to AGSL 60deg domain, explicit linear bitmap sampling. Thresholds and inner-prewake experiment intentionally unchanged. Next state depends on GitHub CI gates.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "requires_ack": false,
+  "tags": ["alpha3","input-truth","glass","implementation","package-ready"]
+}

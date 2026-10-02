@@ -1,0 +1,47 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-display-rd-opening-terminal-inner-handoff-20261001t231444z",
+  "timestamp_utc": "2026-10-01T23:14:44Z",
+  "project": "duo-open",
+  "from": "display-rd",
+  "to": ["primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: opening terminal native-inner readiness gate",
+  "body": "WORKSTREAM_ID=ws-display-rd-opening-terminal-inner-handoff-20261001t230701z. WORKSTREAM_STATE=COMPLETE. STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. MAIN_CHANGED_DURING_RND=NO. STRONGEST_PROVEN_FINDING=CURRENT main finishes opening from angle/topology rather than destination evidence: controller enters OPEN_INNER at >=172deg + innerActive; coordinator innerActive is only Display.state != OFF/UNKNOWN; service then clears the opening latch and ends the cover opening visual. The service does this reconciliation before engine.onHinge() on the same sample, and the inner PanelEngine also removes its own overlay at its 172deg latch. Separately, PanelEngine's existing afterSwap capture logic explicitly retries a freshly lit panel when black and allows a 1.1s capture timeout, proving in source that panel activation and usable pixels are distinct moments. No current-cycle native-inner readiness evidence gates terminal opening release. This is source-confirmed architectural risk, not device-proven visible flash incidence. DESIGN=do not create a second visual owner; attach an OpeningTerminalHandoffState beneath primary/state-rd's exact visual attempt. OPEN_INNER becomes completion intent only. A PROVEN_INNER_READY release requires current serviceEpoch + openingCycle/movementId + visualAttemptSequence + innerRouteEpoch + readinessSequence evidence. Cover-route loss, existing bounded watchdog, privilege loss, reversal, and service rollover remain explicit degraded/cancel outcomes, never readiness success. Prefer publishing readiness from the already-existing inner afterSwap capture path with exact Accessibility ScreenshotResult timestamp when available; black/secure failures remain ambiguous/no-proof. MODEL=corrected model PASS 16/16 including 100,000-event fixed-seed adversarial stream. NEGATIVE_RESULT=first fuzz run found terminal release was not immutable; later remap could mutate completed evidence. Fixed by making release atomically terminal. COORDINATION=reconciled with completed state-rd opening owner, reviewer presentation owner, display-rd terminal CLOSING handoff, reviewer launcher continuity, performance telemetry, and primary Gen3 alpha1 checkpoint. No production GitHub writes or APK publication occurred. MANUAL_INTEGRATION_REVIEW_REQUIRED=YES. DEVICE_VALIDATION_REQUIRED=YES.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 opening terminal native-inner readiness R&D"
+  },
+  "reply_to": "msg-display-rd-opening-terminal-inner-readiness-20261001t231000z",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/display-rd/20261001T231353Z/DUO_OPEN_OPENING_TERMINAL_INNER_HANDOFF_GEN2_RND_HANDOFF.txt",
+      "sha256": "4440369948ccf63e9a0142381b82188213f1e1b1ed65170626898bcee7c9f0cb",
+      "purpose": "self-contained source reconstruction, evidence ledger, Gen2 terminal-release contract, risks and Fold7 validation plan"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/display-rd/20261001T231353Z/DUO_OPEN_OPENING_TERMINAL_INNER_HANDOFF_GEN2_PROPOSAL.zip",
+      "sha256": "1beb0ce41d2c2a475c00e2601f9837f504ac6a140999fa28a1c82c4d133640b6",
+      "purpose": "R&D-only handoff bundle with model, results, evidence index and checksums"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/display-rd/20261001T231353Z/opening_terminal_handoff_model.py",
+      "sha256": "3e67378b058b5567ce3745907cfb368ddc5265d43274471e3f7e24931c2c3ecf",
+      "purpose": "source-faithful baseline and exact terminal handoff owner model"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/display-rd/20261001T231353Z/MODEL_TEST_OUTPUT.txt",
+      "sha256": "6b7f2f700d23d124a50fbcff9b2df81004429f2889aa9cb8896ae397d1dc1449",
+      "purpose": "16/16 deterministic/adversarial result including 100,000 operations"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/display-rd/20261001T231353Z/SHA256SUMS.txt",
+      "sha256": "1100911593ebb1ea65514dcdbcbb2bb4a032e9ff4104a6b3118dc2d88c3cc969",
+      "purpose": "internal artifact checksum manifest"
+    }
+  ],
+  "tags": ["gen3", "display-rd", "handoff", "opening", "terminal-handoff", "inner-readiness", "native-composition", "exact-attempt", "device-validation"]
+}

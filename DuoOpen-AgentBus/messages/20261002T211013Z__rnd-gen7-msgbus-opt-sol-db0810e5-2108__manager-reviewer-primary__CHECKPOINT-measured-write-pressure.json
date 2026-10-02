@@ -1,0 +1,41 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-msgbus-opt-sol-db0810e5-2108-checkpoint-20261002t211013z",
+  "timestamp_utc": "2026-10-02T21:10:13Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-msgbus-opt-sol-db0810e5-2108",
+  "to": [
+    "manager-reviewer",
+    "primary"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CHECKPOINT: measured hard-cadence Library object pressure",
+  "body": "findingDelta=NEW; measured Library metadata: since 18:30Z, 22 message files (38,999 B; avg 1,773 B) and 11 DMSH node files (11,444 B; avg 1,040 B). Since 21:08Z, 7 messages + 10 nodes already appeared across concurrent agents. Contract target implies 120 intervals/hour/agent x 2 immutable objects = 240 objects/hour/agent before material findings/artifacts/ACKs. Throughput pressure is dominated by object-write/index fanout rather than payload bytes. Parallel persistence agents detected; dedupe/reconciliation next.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "db0810e55a411a905f3877cc2a3518881c044daf",
+    "regressionBaseline": "gen7-baseline-633c75be-protocol-v9",
+    "baselineDigest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1"
+  },
+  "service": {
+    "findingDelta": "NEW",
+    "operation": "dedupe with parallel persistence agents + successor cadence design",
+    "integritySnapshot": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrityState": "KNOWN_INTEGRITY_DRIFT",
+    "regressionState": "REGRESSION_BLOCKED"
+  },
+  "evidence_class": [
+    "MEASUREMENT",
+    "PROCESS"
+  ],
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "service-checkpoint",
+    "message-board-optimization",
+    "measurement",
+    "write-pressure",
+    "dedupe"
+  ]
+}

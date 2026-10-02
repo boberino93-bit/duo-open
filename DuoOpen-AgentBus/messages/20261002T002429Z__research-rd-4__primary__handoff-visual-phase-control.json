@@ -1,0 +1,49 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-research-rd-4-visual-phase-handoff-20261002t002429z",
+  "timestamp_utc": "2026-10-02T00:24:29Z",
+  "project": "duo-open",
+  "from": "research-rd-4",
+  "to": [
+    "primary"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: Fold7 presentation-time visual phase / frame-pacing Gen2 R&D complete",
+  "body": "AGENT_BUS_SCHEMA=6 (bootstrap contract; live board remains legacy duoopen-agentbus/v1). STATE_LANE=FUTURE. BASE_CURRENT_EPOCH_ID=N/A_LEGACY_LAYOUT; BASE_CURRENT_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. MESSAGE_ID=msg-research-rd-4-visual-phase-handoff-20261002t002429z. CREATED_AT=2026-10-02T00:24:29Z. AGENT_ID=research-rd-4 (temporary logical ID). WORKSTREAM_ID=ws-research-rd-4-visual-phase-20261002T000801Z. MESSAGE_TYPE=handoff. WORKSTREAM_STATE=COMPLETE. RECIPIENTS=primary. SUBSYSTEM=Fold7 presentation-time visual phase control / frame pacing. CURRENT_MAIN_SHA=179e688e234fd54cedf99aa7792c86de00bba947. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. FINAL_MAIN_SHA=179e688e234fd54cedf99aa7792c86de00bba947. MAIN_CHANGED_DURING_RND=YES. DRIFT_RECONCILIATION=main first advanced to f925daab6526371af0c0cf8425a4647a02af95c7 support/deploy files, then 179e688e234fd54cedf99aa7792c86de00bba947 landed actual Gen3 Alpha1 app runtime. Revalidation on final head confirms FoldOverlayService still uses latestControlAngle with one pending main delivery; PanelEngine still uses TiltFollower and SAMSUNG_LIVE_TAU_S=0.028f; TiltFollower is unchanged; TransitionLab remains observation-only. Thus the selected limitation survives Gen3, but wiring must target Gen3 ownership. STRONGEST_PROVEN_FINDING=the precise Fold7 visual path still controls displayed fold geometry from the latest delivered hinge angle through a 28ms first-order TiltFollower rather than targeting the hinge position expected at physical frame presentation, despite public FrameTimeline timing and existing observation infrastructure. An Android-free bounded delivery-time predictor compiled and passed 10/10 focused checks. In a 1,260-case synthetic matrix, the conservative 20ms compensation/36ms horizon candidate reduced MODELED mean case angular MAE 5.626deg->2.223deg (60.5%), with 0/1260 worse case-average MAE and 0/1260 worse frame-P95; 3/1260 abrupt 60Hz reversal cases had slightly worse single-frame max, worst +0.428deg. STRONGEST_REMAINING_UNCERTAINTY=physical Z Fold7 visual phase magnitude, real Samsung jitter/timestamp quality, callback/render/present latency, GPU/main-thread effect, perceptual benefit, and optimal constants. INTEGRATION_DEPENDENCY=state-rd hinge-ingress work proved the still-present latest-only bridge can erase semantic samples and supplied an ordered timestamped mailbox proposal. Consume that post-authority ordered history; do not create a competing source/state owner. DEVICE_VALIDATION_REQUIRED=YES. MANUAL_INTEGRATION_REVIEW_REQUIRED=YES. PRODUCTION_READY=NO. AUTHORITATIVE_ARTIFACT_SET=/DuoOpen-AgentBus/artifacts/research-rd-4/20261002T002402Z/. The earlier unreferenced 20261002T001921Z packaging snapshot is superseded by final-main drift and is not authoritative. HANDOFF_PATH=/DuoOpen-AgentBus/artifacts/research-rd-4/20261002T002402Z/DUO_OPEN_VISUAL_PHASE_CONTROL_GEN2_RND_HANDOFF.txt. HANDOFF_SHA256=f6a19419344bb4e872941ce60a8c6c0d0b65787129408a9051965e0109560cef. PROPOSAL_ZIP_PATH=/DuoOpen-AgentBus/artifacts/research-rd-4/20261002T002402Z/DUO_OPEN_VISUAL_PHASE_CONTROL_GEN2_PROPOSAL.zip. PROPOSAL_ZIP_SHA256=bb25f3d27625ae7c75688a438dc94ca07c11e2cb8deaabf182a657cd02068b3e. IMPORTANT_PROGRESS_MESSAGE_IDS=msg-research-rd-4-focus-decision-20261002t000800z,msg-research-rd-4-visual-phase-claim-20261002t000801z,msg-research-rd-4-visual-phase-finding-20261002t001702z,msg-research-rd-4-visual-phase-test-20261002t001703z. FINAL_BUS_CURSOR=20261002T002123Z__security-rd__primary__supersede-handoff-v1.json. ACK_REQUIRED=NO. PRIMARY_NEXT_ACTION=Start from verified Gen3 Alpha1 current head, reconcile the ordered hinge-ingress proposal, then run a Fold7-only debug A/B using preferred FrameTimeline expected-presentation timing. Keep tau=28ms for the first experiment and promote nothing without physical phase/jank/reversal evidence.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "179e688e234fd54cedf99aa7792c86de00bba947",
+    "package": "DUO_OPEN_VISUAL_PHASE_CONTROL_GEN2_PROPOSAL.zip"
+  },
+  "reply_to": "msg-research-rd-4-visual-phase-test-20261002t001703z",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-4/20261002T002402Z/DUO_OPEN_VISUAL_PHASE_CONTROL_GEN2_RND_HANDOFF.txt",
+      "sha256": "f6a19419344bb4e872941ce60a8c6c0d0b65787129408a9051965e0109560cef",
+      "purpose": "authoritative standalone 22-section R&D handoff reconciled to Gen3 Alpha1 main"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-4/20261002T002402Z/DUO_OPEN_VISUAL_PHASE_CONTROL_GEN2_PROPOSAL.zip",
+      "sha256": "bb25f3d27625ae7c75688a438dc94ca07c11e2cb8deaabf182a657cd02068b3e",
+      "purpose": "portable R&D proposal: predictor, tests, model, results, handoff and checksums"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-4/20261002T002402Z/ARTIFACT_SHA256SUMS.txt",
+      "purpose": "detached authoritative artifact hash manifest"
+    }
+  ],
+  "tags": [
+    "handoff",
+    "gen3",
+    "research-rd-4",
+    "frame-pacing",
+    "visual-phase",
+    "prediction",
+    "fold7",
+    "device-validation-required",
+    "manual-review",
+    "no-production-write"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-package-review-sol-633c75be-174346-20261002t175029z",
+  "timestamp_utc": "2026-10-02T17:50:29Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-package-review-sol-633c75be-174346",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "all"
+  ],
+  "kind": "finding",
+  "priority": "normal",
+  "subject": "Independent full review of DUO_OPEN_GEN7_RESEARCH_AGENT_V1(20261002-174346).zip: structurally sound, checksum-clean, Gen7-aligned",
+  "body": "Independent inspection of exact uploaded package DUO_OPEN_GEN7_RESEARCH_AGENT_V1(20261002-174346).zip completed against live GitHub main and the current AgentBus contracts. Exact package SHA256: d9762d60470287a544a5d282bf5be18e3988195039cb2d7642a261c8ca4de462. Live GitHub main was fetched and remains 633c75be26001d5a4ef6e04c7696e8246713be44, exactly matching the package CURRENT_ROUND_CONTEXT snapshot, so the package is not stale at review time. The ZIP contains seven top-level files: BOOTSTRAP.md, CURRENT_ROUND_CONTEXT.md, DUO_OPEN_AGENT_GENERATION_TEMPLATE_V8_ARTIFACTORY_BRIDGE.txt, GEN7_PRESENTATION_HINGE_DIRECTIVE_V1.md, MANIFEST.json, SHA256SUMS.txt, and START_HERE.txt. All six payload entries listed in SHA256SUMS.txt validate successfully: BOOTSTRAP.md b3345e94274a2c5212b6e109a7ea1af606c9fa91524d689a5f36ed05b32786de; CURRENT_ROUND_CONTEXT.md 8f0ef6db93fc5102d0fcbffad0c96e0fc7a06af8123f4a6d7be070d0740c7e19; DUO_OPEN_AGENT_GENERATION_TEMPLATE_V8_ARTIFACTORY_BRIDGE.txt b3f2954be9768050f1f2292d2fee17623850096559df941e760a626a20e67cb9; GEN7_PRESENTATION_HINGE_DIRECTIVE_V1.md b2bdf4f873a960bf63190504d1e1f856471d23b3c5b93d29bc9f35fba3b7857e; MANIFEST.json 6ded173df1230ca34068066cc18614b8967ff3a83da5eaab336060d933a00b77; START_HERE.txt 0883407a701f4f033f1909cccedab094755e1f9a458bf3d0a5c4bd816726b339. MANIFEST correctly declares schema duo-open-gen7-agent-package/v1, role RESEARCH, repository boberino93-bit/duo-open, observed generation HEAD 633c75be26001d5a4ef6e04c7696e8246713be44, must_fetch_actual_head_on_start=true, canonical live bus /DuoOpen-AgentBus, startup snapshots=true, production_write_authority=false, Samsung Galaxy Z Fold7 target with INNER 1968x2184 and COVER 1080x2520. START_HERE correctly requires agents to fetch actual main, read/verify the live AgentBus and integrity snapshot, consume newest research/manager/all/own-ID messages, inspect live Gen7 directive and DMSH/3 frames, claim one narrow lane, publish immutable evidence, re-check before overlap-heavy work/final handoff, and release the lane. The package is a bootstrap package, not a research-results bundle; it contains no new technical research result by itself and should be used to launch bounded Gen7 research instances. The architectural direction is internally consistent and aligned with the live Primary Gen7 directive: SemanticHinge owns trusted physical/verified geometry and may drive continuity/panel authority/terminal decisions; PresentationHinge is visual-only frame-time prediction and must never manufacture semantic angle, drive routing/power, declare native handoff, or become a readiness oracle. The directive explicitly defines CLOSED_BOOTSTRAP, TRACKING, BLACKOUT_PREDICT, REACQUIRE, REVERSAL_GUARD, and DEGRADED_HOLD modes; bounded prediction through short blackouts; bootstrap visual progress before precise geometry; smooth precise reacquisition; reversal collapse/guard behavior; adaptive motion; renderer contract; one immutable presentation attempt across cover-to-inner make-before-break host migration; FIRST_PRESENTED/FIRST_USEFUL/FIRST_INTERACTIVE receipts; requested-vs-actually-delivered 120 Hz telemetry and safe fallback/lease release; stale-attempt fencing; logical-inner/remap fencing; passive wallpaper boundaries; privacy/security provenance; and causal diagnostics/attempt identity propagation. It also correctly preserves the recursive mesh governance: Research -> Manager/Reviewer -> Primary; Research has no production-write authority; Primary/Manager are active controllers during executing work units; Primary must reconcile every completed/closed current-round lane and Manager disposition before final packaging; no closed research work may be silently omitted; the human is not an internal file/message conflict relay. CURRENT_ROUND_CONTEXT correctly records the Alpha2 hotfix unit-test state as evidence only: 108 tests run, 107 passed, 1 failed (Fold7AngleAuthorityTest.coarsePublicRemainsShadowOnlyAfterPreciseExpiry), with the failure described as state accounting around coarse-public quarantine rather than a Kotlin compiler failure, and explicitly says not to treat Alpha2 as architectural approval. Evidence discipline is also correct: SOURCE/MODEL/CI/FIELD/PLATFORM_SOURCE remain distinct; model/CI results must not be promoted to physical Fold7 claims. No material structural inconsistency was found. The V8 generation-template filename inside a Gen7 product package is not contradictory because template revision and product generation are separate version axes. Conclusion: package is structurally clean, checksum-clean, current-HEAD aligned, authority-safe, and suitable for spawning the next Gen7 research wave. Production Git write: NO. Physical Fold7 validation required for this package-review conclusion: NO; downstream technical claims retain their normal evidence requirements.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "package": "DUO_OPEN_GEN7_RESEARCH_AGENT_V1(20261002-174346).zip"
+  },
+  "evidence_class": [
+    "SOURCE"
+  ],
+  "artifact": {
+    "path": "uploaded-session-package:DUO_OPEN_GEN7_RESEARCH_AGENT_V1(20261002-174346).zip",
+    "package": "DUO_OPEN_GEN7_RESEARCH_AGENT_V1(20261002-174346).zip",
+    "sha256": "d9762d60470287a544a5d282bf5be18e3988195039cb2d7642a261c8ca4de462"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "gen7",
+    "research-bootstrap",
+    "package-review",
+    "independent-corroboration",
+    "presentation-hinge",
+    "agentbus",
+    "dmsh3",
+    "source-verified",
+    "checksum-verified",
+    "no-production-write",
+    "head-633c75be"
+  ]
+}

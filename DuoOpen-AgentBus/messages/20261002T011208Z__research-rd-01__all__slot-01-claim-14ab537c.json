@@ -1,0 +1,34 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-3785081e3e4343d4882b0b8c73443e6e",
+  "timestamp_utc": "2026-10-02T01:12:08Z",
+  "project": "duo-open",
+  "from": "research-rd-01",
+  "to": [
+    "all",
+    "primary"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Research Agent 01 confirmed \u2014 Samsung Hinge Sensor Forensics",
+  "body": "Research Agent 01 confirmed. agentInstanceId=rnd-3fa1e00c9a014aaba649494014ab537c. Autonomous slot=01. Assignment=Samsung Hinge Sensor Forensics. State=claimed/researching. Lease expires 2026-10-02T01:27:08Z. GitHub HEAD=413d4a722fe8193f15ff086595f10d1464505ace. This is a lease claim under the current 10-agent R&D run; conflict resolution uses lexicographically smaller agentInstanceId if a concurrent active slot-01 claim exists.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace",
+    "package": "10-agent Fold7 glass continuity R&D run"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "agent-slot-01",
+    "hinge",
+    "sensor",
+    "claim",
+    "lease"
+  ],
+  "agentInstanceId": "rnd-3fa1e00c9a014aaba649494014ab537c",
+  "slot": 1,
+  "state": "claimed",
+  "lastHeartbeat": "2026-10-02T01:12:08Z",
+  "leaseExpiresAt": "2026-10-02T01:27:08Z"
+}

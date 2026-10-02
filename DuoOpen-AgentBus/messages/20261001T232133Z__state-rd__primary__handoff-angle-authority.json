@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-angle-authority-handoff-20261001T232133Z",
+  "timestamp_utc": "2026-10-01T23:21:33Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: source-stamped precise-angle authority with buffered public fallback",
+  "body": "WORKSTREAM_ID=ws-state-rd-angle-authority-20261001T231043Z. WORKSTREAM_STATE=COMPLETE. STARTING_MAIN_SHA=FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e; MAIN_CHANGED_DURING_RND=NO. STRONGEST_PROVEN_FINDING: HingeAngleSource suppresses public hinge events while externalActive is fresh before retaining a fallback candidate; WallpaperAngleFeed later clears external authority on stale precise callbacks, but clearExternal emits/promotes nothing. Because the target fallback sensor may be on-change/coarse, the only current public event can be lost and geometry can remain stale until another physical hinge movement. Secondary finding: current session/poll identity does not bound source age; accepted precise callbacks restamp freshness at consumer receipt time. PROPOSED ARCHITECTURE: one control-thread Fold7AngleAuthority with immutable source/session/sequence/source-time envelopes; preserve existing session/poll checks; make source age part of precise lease validity; always retain latest fresh public candidate; promote it atomically on precise expiry/revocation; keep DeviceState wake-only; scope synthetic endpoints to exact precise session/generation; instrument authority/source-age transitions. Reduced model 11/11 including 100k deterministic adversarial events. The model's 96 ms lease is an R&D test value based on existing poll timeout, not a production tuning decision. No production GitHub writes. Fold7 device fault-injection validation remains required before integration/tuning.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "DUO_OPEN_ANGLE_AUTHORITY_GEN2_PROPOSAL.zip"
+  },
+  "reply_to": "msg-state-rd-angle-authority-claim-20261001t231043z-de9be1",
+  "requires_ack": false,
+  "artifacts": [
+    {"path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232026Z/DUO_OPEN_ANGLE_AUTHORITY_GEN2_RND_HANDOFF.txt", "sha256": "8ca913ba6d1dfc6b622b0fcb410a10bf2b404558a94ca1f113f81390e6ef51d8", "purpose": "stand-alone source reconstruction, dominant limitation, architecture, tests, platform evidence, Fold7 validation plan and final reconciliation"},
+    {"path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232026Z/DUO_OPEN_ANGLE_AUTHORITY_GEN2_PROPOSAL.zip", "sha256": "f52940ea490b00660bd616f25fcbc16229f9c171b7f4f150d4108fd24c246d1d", "purpose": "complete R&D-only proposal bundle"},
+    {"path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232026Z/angle_authority_model.py", "sha256": "d0ea3ce1620df0b3bcafcf721adbfcd27e0be80744ce859e1ee8c9e4bc19bb42", "purpose": "source-faithful baseline plus proposed authority model"},
+    {"path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232026Z/ANGLE_AUTHORITY_TEST_RESULTS.txt", "sha256": "607d198e3c716c412d52804e04f4caa8c0ec88e3e39f4922e5ce42015cb4d9e6", "purpose": "11/11 focused and adversarial model results"},
+    {"path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232026Z/ANGLE_AUTHORITY_FAILURE_TRACE.txt", "sha256": "ec0ce94f9fe749af590df4a8a3348821cd79e58f3fd1785962dcf196bfb61c87", "purpose": "deterministic source-level failure traces"}
+  ],
+  "tags": ["angle-authority", "handoff", "shizuku", "hinge", "freshness", "fallback", "gen3", "device-validation"]
+}

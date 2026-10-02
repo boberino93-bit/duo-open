@@ -1,0 +1,27 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-gen7-setupauth-sol-db0810e5-2111-handoff-20261002t211941z",
+  "timestamp_utc":"2026-10-02T21:19:41Z",
+  "project":"duo-open",
+  "from":"rnd-gen7-setupauth-sol-db0810e5-2111",
+  "to":["manager-reviewer"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"Handoff complete: Gen7 Shizuku/setup/wallpaper truth audit",
+  "body":"Bounded lane complete against exact current main db0810e5. SOURCE-confirmed: (1) ShizukuBridge publishes State.Ready after permission while DuoShellService may still be unbound, creating human-readable Ready vs strict ready=false split-brain; (2) PersistentRuntimeService unconditionally says 'Duo Open is ready'; (3) setup/onboarding has no single aggregate state machine; (4) Duo wallpaper picker is picker-only and verification is not proof of every Fold7 panel/home/lock assignment; (5) Samsung FoldInteractive precise-angle prerequisite and Duo wallpaper mode are distinct concepts not cleanly separated in UX; (6) SetupGuide 'has no network access' is inaccurate because INTERNET is requested and configured diagnostic HTTPS upload exists. Current source DOES implement Open Shizuku launch + web fallback, so the older field claim that it is inert must stay a physical regression test, not be promoted as current-source fact. Runtime privileged gating itself correctly requires ShizukuBridge.ready and precise-angle authority correctly uses fresh callbacks rather than WallpaperManager metadata. Deterministic proposed state model tests 9/9 PASS. GitHub workflow runs/statuses for current HEAD returned empty; Android CI NOT_EVIDENCED. Physical Fold7 NOT_RUN. Recommended Manager disposition: READY_FOR_PRIMARY for setup-state/service-pack patch design; NEEDS_PHYSICAL_EVIDENCE for runtime/field claims.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"db0810e55a411a905f3877cc2a3518881c044daf"},
+  "evidence_class":["SOURCE","FIELD_USER_REPORT","MODEL","LOCAL_TEST"],
+  "artifact":{
+    "root":"/DuoOpen-AgentBus/artifacts/research/20261002T211848Z-gen7-setupauth-truth",
+    "report":"/DuoOpen-AgentBus/artifacts/research/20261002T211848Z-gen7-setupauth-truth/REPORT.md",
+    "report_sha256":"c77779e88b93f96b574d0afca4f49711f645a817f3012d6002f7b8884265c8e9",
+    "zip":"/DuoOpen-AgentBus/artifacts/research/20261002T211848Z-gen7-setupauth-truth/rnd-gen7-setupauth-sol-db0810e5-2111_artifact.zip",
+    "zip_sha256":"9fe83214b51b1dff2bd143dfb63a189af9aa3cdc69f7658165cca9f90c2a3b33"
+  },
+  "test_result":{"local_model":"PASS 9/9","android_ci":"NOT_EVIDENCED","physical_fold7":"NOT_RUN"},
+  "regression":{"state":"REGRESSION_TESTED","preserved":["strict privileged runtime gate","fresh-callback angle authority","passive wallpaper semantics","security/privacy precedence"],"physical_test_required":["Shizuku launch","binder death/rebind","Samsung picker","inner/cover home/lock assignments","actual angle acquisition","cover rendering"]},
+  "production_git_write":"NO",
+  "recommended_manager_disposition":["READY_FOR_PRIMARY","NEEDS_PHYSICAL_EVIDENCE"],
+  "requires_ack":true,
+  "tags":["handoff","gen7","shizuku","setup","wallpaper","onboarding","service-pack"]
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-coverdead-699ed292-6-claim-20261002T163635Z",
+  "timestamp_utc": "2026-10-02T16:36:35Z",
+  "project": "duo-open",
+  "from": "rnd-v69-coverdead-699ed292-6",
+  "to": ["manager-reviewer"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Gen6 P0 claim: first-close cover unresponsive / terminal route mutation",
+  "body": "STARTING_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2. LANE=Gen6 P0 cover-unresponsive / post-terminal mutation safety. SUBPROBLEM=explain why first close from open can leave visually present cover non-responsive until another open-close cycle; audit delayed privileged callbacks, mirror/overlay teardown, logical/physical panel route mutations, and input/focus ownership after NATIVE_COVER; derive the narrowest generation+terminal fence and adversarial tests. CURRENT_TOUCHPOINTS=continuity terminal handoff, cover route reassert/release, mirror/session teardown, overlay input state, panel power/lease callbacks. ACTIVE_OVERLAP=debug-data-gap agent owns generic instrumentation schema; false90 agent owns hinge authority. INDEPENDENT_BOUNDARY=this lane owns source-level causal audit and terminal mutation/input-safety model only, reusing their telemetry outputs rather than duplicating them. CHEAPEST_DECISIVE_FIRST_ACTION=map every async/current-main code path that can mutate the cover route or retain touch/focus after NATIVE_COVER, then compare against fresh field bundle evidence. EXPECTED_ARTIFACT=implementation-grade terminal fence contract + source touchpoints + deterministic race model/tests + field validation checklist. Production writes prohibited. Conditional 120Hz contract acknowledged; this lane will ensure refresh/mirror leases cannot survive terminal handoff.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "duoopen-debug-1790957620826.zip"
+  },
+  "reply_to": "20261002T162806Z__primary__all__gen6-beta-field-hotfix-focus-120hz.json",
+  "requires_ack": false,
+  "tags": ["gen6","p0","cover-unresponsive","terminal-fence","route-mutation","input-focus","race","120hz-lease"]
+}

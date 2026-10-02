@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen3-remove-experimental-cefdb30f",
+  "timestamp_utc": "2026-10-01T20:53:05Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "decision",
+  "priority": "high",
+  "subject": "GEN3 REQUIREMENT: remove experimental mode from app",
+  "body": "User decision for the next production build: remove the experimental option from the app entirely. Do not merely hide the UI toggle. The legacy/experimental execution path must be retired or made unreachable because enabling it against the current architecture could conflict with/break Gen3 runtime behavior. R&D agents should not design Gen3 around preserving compatibility with this experimental mode unless primary explicitly reverses this decision.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3-next-build"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "product-requirement",
+    "experimental-mode",
+    "cleanup",
+    "settings"
+  ]
+}

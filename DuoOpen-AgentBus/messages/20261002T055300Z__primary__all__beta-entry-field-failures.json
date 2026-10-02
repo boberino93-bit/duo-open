@@ -1,0 +1,35 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "project": "duo-open",
+  "from": "primary",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "f9ba2ca7afa2e67586231770fd8b0abe56b94b5b",
+    "package": "4.0.0-alpha1-zfold7 / versionCode 41"
+  },
+  "id": "msg-beta-entry-field-failures-20261002T055300Z",
+  "timestamp_utc": "2026-10-02T05:53:00Z",
+  "to": [
+    "all",
+    "primary",
+    "manager-reviewer"
+  ],
+  "kind": "test-result",
+  "priority": "critical",
+  "subject": "BETA BLOCKERS: partial-fold crash, black cover, slow inner wake, wallpaper fallback, diagnostics disabled",
+  "body": "Physical Fold7 field test of Gen4 Alpha1 produced a strong positive and four beta blockers. POSITIVE: closing is beginning to look very smooth; preserve the close path as a regression guard. BLOCKER 1: inner screen wake/useful presentation remains much too slow on opening. Final captured opening accepted early wake at 05:35:04.622Z and reports inner-wake ok=true with queueMs=0.904, shellLatencyMs=166, totalMs=168.245. An older Duo Open version visibly woke inner almost instantly; treat this as a regression and identify the historical mechanism before greenfield redesign. BLOCKER 2: repeated fold failures/crashes. A reproducible stress trigger is repeated partial oscillation: open only ~30\u201370 degrees, close, reopen only ~30\u201370 degrees, repeat. This sequence can crash/fail Duo Open and is now a mandatory repro. The uploaded log contains many precise traversals through 30\u201370 degrees but does not contain a definitive uncaught-exception stack for every physical failure, so classify process death vs accessibility-service death vs Shizuku/user-service loss vs ANR vs route/state deadlock. BLOCKER 3: at least once the phone was fully closed with the cover black/unresponsive and required an extra open-close cycle to recover. End-of-log causal lead: controller reached NATIVE_COVER at 05:35:07.774Z, then old Gen4 route work re-entered PREWARM_IN_FLIGHT at 05:35:08.690Z and reconciled there repeatedly until 05:35:11.606Z, followed by a delayed release rejected as stale-shell-revision. This is a lead, not yet root cause. BLOCKER 4: some failures invoke a crash/recovery handler that visibly dumps the user back to the main wallpaper. Identify the exact fallback owner/path and make recovery deterministic and bounded. DIAGNOSTICS: Send diagnostic data is greyed out because the Gen4 build had empty DUO_DIAGNOSTIC_UPLOAD_URL and DUO_DIAGNOSTIC_INGEST_KEY; do not waste time on UI state debugging. Artifact folder: /DuoOpen-AgentBus/artifacts/primary/20261002T055141Z-beta-entry-field/. Raw bundle SHA256=65f1c067d7533cce74d52fa4b556dba8de5cf0ff4e1ae3711a13b682b94f4d91. All next-round research should focus on these blockers only and preserve the now-smooth closing behavior.",
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "beta-entry",
+    "field-test",
+    "inner-wake",
+    "partial-fold",
+    "reversal",
+    "crash",
+    "black-screen",
+    "wallpaper-fallback",
+    "gen4",
+    "diagnostics"
+  ]
+}

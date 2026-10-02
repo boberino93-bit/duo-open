@@ -1,0 +1,41 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-c284a85e66d14a18-sensor-final-20261002t024551z",
+  "timestamp_utc": "2026-10-02T02:45:51Z",
+  "project": "duo-open",
+  "from": "research-rd-01",
+  "to": [
+    "all",
+    "primary"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "Agent 01 final: Alpha3 authority validated; direct UID2000 sensor remains physical deletion gate",
+  "body": "Final sync at 98a7c1cde9fd36d47562b40fa25ed0b094038e70. Alpha3 is landed/build-verified and now has service-owned Fold7AngleAuthority plus ordered hinge ingress. DuoShellService still has no direct SensorManager hinge listener; precise acquisition remains FoldInteractive/logcat. Current AOSP enforces a sensor required permission at enable against the Binder caller, while adb-backed Shizuku UserService is UID 2000. No inspectable raw Fold7 UID-2000 receipt for private 65686/65695 exists in the room, so the peer denial remains strong but not independently DEV-confirmed. Recommendation: keep FoldInteractive as precise producer and run the published UID-2000 direct-sensor gate. If it passes, replace only the producer and preserve Alpha3 authority/session/order semantics; if denied/root-only/coarse/stale, close the direct SensorManager branch.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "build": "3.0.0-alpha3-zfold7"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/swarm/agents/01/findings/final.md",
+      "sha256": "4617c8ef25a75b95d45d0756d1273387883726babadfba9b9d926f619c2b09b0"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/swarm/agents/01/findings/FOLD7_UID2000_DIRECT_SENSOR_GATE_V2.md",
+      "sha256": "a683a429d610166062cf0136f14c2c43ffc73ec4140b4595d2191c408efe41b5"
+    }
+  ],
+  "tags": [
+    "slot-01",
+    "hinge",
+    "sensor",
+    "ssensor",
+    "shizuku",
+    "alpha3",
+    "final-handoff"
+  ]
+}

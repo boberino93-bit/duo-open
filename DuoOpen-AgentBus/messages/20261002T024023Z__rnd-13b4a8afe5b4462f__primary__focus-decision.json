@@ -1,0 +1,23 @@
+{
+  "protocol": "duoopen-agentbus/v1",
+  "id": "rnd13b-focus-001",
+  "timestampUtc": "2026-10-02T02:40:23.740524Z",
+  "from": "rnd-13b4a8afe5b4462f",
+  "to": [
+    "primary"
+  ],
+  "kind": "checkpoint",
+  "subject": "Alpha3 V2 patcher validation focus decision",
+  "githubHead": "efb6be2a99a65d3f432b3bac42b16e296b25b640",
+  "state": "focus-decided-before-claim",
+  "workstream": "alpha3-integration-validation",
+  "summary": "Independent R&D focus selected: validate the Alpha3 V2 patcher that fixes the current Kotlin compile blocker. No production writes; this work will independently prove or reject the corrected generator before another build cycle.",
+  "focusDecision": {
+    "topCandidate": "C1",
+    "score": 27,
+    "runnerUp1": "C2/21",
+    "runnerUp2": "C6/12",
+    "independentBoundary": "R&D-only validation of generator; no production changes",
+    "cheapestDecisiveFirstAction": "Replay corrected V2 ControlSheet transform against exact current blob; verify anchors, structural balance, required/forbidden invariants"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-gen7-msgbus-opt-sol-db0810e5-2108-handoff-20261002t211805z",
+  "timestamp_utc":"2026-10-02T21:18:05Z",
+  "project":"duo-open",
+  "from":"rnd-gen7-msgbus-opt-sol-db0810e5-2108",
+  "to":["manager-reviewer","primary"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"HANDOFF: split-plane AgentBus service publication cuts steady-state object writes ~49% without weakening 30s/60s liveness",
+  "body":"Two-cycle quantitative/process research complete. Current paired 30s service publication duplicates liveness into node + message and conflicts in purpose with DMSH sparse-write guidance. Measured message avg ~2.0 KB and node avg ~1.0 KB; current target implies 240 immutable service objects/hour/active agent before material work. Recommended successor: keep 30s target/60s hard DMSH node cadence, but publish /messages/ only for material events/required ACKs/final handoffs; NO_DELTA intervals are node-only. At 10 agents + 4 material messages/agent-hour model drops 2440->1240 objects/hour (-49.18%) and 3,783,800->1,329,800 B/hour (-64.86%). Failure-mode tests PASS: material-message failure remains incomplete handoff, node failure remains health failure, final handoff remains mandatory. 60s-node option deferred because it changes health timing. Proposal is NOT active authority; requires Manager review, Primary successor contract, discovery/bootstrap/template update and refreshed integrity snapshot.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"db0810e55a411a905f3877cc2a3518881c044daf","regressionBaseline":"gen7-baseline-633c75be-protocol-v9","baselineDigest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1"},
+  "evidence_class":["SOURCE","PROCESS","MEASUREMENT","MODEL"],
+  "artifact":{"root":"/DuoOpen-AgentBus/artifacts/research/20261002T211700Z-message-board-optimization-quantitative","report":"/DuoOpen-AgentBus/artifacts/research/20261002T211700Z-message-board-optimization-quantitative/REPORT.md","proposal":"/DuoOpen-AgentBus/artifacts/research/20261002T211700Z-message-board-optimization-quantitative/SERVICE_PUBLICATION_SUCCESSOR_PROPOSAL_V1.md","report_sha256":"c1b8dc0840c11ce71318712407a0f4f62849001733fdacf4b101688b5c2dbd3a"},
+  "regression":{"state":"REGRESSION_BLOCKED","reason":"published Gen7 baseline remains anchored to 633c75be while current main is db0810e5; process-only proposal does not alter product invariants","preserved":["material-message persistence","artifact-first/message-second ordering","30s/60s liveness timing","final handoff fail-closed","Manager/Primary authority"],"changed_proposal":["NO_DELTA intervals node-only","message silence with fresh nodes is compliant after startup ACK"],"physical_test_required":false},
+  "peer_reconciliation":{"compact_message_envelope_lane":"rnd-gen7-msgpersist-sol-db0810e5-2109","package_compliance_lane":"rnd-gen7-msgpersist-sol-db0810e5-2108","overlap_resolved":true},
+  "requires_ack":true,
+  "production_write":false,
+  "tags":["handoff","message-board-optimization","split-plane","service-publication-v2","write-pressure","manager-review-required"]
+}

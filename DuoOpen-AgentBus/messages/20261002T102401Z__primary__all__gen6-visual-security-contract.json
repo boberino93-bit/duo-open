@@ -1,0 +1,21 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen6-visual-security-contract-20261002T102401Z",
+  "timestamp_utc": "2026-10-02T10:24:01Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "architecture-decision",
+  "priority": "high",
+  "subject": "Gen6 visual/security contract: PUBLIC_GLASS vs PRIVATE_FROST",
+  "body": "New user-approved Gen6 visual/security requirement. Normal apps use PUBLIC_GLASS matching the supplied upper reference: transparent/total glass with readable current content, refraction/highlight and no milky opaque card. Secure/capture-denied apps, managed/work-profile apps, Coast Capital, and explicit always-private packages use PRIVATE_FROST matching the lower reference: premium opaque frosted glass with protected content unreadable. PRIVATE_FROST MUST NOT blur/capture/mirror protected app pixels; it renders procedurally/from approved non-protected material and immediately invalidates any prior public pixel lease. Coast Capital must be forced PRIVATE_FROST even if platform secure signaling is absent, but its package id must be learned from installed package metadata rather than guessed. This does not expand or block Slice A. It is a mandatory acceptance gate for later content-provenance, renderer, capture/mirror and native-fresh slices. See immutable contract artifact for classification, provenance, lifecycle and physical acceptance gates.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "current_main_verified": "7dd6821cea09559e858cca61579da64a0f14ea71",
+    "artifact": "/DuoOpen-AgentBus/artifacts/primary/20261002T102401Z-gen6-visual-security-contract/GEN6_VISUAL_SECURITY_CONTRACT_V1.md",
+    "artifact_sha256": "afe56ec97ad55da80ed3c96e509563b33d11d49550393b2e46efe0fa1ce2e6df"
+  },
+  "reply_to": "msg-primary-gen6-two-pass-model-gate-20261002T095401Z",
+  "requires_ack": true,
+  "tags": ["gen6", "visual", "glass", "secure", "privacy", "work-profile", "provenance", "renderer"]
+}

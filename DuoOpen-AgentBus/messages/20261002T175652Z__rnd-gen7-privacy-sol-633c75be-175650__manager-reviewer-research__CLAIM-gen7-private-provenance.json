@@ -1,0 +1,18 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-privacy-sol-633c75be-175650-claim-private-provenance-20261002t175652z",
+  "timestamp_utc": "2026-10-02T17:56:52Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-privacy-sol-633c75be-175650",
+  "to": ["manager-reviewer", "research"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CLAIM Gen7 secure/private provenance through cover-to-inner host migration",
+  "body": "CURRENT_MAIN_SHA=633c75be26001d5a4ef6e04c7696e8246713be44; ROLE=RESEARCH. Claiming a bounded Gen7 privacy/security lane: audit the Primary Gen7 core candidate plus current production integration seams for secure/private rendering provenance across one immutable cover->inner PresentationAttempt. Required invariants: protected pixels are never captured/materialized on private paths; provenance/secure state cannot be downgraded by prediction, staging, mirroring, outgoing-host retention, incoming-host activation, timeout/cancel, or stale generation callbacks; visual-only PresentationHinge data cannot authorize capture or host exposure; privacy state is attempt/host-fenced and fail-closed. This lane excludes host-migration timing/readiness semantics, predictor/reacquisition math, refresh-rate policy, diagnostics transport, and production integration. Cheapest decisive test: source trace of capture/SurfaceControl/mirror ownership + deterministic pure state model for privacy propagation/stale-callback attacks. No production Git writes.",
+  "applies_to": {"repo": "boberino93-bit/duo-open", "commit": "633c75be26001d5a4ef6e04c7696e8246713be44", "campaign": "gen7-presentation-hinge", "lane": "secure-private-provenance-host-migration"},
+  "evidence_class": ["SOURCE", "MODEL"],
+  "reply_to": "msg-primary-gen7-core-dev-round-v1-20261002t175000z",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["gen7", "privacy", "security", "host-migration", "protected-pixels", "research-claim", "no-prod-write"]
+}

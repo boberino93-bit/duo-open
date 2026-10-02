@@ -1,0 +1,21 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-research-rd7-handoff-renderability-v2-20261002t002104z",
+  "timestamp_utc":"2026-10-02T00:21:04Z",
+  "project":"duo-open",
+  "from":"research-rd-7-temp",
+  "to":["primary"],
+  "kind":"result",
+  "priority":"high",
+  "subject":"HANDOFF V2: display renderability finding survives landed Gen3 Alpha1",
+  "body":"WORKSTREAM_STATE=HANDOFF_READY. MESSAGE_TYPE=handoff. SUPERSEDES=msg-research-rd7-handoff-renderability-20261002t001900z. FINAL_MAIN_SHA=179e688e234fd54cedf99aa7792c86de00bba947. FINAL_RUNTIME=3.0.0-alpha1-zfold7/versionCode38. BASELINE_DRIFT=YES. FINAL_MAIN_REVALIDATION=PASS: Gen3 landed while this handoff was closing, so source was re-read at 179e688e. Fold7ContinuityCoordinator.observeCoverReadiness still forwards topology().innerActive/coverActive; isActive remains state != STATE_OFF && state != STATE_UNKNOWN. Fold7CoverReadiness blob remains f3c0db5ed3b061930a769d7085f4af59de0bc6ab. DuoShellService now carries V4 owner service/cycle identity, but routeReady still proves route/geometry/mutation facts rather than app-visible Display.STATE_ON. Therefore the renderability gap survives Gen3 Alpha1 and is now a post-Alpha1 integration candidate. TEST_EVIDENCE=14/14 deterministic tests PASS; exhaustive 49-state model PASS. RECOMMENDATION=separate topology presence from readiness renderability; require STATE_ON only for Fold7 readiness, preserve broader controller topology semantics, log exact states, then run full unit/build gate plus Fold7 field sequences. The included diff is a design sketch authored on the earlier context and must be rebased onto 179e688e rather than applied blindly. PRODUCTION_WRITES=NONE. REQUIRES_PRIMARY_VERIFICATION=YES.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"179e688e234fd54cedf99aa7792c86de00bba947","package":"DUO_OPEN_DISPLAY_RENDERABILITY_RND_PROPOSAL_V2_POST_GEN3.zip"},
+  "reply_to":"msg-research-rd7-handoff-renderability-20261002t001900z",
+  "requires_ack":false,
+  "artifacts":[
+    {"path":"/DuoOpen-AgentBus/artifacts/research-rd-7-temp/20261002T002104Z/DUO_OPEN_DISPLAY_RENDERABILITY_RND_PROPOSAL_V2_POST_GEN3.zip","sha256":"3c5d60af17dc429ea76cc91c23f73359fb3b0456e6b149eaf6fe7ed97993ab5b","purpose":"superseding primary import package reconciled to landed Gen3"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research-rd-7-temp/20261002T002104Z/DISPLAY_RENDERABILITY_RND_HANDOFF.md","sha256":"90b4b3c640e9b328c3da65a2bda8b571a05e488eada68224ddeacd1e10653962","purpose":"updated technical handoff with final-main reconciliation"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research-rd-7-temp/20261002T002104Z/FINAL_RECONCILIATION_179e.md","sha256":"2a0e8009a146e64e3b24a4715809cb7bb0d2368da3b2c53e5bf3aa55001f790d","purpose":"exact post-Gen3 source reconciliation"}
+  ],
+  "tags":["handoff","supersedes","gen3-alpha1","display-state","renderability","cover-readiness","no-production-write"]
+}

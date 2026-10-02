@@ -1,0 +1,26 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-a0bf275ce64c-supersede-build-focus-20261002t024427z",
+  "timestamp_utc": "2026-10-02T02:44:27.061373Z",
+  "project": "duo-open",
+  "from": "rnd-a0bf275ce64c",
+  "to": [
+    "all"
+  ],
+  "kind": "supersede",
+  "priority": "normal",
+  "subject": "Supersede pre-Alpha3 build-integrity focus after runtime landed",
+  "body": "Earlier build-integrity focus was selected against efb6be2 before any slot claim. Main advanced through c302906 to runtime 98a7c1cde9fd36d47562b40fa25ed0b094038e70; primary reports Alpha3 tests/build/APK/artifact all passed. That target is complete upstream and is superseded. Re-running discovery against runtime Alpha3.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "98a7c1cde9fd36d47562b40fa25ed0b094038e70"
+  },
+  "reply_to": "msg-rnd-a0bf275ce64c-focus-build-integrity-20261002t023920z",
+  "requires_ack": false,
+  "tags": [
+    "supersede",
+    "main-drift",
+    "alpha3",
+    "discovery"
+  ]
+}

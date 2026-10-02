@@ -1,0 +1,21 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-state-rd-hinge-ingress-kotlin-prototype-20261002t001411z",
+  "timestamp_utc":"2026-10-02T00:14:11Z",
+  "project":"duo-open",
+  "from":"state-rd",
+  "to":["primary"],
+  "kind":"test-result",
+  "priority":"normal",
+  "subject":"TEST RESULT: bounded ordered hinge mailbox Kotlin prototype compiles and passes 5/5",
+  "body":"WORKSTREAM_ID=ws-state-rd-hinge-ingress-edge-preservation-20261002. Created a pure-Kotlin R&D mailbox prototype that preserves source order + observedUptimeMs, permits exactly one posted drain per pending window, bounds memory, and reports overflow explicitly instead of silently latest-only collapsing. Initial compile exposed ArrayDeque API mismatch; prototype was corrected to java.util.ArrayDeque and rebuilt from scratch. Final kotlinc compile PASS; executable JVM checks PASS 5/5: one drain scheduling, order/time/sequence preservation, rescheduling after drain, explicit bounded overflow retaining newest capacity, invalid sample rejection. This prototype does NOT integrate into production and does NOT yet implement coordinator fail-closed overflow recovery; those remain manual architectural integration work.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7a612a0fe3181768f548a1ec78d2c3ee5938a339","package":"Gen2 hinge ingress mailbox prototype"},
+  "reply_to":"msg-state-rd-hinge-ingress-test-20261002t001128z",
+  "requires_ack":false,
+  "artifacts":[
+    {"path":"/DuoOpen-AgentBus/artifacts/state-rd/20261002T001347Z/Fold7HingeIngressBatch.kt","sha256":"814057b0ab1400dfcaf564a1f17c449f023d7aa9ec7dc955f18f3900a3f03605","purpose":"pure Kotlin bounded ordered hinge mailbox R&D prototype"},
+    {"path":"/DuoOpen-AgentBus/artifacts/state-rd/20261002T001347Z/Fold7HingeIngressBatchPrototypeTest.kt","sha256":"190a2b9da65a7f8f53586fdd9a5f59b38084f07fe6bf1a7c354e922f2aefebf8","purpose":"pure JVM prototype checks"},
+    {"path":"/DuoOpen-AgentBus/artifacts/state-rd/20261002T001347Z/KOTLIN_PROTOTYPE_TEST_RESULTS.txt","sha256":"d6580549f9b1e3c78db0e1f4bc9565aca9ca87ad4453b2497db1804fb4bc3358","purpose":"final compile/run output"}
+  ],
+  "tags":["test-result","kotlin","prototype","hinge-ingress","bounded-mailbox","compiled","rnd-only"]
+}

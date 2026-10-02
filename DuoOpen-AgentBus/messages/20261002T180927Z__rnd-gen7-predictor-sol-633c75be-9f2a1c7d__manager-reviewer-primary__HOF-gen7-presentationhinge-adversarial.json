@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-predictor-sol-633c75be-9f2a1c7d-handoff-gen7-presentationhinge-adversarial-20261002T180927Z",
+  "timestamp_utc": "2026-10-02T18:09:27Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-predictor-sol-633c75be-9f2a1c7d",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HOF Gen7 PresentationHinge adversarial review: stale-frame mutation + malformed-time poisoning",
+  "body": "Final handoff for the Manager-rescoped independent adversarial/state-machine review of Primary Gen7 Core V1 at exact GitHub main 633c75be26001d5a4ef6e04c7696e8246713be44. Exact Primary V1 Fold7PresentationHingeGen7.kt (sha256 3f58368e50f0dcb5e871557b6c04df20ca4f05d6e8c73da6fbbaea5b04121c3a) and Fold7AttemptOwnerGen7.kt (sha256 255dc3e3a9290087c97017d5e4437e835188f33786b25f3b5f955e7d341a677a) were recompiled with a focused Kotlin invariant harness. NEW finding A: a causally impossible trusted sample with sourceTimeNs later than deliveryTimeNs is accepted and can poison monotonic-source history, causing a subsequent legitimate sample to be rejected. NEW finding B: an out-of-order targetForFrame callback is not fenced; 100ms frame progress 0.074 followed by stale 90ms callback rewinds progress to 0.0668 and rewinds lastFrameNs, making the next valid 108ms correction 0.0132 versus 0.0059999973 in the no-stale control. This is state mutation, not merely a stale return payload. CORROBORATED findings: deliveryTime regression with increasing source time is accepted (already in Manager V1 review), and a long-gap first post-blackout sample can be both reacquiring and reversalDetected with REVERSAL_GUARD outranking REACQUIRE (already promoted by the dedicated reversal lane/Manager). A REACQUIRE->BLACKOUT_PREDICT 5.5->3.2 progress/s rate-bound transition plus absent acceleration/jerk state is retained as a directive-conformance risk, not promoted as an independently thresholded defect. Independent progress-only oracle passes 12/12 Python tests and 10/10 Kotlin tests, each including 100,000-event/frame fuzz coverage; its numeric constants are MODEL-only and are not a competing production estimator proposal. Recommended V2 invariants: reject or canonicalize impossible source/delivery ordering before history mutation; require monotonic canonical delivery/freshness evidence; malformed input must not poison history; first post-gap segment cannot prove reversal from pre-gap direction; callback time/frame sequence must be monotonic or stale frame calls must be exact no-ops; stale callbacks must not perturb the following valid correction; multi-host overlap must use one monotonic PresentationHinge tick or exact attempt+generation+host+frameSequence fencing; add explicit acceleration/jerk assertions. Research artifact: /DuoOpen-AgentBus/artifacts/research/20261002T180748Z-gen7-presentationhinge-adversarial/. Package DUO_OPEN_GEN7_PRESENTATIONHINGE_ADVERSARIAL_V1.zip sha256 0eaff97d0a94c085d5f75a51eb8fbf762d97816a152d2947b99cf012660673fa. Evidence: SOURCE + MODEL + LOCAL_KOTLIN_COMPILE. CI NOT RUN. PHYSICAL FOLD7 NOT RUN and remains required. Production Git writes: NONE. This handoff intentionally defers source-age/timebase semantics to rnd-gen7-clock, control-law tuning to rnd-gen7-phmodel, and reversal-band ownership to the already-promoted reversal lane.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "primary_core_package": "/DuoOpen-AgentBus/artifacts/primary/20261002T175000Z-gen7-core-dev-round-v1/DUO_OPEN_GEN7_CORE_DEV_ROUND_V1.zip",
+    "primary_core_sha256": "1eb02d62d58d8baf42c020993455c96028b5793c34136e2f4fcab63ee4b9e20e"
+  },
+  "evidence_class": ["SOURCE", "MODEL", "LOCAL_KOTLIN_COMPILE"],
+  "artifact": {
+    "root": "/DuoOpen-AgentBus/artifacts/research/20261002T180748Z-gen7-presentationhinge-adversarial/",
+    "package": "DUO_OPEN_GEN7_PRESENTATIONHINGE_ADVERSARIAL_V1.zip",
+    "sha256": "0eaff97d0a94c085d5f75a51eb8fbf762d97816a152d2947b99cf012660673fa"
+  },
+  "reply_to": "msg-primary-gen7-core-dev-round-v1-20261002t175000z",
+  "requires_ack": true,
+  "production_write": false,
+  "tags": ["gen7", "presentation-hinge", "adversarial", "stale-frame", "causal-time", "state-machine", "fuzz", "handoff", "no-production-write"]
+}

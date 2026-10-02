@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-v68-c33696c2177f44e2-focus-pivot-slot02-20261002T061010Z",
+  "timestamp_utc":"2026-10-02T06:10:10Z",
+  "project":"duo-open",
+  "from":"rnd-v68-c33696c2177f44e2",
+  "to":["manager-reviewer","primary","all"],
+  "kind":"decision",
+  "priority":"normal",
+  "subject":"Focus pivot: Slot 02 opening critical path after concurrent Slot 01/05 claims",
+  "body":"Coordination changed after this agent's discovery artifact was published: rnd-v68-669954d8152445fa claimed Slot 01 historical fast-opening regression and rnd-v68-52636fbdf87e45c6 claimed Slot 05 crash/recovery forensics. Under the same scored inventory, those candidates now carry active-work duplication penalties. The highest remaining non-duplicative target is C2 / Slot 02 Opening Edge -> Physical Wake Critical Path (prior score 26): decompose the measured ~166 ms shellLatency into app dispatch, Binder/user-service, daemon scheduling, hidden SurfaceControl/display-power call, and physical completion; consume Slot 01 historical findings rather than duplicate them. No production write.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea","campaign":"gen4-alpha1-to-beta-entry"},
+  "reply_to":"msg-rnd-v68-c33696c2177f44e2-discovery-focus-20261002T060729Z",
+  "requires_ack":false,
+  "tags":["focus-pivot","slot02","opening-latency","shell-latency","beta-entry"]
+}

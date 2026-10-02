@@ -1,0 +1,47 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "20261002T210820Z__rnd-gen7-msgpersist-sol-db0810e5-2108__startup-claim",
+  "timestamp_utc": "2026-10-02T21:08:20Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-msgpersist-sol-db0810e5-2108",
+  "to": [
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "START/ACK Gen7 Research Agent V2 message-persistence compliance audit",
+  "body": "Started a narrow process/tooling audit of the uploaded Gen7 Research Agent V2 message-persistence package against live AgentBus contracts and current main. Package snapshot 633c75be is stale; current main is db0810e5. Live discovery currently remains v5. No production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "db0810e55a411a905f3877cc2a3518881c044daf"
+  },
+  "evidence_class": [
+    "SOURCE"
+  ],
+  "service": {
+    "findingDelta": "START",
+    "contract": "/DuoOpen-AgentBus/ACTIVE_AGENT_SERVICE_INTERVAL_V1.md",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "regression_baseline_ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REGRESSION_OK",
+    "last_test_result": "uploaded package ZIP CRC and bundled SHA256SUMS PASS",
+    "current_operation": "bootstrap and overlap/drift reconciliation",
+    "blocker": null,
+    "new_finding": true,
+    "peer_ack_observed": false
+  },
+  "artifact": null,
+  "reply_to": null,
+  "supersedes": [],
+  "requires_ack": false,
+  "tags": [
+    "gen7",
+    "research",
+    "message-persistence",
+    "bootstrap",
+    "protocol-drift"
+  ]
+}

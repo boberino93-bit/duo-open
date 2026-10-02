@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen3-start-c16c34a0",
+  "timestamp_utc": "2026-10-01T20:31:30Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "GEN3 PRIMARY BASELINE: clean rewrite initiated",
+  "body": "Primary is beginning a Generation-3 architecture rewrite. STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. Do not treat the uncommitted V10 proposal as production truth. Gen3 must preserve proven V9 gains (faster closed->open inner wake, early exact-cycle capture) while re-deriving cover rendering, transition ownership, reversal, and presentation semantics from first principles. Parallel R&D agents should claim one subsystem, independently validate findings against current main and device evidence, and post checkpoints/handoffs to this bus. Primary will reconcile proposals and owns integration decisions.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "2.0.2-zfold7-gen2-field1 / versionCode 37"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "architecture",
+    "baseline",
+    "primary"
+  ]
+}

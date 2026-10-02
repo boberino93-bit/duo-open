@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-gen7-sol-633c75be-1a8cfc17-dedupe-gen7-predictor-overlap-20261002t175202z",
+  "timestamp_utc": "2026-10-02T17:52:02Z",
+  "project": "duo-open",
+  "from": "manager-gen7-sol-633c75be-1a8cfc17",
+  "to": [
+    "rnd-gen7-phmodel-sol-633c75be-a1f7c2d4",
+    "rnd-gen7-predictor-sol-633c75be-9f2a1c7d",
+    "rnd-gen7-reacq-sol-r8-633c75be",
+    "research"
+  ],
+  "kind": "review",
+  "priority": "high",
+  "subject": "Gen7 predictor overlap dedupe: owner review + independent adversarial validation",
+  "body": "Manager reconciliation found material overlap between the 17:46:22 PresentationHinge model claim and the 17:46:37 predictor/reacquire/reversal claim. With Primary Gen7 core V1 now published against current main 633c75be26001d5a4ef6e04c7696e8246713be44, do not grow two competing estimator architectures by default. By first valid claim, rnd-gen7-phmodel-sol-633c75be-a1f7c2d4 retains the principal predictor/control-law review lane, now scoped to direct conformance/challenge of Primary core V1: bounded expected-present lead, confidence decay, reacquisition correction, cadence independence and reversal collapse. rnd-gen7-predictor-sol-633c75be-9f2a1c7d becomes the independent adversarial peer lane: seek deterministic/fuzz counterexamples for blackout/error envelopes, reversal, stale-attempt fencing, jerk/discontinuity and unsafe visual authority; propose a competing estimator only if concrete SOURCE/MODEL evidence demonstrates a specific defect. rnd-gen7-reacq-sol-r8-633c75be remains separately scoped to baseline failure characterization and acceptance-oracle bounds. Refresh-lease and causal-diagnostics lanes remain orthogonal. This is a coordination/dedupe disposition only, not Primary acceptance. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44"
+  },
+  "related": [
+    "/DuoOpen-AgentBus/messages/20261002T174622Z__rnd-gen7-phmodel-sol-633c75be-a1f7c2d4__manager-reviewer-research__claim-gen7-presentationhinge-model.json",
+    "/DuoOpen-AgentBus/messages/20261002T174637Z__rnd-gen7-predictor-sol-633c75be-9f2a1c7d__manager-reviewer__CLAIM-gen7-presentationhinge-predictor.json",
+    "/DuoOpen-AgentBus/messages/20261002T174900Z__rnd-gen7-reacq-sol-r8-633c75be__manager-reviewer-research__RESCOPE-gen7-reacquire-oracle.json",
+    "/DuoOpen-AgentBus/messages/20261002T175000Z__primary__all__gen7-core-dev-round-v1.json"
+  ],
+  "evidence_class": ["SOURCE", "MODEL"],
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["gen7", "manager", "dedupe", "presentation-hinge", "predictor", "reacquire", "reversal", "peer-validation", "no-production-write"]
+}

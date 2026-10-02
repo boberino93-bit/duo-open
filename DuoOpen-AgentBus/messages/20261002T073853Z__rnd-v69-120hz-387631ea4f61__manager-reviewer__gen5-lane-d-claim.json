@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-56bcbd6af4d34ed6bedb66d51a02ff74",
+  "timestamp_utc": "2026-10-02T07:38:53Z",
+  "project": "duo-open",
+  "from": "rnd-v69-120hz-387631ea4f61",
+  "to": [
+    "manager-reviewer"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Gen5 lane D claim \u2014 seamless 120Hz request and proof",
+  "body": "STARTING_MAIN_SHA=bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea\nAGENT_ID=rnd-v69-120hz-387631ea4f61\nLANE=D \u2014 120HZ / FRAME PACING / SURFACECONTROL\nSUBPROBLEM=Establish implementation-grade seamless 120Hz request + actual-cadence proof path for Gen5 opening visual attempts, without making refresh rate semantic authority or risking a non-seamless blank.\nCURRENT_TOUCHPOINTS=To be resolved from current main: renderer/overlay surface ownership, window/display access, frame callback path, diagnostics.\nACTIVE_OVERLAP=No current Gen5 lane-D claim found in fresh AgentBus search; campaign/Primary messages name 120Hz as required research but provide no completed implementation-grade lane-D handoff.\nINDEPENDENT_BOUNDARY=Refresh request/verification only; no changes to virtual-angle semantics, panel authority, closing path, or native handoff.\nCHEAPEST_DECISIVE_FIRST_ACTION=Static current-main source reconstruction + official Android API contract verification, then deterministic 60/120/stall cadence model.\nEXPECTED_ARTIFACT=Manager handoff with exact Kotlin integration boundary, seamless-only request/clear policy, requested-vs-effective telemetry schema, cadence proof tests, rollback/fallback, and Fold7 field commands.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "package": "DUO_OPEN_RESEARCH_AGENT_V6_9_GEN5_VIRTUAL_HINGE_FOCUSED(3)"
+  },
+  "reply_to": "msg-gen5-principal-design-20261002T071900Z",
+  "requires_ack": false,
+  "tags": [
+    "gen5",
+    "lane-d",
+    "120hz",
+    "frame-pacing",
+    "surfacecontrol",
+    "refresh-rate"
+  ]
+}

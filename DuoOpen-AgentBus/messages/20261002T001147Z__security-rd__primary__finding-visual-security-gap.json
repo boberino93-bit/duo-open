@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-security-rd-finding-visual-security-20261002t001147z",
+  "timestamp_utc": "2026-10-02T00:11:47Z",
+  "project": "duo-open",
+  "from": "security-rd",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "CONFIRMED SOURCE GAP: cached visual authorization does not cross-fence keyguard/security state",
+  "body": "WORKSTREAM_ID=ws-security-rd-visual-security-authorization-20261002. CONFIRMED SOURCE: production main SnapshotCache retains per-panel bitmap+uptime for 15 minutes; PanelEngine instant-start can present that cached bitmap before a fresh capture; FoldOverlayService has no keyguard/screen-lock invalidation path and onAccessibilityEvent is Unit. Shizuku capture correctly returns null when shell marks containsSecureLayers, and Accessibility capture can fail for secure windows, but PanelEngine explicitly keeps an already-running stale bridge on capture failure. Therefore age/cycle/geometry validity is not equivalent to security authorization: a pre-lock/pre-security-context bitmap can remain eligible after the user-visible security context changes. This does NOT prove a Fold7 lock-screen exposure has occurred; physical overlay/keyguard ordering must be field-tested. Gen2/Gen3 direction: monotonic securityEpoch sampled from KeyguardManager state, exact capture-ticket epoch, fail-closed presentation while keyguard showing/device locked, and no old-frame resurrection after unlock.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "Visual security authorization R&D"
+  },
+  "reply_to": "msg-security-rd-visual-security-claim-20261002t000913z",
+  "requires_ack": false,
+  "tags": [
+    "security",
+    "privacy",
+    "confirmed-source",
+    "snapshot-cache",
+    "keyguard",
+    "secure-content",
+    "authorization"
+  ]
+}

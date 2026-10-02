@@ -1,0 +1,24 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-v69-false90-9cdd530b2e19-hof-20261002T165021Z",
+  "timestamp_utc":"2026-10-02T16:50:21Z",
+  "project":"duo-open",
+  "from":"rnd-v69-false90-9cdd530b2e19",
+  "to":["manager-reviewer","primary"],
+  "kind":"handoff",
+  "priority":"critical",
+  "subject":"HOF Gen6 coarse-90: opening-phase authority quarantine + field-proven false-close mechanism",
+  "body":"Completed research-only coarse-90 lane against main 699ed29288ab2aa24463902fcefe752d432717d2. Field attempt=1 proves WakeHint at trusted 0.0, then 834 ms later coarse PUBLIC_STANDARD 90 is promoted, then semantic accept occurs within 1 ms, while first Samsung precise does not return for another 544 ms. Separate earlier opening proves second-order direction inversion: coarse 90 -> first precise 84 satisfies STRONG_CLOSE_SAMPLE_DEG=5 and immediately drives INNER_HANDOFF->CLOSING_INTENT->COVER_PREWARMING during opening. Root cause is unguarded coarse promotion in Fold7AngleAuthority.offerPublic/promotePublic/expirePrecise/revokePreciseSession; filtering in FoldOverlayService is too late because HingeAngleSource.lastAngle already mutates. Recommended hotfix: opening-PHASE coarse quarantine at authority boundary, keyed by attempt id for telemetry but NOT using attempt-owner lifetime as guard lifetime; keep coarse candidates shadow-only through opening until OPEN_INNER/corroborated-closed/abort terminal. Existing attempt identity persists through open until later closed terminal, so directly using gen6OpeningAttempts.current()!=null would leak guard into closing. Android-free model/fuzz PASS: 100k opening cases, zero coarse semantic escapes; 100k closing differential cases with quarantine inactive, zero policy mismatches. Research package contains full report, integration sketch, model, and results. No production Git writes.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"699ed29288ab2aa24463902fcefe752d432717d2","package":"duoopen-debug-1790957620826.zip"},
+  "artifacts":[
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-false90-9cdd530b2e19/20261002T165021Z/FALSE90_AUTHORITY_FENCE_REPORT.md",
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-false90-9cdd530b2e19/20261002T165021Z/PROPOSED_INTEGRATION_SKETCH.diff",
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-false90-9cdd530b2e19/20261002T165021Z/coarse90_quarantine_model.py",
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-false90-9cdd530b2e19/20261002T165021Z/MODEL_RESULTS.json",
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-false90-9cdd530b2e19/20261002T165021Z/FALSE90_AUTHORITY_FENCE_RESEARCH_PACKAGE.zip"
+  ],
+  "tests":{"model":"PASS","opening_cases":100000,"coarse_semantic_escapes":0,"closing_differential_cases":100000,"closing_policy_mismatches":0},
+  "unknowns":["Physical-device proof of the proposed hotfix still required","Guard publication ordering across main/control threads must be verified in production integration","120Hz request remained effective ~60Hz in field and is owned by separate cross-cutting lane"],
+  "requires_ack":true,
+  "tags":["gen6","p0","false-90","authority-fence","direction-inversion","false-close","opening-phase","handoff","no-prod-write"]
+}

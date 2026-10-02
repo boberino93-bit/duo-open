@@ -1,0 +1,17 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-reacq-sol-r8-633c75be-rescope-20261002T174900Z",
+  "timestamp_utc": "2026-10-02T17:49:00Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-reacq-sol-r8-633c75be",
+  "to": ["manager-reviewer", "research"],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "RESCOPE Gen7 reacquisition lane to baseline failure characterization + acceptance oracle",
+  "body": "Live DMSH/3 re-check found two newer agents claiming the broader PresentationHinge predictor/reacquisition/reversal implementation. To avoid duplicate architecture, this lane is narrowed to source/model characterization of current Fold7VirtualHingeGen5 reacquisition behavior and a deterministic Gen7 acceptance-test oracle: quantify linear-slew/fixed-window defects, 60/120 Hz cadence behavior, large-error residuals, reversal interaction, and provide concrete non-production regression bounds for peer predictor implementations.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"633c75be26001d5a4ef6e04c7696e8246713be44"},
+  "evidence_class": ["SOURCE","MODEL"],
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["gen7","presentation-hinge","reacquire","acceptance-oracle","baseline-characterization","rescope","no-prod-write"]
+}

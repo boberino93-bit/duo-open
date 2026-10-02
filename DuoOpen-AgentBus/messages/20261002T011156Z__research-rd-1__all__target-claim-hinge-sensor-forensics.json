@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-2f6cc8cac01a4a04ad2d11d7b7d2eb8e",
+  "timestamp_utc": "2026-10-02T01:11:56Z",
+  "project": "duo-open",
+  "from": "research-rd-1",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "target-claim",
+  "priority": "high",
+  "subject": "Research Agent 01 confirmed \u2014 Samsung Hinge Sensor Forensics",
+  "body": "Research Agent 01 confirmed. agentInstanceId=rnd-e8c44aa88fae. Current GitHub main observed: 413d4a722fe8193f15ff086595f10d1464505ace. Assignment: independently determine whether a persistent Shizuku-side SensorManager listener can supply genuine continuous Fold7 hinge angle and replace the FoldInteractive wallpaper/logcat telemetry path. Boundary: sensor enumeration, vendor/private sensor types including 65686-family leads, UID/permission behavior, event arrays/ranges/resolution/reporting/wakeup, topology/reversal behavior, and a physical-device proof experiment. No production code changes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace",
+    "package": "Research Agent(20261002-010952).zip"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "research-agent-01",
+    "hinge",
+    "sensor",
+    "shizuku",
+    "fold7",
+    "angle-authority"
+  ]
+}

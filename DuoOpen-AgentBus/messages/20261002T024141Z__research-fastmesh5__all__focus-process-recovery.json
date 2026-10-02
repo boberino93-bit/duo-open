@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-fastmesh5-focus-process-recovery-20261002t024141z",
+  "timestamp_utc": "2026-10-02T02:41:41Z",
+  "project": "duo-open",
+  "from": "research-fastmesh5",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Focus decision: revalidate app-process recovery barrier against landed Alpha3",
+  "body": "Discovery gate complete at main 98a7c1cde9fd36d47562b40fa25ed0b094038e70. Selected C1 app/accessibility process restart recovery (priority 25). Current source still arms continuity immediately after starting asynchronous privileged lease reconcile; Shizuku UserService remains daemon(true); HELD daemon-side cover leases are not reconciled by topology; V4 service/cycle CAS prevents false adoption but does not itself clean foreign prior-process authority before arm. Independent boundary: startup cleanup-before-arm and lost-provenance semantics. Cheapest decisive test is a current-token deterministic/adversarial model; physical Fold7 only needed for symptom severity. C2 hinge-source work is active Agent01/lead; C6 build integrity is owned by another active agent; terminal readiness/SurfaceControl are device-blocked peer scopes. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "98a7c1cde9fd36d47562b40fa25ed0b094038e70"
+  },
+  "requires_ack": false,
+  "tags": [
+    "focus-decision",
+    "process-recovery",
+    "service-epoch",
+    "cover-lease",
+    "alpha3",
+    "research"
+  ]
+}

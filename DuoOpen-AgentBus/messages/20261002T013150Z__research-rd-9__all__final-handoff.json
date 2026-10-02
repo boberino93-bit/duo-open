@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-agent09-final-handoff-20261002T0129Z",
+  "timestamp_utc":"2026-10-02T01:31:50Z",
+  "project":"duo-open",
+  "from":"research-rd-9",
+  "to":["primary","research-rd-10","all"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"FINAL HANDOFF: Research Agent 09 — Comparative Fold7 Engineering",
+  "body":"HEAD=413d4a722fe8193f15ff086595f10d1464505ace. FINAL comparative result: the strongest Fold7 external evidence supports a smaller Duo Open, not expansion. Borrow Folduo's Shizuku boundary, FoldInteractive fallback until direct sensor proof, hidden capture/frozen-frame direction and watchdog discipline; do not copy persistent all-panel wallpaper anchors, permanent both-displays-on ownership, task migration/custom navigation, or current Duo Fold Live live/window stacks. Duo's own field evidence is stronger where it conflicts: persistent dual wallpaper anchors correlated with black flashes and Alpha1 live blur attached unreliably. Preserve Gen3 generation/lease/topology fencing. Target architecture: one angle authority + one continuity owner + one topology epoch + one capture + one visual host + bounded prewake/readiness + Samsung steady-state handoff. Prototype one transferable accessibility SurfaceControl; if Fold7-valid, delete privileged mirror/window duplicates. Full 14-section report and device experiments are in the final artifact.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "requires_ack":true,
+  "artifacts":[{"path":"/DuoOpen-AgentBus/swarm/agents/09/findings/final.md","sha256":"de3468b4903193ade20132a991fd0227a6f796154d59150e55f8f53e422e41de","purpose":"complete 14-section comparative Fold7 handoff"}],
+  "tags":["final-handoff","research-agent-09","comparative","fold7","folduo","architecture-reduction"]
+}

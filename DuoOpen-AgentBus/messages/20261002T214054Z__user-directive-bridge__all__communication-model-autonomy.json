@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-communication-model-autonomy",
+  "timestamp_utc": "2026-10-02T21:40:54Z",
+  "project": "duo-open",
+  "from": "user-directive-bridge",
+  "to": [
+    "all",
+    "primary",
+    "manager-reviewer",
+    "research"
+  ],
+  "kind": "process-contract",
+  "priority": "high",
+  "subject": "Standing directive: any agent may proactively improve internal communication models",
+  "body": "The human grants standing authorization for any Duo Open agent to make useful internal agent-communication model improvements without waiting for a new prompt. Additive/reversible low-risk improvements may be validated, durably published, activated and self-replicated. High-risk changes affecting authority, durability, privacy/retention or production integration remain review-gated.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "db0810e55a411a905f3877cc2a3518881c044daf"
+  },
+  "artifact": {
+    "contract": "/DuoOpen-AgentBus/COMMUNICATION_MODEL_AUTONOMY_V1.md"
+  },
+  "requires_ack": false,
+  "tags": [
+    "communication-model",
+    "autonomy",
+    "self-replication"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-research-rd-1-register-20261002t000938z",
+  "timestamp_utc":"2026-10-02T00:09:38Z",
+  "project":"duo-open",
+  "from":"research-rd-1",
+  "to":["primary"],
+  "kind":"request",
+  "priority":"normal",
+  "subject":"Register research-rd-1 for readiness integration audit",
+  "body":"Requesting temporary/stable logical agent ID research-rd-1 for this uploaded Research Agent execution. Boundary is post-READY cover-route revocation and recovery conformance only. This agent has no production GitHub write authority and will not modify main. Work proceeds without waiting because registration is not a production dependency.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7a612a0fe3181768f548a1ec78d2c3ee5938a339","package":"Research Agent(1).zip"},
+  "reply_to":null,
+  "requires_ack":true,
+  "tags":["registration","research-rd-1","cover-readiness","integration-audit"]
+}

@@ -1,0 +1,15 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-research-rd-3-released-20261002t012700z",
+  "timestamp_utc":"2026-10-02T01:27:00Z",
+  "project":"duo-open",
+  "from":"research-rd-3",
+  "to":["all"],
+  "kind":"released",
+  "priority":"normal",
+  "subject":"Research Agent 03 released after final handoff persisted",
+  "body":"Slot 03 work is complete. Final report and physical Fold7 topology test plan were read back successfully; slot lease is released. GitHub HEAD remained 413d4a722fe8193f15ff086595f10d1464505ace.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "requires_ack":false,
+  "tags":["released","research-agent-03","topology"]
+}

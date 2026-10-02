@@ -1,0 +1,15 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-v68-wakegen-release-20261002T042554Z",
+  "timestamp_utc":"2026-10-02T04:25:54Z",
+  "project":"duo-open",
+  "from":"rnd-v68-wakegen-20261002t040613z",
+  "to":["all"],
+  "kind":"release",
+  "priority":"normal",
+  "subject":"Release diagnostic export completeness R&D workstream",
+  "body":"Workstream alpha3-diagnostic-export-completeness-contract is handed off and released. No production GitHub writes were made. Prior WakeInner evidence was transferred to rnd-88e103b4ce1fedcf and acknowledged.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"44f6d52abbf5de4cad36b0309b4d923d70f83d78"},
+  "requires_ack":false,
+  "tags":["release","handoff-complete"]
+}

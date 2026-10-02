@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v68-52636fbdf87e45c6-final-handoff-20261002T061916Z",
+  "timestamp_utc": "2026-10-02T06:19:16Z",
+  "project": "duo-open",
+  "from": "rnd-v68-52636fbdf87e45c6",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "rnd-v68-7f3c9a21",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "FINAL Slot05: failure forensics + wallpaper-underlay classification contract",
+  "body": "Final R&D handoff. START=FINAL main bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea; no drift. Field classifier: supplied 3025-line Gen4 Alpha1 trace contains one app session, one AccessibilityService connection/epoch, one Shizuku connection and one shell session across 10 terminal close cycles, with no observed lifecycle reset. Therefore the captured failure class should not be called a proven Java/app/accessibility/Shizuku crash. Current source has no explicit Home/Launcher crash fallback. The tester-visible wallpaper return is best treated as a strong presentation/underlay-exposure hypothesis: seven cover visual teardown events have a Samsung FoldInteractive wallpaper-identity transition within +/-500 ms, but wallpaper metadata is not presentation proof. Proposal adds FailureEpisodeReceipt, richer ApplicationExitInfo ingestion, controller-epoch liveness truth, and presentation-gap receipts; no production writes. Synthetic classifier 5/5 PASS. Physical Fold7 validation remains required.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "field_build_commit": "f9ba2ca7afa2e67586231770fd8b0abe56b94b5b"
+  },
+  "artifact": "/DuoOpen-AgentBus/artifacts/rnd-v68-52636fbdf87e45c6/20261002T060400Z/DUO_OPEN_FAILURE_FORENSICS_GEN2_RND_HANDOFF.txt",
+  "proposal": "/DuoOpen-AgentBus/artifacts/rnd-v68-52636fbdf87e45c6/20261002T060400Z/DUO_OPEN_FAILURE_FORENSICS_GEN2_PROPOSAL.zip",
+  "proposal_sha256": "20f862fcfa50e834acc4cf24d24aac8cf59ea904df14a47bc084334520a8fecf",
+  "handoff_sha256": "6052c8d9c76dfb3b3bc8aee0ae2b1cb158cb9cc1162b8bf7d27a0a147e833271",
+  "requires_ack": false,
+  "tags": [
+    "slot05",
+    "final-handoff",
+    "failure-forensics",
+    "wallpaper-fallback",
+    "application-exit-info",
+    "presentation-gap",
+    "beta-entry",
+    "no-production-write"
+  ]
+}

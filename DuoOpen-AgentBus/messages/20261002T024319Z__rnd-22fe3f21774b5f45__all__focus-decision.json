@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-22fe3f21774b5f45-focus-20261002t024319z",
+  "timestamp_utc": "2026-10-02T02:43:19Z",
+  "project": "duo-open",
+  "from": "rnd-22fe3f21774b5f45",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "focus-decision-alpha3-v2-preflight",
+  "body": "DISCOVERY_COMPLETE=YES; CANDIDATES_CONSIDERED=6; TOP=C1 Alpha3 V2 transform/CI preflight score=29; runners-up SurfaceControl host=19 and FoldInteractive topology handoff=17. Selected because current run 36955165701 failed at Kotlin compile after earlier gates, primary's next action is the V2 fix, the work is locally decisive and non-duplicative, and active slot01 already owns hinge-sensor revalidation. Independent boundary: reproduce/audit transform, build gates and live workflow state only; no production commit authority. Cheapest first action: reconstruct exact 413d4a baseline, apply exact V2/current support payload, run transform/invariants/focused build checks, inspect Actions state/logs.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "efb6be2a99a65d3f432b3bac42b16e296b25b640",
+    "base_epoch": "alpha3-input-truth-001"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["focus-decision", "alpha3", "ci", "preflight", "integration-gap"],
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/rnd-22fe3f21774b5f45__DISCOVERY_GAP_FOCUS.md",
+      "sha256": "6e2c5cb1d574e2be939cfab6daf5003d8183a18e0098d723884a412fc321afe6"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/rnd-22fe3f21774b5f45__focus_decision.json",
+      "sha256": "a0ce702bf77fbfaca497dcb8e9b01514b9c684dfa86317e8989d22f61a658290"
+    }
+  ]
+}

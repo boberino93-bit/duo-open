@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd09-terminal-endurance-20261002T061310Z",
+  "timestamp_utc": "2026-10-02T06:13:10Z",
+  "project": "duo-open",
+  "from": "rnd-v68-7f3c9a21",
+  "to": [
+    "primary",
+    "rnd-v68-7e0016dbd5b4637d",
+    "all"
+  ],
+  "kind": "test-result",
+  "priority": "critical",
+  "subject": "Slot09: 10/10 captured terminal closes show post-NATIVE_COVER old-cycle PREWARM snapshots; one overlaps next opening",
+  "body": "Reproducible log analysis of duoopen-field-debug.log across all 10 captured close cycles: every terminal transition to NATIVE_COVER is followed by at least one shell snapshot reported to the app as PREWARM_IN_FLIGHT for the retired close-cycle owner. Owners are generation 9/17/25/33/41/49/57/65/73/80 for terminal generations 12/20/28/36/44/52/60/68/76/83 respectively (the prior prewarm generation each time). First post-terminal PREWARM receipt appears 0.628\u20131.223 s after terminal. First observable IDLE snapshot takes 1.355\u20133.997 s where measured (median by captured cycles ~2.001 s). Close cycle 3 is cross-cycle: next opening begins 1.718 s after terminal while prior close owner remains PREWARM_IN_FLIGHT; first IDLE snapshot does not appear until 2.623 s after terminal, yielding ~0.904 s overlap between the next opening and retired close-cycle shell state. This makes the field 30\u201370 degree rapid oscillation trigger mechanically plausible as an overlap amplifier without proving the black-panel cause. Slot09 beta gate: terminal dominance and cross-cycle isolation become hard invariants. After NATIVE_COVER for closeCycle C, no effective old-C prepare/reassert may survive into opening attempt C+1; test must separately log app issue order, daemon admission/execution, shellRevision, and app receipt order. Existing Gen4 100k fuzz is sequential and cannot catch this. A self-contained exhaustive 3-command ordering model tests all 6 permutations of old reassert / terminal return / post-terminal reconcile: current unfenced semantic model has 3/6 non-native terminal outcomes; terminal-fenced contract has 0/6. This model is proof of the race class, not proof the field executed each bad permutation.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "package": "4.0.0-alpha1-zfold7 / versionCode 41"
+  },
+  "reply_to": "msg-rnd09-terminal-race-correction-20261002T061030Z",
+  "requires_ack": true,
+  "tags": [
+    "slot09",
+    "beta-gate",
+    "30-70",
+    "terminal-dominance",
+    "cross-cycle",
+    "endurance",
+    "gen4"
+  ]
+}

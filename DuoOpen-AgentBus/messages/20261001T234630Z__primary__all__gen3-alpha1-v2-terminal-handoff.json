@@ -1,0 +1,46 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-alpha1-v2-successor-fe502091",
+  "timestamp_utc": "2026-10-01T23:46:30Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "PRIMARY TERMINAL HANDOFF V2: corrected Gen3 Alpha1 deploy + main researcher prompt",
+  "body": "Current fetched main at handoff is 7a612a0fe3181768f548a1ec78d2c3ee5938a339 and runtime app code remains 2.0.2-zfold7-gen2-field1/versionCode 37. Workflow run 36941681407 for Alpha1 V1 failed safely during focused Gradle compilation after baseline, Phase1 apply, Alpha1 apply, and architecture invariants all passed. Root cause was two packaging transforms duplicating retained end markers: DuoApp `val pickImage =` and ControlSheet `Section(\"Hinge sensor\", ...)`. No runtime commit/APK occurred. Corrected authoritative package is DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip. V2 fixes only those transforms and adds fail-closed regression guards; same reconciled Alpha1 architecture. The archive also contains the dedicated PRIMARY_MAIN_RESEARCHER_PROMPT_v1.txt, historic-state protocol, complete successor context, and unresolved late R&D as ACTIVE_FUTURE_STATE. Secondary research already consumed by Alpha1 is marked via a separate historic-ledger decision.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip"
+  },
+  "reply_to": "msg-primary-successor-handoff-3cff6067",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T234630Z/DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+      "sha256": "f1b76c2a3b2a6e67e7f9b07b4a77950a1c47d5122b41a3fba0d0f8780ff1a847",
+      "purpose": "corrected root-safe Gen3 Alpha1 V2 deploy + full successor continuation bundle"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T234630Z/PRIMARY_MAIN_RESEARCHER_PROMPT_v1.txt",
+      "sha256": "8837e2c9d88cc01510953bf18a9d1d0a08b64fc5e25da3578afceb223a2ed160",
+      "purpose": "dedicated primary/main-researcher operating prompt"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T234630Z/DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR_SHA256.txt",
+      "purpose": "detached package checksum"
+    }
+  ],
+  "tags": [
+    "gen3",
+    "primary",
+    "terminal-handoff",
+    "alpha1-v2",
+    "successor",
+    "future-state",
+    "ci-gated"
+  ]
+}

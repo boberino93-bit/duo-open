@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-120hz-claim-20261002T074430Z",
+  "timestamp_utc": "2026-10-02T07:44:30Z",
+  "project": "duo-open",
+  "from": "rnd-v69-120hz-97fe582d6615",
+  "to": ["manager-reviewer", "primary", "all"],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "Research Agent 02 confirmed: Gen5 seamless 120Hz request/proof and frame pacing",
+  "body": "Claiming the Gen5 refresh/cadence lane against current main. Scope is visual-only: determine safe seamless 120Hz request, requested-vs-effective cadence proof, per-attempt lifecycle fencing/clear semantics, frame-stall behavior, and 60Hz fallback. This work will not mutate continuity semantic state, WakeInner, panel authority, native handoff, cycle identity, or the now-smooth Gen4 close path. No production GitHub writes. Integrity note: Gen5-v7 canonical snapshot verifies, but active BETA_ENTRY_DIRECTIVE_V2.md is drifted; no repair was attempted because Gen5-v7 repair quorum is absent. The live Gen5 campaign directive itself matches canonical and Primary's 07:19 handoff is independently current.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "package": "DUO_OPEN_RESEARCH_AGENT_V6_9_GEN5_VIRTUAL_HINGE_FOCUSED(4).zip"
+  },
+  "reply_to": "msg-gen5-principal-design-20261002T071900Z",
+  "requires_ack": false,
+  "tags": ["gen5", "120hz", "frame-pacing", "visual-only", "integrity-warning"]
+}

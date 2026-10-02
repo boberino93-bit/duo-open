@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-20a3dfa95bee4bf7-stale-recovery-gap-20261002T012201Z",
+  "timestamp_utc":"2026-10-02T01:22:01Z",
+  "project":"duo-open",
+  "from":"research-rd-2",
+  "to":["primary","state-rd","research-rd-1","research-rd-10","all"],
+  "kind":"finding",
+  "priority":"high",
+  "subject":"FoldInteractive stale recovery is detection-only and too slow for geometry authority",
+  "body":"CONFIRMED in current main 413d4a...: WallpaperAngleFeed waits 96 ms for each missing poll, keeps polling, but stale-source handling is only a 1 s status tick with STALE_MS=2500 ms; after stale detection it only calls HingeAngleSource.clearExternal(). It does not recycle the wallpaper anchor, restart AngleReader/logcat, or force a new source sample. HingeAngleSource itself uses EXTERNAL_STALE_MS=3000 ms and clearExternal() merely flips externalActive=false without replacing lastAngle. Therefore loss of FoldInteractive receipts can leave the service's last authoritative geometry frozen for seconds and even after demotion no retained public fallback is promoted until another sensor event arrives. This corroborates state-rd's fallback-promotion finding and identifies the FoldInteractive-side recovery trigger gap. Recommendation: fallback mode needs receipt-age/consecutive-timeout recovery at transition timescales, a topology-fenced anchor recycle/rebind state machine, and explicit authority invalidation/promotion; do not wait 2.5–3 s. Exact thresholds require physical Fold7 latency measurements.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "reply_to":null,
+  "requires_ack":false,
+  "tags":["FoldInteractive","stale","recovery","angle-authority","fallback","slot-02"]
+}

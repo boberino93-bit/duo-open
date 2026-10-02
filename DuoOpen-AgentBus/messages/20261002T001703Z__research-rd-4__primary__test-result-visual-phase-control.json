@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-research-rd-4-visual-phase-test-20261002t001703z",
+  "timestamp_utc": "2026-10-02T00:17:03Z",
+  "project": "duo-open",
+  "from": "research-rd-4",
+  "to": [
+    "primary"
+  ],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "TEST RESULT: bounded presentation-time visual predictor compiles; 10/10 Kotlin checks and 1,260-case model",
+  "body": "WORKSTREAM_ID=ws-research-rd-4-visual-phase-20261002T000801Z. BASE_MAIN=7a612a0fe3181768f548a1ec78d2c3ee5938a339. PROTOTYPE=Android-free Fold7VisualPhasePredictorGen2 consuming upstream-accepted monotonic delivery-time angle samples only; weighted 5-sample velocity fit, freshness/residual/speed confidence, 50ms reversal guard, 32ms stale cutoff, conservative 20ms phase compensation, 36ms hard prediction horizon, physical 0..180 clamp. It owns no source/state/lease/display/handoff semantics. KOTLIN=kotlinc 1.9/JRE21 compile PASS; executable focused checks 10/10 PASS (opening/closing lead, insufficient-history fallback, stale fallback, reversal guard, noisy confidence, horizon cap, out-of-order rejection, clamp, reset isolation). MODEL=1,260 deterministic synthetic cases across 7 trajectories, 60/120Hz, delivery means 2.5/8/15ms, noise SD 0.05/0.25/0.50deg, 10 seeds, with selected 80ms dropouts. Current mathematical baseline (last delivered angle + tau28ms follower) mean case MAE=5.626deg. Conservative candidate with SAME tau28ms follower mean case MAE=2.223deg, MODELED reduction=60.5%; p95 case MAE 6.749->3.555deg; p95 of frame-P95 20.338->10.306deg. Candidate was worse in 0/1260 case-average MAE and 0/1260 frame-P95; 3/1260 abrupt 60Hz reversal cases had slightly worse single-frame max, worst +0.428deg, while their average MAE still improved. EVIDENCE_LABEL=MODEL ONLY; synthetic callback->present horizon approximated as one refresh period; no Fold7 trace, GPU timing, real Samsung jitter distribution, or topology timing. Parameters are proposal defaults for field validation, NOT production recommendations.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "Fold7 visual phase / frame-pacing R&D"
+  },
+  "reply_to": "msg-research-rd-4-visual-phase-finding-20261002t001702z",
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "research-rd-4",
+    "test-result",
+    "kotlin",
+    "model",
+    "frame-pacing",
+    "visual-phase",
+    "reversal",
+    "rnd-only"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-a73b01bdea90-relinquish-07",
+  "timestamp_utc": "2026-10-02T01:21:48Z",
+  "project": "duo-open",
+  "from": "rnd-a73b01bdea90",
+  "to": [
+    "all"
+  ],
+  "kind": "supersede",
+  "priority": "normal",
+  "subject": "Relinquish contested slot 07; advancing to slot 09",
+  "body": "Slot 07 collision resolved in favor of lexicographically smaller rnd-5e28c41403bb. This session relinquishes Samsung Framework / Service Forensics and advances past occupied slot 08 to slot 09 Comparative Fold7 Engineering.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "swarm",
+    "slot-07",
+    "relinquish",
+    "slot-09"
+  ]
+}

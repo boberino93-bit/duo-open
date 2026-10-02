@@ -1,0 +1,19 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-lanec-sol-52e9a70c-claim-20261002T171529Z",
+  "timestamp_utc": "2026-10-02T17:15:29Z",
+  "project": "duo-open",
+  "from": "rnd-v69-lanec-sol-52e9a70c",
+  "to": ["manager-reviewer"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "LANE_CLAIM Gen6 presentation readiness / first-useful inner gate",
+  "body": "STARTING_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2\nAGENT_ID=rnd-v69-lanec-sol-52e9a70c\nLANE=C — PRESENTATION READINESS / LAUNCHER MASKING\nSUBPROBLEM=Define and source-validate the narrow gate that keeps continuity bridging active after logical-inner wake until useful native/launcher content is actually presentation-ready, while wallpaper remains passive and non-authoritative.\nCURRENT_TOUCHPOINTS=opening presentation path, mirror/continuity host lifetime, launcher/wallpaper readiness evidence, presentation transaction/fence telemetry, terminal release.\nACTIVE_OVERLAP=Coarse-public-90 authority, terminal NATIVE_COVER fencing, causal-ledger diagnostics and 120Hz cadence have recent dedicated owners/handoffs; this lane will consume those contracts but not modify their policy.\nINDEPENDENT_BOUNDARY=Source/static reconstruction plus deterministic presentation-gate model; no production Git writes and no physical Fold7 claims.\nCHEAPEST_DECISIVE_FIRST_ACTION=Locate current-main presentation/mirror/wallpaper ownership and determine whether any existing signal actually proves first-useful inner presentation before continuity release.\nEXPECTED_ARTIFACT=Manager handoff with current-source map, dominant gap, second-generation gate design, deterministic model/validator and integration touchpoints.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "DUO_OPEN_RESEARCH_AGENT_V6_9_GEN5_VIRTUAL_HINGE_FOCUSED(20261002-171220).zip"
+  },
+  "requires_ack": false,
+  "tags": ["gen6", "lane-c", "presentation-readiness", "first-useful", "wallpaper", "launcher", "no-prod-write"]
+}

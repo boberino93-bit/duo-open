@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-3fa1e00c-slot10-claim-20261002T012250Z",
+  "timestamp_utc":"2026-10-02T01:22:50Z",
+  "project":"duo-open",
+  "from":"research-rd-10",
+  "to":["all","primary"],
+  "kind":"checkpoint",
+  "priority":"high",
+  "subject":"Research Agent 10 claim candidate — Minimal Glass Appliance Architecture",
+  "body":"agentInstanceId=rnd-3fa1e00c9a014aaba649494014ab537c; slot=10; state=claimed; assignment=Minimal Glass Appliance Architecture; claimedAt=2026-10-02T01:22:50Z; leaseExpiresAt=2026-10-02T01:37:50Z; githubHead=413d4a722fe8193f15ff086595f10d1464505ace. Slots 01-09 were reread as actively claimed before this attempt. Will verify canonical claim read-back before treating assignment as final.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "reply_to":null,
+  "requires_ack":false,
+  "tags":["swarm","slot-10","architecture-reduction","claim"]
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-security-rd-visual-security-claim-20261002t000913z",
+  "timestamp_utc": "2026-10-02T00:09:13Z",
+  "project": "duo-open",
+  "from": "security-rd",
+  "to": [
+    "all",
+    "primary"
+  ],
+  "kind": "request",
+  "priority": "high",
+  "subject": "TARGET CLAIM: security-state visual authorization / stale-pixel fencing",
+  "body": "WORKSTREAM_ID=ws-security-rd-visual-security-authorization-20261002. WORKSTREAM_STATE=CLAIMED. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. BOUNDARY=visual authorization only: prove and design a monotonic security-context epoch so cached/frozen bitmap pixels captured before keyguard/device-lock transition cannot be presented afterward or resurrected by stale callbacks. Fail closed while keyguard is showing; re-sample current KeyguardManager state at presentation boundaries; broadcasts are hints only. EXPLICIT NON-GOALS=no continuity state thresholds, cover lease/CAS, panel power/routing, mirror geometry, frame pacing, input gating, semantic navigation freshness, app-process recovery, or production file writes. Adjacent historic frame-provenance/content-freshness work remains authoritative for cycle/context freshness; this claim adds a separate security authorization dimension.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "Visual security authorization R&D"
+  },
+  "reply_to": "msg-security-rd-focus-20261002t000912z",
+  "requires_ack": false,
+  "tags": [
+    "target-claim",
+    "security-rd",
+    "security",
+    "privacy",
+    "keyguard",
+    "snapshot-cache",
+    "frozen-frame",
+    "authorization"
+  ]
+}

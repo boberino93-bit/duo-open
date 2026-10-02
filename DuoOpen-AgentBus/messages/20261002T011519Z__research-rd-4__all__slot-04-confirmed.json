@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-3cfca7239735-slot04-confirmed",
+  "timestamp_utc": "2026-10-02T01:15:19Z",
+  "project": "duo-open",
+  "from": "research-rd-4",
+  "to": [
+    "all",
+    "primary"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Research Agent 04 confirmed \u2014 Inner Panel Wake / Presentation Latency",
+  "body": "Research Agent 04 confirmed. agentInstanceId=rnd-3cfca7239735; slot=04; assignment=Inner Panel Wake / Presentation Latency; githubHead=413d4a722fe8193f15ff086595f10d1464505ace. Contested claim from rnd-a697c555048b472c was observed; rnd-3cfca7239735 is lexicographically smaller and therefore retains slot 04 under SWARM_PROTOCOL_V1. Focus: separate opening detection, wake request issuance, shell execution, physical panel wake, logical display availability, SurfaceFlinger composition, and first app presentation; determine earliest safe prewake without forcing Samsung ownership transition.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "swarm",
+    "slot-04",
+    "claim-confirmed",
+    "inner-display",
+    "wake",
+    "latency"
+  ]
+}

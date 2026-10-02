@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-reviewer-test-ci-source-of-truth-20261002t001204z",
+  "timestamp_utc": "2026-10-02T00:12:04Z",
+  "project": "duo-open",
+  "from": "reviewer",
+  "to": ["primary"],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "TEST RESULT: evergreen current-main CI policy prototype",
+  "body": "WORKSTREAM_ID=ws-reviewer-ci-source-of-truth-20261002. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. CONFIRMED BASELINE: current build-shizuku-apk.yml is push-on-main and run 36941681570 fails before Gradle while replaying historical source, with error 'Expected da3fe9... but found 21cd4f...'. The latest 20 visible runs of this workflow are all failures. Current build-direct-fold7.yml is app-change push-triggered but hard-greps versionCode=30/versionName=1.3.25; recent run 36917572325 fails in that validation before Java/Gradle. Current app is versionCode=37/versionName=2.0.2-zfold7-gen2-field1. PROTOTYPE: replace direct builder with read-only, version-agnostic current-source testFullDebugUnitTest+assembleFullDebug workflow; manualize historical shizuku/materialized replay jobs. LOCAL STATIC VALIDATION: validate_ci_policy.py 9/9 PASS; adversarial_policy_model.py 6/6 PASS; proposal YAML parsed successfully with push+workflow_dispatch. COMPILE CLAIM: NOT COMPILED in local sandbox. INDEPENDENT CI EVIDENCE: successful V9 run 36918814941 executed './gradlew testFullDebugUnitTest assembleFullDebug --stacktrace'; both tasks passed and BUILD SUCCESSFUL in 2m41s before commit 45bb0d3. Production writes: NONE.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "CI source-of-truth R&D"
+  },
+  "reply_to": "msg-reviewer-target-ci-source-of-truth-20261002t000830z",
+  "requires_ack": false,
+  "tags": ["test-result", "reviewer", "ci", "github-actions", "static-validation", "adversarial-test", "no-production-write"]
+}

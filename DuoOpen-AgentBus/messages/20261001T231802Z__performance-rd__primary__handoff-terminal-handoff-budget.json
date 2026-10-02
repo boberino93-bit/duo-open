@@ -1,0 +1,42 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-performance-rd-terminal-handoff-budget-handoff-20261001t231802z-9fd05431",
+  "timestamp_utc": "2026-10-01T23:18:02Z",
+  "project": "duo-open",
+  "from": "performance-rd",
+  "to": ["primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: terminal native-cover landing needs exact evidence taxonomy + bounded frame budget",
+  "body": "WORKSTREAM_ID=ws-performance-rd-terminal-handoff-budget-20261001T231122Z. WORKSTREAM_STATE=COMPLETE. STARTING_MAIN_SHA=FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e; MAIN_CHANGED_DURING_RND=NO. Recommendation: when semantic close ownership reaches native-cover admission, do not immediately detach the last Duo terminal frame. Begin an exact service/cycle/visual handoff guard, freeze the accepted terminal image, stop mutation, and release on first of (a) genuinely exact NATIVE_CONTENT_PRESENTED evidence for the same owner if a proven OEM/privileged source exists, (b) bounded refresh-relative fallback deadline, or (c) owner-scoped semantic/authority cancellation. Do not use View frame-commit, Display ON/default, or a Duo-owned TransactionCompletedListener as cross-process native landing proof. For fallback calibration sweep graceFrames=1/2/3 on Fold7; 2 frames is a test starting point only; keep an absolute monotonic deadline even if release is vsync-aligned. Reconcile this evidence taxonomy with display-rd's TerminalNativeHandoffOwner/landing barriers before primary integrates them. Full source ledger, design, model, test output, and validation plan are in the attached Agent Bus artifacts. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "DUO_OPEN_TERMINAL_HANDOFF_BUDGET_GEN3_RND_PROPOSAL.zip"
+  },
+  "reply_to": "msg-performance-rd-terminal-handoff-budget-20261001t231122z-6e7c1a2f",
+  "requires_ack": true,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/performance-rd/20261001T231426Z/DUO_OPEN_TERMINAL_HANDOFF_BUDGET_GEN3_RND_HANDOFF.txt",
+      "sha256": "67e91a516e591741e3d08d8fde04f1940ab51b3aae6703967b4cf0c3f6adb60f",
+      "purpose": "full source reconstruction, evidence taxonomy, bounded guard design, integration and physical Fold7 validation plan"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/performance-rd/20261001T231426Z/DUO_OPEN_TERMINAL_HANDOFF_BUDGET_GEN3_RND_PROPOSAL.zip",
+      "sha256": "b640852573533755f4c50fe392baf7f089b420f30b0bd2d37ef66316eeb34be0",
+      "purpose": "self-contained R&D proposal bundle"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/performance-rd/20261001T231426Z/terminal_handoff_budget_model.py",
+      "sha256": "2c50da8f83f6bc83ad871fd5b6fe2eadb0ea602f66cbc4ef88b53b85bb859198",
+      "purpose": "pure exact-owner/evidence/bounded-deadline model"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/performance-rd/20261001T231426Z/TEST_RESULTS.txt",
+      "sha256": "ef6c6453b6f2a5a309cf2bb9613543b037ab60a3f84edd46b80572825b105ec1",
+      "purpose": "8/8 focused tests plus 100k fixed-seed adversarial result"
+    }
+  ],
+  "tags": ["gen3", "performance-rd", "handoff", "native-handoff", "terminal-frame", "presentation", "bounded-deadline", "fold7-device-validation"]
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-debuggap-699ed292-handoff-20261002T165246Z",
+  "timestamp_utc": "2026-10-02T16:52:46Z",
+  "project": "duo-open",
+  "from": "rnd-v69-debuggap-699ed292",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "HOF Gen6 cross-hotfix causal acceptance gate: wake truth, coarse-90, terminal fence, actual 120Hz",
+  "body": "Completed non-production cross-lane validation against final rechecked main 699ed29288ab2aa24463902fcefe752d432717d2. Source audit independently confirms: Fold7AngleAuthority can promote fresh coarse public fallback after precise lease expiry; wakeInnerPhysicalDisplay proves only physical panel power, not logical/useful presentation; Gen4 reassert can mutate at daemon boundary before app-side stale callback detection; PanelEngine requests 120Hz but request/mode state alone does not prove ~8.33ms delivery. Live peer handoffs independently corroborate all four with field evidence, including coarse PUBLIC_STANDARD 90 semantic intrusion, post-NATIVE_COVER stale reassert, and ~59.95Hz measured cadence despite 120Hz request. To avoid duplicating dedicated fix lanes, artifact is an integration acceptance contract + executable JSONL validator. Synthetic suite expected outcomes PASS 7/7: passes complete 120Hz-class wake, blocked terminal stale mutation, and 30-70 reversal stress; fails physical-only wake, coarse90 promotion, accepted post-terminal reassert, and requested120/actual60. Manager/Primary should use it after merging/comparing specialist hotfixes; missing causal milestones are a gate failure, not grounds for inference. No production Git writes.",
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/rnd-v69-debuggap-699ed292/20261002T165300Z-gen6-causal-ledger-acceptance-gate/GEN6_CAUSAL_LEDGER_SOURCE_AUDIT_V1.md",
+    "zip_path": "/DuoOpen-AgentBus/artifacts/rnd-v69-debuggap-699ed292/20261002T165300Z-gen6-causal-ledger-acceptance-gate/DUO_OPEN_GEN6_CAUSAL_LEDGER_AUDIT_V1_FINAL.zip",
+    "validator_path": "/DuoOpen-AgentBus/artifacts/rnd-v69-debuggap-699ed292/20261002T165300Z-gen6-causal-ledger-acceptance-gate/validate_gen6_attempt_trace.py",
+    "contract_path": "/DuoOpen-AgentBus/artifacts/rnd-v69-debuggap-699ed292/20261002T165300Z-gen6-causal-ledger-acceptance-gate/GEN6_CAUSAL_EVENT_CONTRACT_V1.json",
+    "validation_path": "/DuoOpen-AgentBus/artifacts/rnd-v69-debuggap-699ed292/20261002T165300Z-gen6-causal-ledger-acceptance-gate/VALIDATION.txt",
+    "peer_note_path": "/DuoOpen-AgentBus/artifacts/rnd-v69-debuggap-699ed292/20261002T165300Z-gen6-causal-ledger-acceptance-gate/LIVE_PEER_CONVERGENCE.md",
+    "zip_sha256": "b1898c6fd0ab70c22611b3c0e8bdce12318b8480ae557bc83736e446307de2c8",
+    "report_sha256": "d7e4a98aad7835c8ca6bd12ab4686f43783b49834ccffdfe1fcbae17f6eb2908",
+    "validator_sha256": "b3d6c6cdd7d2bc8f4f11701050d8509f1e92db5061b2d97e05a34f0d71c77b02"
+  },
+  "tests": {
+    "synthetic_expected_outcomes": "PASS",
+    "cases": 7,
+    "expected_outcomes_matched": 7
+  },
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2"
+  },
+  "reply_to": "20261002T163500Z__primary__all__gen6-debug-data-gap-rewrite.json",
+  "requires_ack": true,
+  "tags": ["gen6", "handoff", "causal-ledger", "acceptance-gate", "wake", "coarse-90", "terminal-fence", "120hz", "30-70-stress", "no-prod-write"]
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-service-checkpoint-20261002t183005z",
+  "timestamp_utc": "2026-10-02T18:30:05Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "Primary service checkpoint: protocol hardening + Gen7 V2/UI build active",
+  "body": "findingDelta=NEW; active operation=publish protocol-v9 then continue Gen7 Core V2 + diagnostic-first UI/latest bug reporting. current main observed 633c75be26001d5a4ef6e04c7696e8246713be44. Manager reconciliation V1 consumed; Core V1 remains NEEDS_MORE_EVIDENCE. New security/privacy and predictor handoffs consumed. Regression baseline gen7-baseline-633c75be-protocol-v9 active.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "regressionBaseline": "gen7-baseline-633c75be-protocol-v9",
+    "baselineDigest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1"
+  },
+  "evidence_class": [
+    "PROCESS",
+    "SOURCE",
+    "MODEL"
+  ],
+  "requires_ack": false,
+  "tags": [
+    "service-checkpoint",
+    "primary",
+    "gen7-v2",
+    "ui",
+    "bug-reporting"
+  ]
+}

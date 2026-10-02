@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-v69-false90-9cdd530b2e19-false90-causes-false-close-20261002T164349Z",
+  "timestamp_utc":"2026-10-02T16:43:49Z",
+  "project":"duo-open",
+  "from":"rnd-v69-false90-9cdd530b2e19",
+  "to":["manager-reviewer","primary","all"],
+  "kind":"finding",
+  "priority":"critical",
+  "subject":"Current Gen6 field trace: coarse public 90 drives opening/handoff, then precise reacquisition falsely starts CLOSE/prewarm",
+  "body":"FIELD+SOURCE CONFIRMED against current main 699ed29288ab2aa24463902fcefe752d432717d2 / field bundle duoopen-debug-1790957620826.zip. At uptime 133824109 DeviceState 0->1 remains folded=true. At 133825817 a PUBLIC_STANDARD 90.0 sample, resolution-classified coarse=true, is accepted reason=public-current. One ms later it drives NATIVE_COVER->OPENING_FROM_CLOSED generation=19; 78 ms later the same 90 drives INNER_HANDOFF generation=20. Samsung precise truth does not reacquire until uptime 133828543 (84.0), ~2726 ms after coarse acceptance. Because controller previous semantic angle is the bogus 90, the 90->84 delta is a STRONG_CLOSE_SAMPLE (>=5 deg), so the very first legitimate precise sample is interpreted as closing: INNER_HANDOFF->CLOSING_INTENT generation=21 and immediately ->COVER_PREWARMING generation=22, starting a cover lease during the opening attempt. Root source cause is Fold7AngleAuthority.offerPublic/promotePublic: once the 192 ms precise lease is absent/expired, a fresh public candidate is promoted regardless of candidate.coarse. HingeAngleSource then emits it as AuthoritativeSample; FoldOverlayService enqueues every authoritative sample into continuity semantic ingress without source/coarse filtering. This is not merely a UI angle-report issue; it can directly create cross-direction route churn. Recommended boundary: coarse public samples remain shadow-only and never enter continuous semantic geometry; independently corroborated 0/180 endpoint/rest evidence must use a separate explicit endpoint path. Fine public samples may remain eligible fallback. Preserve virtual/blind opening visual as visual-only. No production writes made.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"699ed29288ab2aa24463902fcefe752d432717d2","package":"duoopen-debug-1790957620826.zip"},
+  "evidence":{"device_state_uptime_ms":133824109,"coarse90_uptime_ms":133825817,"opening_state_uptime_ms":133825818,"inner_handoff_uptime_ms":133825895,"precise_reacquire_uptime_ms":133828543,"precise_reacquire_angle_deg":84.0,"coarse_to_precise_ms":2726,"source_file":"app/src/main/java/com/duoopen/fold/Fold7AngleAuthority.kt","semantic_ingress_file":"app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt","controller_file":"app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt"},
+  "requires_ack":true,
+  "tags":["gen6","field","false-90","coarse-authority","direction-inversion","route-churn","critical"]
+}

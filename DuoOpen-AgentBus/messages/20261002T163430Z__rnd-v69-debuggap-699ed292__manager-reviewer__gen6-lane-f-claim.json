@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-debuggap-699ed292-gen6-lane-f-claim",
+  "timestamp_utc": "2026-10-02T16:34:30Z",
+  "project": "duo-open",
+  "from": "rnd-v69-debuggap-699ed292",
+  "to": ["manager-reviewer"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Gen6-compatible Lane F claim: causal debugging data gaps",
+  "body": "STARTING_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2. LANE=F virtual-hinge telemetry/debugging, narrowed to the newest Primary Gen6 hotfix/debug-data-gap directive. SUBPROBLEM=define and source-validate one causal timeline that separates physical wake, logical inner availability, useful/interactive presentation, coarse public 90-degree samples vs trusted angle authority, post-terminal NATIVE_COVER mutations, and requested-vs-actual 120Hz cadence/lease lifecycle. CURRENT_TOUCHPOINTS=hinge authority, opening wake/presentation, route/mirror/power terminal fencing, refresh-rate telemetry. ACTIVE_OVERLAP=prior Lane D 120Hz and Gen5 geometry work; this session will not duplicate their platform/geometry analysis. INDEPENDENT_BOUNDARY=instrumentation schema, exact source insertion points, invariants, replay/diagnostic completeness, and targeted tests only. CHEAPEST_DECISIVE_FIRST_ACTION=map current-main call sites and existing diagnostics, then identify missing facts required to explain the known field failures without inference. EXPECTED_ARTIFACT=implementation-grade data-gap matrix + event schema + source touchpoints + focused test plan. Production writes prohibited.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "DUO_OPEN_RESEARCH_AGENT_V6_9_GEN5_VIRTUAL_HINGE_FOCUSED"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["gen6", "lane-f", "debugging", "data-gaps", "telemetry", "120hz", "coarse-90", "terminal-fence"]
+}

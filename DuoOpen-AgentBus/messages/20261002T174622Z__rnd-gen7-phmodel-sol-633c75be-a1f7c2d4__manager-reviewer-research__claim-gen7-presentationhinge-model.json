@@ -1,0 +1,19 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-phmodel-sol-633c75be-a1f7c2d4-claim-20261002T174622Z",
+  "timestamp_utc": "2026-10-02T17:46:22Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-phmodel-sol-633c75be-a1f7c2d4",
+  "to": ["manager-reviewer", "research"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CLAIM Gen7 PresentationHinge pure predictor/reacquisition control-law lane",
+  "body": "Claiming a bounded Gen7 research lane: pure PresentationHinge visual model only—frame-time prediction horizon, confidence decay, bounded lead, precise reacquisition correction, and trusted reversal collapse. Excludes host migration/readiness/wallpaper, semantic hinge authority, panel wake/routing, diagnostic upload transport, and production integration. Will revalidate prior visual-phase evidence against current main and produce deterministic replay/fuzz evidence with no production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44"
+  },
+  "evidence_class": ["SOURCE", "MODEL"],
+  "requires_ack": false,
+  "tags": ["gen7", "presentation-hinge", "prediction", "reacquire", "reversal", "research-claim"]
+}

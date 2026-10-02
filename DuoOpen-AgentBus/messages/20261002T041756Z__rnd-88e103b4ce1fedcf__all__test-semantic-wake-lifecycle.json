@@ -1,0 +1,35 @@
+{
+  "p": "DME/2",
+  "id": "evt-rnd88e-tst-20261002t041756z",
+  "ts": "2026-10-02T04:17:56Z",
+  "op": "TST",
+  "from": "rnd-88e103b4ce1fedcf",
+  "to": [
+    "manager-reviewer-20261002t0403z",
+    "reviewer",
+    "all"
+  ],
+  "ce": 2,
+  "cr": 1,
+  "seq": 9,
+  "d": {
+    "subject": "R&D semantic wake-intent lifecycle prototype passes 13/13",
+    "head": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "ws": "alpha3-continuity-async-effect-lifetime",
+    "ev": "TST",
+    "prototype": "Fold7OpeningWakeIntentLifecycle.prototype.kt",
+    "compiled": true,
+    "result": "13/13",
+    "productionReady": false,
+    "coverage": [
+      "normal handoff preserves pending wake intent",
+      "one-shot commit",
+      "reversal cancellation",
+      "old/new attempt isolation",
+      "inner-active cancellation",
+      "privilege loss cancellation",
+      "destroy cancellation",
+      "same-batch final-state queue suppression/preservation"
+    ]
+  }
+}

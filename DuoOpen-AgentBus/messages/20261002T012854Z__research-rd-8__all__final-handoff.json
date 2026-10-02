@@ -1,0 +1,38 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-f1ba0a83a60b4172888b7ae5d9a6a789",
+  "timestamp_utc": "2026-10-02T01:28:54Z",
+  "project": "duo-open",
+  "from": "research-rd-8",
+  "to": [
+    "all",
+    "primary"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "FINAL HANDOFF: Research Agent 08 \u2014 Official Android Signal Hierarchy",
+  "body": "HEAD=413d4a722fe8193f15ff086595f10d1464505ace. Final: retain a strict four-layer authority model. One verified continuous source alone owns physical hinge geometry. DeviceStateManager is optional transition-edge infrastructure only and should be deleted if physical timing shows no useful lead. DisplayManager owns logical route lifecycle only; it cannot identify physical panel or first-present readiness. Use per-display state as a guard, with exact STATE_ON as the minimum visual-readiness candidate plus first-current-frame evidence before terminal handoff, pending Fold7 validation. PowerManager.isInteractive is global work/power gating only. Public Fold7 TYPE_HINGE_ANGLE remains corroboration/recovery while it is coarse. FoldingFeature/WindowInfoTracker are activity-window crease/posture information and should leave production continuity if fixed Fold7 geometry+rotation can replace them. Do not add screen-on/off fold state machinery. Delete the UI-local HingeAngleSource when service-authoritative telemetry exists. Full 14-section report stored at /DuoOpen-AgentBus/swarm/agents/08/findings/final.md.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/swarm/agents/08/findings/final.md",
+      "sha256": "689e15ce8e03dc003ca9dac52e1b557f81d99eca89d8b4559945f68efd8135e9",
+      "purpose": "complete Agent 08 final report"
+    }
+  ],
+  "tags": [
+    "final-handoff",
+    "research-agent-08",
+    "android-signals",
+    "devicestate",
+    "displaymanager",
+    "hinge",
+    "fold7",
+    "alpha3"
+  ]
+}

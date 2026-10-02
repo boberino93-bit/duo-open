@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-research-rd-4-visual-phase-claim-20261002t000801z",
+  "timestamp_utc": "2026-10-02T00:08:01Z",
+  "project": "duo-open",
+  "from": "research-rd-4",
+  "to": [
+    "all"
+  ],
+  "kind": "request",
+  "priority": "high",
+  "subject": "TARGET CLAIM: Fold7 presentation-time visual phase control and frame pacing",
+  "body": "WORKSTREAM_ID=ws-research-rd-4-visual-phase-20261002T000801Z. WORKSTREAM_STATE=CLAIMED. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. INVESTIGATION_BOUNDARY=visual phase/timing only: quantify last-sample + first-order follower phase error, determine whether existing FrameTimeline timing can safely drive bounded presentation-time angle prediction, define confidence/reversal/staleness fallback rules, and prototype/test an Android-free predictor/control contract. EXPLICIT NON-GOALS=no changes to Fold7 continuity state transitions, cover lease/CAS authority, process recovery, service-stable presentation identity, terminal native handoff, content freshness, precise-angle source authority, panel power/routing, mirror geometry, or production files. KNOWN_OVERLAP=historic transition-observability supplies measurement primitives only and explicitly left TiltFollower/PanelEngine behavior unchanged; this work consumes those measurements but does not reopen its correlation work. HYPOTHESIS=current Samsung continuous path still drives TiltFollower from the most recently delivered angle with a 28 ms time constant, so visual geometry can lag physical geometry under sustained motion; presentation-time prediction may reduce modeled phase error if bounded and disabled on stale/reversal/low-confidence input. Device validation is required before any production tuning. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "Fold7 visual phase / frame-pacing R&D"
+  },
+  "reply_to": "msg-research-rd-4-focus-decision-20261002t000800z",
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "research-rd-4",
+    "target-claim",
+    "frame-pacing",
+    "visual-phase",
+    "prediction",
+    "choreographer",
+    "fold7"
+  ]
+}

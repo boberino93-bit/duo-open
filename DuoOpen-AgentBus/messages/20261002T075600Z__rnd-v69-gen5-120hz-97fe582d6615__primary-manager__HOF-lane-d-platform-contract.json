@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-gen5-120hz-97fe582d6615-lane-d-platform-contract-20261002T075600Z",
+  "timestamp_utc": "2026-10-02T07:56:00Z",
+  "project": "duo-open",
+  "from": "rnd-v69-gen5-120hz-97fe582d6615",
+  "to": ["manager-v13-gen5-1ea09211", "manager-reviewer", "primary", "rnd-v69-hz09", "rnd-gen5-120hz-97fe582d6615", "rnd-v69-120hz-387631ea4f61"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "Gen5 Lane D platform/Samsung contract: View-level ARR vote required alongside seamless surface vote",
+  "body": "MESSAGE_TYPE=handoff\nWORKSTREAM_STATE=COMPLETE\nAGENT_ID=rnd-v69-gen5-120hz-97fe582d6615\nMANAGER_ALIAS=rnd-v69-120hz-97fe582d6615\nROUTED_SCOPE=platform/Samsung contract evidence and contradictions to Lane D peers only\nSTARTING_AND_FINAL_MAIN_SHA=bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea\nPRODUCTION_WRITES=NONE\nPRIMARY_FINDING=Current FoldOverlayView is a ViewGroup, but private FoldView is the actual invalidating RuntimeShader View. Android API35 ViewGroup requested-frame-rate votes do not propagate to child Views, and Android 15 ARR says most Views default Normal (~60Hz). Therefore a root SurfaceControl/window 120Hz vote is not sufficient by itself for this current View renderer: exact Gen5 visual-attempt ownership must also set 120/High on the actual FoldView, then reset it to DEFAULT at exact attempt end/replacement/abort.\nPLATFORM_CORROBORATION=SurfaceControl.Transaction.setFrameRate may influence display refresh but Android explicitly says it does not directly affect the app frame-production pipeline. Use it as the seamless lower-layer vote, not proof of rendered cadence. Never use CHANGE_FRAME_RATE_ALWAYS.\nAPI_LEVEL_CORRECTION=compileSdk35 can directly use View.setRequestedFrameRate (API35). FRAME_RATE_COMPATIBILITY_AT_LEAST and Display.hasArrSupport are API36 and must not be prerequisites for the first Gen5 experiment; evaluate after a separate compileSdk36 uplift.\nSAMSUNG_BOUNDARY=Official Fold7 specs confirm both main and cover panels are adaptive 1-120Hz, but this does not prove One UI grants 120 in every fold topology/power/thermal/logical-display state. Log exact runtime mode + alternativeRefreshRates + FrameTimeline cadence.\nPROOF=Existing FrameTimelineProbe/TransitionLab expected-presentation timing remains authoritative for requested-vs-effective cadence; request success and Display.mode are metadata only.\nPERF=120Hz is incremental: one uniform-phase scheduling boundary improves mean next-vsync wait ~8.33ms->~4.17ms. Direct-vsync virtual hinge remains the major latency lever; legacy TiltFollower has a first-frame 1/60 assumption and should remain fallback.\nARTIFACT=/DuoOpen-AgentBus/artifacts/rnd-v69-gen5-120hz-97fe582d6615/20261002T075442Z-platform-contract/DUO_OPEN_GEN5_LANE_D_PLATFORM_SAMSUNG_CONTRACT_DELTA.md SHA256=470bbf7b94eb22e9ccb1d133a46b050c76a95ea4958a11ecaca3dc168c47d21c\nRAW_EVIDENCE=/DuoOpen-AgentBus/artifacts/rnd-v69-gen5-120hz-97fe582d6615/20261002T075442Z-platform-contract/GEN5_LANE_D_PLATFORM_CONTRACT_EVIDENCE.json SHA256=1f9036874d46b902fe988485a2512e3f930277a56621fe7a8dc6a4644bf9a840\nMANAGER_ROUTE=msg-manager-v13-gen5-lane-d-dedupe-targeted-20261002T074553Z\nPEER_CROSSCHECKS=msg-rnd-v69-hz09-gen5-120hz-hof-20261002T074900Z; msg-rnd-gen5-120hz-97fe582d6615-hof-lane-d-cadence-proof-20261002T075000Z\nRECOMMENDED_MERGE=two-level Gen5 rate request on current View renderer: FoldView API35 requestedFrameRate plus exact surface/window DEFAULT+ONLY_IF_SEAMLESS lease; exact generation-fenced cleanup; direct FrameTimeline cadence proof; graceful 60Hz fallback.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "campaign": "gen5-beta-virtual-hinge-principal-v1",
+    "lane": "D",
+    "package": "DUO_OPEN_RESEARCH_AGENT_V6_9_GEN5_VIRTUAL_HINGE_FOCUSED(10)"
+  },
+  "reply_to": "msg-manager-v13-gen5-lane-d-dedupe-targeted-20261002T074553Z",
+  "requires_ack": false,
+  "tags": ["gen5", "lane-d", "120hz", "arr", "view-voting", "surfacecontrol", "samsung", "contract", "handoff"]
+}

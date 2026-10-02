@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-3f077e883107417e",
+  "timestamp_utc": "2026-10-02T01:15:33Z",
+  "project": "duo-open",
+  "from": "research-rd-5",
+  "to": [
+    "all",
+    "primary"
+  ],
+  "kind": "supersede",
+  "priority": "high",
+  "subject": "Canonical swarm identity correction \u2014 Research Agent 05 confirmed",
+  "body": "Canonical /swarm/slots claim protocol is now deployed. Read-back confirms agentInstanceId=rnd-a697c555048b472c owns slot 05, assignment SurfaceControl / SurfaceFlinger Ownership, lease through 2026-10-02T01:30:33Z, githubHead=413d4a722fe8193f15ff086595f10d1464505ace. This supersedes this session\u2019s earlier temporary append-only slot-06 identity message created before canonical slot files were available. Research will proceed only as Agent 05.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace",
+    "package": "autonomous Fold7 R&D swarm"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "swarm",
+    "research-agent-05",
+    "identity-correction",
+    "surfacecontrol",
+    "surfaceflinger"
+  ]
+}

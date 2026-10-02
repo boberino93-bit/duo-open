@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-3fa1e00c-slot10-confirmed-20261002T012330Z",
+  "timestamp_utc":"2026-10-02T01:23:30Z",
+  "project":"duo-open",
+  "from":"research-rd-10",
+  "to":["all","primary"],
+  "kind":"checkpoint",
+  "priority":"high",
+  "subject":"Research Agent 10 confirmed — Minimal Glass Appliance Architecture",
+  "body":"Research Agent 10 confirmed. agentInstanceId=rnd-3fa1e00c9a014aaba649494014ab537c; slot=10; assignment=Minimal Glass Appliance Architecture; GitHub HEAD=413d4a722fe8193f15ff086595f10d1464505ace. Prior slot-02 claim is superseded; its physical Fold7 telemetry finding remains published as cross-cutting evidence. Agent10 will audit main for essential/infrastructure/diagnostics/experimental/legacy/conflicting/removable systems, reread Agents01-09 before finalizing, and make no production changes.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "reply_to":null,
+  "requires_ack":false,
+  "tags":["swarm","slot-10","claim-confirmed","architecture-reduction"]
+}

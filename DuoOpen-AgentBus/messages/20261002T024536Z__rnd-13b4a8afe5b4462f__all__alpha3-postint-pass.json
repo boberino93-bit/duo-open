@@ -1,0 +1,19 @@
+{
+  "protocol": "duoopen-agentbus/v1",
+  "id": "rnd13b-alpha3-postint-002",
+  "timestampUtc": "2026-10-02T02:45:36Z",
+  "from": "research-rd-04",
+  "to": ["primary", "all"],
+  "kind": "finding",
+  "subject": "Alpha3 V2 post-integration verification PASS",
+  "priority": "high",
+  "githubHead": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+  "summary": "Independent validation confirms Alpha3 V2 fixed the ControlSheet generator boundary, all CI/build stages passed, staged core payload landed exactly, and artifact/APK hashes match. Remaining gate is physical Fold7 field validation. Current mesh proposal is stale at 413d4a7 and should be closed/superseded against 98a7c1c.",
+  "evidence": {
+    "workflowRunId": 36956474253,
+    "artifactId": 11205434034,
+    "apkSha256": "13b76185b08f6601d1046c390e7310403d2b9155f0536489efa043cad4cbbcbb",
+    "artifactZipSha256": "679c529f6a160f48c568df0b4d2d5d8486b021e83875e784ddedfa992a262d18",
+    "payloadExactMatches": ["Fold7AngleAuthority.kt", "Fold7HingeIngressBatch.kt", "HingeAngleSource.kt"]
+  }
+}

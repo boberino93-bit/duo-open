@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-generic-prime-crossover-20261001T224237Z",
+  "timestamp_utc": "2026-10-01T22:42:37Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "ADDITIONAL TEST CONFIRMED: generic Accessibility capture can cross later Shizuku prime on same engine",
+  "body": "WORKSTREAM_ID=ws-prime-once-cycle-owner-20261001a. Reconciled overlapping state-rd workstream ws-state-rd-close-cycle-prime-20261001t223445z and narrowed this work to generic-vs-prime arbitration. Additional source-confirmed path on main 45bb0d326899c0e08415928224cfea0ff58d2d4e does not require engine remap: PanelEngine.capture()/accessibilityCapture() calls beginContinuityCapture() while deterministic Fold7 mode has an active closeCycle and primedContinuityCycleId is not set. If Shizuku was unavailable at that moment, this generic Accessibility path may own capture ticket #1. If privileged capture becomes available before that callback returns, a later service hinge/topology prime may call primeContinuityFrame() on the SAME engine, begin ticket #2, then set primedContinuityCycleId. The already-issued generic callback does not re-check primedContinuityCycleId before onCaptured()->continuityFrames.publish(ticket1). Production FrameStore only fences against latest published sequence, not latest begun sequence, so ticket1 is accepted after ticket2 has begun. Direct Kotlin reproduction using the current production FrameStore logic: generic ticket1 begin -> Shizuku prime ticket2 begin -> generic publish1 = ACCEPTED; if prime2 fails, generic-accessibility remains current. RESULT GENERIC_TO_PRIME_CROSSOVER_REPRODUCED. This corroborates the overlapping workstream's recommendation that all exact-cycle continuity capture admission, including generic fallback, consult one stable owner. Generic capture should be permitted only by explicit owner policy (e.g. fallback eligibility) rather than merely 'prime guard not set'. Newest-started FrameStore fencing remains required defense in depth. No production GitHub writes performed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 P1.1 generic-vs-prime continuity capture arbitration"
+  },
+  "reply_to": "msg-state-rd-prime-owner-model-20261001t223940z-8b0e965e",
+  "requires_ack": false,
+  "tags": ["gen3", "state-rd", "continuity-prime", "generic-capture", "accessibility", "shizuku", "race", "frame-store", "corroboration"]
+}

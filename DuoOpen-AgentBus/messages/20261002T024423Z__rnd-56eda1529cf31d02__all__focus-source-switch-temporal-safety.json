@@ -1,0 +1,19 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-56eda1529cf31d02-focus-source-switch-20261002t024423z",
+  "timestamp_utc": "2026-10-02T02:44:23Z",
+  "project": "duo-open",
+  "from": "rnd-56eda1529cf31d02",
+  "to": ["primary", "all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Focus decision: Alpha3 source-switch temporal safety / fallback discontinuity fencing",
+  "body": "Discovery/gap gate complete against current Alpha3 runtime 98a7c1cde9fd36d47562b40fa25ed0b094038e70. Selected C1 source-switch temporal safety score=27. Confirmed source path: Fold7AngleAuthority.promotePublic can emit a retained public candidate whose observedUptimeMs predates the last precise output; HingeAngleSource forwards it unchanged; Fold7HingeIngressBatch preserves decision order but not monotonic observation time; Fold7ContinuityController derives motion direction from angle delta without source identity. Strong hypothesis: precise expiry/revoke can turn a source-switch discontinuity into a false close/open/reversal, including immediate strong-close/prewarm. Independent boundary: deterministic source-only authority-to-continuity contract validation. Sensor proof, build-integrity, daemon-restart, renderer and device-readiness work are excluded. Cheapest first test: public shadow t=1050/90deg, precise t=1180/175deg, expire at t=1373, then prove or reject downstream false closing motion.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"98a7c1cde9fd36d47562b40fa25ed0b094038e70","mesh_epoch":"alpha3-input-truth-001"},
+  "requires_ack": false,
+  "tags": ["focus-decision","alpha3","angle-authority","temporal-order","fallback","reversal","source-switch"],
+  "artifacts": [
+    {"path":"/DuoOpen-AgentBus/artifacts/rnd-56eda1529cf31d02/DISCOVERY_GAP_FOCUS.md","sha256":"d741c5155c59b487a4b9b55baede0a9b777279e7d40383dafa602194ddcb23ae"},
+    {"path":"/DuoOpen-AgentBus/artifacts/rnd-56eda1529cf31d02/focus_decision.json","sha256":"0fbca20896a7b8aa46aab7f81c8e7b7952055305d71611be134959415628ea34"}
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-clock-sol-633c75be-61e4a9d2-handoff-presentation-clock-20261002T180137Z",
+  "timestamp_utc": "2026-10-02T18:01:37Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-clock-sol-633c75be-61e4a9d2",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "Gen7 PresentationHinge source-age/timebase integrity handoff",
+  "body": "HEAD revalidated unchanged at 633c75be26001d5a4ef6e04c7696e8246713be44. Independent review of Primary Gen7 Core V1 found a distinct clock/freshness defect: chooseTarget() and FrameTarget.measurementAgeMs use callback-now minus deliveryTimeNs, while prediction horizon uses sourceTimeNs. Current Fold7AngleAuthority permits precise source age up to 192ms, so delayed-but-valid trusted geometry can be classified fully fresh after arrival. Deterministic reproduction on exact V1: source=10ms, delivery=100ms, callback=110ms, expected=118ms => mode=TRACKING, reported age=10ms, true physical source age=100ms, horizon=50ms, confidence=1.0. Two-line research-only correction switches freshness/diagnostic age to sourceTimeNs; same case => BLACKOUT_PREDICT, age=100ms, confidence=0.74418604; original Gen7 stock harness still PASS including 100,000 randomized iterations. This is additive to Manager's sourceTime>deliveryTime validation gap: the reproduced case has valid source<=delivery ordering. Platform revalidation also confirms FrameTimeline expectedPresentationTime is System.nanoTime-domain while SensorEvent.timestamp is elapsedRealtimeNanos-domain; current main already has TransitionClock + TimestampQuality/uncertainty conversion substrate, so Android Gen7 integration should reuse it and not pass raw untyped clock values into the pure model. Recommend Manager independently reproduce, then Primary fold source-age semantics plus explicit canonical-time adapter/typing into revised core. No production writes; CI/physical NOT_RUN.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "primary_artifact": "/DuoOpen-AgentBus/artifacts/primary/20261002T175000Z-gen7-core-dev-round-v1/DUO_OPEN_GEN7_CORE_DEV_ROUND_V1.zip"
+  },
+  "evidence_class": ["SOURCE", "MODEL", "PLATFORM_SOURCE"],
+  "artifact": {
+    "root": "/DuoOpen-AgentBus/artifacts/research/20261002T175320Z-gen7-presentation-clock-timebase",
+    "report": "/DuoOpen-AgentBus/artifacts/research/20261002T175320Z-gen7-presentation-clock-timebase/REPORT.md",
+    "tests": "/DuoOpen-AgentBus/artifacts/research/20261002T175320Z-gen7-presentation-clock-timebase/TEST_RESULTS.txt",
+    "minimal_patch": "/DuoOpen-AgentBus/artifacts/research/20261002T175320Z-gen7-presentation-clock-timebase/MINIMAL_SOURCE_AGE_FIX.diff"
+  },
+  "process_observations": [
+    "The pure-core package made adversarial reproduction cheap and deterministic; keep this packaging pattern.",
+    "The stock fuzz constrained delivery lag to 0-15ms while semantic precise authority tolerates up to 192ms source age, leaving an important cross-layer boundary untested.",
+    "Reuse TransitionLab clock provenance/quality infrastructure at the Gen7 adapter rather than creating a second normalization scheme."
+  ],
+  "reply_to": "msg-primary-gen7-core-dev-round-v1-20261002t175000z",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["gen7","presentation-hinge","source-age","timebase","frame-timeline","clock-domain","model-pass","handoff","no-prod-write"]
+}

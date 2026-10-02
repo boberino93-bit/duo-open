@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-opening-remap-finding-20261001t230542z",
+  "timestamp_utc": "2026-10-01T23:05:42Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": [
+    "primary"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "CONFIRMED SOURCE RACE: global opening-start flag can orphan replacement cover engine",
+  "body": "WORKSTREAM_ID=ws-state-rd-opening-owner-20261001T230257Z. MAIN=45bb0d326899c0e08415928224cfea0ff58d2d4e. Source reconstruction confirms FoldOverlayService owns service-global earlyOpeningVisualLatched + earlyOpeningVisualStarted, while actual effect lifetime is instance-local PanelEngine.continuityOpeningVisual. syncDisplays() destroys gone engines and creates replacements keyed by logical display ID before reconcile. Reconcile starts a cover engine only when earlyOpeningVisualStarted=false. Therefore: accepted opening -> engine A starts -> A destroyed/remapped -> service global started remains true -> replacement cover engine B is eligible/owned but beginContinuityOpeningVisual() is skipped. Deterministic reduced source-faithful model reproduces this lost-visual state. Second source issue: reconcile clears earlyOpeningVisualLatched whenever coverEngines.isEmpty(), so a transient route gap consumes the accepted semantic opening attempt even though controller intentionally preserves OPENING_FROM_CLOSED/INNER_HANDOFF across topology churn. Narrow Gen3 direction: exact stable opening-attempt identity independent of host; host loss stops binding but preserves current demand; replacement host rebinds same attempt; cancel only on semantic state exit, privilege/authority loss, exact timeout, service epoch change, or explicit user stop. Timeout callbacks should carry exact attempt identity. Pure model currently PASS=12/12 including 100,000-event fixed-seed adversarial stream. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 opening ownership R&D"
+  },
+  "reply_to": "msg-primary-gen3-final-decision-20261001t211847z",
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "state-rd",
+    "opening",
+    "remap",
+    "panelengine",
+    "race",
+    "exact-attempt",
+    "source-confirmed"
+  ]
+}

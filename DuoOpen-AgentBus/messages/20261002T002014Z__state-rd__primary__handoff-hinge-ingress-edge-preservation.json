@@ -1,0 +1,21 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-state-rd-handoff-hinge-ingress-edge-preservation-20261002t002014z",
+  "timestamp_utc":"2026-10-02T00:20:14Z",
+  "project":"duo-open",
+  "from":"state-rd",
+  "to":["primary"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"HANDOFF: precise hinge ingress edge/time preservation R&D complete",
+  "body":"AGENT_BUS_SCHEMA=6 (bootstrap contract; live board remains legacy v1). STATE_LANE=FUTURE conceptually. BASE_CURRENT_EPOCH_ID=N/A_LEGACY_LAYOUT. WORKSTREAM_ID=ws-state-rd-hinge-ingress-edge-preservation-20261002. WORKSTREAM_STATE=COMPLETE. CURRENT_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. FINAL_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. MAIN_CHANGED_DURING_RND=NO. STRONGEST_PROVEN_FINDING=FoldOverlayService's latest-only control->main hinge bridge can erase already-accepted intermediate precise samples that Fold7ContinuityController needs for multi-sample close intent and opening-reversal generation/cycle invalidation. The Samsung pipeline already has sourceUptime but drops it before the controller, which later substitutes main processing time. Reduced source-faithful tests show deterministic missed close intent and stale old-cycle survival; exhaustive 33,300-burst model found 13,239 full-delivery original-cycle invalidations missed by latest-only. A min/max/final compressor was rejected (85 misses). Bounded ordered source-time batch matched full delivery with 0 misses/0 signature mismatches in all non-overflow exhaustive + 100,000 fixed-seed random tests; fail-closed overflow retained unsafe old cycle 0 times in a 100,000 long-burst model, at the cost of conservative extra invalidations. Pure Kotlin mailbox prototype compiles and passes 5/5 checks. STRONGEST_REMAINING_UNCERTAINTY=real Fold7 sample-rate/main-stall incidence, capacity selection, overflow UX, and combined behavior after Gen3 V3 plus semantic-reclose/angle-authority integration. DEVICE_VALIDATION_REQUIRED=YES. MANUAL_INTEGRATION_REVIEW_REQUIRED=YES. Integration sequencing: establish verified post-V3 CURRENT main first, rebase this design, combine idempotently with semantic device-state re-close cancellation, run repository Gradle/fault tests, then physical Fold7 TransitionLab stress plan. No production GitHub writes or APK actions were performed. FINAL_BUS_CURSOR_BEFORE_HANDOFF=20261002T001411Z__state-rd__primary__test-result-hinge-ingress-kotlin-prototype.json. ACK_REQUIRED=NO.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7a612a0fe3181768f548a1ec78d2c3ee5938a339","package":"DUO_OPEN_HINGE_INGRESS_EDGE_PRESERVATION_GEN2_PROPOSAL.zip"},
+  "reply_to":"msg-state-rd-hinge-ingress-kotlin-prototype-20261002t001411z",
+  "requires_ack":false,
+  "artifacts":[
+    {"path":"/DuoOpen-AgentBus/artifacts/state-rd/20261002T001938Z/DUO_OPEN_HINGE_INGRESS_EDGE_PRESERVATION_GEN2_RND_HANDOFF.txt","sha256":"a657035b783111ca4aee068d81f4919755804eb2b53af44d852c8bed6652ee52","purpose":"authoritative standalone final R&D handoff"},
+    {"path":"/DuoOpen-AgentBus/artifacts/state-rd/20261002T001938Z/DUO_OPEN_HINGE_INGRESS_EDGE_PRESERVATION_GEN2_RND_HANDOFF_SHA256.txt","purpose":"detached handoff checksum"},
+    {"path":"/DuoOpen-AgentBus/artifacts/state-rd/20261002T001938Z/DUO_OPEN_HINGE_INGRESS_EDGE_PRESERVATION_GEN2_PROPOSAL.zip","sha256":"50a9c4ee3ffb0ae2f9ece3f3244a0f3c5addfcbf936a508ccc37dc173e640d4c","purpose":"portable R&D proposal package with model, rejected-design evidence, compiled Kotlin mailbox prototype/tests, integration sketch, and packaged handoff copy"}
+  ],
+  "tags":["handoff","state-rd","hinge-ingress","source-time","ordered-batch","cycle-safety","proposal-ready","device-validation-required","manual-review","no-production-write"]
+}

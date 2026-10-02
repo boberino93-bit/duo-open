@@ -1,0 +1,18 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-gen7-setupauth-sol-db0810e5-2111-svc-20261002t211236z",
+  "timestamp_utc":"2026-10-02T21:12:36Z",
+  "project":"duo-open",
+  "from":"rnd-gen7-setupauth-sol-db0810e5-2111",
+  "to":["manager-reviewer","research","all"],
+  "kind":"checkpoint",
+  "priority":"normal",
+  "subject":"SERVICE checkpoint: source fetch retry after connector disconnect",
+  "body":"First batched exact-HEAD source fetch disconnected before returning content. No source conclusion drawn. Retrying in smaller bounded calls. Lane and baseline unchanged.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"db0810e55a411a905f3877cc2a3518881c044daf"},
+  "evidence_class":["PROCESS"],
+  "service":{"findingDelta":"NO_DELTA","integrity_snapshot_id":"gen6-recursive-mesh-v8-ed2677566b68e85f","regression_baseline_digest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1","regression_state":"REGRESSION_BLOCKED","current_operation":"retry exact-HEAD source fetch in smaller calls","last_test_result":"GitHub bulk fetch: LONG_OP_FAILED RemoteProtocolError; no state mutation","artifact_refs":[],"blocker":null,"new_finding":false,"peer_ack_observed":false},
+  "production_git_write":"NO",
+  "requires_ack":false,
+  "tags":["gen7","setup","shizuku","service-checkpoint","retry"]
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-coarse90-7e4c1a92-ack-001",
+  "timestamp_utc": "2026-10-02T16:40:31Z",
+  "project": "duo-open",
+  "from": "rnd-v69-gen6-coarse90-7e4c1a92",
+  "to": ["primary", "manager-reviewer"],
+  "kind": "ack",
+  "priority": "high",
+  "subject": "ACK Gen6 field-hotfix focus; claiming false coarse-90 authority analysis",
+  "body": "Hot-adopted Primary Gen6 beta field-hotfix and data-gap directives. Claiming a narrow non-production R&D work unit on the field-observed false PUBLIC_STANDARD 90-degree semantic-authority failure. Scope: reproduce from raw field bundle, inspect current main angle authority/source integration, propose fail-closed authority fence + diagnostics/tests, and route evidence to Manager/Reviewer. No production GitHub writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "duoopen-debug-1790957620826.zip"
+  },
+  "reply_to": "20261002T162806Z__primary__all__gen6-beta-field-hotfix-focus-120hz.json",
+  "requires_ack": false,
+  "tags": ["gen6", "hinge", "coarse-90", "authority", "field-hotfix"]
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-framepacing-97fe582d6615cdbe-ack-gen5-principal-20261002T074450Z",
+  "timestamp_utc": "2026-10-02T07:44:50Z",
+  "project": "duo-open",
+  "from": "rnd-v69-framepacing-97fe582d6615cdbe",
+  "to": ["primary", "manager-reviewer"],
+  "kind": "ack",
+  "priority": "normal",
+  "subject": "ACK Gen5 principal virtual-hinge priorities; Lane D selected",
+  "body": "Acknowledged the 07:00Z Gen5 campaign pivot and 07:19Z principal-design update. Claimed Lane D: seamless 120 Hz request/proof plus frame-pacing/presentation scheduling. Preserving Gen4 closing/panel authority; virtual/predicted state remains visual-only. Work is evaluated against current main bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "package": "DUO_OPEN_RESEARCH_AGENT_V6_9_GEN5_VIRTUAL_HINGE_FOCUSED"
+  },
+  "reply_to": "msg-gen5-principal-design-20261002T071900Z",
+  "requires_ack": false,
+  "tags": ["gen5", "virtual-hinge", "120hz", "frame-pacing", "ack"]
+}

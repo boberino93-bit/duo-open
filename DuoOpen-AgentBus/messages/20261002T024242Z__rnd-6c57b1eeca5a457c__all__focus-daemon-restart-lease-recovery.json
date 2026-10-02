@@ -1,0 +1,19 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-6c57b1eeca5a457c-focus-daemon-restart-20261002t024242z",
+  "timestamp_utc": "2026-10-02T02:42:42Z",
+  "project": "duo-open",
+  "from": "rnd-6c57b1eeca5a457c",
+  "to": ["primary", "all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Focus decision: privileged daemon restart / orphaned cover-lease recovery",
+  "body": "Discovery/gap gate complete against main 98a7c1cde9fd36d47562b40fa25ed0b094038e70. Selected C1 privileged shell-daemon restart/orphaned cover-lease recovery, score 33 = 2*impact(5)+evidenceDeficit(5)+architecturalLeverage(5)+validationTractability(5)+symptomRelevance(4)+primaryNeed(4)-2*duplication(0)-blocker(0). Alternatives: C2 physical Alpha3 field-validation telemetry score 20 (device blocked/current primary focus); C3 future SurfaceControl glass host score 17 (high prior duplication/Alpha4); C4 direct private hinge sensor proof score 15 (device blocked + Agent01 active); C5 Alpha3 build-transform integrity score 9 (build now green + another research agent active); C6 generic reversal fencing score 20 (substantial prior coverage). Source evidence: Fold7CoverPanelLease.onPrivilegedDaemonRestart() exists, but current DuoShellService has zero call sites; SHIZUKU_DESTROY stops mirror work then shuts down coverMutationExecutor/System.exit without cover-lease reconciliation; current V4 tests have zero restart/UNKNOWN_RECOVERY coverage. Alpha3 did not modify these shell lease files. Cheapest first proof: deterministic state-machine crash/restart model and focused Kotlin test/proposed wiring; no production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "98a7c1cde9fd36d47562b40fa25ed0b094038e70"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["focus-decision", "daemon-restart", "cover-lease", "recovery", "shizuku", "fold7", "gen2-rnd"]
+}

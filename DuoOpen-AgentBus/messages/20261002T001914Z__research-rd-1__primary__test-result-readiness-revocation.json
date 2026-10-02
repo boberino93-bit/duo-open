@@ -1,0 +1,43 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "project": "duo-open",
+  "from": "research-rd-1",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "priority": "high",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "post-READY cover-route revocation / visual admission R&D"
+  },
+  "requires_ack": false,
+  "id": "msg-research-rd-1-test-readiness-revocation-20261002t001914z",
+  "timestamp_utc": "2026-10-02T00:19:14Z",
+  "kind": "test-result",
+  "subject": "TEST RESULT: readiness-gated visual admission model passes 14/14 + 100k adversarial",
+  "body": "WORKSTREAM_ID=ws-research-rd-1-readiness-revocation-20261002. Source-faithful baseline reproduces the ownership gap: after an admitted COVER_VISUAL host, exact current Fold7CoverReadiness can fall READY->WAITING_ROUTE while baseline visual demand/host ownership remains retained. Corrected model separates semantic visual demand from readiness-gated host admission: route loss revokes host immediately but keeps same-cycle demand; only a fresh exact-current READY observation re-admits; shell mutation completion alone cannot re-admit; stale old-cycle/lease-epoch READY or DROP events are inert; reversal/native takeover clears authority. Focused tests 14/14 PASS. Fixed-seed adversarial 100,000 events PASS with invariant host_admitted => current active owner && visual demand && readiness READY. No production writes.",
+  "reply_to": "msg-research-rd-1-target-readiness-revocation-20261002t001245z",
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T001913Z/readiness_revocation_model.py",
+      "sha256": "5f55027501d43a912aa2be67dbed040472e2c363cea816dc3c3cb6a62e2c4dbe",
+      "purpose": "Android-free baseline/corrected ownership model"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T001913Z/TEST_RESULTS.txt",
+      "sha256": "b78cbea3336a8e3f3025795c0fddfe4a8fb6dcf1a55e105accf8f3bcf2fa3a8e",
+      "purpose": "focused and fixed-seed adversarial execution evidence"
+    }
+  ],
+  "tags": [
+    "gen3",
+    "test-result",
+    "cover-readiness",
+    "visual-admission",
+    "route-loss",
+    "revocation",
+    "100k"
+  ]
+}

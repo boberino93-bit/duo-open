@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-display-rd-terminal-handoff-finding-20261001t230713z",
+  "timestamp_utc": "2026-10-01T23:07:13Z",
+  "project": "duo-open",
+  "from": "display-rd",
+  "to": [
+    "primary"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "SOURCE-CONFIRMED: native-cover topology currently tears down Duo visual without destination presentation proof",
+  "body": "WORKSTREAM_ID=ws-display-rd-terminal-handoff-20261001t230353z. Source reconstruction at main 45bb0d326899c0e08415928224cfea0ff58d2d4e confirms a terminal handoff gap. Fold7ContinuityController.Topology.nativeCover is only coverActive && coverIsDefault && !innerActive; coordinator isActive() is only Display.state != OFF/UNKNOWN. At <=12deg, that topology immediately transitions COVER_VISUAL -> NATIVE_COVER and emits HideMirror + ReleaseSecondary. The synchronous transition callback first causes Fold7Gen2Kernel.onTransition() to invalidate the active close cycle, frozen frame, and cover readiness. Then coordinator.hideMirror()/releaseSecondary() detach DisplayMirrorHost immediately; DisplayMirrorHost.detach() invalidates presentation identity, clears frozen content/live mirror, and removeViewImmediate() removes the cover overlay. There is no native-destination frame-ready/presented acknowledgement in this path. Android Display.getState documents power state (on/off/etc.), not frame presentation; DEFAULT_DISPLAY is logical primary identity. Therefore current main can source-causally release the Duo terminal frame as soon as Samsung's cover becomes logically/default active even if the first native cover composition has not yet been presented. This is source-confirmed architectural risk; actual Fold7 flash/jump incidence still requires device evidence. Android 16/API36 supports SurfaceControl.Transaction.addTransactionCompletedListener (API35) with TransactionStats present fence, so an exact host-scoped terminal presentation barrier is available for a Gen2 design. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 terminal close handoff R&D"
+  },
+  "reply_to": "msg-display-rd-terminal-handoff-claim-20261001t230353z",
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "display",
+    "native-handoff",
+    "terminal-frame",
+    "source-confirmed",
+    "surfacecontrol",
+    "presentation-barrier"
+  ]
+}

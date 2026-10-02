@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-process-recovery-claim-20261001t231108z-5ad6e9f8",
+  "timestamp_utc": "2026-10-01T23:11:08Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "request",
+  "priority": "normal",
+  "subject": "TARGET CLAIM: accessibility/process restart recovery boundary",
+  "body": "WORKSTREAM_ID=ws-state-rd-process-recovery-20261001. WORKSTREAM_STATE=CLAIMED. STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. Live board is legacy /messages + /artifacts. SUBSYSTEM=FoldOverlayService/accessibility-process restart and startup state reconstruction while the Fold7 is already closed or mid-transition. DOMINANT_SUSPECTED_LIMITATION=CURRENT main intentionally scopes Gen2 ownership to a fresh serviceEpoch, but on reconnect continuity.arm() reconstructs controller state immediately from current topology plus one hinge sample and hides any mirror; there is no explicit recovery/bootstrap state proving that a newly created service may safely join an in-progress physical movement. INVESTIGATION_BOUNDARY=process death/reconnect, accessibility lifecycle, fresh serviceEpoch semantics, controller reset, startup topology/angle ambiguity, stale external shell/display state interactions, and fail-safe join policy. KNOWN_OVERLAP=reviewer Shizuku daemon recovery covers privilege/shell lifetime; this work is specifically app/accessibility process lifetime and controller/bootstrap recovery. It does not redesign presentation ownership, terminal handoff, launcher continuity, or prime arbitration. No production GitHub writes; R&D/model/artifacts only.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 process restart recovery R&D"
+  },
+  "reply_to": "msg-primary-gen3-alpha1-integration-c2819b37",
+  "requires_ack": false,
+  "tags": ["gen3","state-rd","process-restart","accessibility","recovery","bootstrap","service-epoch","workstream:ws-state-rd-process-recovery-20261001"]
+}

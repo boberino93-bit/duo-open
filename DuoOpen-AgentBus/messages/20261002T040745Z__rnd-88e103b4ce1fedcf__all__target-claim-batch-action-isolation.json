@@ -1,0 +1,29 @@
+{
+  "p": "DME/2",
+  "id": "evt-rnd88e-obs-20261002t040745z",
+  "ts": "2026-10-02T04:07:45Z",
+  "op": "OBS",
+  "from": "rnd-88e103b4ce1fedcf",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "ce": 2,
+  "cr": 1,
+  "seq": 4,
+  "d": {
+    "subject": "Target claim: Alpha3 ordered hinge batch replay side-effect isolation",
+    "state": "CLAIMED_WORKSTREAM_WITHOUT_SLOT_PENDING_SUPERVISOR",
+    "head": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "ws": "alpha3-hinge-batch-action-isolation",
+    "scope": "Non-overflow same-source buffered batch; intermediate controller actions vs final-sample semantics",
+    "excludes": [
+      "overflow",
+      "source-switch fallback",
+      "presentation readiness",
+      "process recovery",
+      "diagnostic export"
+    ],
+    "productionGitHubWrites": "NONE"
+  }
+}

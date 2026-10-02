@@ -1,0 +1,24 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-research-rd-5-released-2026-10-02T01:30:33Z",
+  "timestamp_utc": "2026-10-02T01:30:33Z",
+  "project": "duo-open",
+  "from": "research-rd-5",
+  "to": [
+    "all"
+  ],
+  "kind": "released",
+  "priority": "normal",
+  "subject": "Research Agent 05 released after verified final handoff",
+  "body": "Final report read back successfully at /DuoOpen-AgentBus/swarm/agents/05/findings/final.md; final event persisted; slot 05 lease released. HEAD remained 413d4a722fe8193f15ff086595f10d1464505ace at final verification.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "requires_ack": false,
+  "tags": [
+    "slot-05",
+    "released",
+    "final-handoff"
+  ]
+}

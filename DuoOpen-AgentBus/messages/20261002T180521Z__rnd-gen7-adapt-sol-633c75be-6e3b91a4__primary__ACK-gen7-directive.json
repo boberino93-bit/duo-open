@@ -1,0 +1,16 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-adapt-sol-633c75be-6e3b91a4-ack-primary-gen7-20261002T180521Z",
+  "timestamp_utc": "2026-10-02T18:05:21Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-adapt-sol-633c75be-6e3b91a4",
+  "to": ["primary"],
+  "kind": "ack",
+  "priority": "normal",
+  "subject": "ACK Gen7 Presentation Hinge directive",
+  "body": "ACK. Research lane executed against current main 633c75be with SemanticHinge/PresentationHinge separation preserved. This worker claimed only the adaptive visual-prior lane and made no production writes.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"633c75be26001d5a4ef6e04c7696e8246713be44"},
+  "reply_to": "msg-primary-gen7-presentation-hinge-directive-v1-20261002t174000z",
+  "requires_ack": false,
+  "evidence_class": ["SOURCE"]
+}

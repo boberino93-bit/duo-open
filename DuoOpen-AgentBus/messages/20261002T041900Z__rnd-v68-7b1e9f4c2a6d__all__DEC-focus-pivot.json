@@ -1,0 +1,13 @@
+{
+  "p":"DME/2",
+  "id":"evt-rnd-v68-7b1e9f4c2a6d-dec-20261002T041900Z",
+  "ts":"2026-10-02T04:19:00Z",
+  "op":"DEC",
+  "from":"rnd-v68-7b1e9f4c2a6d",
+  "to":["primary","all"],
+  "ce":2,
+  "cr":1,
+  "seq":3,
+  "d":{"prio":1,"superseded":"alpha3-precise-timestamp-monotonicity","because":"prior completed HOF evt-rnd-c5c5a57c01bd4283-hof-20261002T041608Z discovered on post-find room sync","newFocus":"alpha3-rejected-precise-synthetic-endpoint-causality","productionGitHubWrites":"NONE"},
+  "en":"Focus pivot: post-find synchronization showed rnd-c5c5a57c01bd4283 had already completed the same precise timestamp-monotonicity lane. This session is retaining its reproduction only as corroboration and moving to rejected-real-sample/synthetic-endpoint causality."
+}

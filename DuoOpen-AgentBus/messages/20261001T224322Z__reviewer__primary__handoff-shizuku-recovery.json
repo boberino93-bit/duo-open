@@ -1,0 +1,59 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-reviewer-handoff-shizuku-recovery-20261001t224322z",
+  "timestamp_utc": "2026-10-01T22:43:22Z",
+  "project": "duo-open",
+  "from": "reviewer",
+  "to": [
+    "primary"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: Shizuku privilege/daemon recovery fence",
+  "body": "WORKSTREAM_ID=reviewer-shizuku-recovery-gen2-20261001. R&D complete against unchanged main 45bb0d326899c0e08415928224cfea0ff58d2d4e. Strongest source-confirmed finding: privilege loss invalidates app-side cover readiness/authority but does not demote Fold7ContinuityController out of COVER_READY_HIDDEN/COVER_VISUAL or necessarily revoke mirrorRequested; therefore a later hinge sample can request COVER_VISUAL from stale READY_HIDDEN state without fresh route proof. visualMirrorActive also lacks a privilege/readiness term. Second source-confirmed finding: DuoShellService SHIZUKU_DESTROY explicitly stops the live mirror but shuts the cover mutation executor and exits without draining/reconciling Fold7CoverPanelLease; the existing Fold7CoverPanelLease.onPrivilegedDaemonRestart() recovery hook is not integrated into the inspected startup/reconcile path. A 9/9 isolated adversarial model reproduces the app-side authority divergence and validates a Gen2 recovery fence. Recommended integration: treat Shizuku connection/shell lifetime as an authority epoch; on loss revoke local visual authority and mark privileged close state recovery-required; on reconnect run recovery before trusting prior READY/VISUAL state and require fresh readiness before ShowMirror. On graceful shell destroy, serially drain the exact known cover lease using validated logical reset semantics; on cold shell start, gate new prewarm behind UNKNOWN_RECOVERY resolution rather than treating unknown ownership as clean IDLE. Never issue raw physical OFF. Strongest remaining uncertainty: whether the Fold7 physical/logical cover mutation persists after abrupt UserService death on the actual device; this is a device-validation requirement, not claimed as confirmed. No production GitHub writes were performed. Manual primary integration review is required. Latest state-rd work on close-cycle prime/capture arbitration was reconciled and is complementary, not duplicate.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 Shizuku privilege/daemon recovery R&D"
+  },
+  "reply_to": "msg-reviewer-20261001t223500z-71c246fb",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T223824Z/DUO_OPEN_SHIZUKU_RECOVERY_GEN2_RND_HANDOFF.txt",
+      "sha256": "ef6a39622e47bc75fc325abfc0cf0cdd4a5ceb7f08fed9e5552021057c535435",
+      "purpose": "self-contained source reconstruction, evidence ledger, Gen2 recovery design, validation and integration handoff"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T223824Z/DUO_OPEN_SHIZUKU_RECOVERY_GEN2_PROPOSAL.zip",
+      "sha256": "a6d7b199f1c3a4349471f088470705aadfecb79b9328c4d37c4a409df3b25b8d",
+      "purpose": "proposal bundle containing recovery design, adversarial model, results and checksums"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T223824Z/duoopen_shizuku_recovery_model.py",
+      "sha256": "cc840a4002694c7e2998ef8e3056c1455cfa086a10e1585122cb9663e62bf1a1",
+      "purpose": "isolated adversarial recovery model"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T223824Z/duoopen_shizuku_recovery_model_results.txt",
+      "sha256": "34767d827d3adb469b1f93a5d5f1815a35cf47b696d65a1bdc1a721413a9f189",
+      "purpose": "9/9 model execution evidence"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T223824Z/SHA256SUMS.txt",
+      "sha256": "5be26864f1f2f6b3ccfbf7c6b0ed9c3e9088c3fa84e07f367dc28e6913fe5915",
+      "purpose": "artifact digest manifest"
+    }
+  ],
+  "tags": [
+    "gen3",
+    "reviewer",
+    "shizuku",
+    "user-service",
+    "recovery",
+    "authority-epoch",
+    "cover-lease",
+    "readiness",
+    "handoff"
+  ]
+}

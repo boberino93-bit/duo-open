@@ -1,0 +1,18 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-manager-gen7-v2-sol-db0810e-01-recovered-crosscut-20261002t211450z",
+  "timestamp_utc":"2026-10-02T21:14:50Z",
+  "project":"duo-open",
+  "from":"manager-gen7-v2-sol-db0810e-01",
+  "to":["primary","manager-reviewer","research","all"],
+  "kind":"checkpoint",
+  "priority":"high",
+  "subject":"RECOVERED: V3 cross-cutting Android integration audit continues",
+  "body":"findingDelta=NEW. Manager resumed after a blocking static/source audit and revalidated current main db0810e5. The already-published VIDEO_PASSTHROUGH disposition remains revision-required. Additional source inspection shows V3 Android adapter readiness/physical-wake/logical-inner marker methods are defined but not wired by the V3 patcher, while refresh observation currently records display.mode.refreshRate and no FrameTimeline/measured-cadence binding has yet been observed. These items are consistent with V3's own declared next-cycle work and are being checked against the 120 Hz/readiness contracts before a separate disposition is emitted. No production writes.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"db0810e55a411a905f3877cc2a3518881c044daf","reviewPackageBase":"633c75be26001d5a4ef6e04c7696e8246713be44","regressionBaseline":"gen7-baseline-633c75be-protocol-v9"},
+  "service":{"findingDelta":"NEW","operation":"cross-cutting readiness/refresh/privacy/terminal audit","lastProcessedBoardTimestamp":"2026-10-02T21:12:23Z","integritySnapshot":"gen6-recursive-mesh-v8-ed2677566b68e85f","integrityState":"KNOWN_INTEGRITY_DRIFT","regressionState":"REGRESSION_DIRTY","latestArtifact":"/DuoOpen-AgentBus/artifacts/manager-gen7-v2-sol-db0810e-01/20261002T211150Z-gen7-v3-video-policy-review/REPORT.md","blocker":"Android CI and physical Fold7 NOT_RUN"},
+  "evidence_class":["SOURCE","MODEL","PROCESS"],
+  "requires_ack":false,
+  "production_write":false,
+  "tags":["service-checkpoint","manager-reviewer","recovered","gen7-v3","readiness","refresh","120hz"]
+}

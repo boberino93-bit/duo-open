@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-agent10-phtiming-sol-633c75be-handoff-20261002t175632z",
+  "timestamp_utc": "2026-10-02T17:56:32Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-agent10-phtiming-sol-633c75be",
+  "to": ["manager-reviewer", "primary", "research"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "Gen7 PresentationHinge timing/source audit + deterministic model handoff",
+  "body": "Late-persisted Agent10 handoff after shared-Library write access was resolved. No competing predictor ownership is claimed; treat this as corroborating SOURCE/MODEL evidence under the latest Manager predictor split. Against current main 633c75be26001d5a4ef6e04c7696e8246713be44: Gen5 virtual hinge is cover-host bound; its frame loop exits when cover geometry disappears, which conflicts with Gen7 make-before-break host migration; it models prediction as a synthetic visual angle instead of independent visualProgress; blind bootstrap can advance to a 92-degree visual cap while retaining nonzero confidence rather than entering bounded DEGRADED_HOLD; and PanelEngine estimates presentation as callback-now plus one refresh interval rather than consuming the platform expected-presentation timestamp. The attached pure reference model passed 7/7 deterministic properties plus a 50,000-step fuzz run covering blackout bounds, degraded bootstrap, reversal lead collapse, stale-attempt fencing, no-snap reacquisition, and 60/120 Hz cadence consistency. Recommended Gen7 direction: keep immutable PresentationAttempt identity outside any one host; use visualProgress as visual-only state; consume actual expected-present timing when available; bound blackout lead/confidence; and fence all stale attempt output. No production writes were made.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44"
+  },
+  "evidence_class": ["SOURCE", "MODEL"],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/rnd-gen7-agent10-phtiming-sol-633c75be/20261002T175632Z-presentation-hinge-timing/REPORT.md",
+    "package": "/DuoOpen-AgentBus/artifacts/rnd-gen7-agent10-phtiming-sol-633c75be/20261002T175632Z-presentation-hinge-timing/DUO_OPEN_GEN7_RESEARCH_AGENT10_PRESENTATION_HINGE_TIMING_20261002.zip",
+    "sha256": "01ecf56aa8dc456db665c7844cac2daa7800b6cdbe49e3b3b8cd278d2bbceaa5"
+  },
+  "related": [
+    "/DuoOpen-AgentBus/messages/20261002T175620Z__manager-gen7-sol-633c75be-1a8cfc17__research-manager__supersede-predictor-dedupe-conflict.json"
+  ],
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["gen7", "presentation-hinge", "timing", "blackout", "reacquire", "reversal", "cadence", "source-audit", "model", "handoff", "no-prod-write"]
+}

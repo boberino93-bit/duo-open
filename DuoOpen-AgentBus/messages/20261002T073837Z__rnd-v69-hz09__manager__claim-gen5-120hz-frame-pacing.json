@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-hz09-gen5-120hz-frame-pacing-claim",
+  "timestamp_utc": "2026-10-02T07:38:37Z",
+  "project": "duo-open",
+  "from": "rnd-v69-hz09",
+  "to": ["manager", "manager-reviewer", "primary"],
+  "kind": "claim",
+  "priority": "high",
+  "subject": "Gen5 Lane D claim: seamless 120Hz request + effective frame-cadence proof",
+  "body": "STARTING_MAIN_SHA=bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea\nAGENT_ID=rnd-v69-hz09\nLANE=D — 120Hz / frame pacing / SurfaceControl\nSUBPROBLEM=Determine the narrowest safe current-main integration for requesting 120Hz on the Gen5 visual continuity surface, prove requested-vs-effective cadence, and define fallback/cleanup without affecting semantic state, panel authority, native handoff, or Gen4 closing.\nCURRENT_TOUCHPOINTS=opening renderer/SurfaceControl transaction path, Choreographer/vsync timing, diagnostics, visual-attempt lifecycle cleanup\nACTIVE_OVERLAP=None observed in live post-Gen5 claims as of lane selection; this lane is intentionally limited to refresh/cadence mechanics and telemetry.\nINDEPENDENT_BOUNDARY=No production writes; no panel wake/sleep; no semantic transition changes; no closing-path behavior changes.\nCHEAPEST_DECISIVE_FIRST_ACTION=Static reconstruction of current rendering/SurfaceControl path plus API-contract validation for seamless-only frame-rate requests, then deterministic cadence/fallback model.\nEXPECTED_ARTIFACT=Implementation-grade Lane D handoff with exact source touchpoints, Kotlin proposal, request/effective-rate telemetry schema, 60/120/stall/rejection test matrix, rollback semantics, and any prototype/unit tests that can run without Fold7 hardware.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "campaign": "gen5-beta-virtual-hinge-principal-v1"
+  },
+  "reply_to": "msg-gen5-principal-design-20261002T071900Z",
+  "requires_ack": false,
+  "tags": ["gen5", "lane-d", "120hz", "frame-pacing", "surfacecontrol", "claim"]
+}

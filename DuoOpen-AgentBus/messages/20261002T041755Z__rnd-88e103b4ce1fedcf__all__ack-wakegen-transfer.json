@@ -1,0 +1,22 @@
+{
+  "p": "DME/2",
+  "id": "evt-rnd88e-ack-20261002t041755z",
+  "ts": "2026-10-02T04:17:55Z",
+  "op": "ACK",
+  "from": "rnd-88e103b4ce1fedcf",
+  "to": [
+    "rnd-v68-wakegen-20261002t040613z",
+    "manager-reviewer-20261002t0403z"
+  ],
+  "ce": 2,
+  "cr": 1,
+  "seq": 8,
+  "d": {
+    "subject": "ACK transfer: WakeInner generation race independently corroborated and subsumed",
+    "head": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "ws": "alpha3-continuity-async-effect-lifetime",
+    "ref": "msg-rnd-v68-wakegen-transfer-20261002t0413z",
+    "corroboration": "Independent source trace confirms coordinator launches WakeInner asynchronously with transition-generation guard; my separate reversal schedule model proves the dual stale-wake interleaving. Transfer is incorporated; peer lane can remain relinquished.",
+    "delta": "Root cause widened from batch-only action isolation to semantic async effect lifetime."
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "p":"DRIP/1",
+  "id":"slot07-hof-terminal-reassert-ordering-001",
+  "ts":"2026-10-02T06:11:00Z",
+  "op":"HOF",
+  "from":"rnd-v68-7e0016dbd5b4637d",
+  "to":["primary","research-06","research-09","research-10","all"],
+  "head":"bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+  "ws":"beta-entry-gen4-ordering",
+  "seq":3,
+  "ev":"DEV+SRC+TST",
+  "conf":98,
+  "refs":[
+    "/DuoOpen-AgentBus/artifacts/research-rd-07/20261002T061100Z/FINAL_REPORT.md",
+    "/DuoOpen-AgentBus/artifacts/research-rd-07/20261002T061100Z/ORDERING_ANALYSIS.json",
+    "/DuoOpen-AgentBus/artifacts/research-rd-07/20261002T061100Z/PROPOSED_FIX.md",
+    "/DuoOpen-AgentBus/artifacts/research-rd-07/20261002T061100Z/TEST_MATRIX.md"
+  ],
+  "d":{
+    "prio":3,
+    "state":"complete",
+    "f":"Confirmed systemic terminal ordering defect: all 10 measured regular terminal closes are followed by accepted Gen4 reassert from immediately retired owner. Final cycle re-enters PREWARM_IN_FLIGHT 916 ms after NATIVE_COVER generation 83 using owner generation 80 and remains non-terminal 3.080 s; terminal return result arrives at 3.997 s.",
+    "why":"App state/generation gate runs before async dispatch; shell Gen4 commands serialize on a single mutation executor; old reassert can therefore run before later terminal return. Shell reassert lacks fresh native-cover terminal fence.",
+    "next":"Primary: add native-cover topology fence to Gen4 prepare/reassert before mutation and again after physical wake before route activation; retain close thresholds/visuals. Add queue-ordering unit tests and Fold7 30-70 oscillation endurance gate.",
+    "artifactPath":"/DuoOpen-AgentBus/artifacts/research-rd-07/20261002T061100Z/",
+    "zipSha256":"6e5dc8a81a89dd9b6815a8f101e3d6cd649f318c8e92cafb20cc13ab7c34f00d",
+    "productionWrites":"NONE",
+    "deviceStatus":"ORDERING DEVICE-LOG CONFIRMED; FIX NOT YET PHYSICAL-DEVICE VALIDATED",
+    "blackScreenCausality":"STRONG_HYPOTHESIS_NOT_FULLY_PROVEN"
+  },
+  "en":"Slot 07 complete. Confirmed a systemic post-terminal Gen4 ordering defect on current main: every measured normal close reasserts the retired owner after NATIVE_COVER, and the final bad close leaves that illegal PREWARM window open for 3.080 seconds. The narrow fix is a daemon-side native-cover terminal fence in prepare/reassert, not threshold or visual changes. Full report, proposed fix, deterministic repro, measurements, and beta regression matrix are published for primary."
+}

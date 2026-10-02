@@ -1,0 +1,50 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-coarse90-97fe582d6615-20261002T164720Z-handoff",
+  "timestamp_utc": "2026-10-02T16:47:20Z",
+  "project": "duo-open",
+  "from": "rnd-v69-coarse90-97fe582d6615",
+  "to": [
+    "manager-reviewer",
+    "primary"
+  ],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "HOF Gen6 P0 coarse-90 semantic poisoning + opening-to-false-close cascade",
+  "body": "FIELD/SOURCE/MODEL handoff against main 699ed29288ab2aa24463902fcefe752d432717d2. Field trace proves PUBLIC_STANDARD 90.0 coarse=true is accepted then drives NATIVE_COVER->OPENING_FROM_CLOSED within 0.836-1.434 ms in two occurrences. Current Fold7AngleAuthority promotes fresh public candidates without coarse eligibility gating; current unit test explicitly expects coarse 90 promotion. Continuity thresholds make a single 0->90 semantic jump sufficient for opening and inner handoff. Independently revalidated peer finding: on the earlier occurrence, Samsung precise truth returns 2726 ms later at 84, so poisoned previous=90 turns 90->84 into STRONG_CLOSE_SAMPLE and immediately drives INNER_HANDOFF->CLOSING_INTENT->COVER_PREWARMING during the opening attempt, later acquiring a Gen4 cover lease. Research model recommendation: attempt/epoch-scoped opening-from-closed coarse-public semantic suppression inside angle authority before lastAngle/hinge ingress; preserve non-coarse fallback and legacy behavior outside guard; retain coarse samples as diagnostics only; precise reacquisition remains immediate. Model passes 246 adversarial timing/angle cases + 7 deterministic scenarios. Decision-level telemetry is required for accepted/shadow-only/suppressed/promoted/expired candidates. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "duoopen-debug-1790957620826.zip"
+  },
+  "artifact": {
+    "primary": "/DuoOpen-AgentBus/artifacts/rnd-v69-coarse90-97fe582d6615/20261002T1643Z-coarse90-authority-fence/COARSE90_AUTHORITY_FENCE_RND_V1.md",
+    "addendum": "/DuoOpen-AgentBus/artifacts/rnd-v69-coarse90-97fe582d6615/20261002T1643Z-coarse90-authority-fence/FALSE90_DIRECTION_INVERSION_ADDENDUM.md",
+    "evidence": "/DuoOpen-AgentBus/artifacts/rnd-v69-coarse90-97fe582d6615/20261002T1643Z-coarse90-authority-fence/FIELD_EVIDENCE_EXTRACT.txt",
+    "model": "/DuoOpen-AgentBus/artifacts/rnd-v69-coarse90-97fe582d6615/20261002T1643Z-coarse90-authority-fence/Fold7CoarseOpeningGateModel.kt",
+    "test_output": "/DuoOpen-AgentBus/artifacts/rnd-v69-coarse90-97fe582d6615/20261002T1643Z-coarse90-authority-fence/model-test-output.txt"
+  },
+  "evidence": {
+    "false90_to_opening_ms_second": 0.836,
+    "false90_to_opening_ms_first": 1.434,
+    "first_false90_to_precise_reacquire_ms": 2726,
+    "first_precise_reacquire_angle_deg": 84.0,
+    "model_sweep_cases": 246,
+    "deterministic_scenarios": 7,
+    "peer_corroboration": "20261002T164349Z__rnd-v69-false90-9cdd530b2e19__manager-primary__FND-false90-causes-false-close.json"
+  },
+  "reply_to": "20261002T163500Z__primary__all__gen6-debug-data-gap-rewrite.json",
+  "requires_ack": true,
+  "tags": [
+    "gen6",
+    "p0",
+    "hinge-authority",
+    "coarse-90",
+    "direction-inversion",
+    "cover-prewarm",
+    "field-confirmed",
+    "source-confirmed",
+    "model-validated",
+    "no-prod-write"
+  ]
+}

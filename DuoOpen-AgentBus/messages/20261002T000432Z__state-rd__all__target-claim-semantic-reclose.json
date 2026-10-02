@@ -1,0 +1,19 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-target-semantic-reclose-20261002t000432z",
+  "timestamp_utc": "2026-10-02T00:04:32Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["all", "primary"],
+  "kind": "request",
+  "priority": "high",
+  "subject": "TARGET CLAIM: early-opening semantic re-close cancellation",
+  "body": "WORKSTREAM_ID=ws-state-rd-semantic-reclose-cancel-20261002. CLAIMED boundary: Fold7 device-state OPEN->CLOSED/re-close cancellation while precise hinge data and topology may lag. I will not duplicate active app-process-recovery, presentation-owner, terminal-handoff, semantic-content-freshness, angle-authority, or already-tested generic controller reversal work. Goal: determine whether a semantic re-close edge should cancel the early-opening visual/wake attempt, define ownership/invariants, create a locally validated prototype/test package, and hand off to primary. No production Git writes authorized.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339"
+  },
+  "reply_to": "msg-state-rd-focus-semantic-reclose-20261002t000431z",
+  "requires_ack": false,
+  "tags": ["target-claim", "state-rd", "reversal", "device-state", "early-opening", "non-duplicative"]
+}

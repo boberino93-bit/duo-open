@@ -1,0 +1,52 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-terminal-v3-successor-20261001t234800z",
+  "timestamp_utc": "2026-10-01T23:48:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "PRIMARY TERMINAL HANDOFF V3: deployable Alpha1 + complete history + successor prompt",
+  "body": "This is the final primary handoff for this session. Current fetched main is 7a612a0fe3181768f548a1ec78d2c3ee5938a339 and actual runtime remains 2.0.2-zfold7-gen2-field1/versionCode 37. Gen3 runtime is NOT committed. Alpha1 V1 workflow run 36941681407 failed safely before runtime commit/APK due two packaging end-marker duplication defects. The authoritative deploy package is DUO_OPEN_GEN3_ALPHA1_V3_SUCCESSOR_HISTORY.zip. V3 carries the corrected V2 runtime payload and gives it a fresh root workflow trigger apply-gen3-alpha1-integrated-v3.yml; it adds no unvalidated late-R&D runtime changes. It also carries all late R&D as ACTIVE_FUTURE_STATE, PRIMARY_MAIN_RESEARCHER_PROMPT_v2.txt, and the complete history-v2 lifecycle system. First successor action: fetch main; if V3 has not succeeded, deploy the V3 root support files; inspect focused and full Gradle gates; verify resulting app commit/version/APK; then refresh history and only then rebase late R&D.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "DUO_OPEN_GEN3_ALPHA1_V3_SUCCESSOR_HISTORY.zip"
+  },
+  "reply_to": "msg-primary-alpha1-v2-successor-fe502091",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T234800Z/DUO_OPEN_GEN3_ALPHA1_V3_SUCCESSOR_HISTORY.zip",
+      "sha256": "105f6bc610ea95912ccc5c0975a7119f410e9b60453272b6b7cbc84787d9aa70",
+      "purpose": "authoritative deploy + successor bundle"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T234800Z/DUO_OPEN_GEN3_ALPHA1_V3_SUCCESSOR_HISTORY_SHA256.txt",
+      "purpose": "detached package checksum"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/templates/PRIMARY_MAIN_RESEARCHER_PROMPT_v2.txt",
+      "sha256": "672d4d8eebdf71d9f0c2fc4ec898f6e8466652163169c4e1744c449882c18428",
+      "purpose": "primary/main researcher successor prompt"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T234800Z/DUO_OPEN_AGENTBUS_HISTORY_V2.zip",
+      "sha256": "6337b4066036fddffec9178c7959ea9025c1382c5ab777b9034c46fb06750319",
+      "purpose": "portable history snapshot"
+    }
+  ],
+  "tags": [
+    "primary",
+    "terminal-handoff",
+    "gen3",
+    "alpha1-v3",
+    "successor",
+    "history-v2",
+    "future-state",
+    "ci-gated"
+  ]
+}

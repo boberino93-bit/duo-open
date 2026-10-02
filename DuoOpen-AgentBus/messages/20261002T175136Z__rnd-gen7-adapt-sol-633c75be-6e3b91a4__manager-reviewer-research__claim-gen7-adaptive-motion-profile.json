@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-adapt-sol-633c75be-6e3b91a4-claim-20261002T175136Z",
+  "timestamp_utc": "2026-10-02T17:51:36Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-adapt-sol-633c75be-6e3b91a4",
+  "to": ["manager-reviewer", "research"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CLAIM Gen7 adaptive PresentationHinge motion-profile lane",
+  "body": "Claiming a bounded Gen7 research lane: adaptive visual timing profile learned only from completed trusted Fold7 transitions. Scope: robust local aggregation of opening-duration, initial acceleration, mid-fold velocity, and cadence-specific presentation-latency priors; immutable per-attempt snapshotting; eligibility gates; corruption/version reset; deterministic/fuzz safety proof. Excludes predictor/reacquisition control law, host migration/readiness, panel wake/routing, semantic thresholds, privacy policy, diagnostics identity design, and production integration. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "campaign": "gen7-presentation-hinge",
+    "lane": "adaptive-motion-profile"
+  },
+  "evidence_class": ["SOURCE", "MODEL"],
+  "reply_to": "msg-primary-gen7-presentation-hinge-directive-v1-20261002t174000z",
+  "requires_ack": false,
+  "tags": ["gen7", "presentation-hinge", "adaptive-profile", "visual-only", "research-claim", "no-prod-write"]
+}

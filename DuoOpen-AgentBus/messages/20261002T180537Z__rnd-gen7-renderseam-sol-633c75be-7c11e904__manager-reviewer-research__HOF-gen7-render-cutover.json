@@ -1,0 +1,49 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-renderseam-sol-633c75be-7c11e904-handoff-render-cutover-20261002T180537Z",
+  "timestamp_utc": "2026-10-02T18:05:37Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-renderseam-sol-633c75be-7c11e904",
+  "to": ["manager-reviewer", "research"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "Gen7 renderer cutover handoff: exact-current render token + calibrated progress-domain material seam",
+  "body": "HEAD revalidated unchanged at 633c75be26001d5a4ef6e04c7696e8246713be44. Bounded renderer-cutover lane complete. SOURCE: current explicit Fold7 opening path already has the correct downstream temporal primitive: Choreographer-driven direct surface tilt and an explicit bypass of TiltFollower, so Gen7 should preserve direct frame-cadence application and move prediction upstream rather than add another smoothing stage. SOURCE/MODEL: Primary Core V1 normalized visualProgress is suitable as the renderer coordinate, but FrameTarget alone is not a sufficient exact-current render token because AttemptOwner can advance currentGeneration inside one immutable attempt while FrameTarget carries no current generation, host epoch/id or monotonic frame sequence. A renderer must fence (attempt, currentGeneration, hostEpoch/hostId, frameSequence) before every surface mutation. Manager has independently reproduced the same generation/API gap, so this finding is corroborated. MODEL/local compile: research-only gate + material LUT compile and PASS deterministic checks plus 100,000 randomized stale-binding/DEGRADED_HOLD iterations. Material warning: naively applying Core V1 smoothstep visualProgress to the legacy sin(pi*x) optical envelope changes timing by max sampled abs error 0.2703595; a progress-domain inverse-smoothstep calibration preserves the existing Gen5 envelope to max sampled error 4.62e-6 without exporting fake physical degrees. DEGRADED_HOLD must hold/safely reduce PresentationHinge output and must not fall back through TiltFollower. Renderer DTO should omit diagnostic measured/visual-equivalent angles to make semantic leakage harder by construction. No CI or physical Fold7 evidence was generated; physical validation remains required. Primary Core V1 overall is currently NEEDS_MORE_EVIDENCE/revision-required by Manager, so this handoff is input to the revised core/integration round and is not approval to integrate V1 unchanged. Presentation-clock/source-age defects are owned by the dedicated clock lane and were not duplicated here. Production Git writes: NONE.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "campaign": "gen7-presentation-hinge",
+    "lane": "renderer-cutover-direct-visualprogress"
+  },
+  "evidence_class": ["SOURCE", "MODEL", "LOCAL_KOTLIN_COMPILE"],
+  "status": "READY_FOR_MANAGER_REVIEW",
+  "artifact": {
+    "root": "/DuoOpen-AgentBus/artifacts/research/20261002T180424Z-gen7-renderer-cutover",
+    "report": "/DuoOpen-AgentBus/artifacts/research/20261002T180424Z-gen7-renderer-cutover/REPORT.md",
+    "implementation_sketch": "/DuoOpen-AgentBus/artifacts/research/20261002T180424Z-gen7-renderer-cutover/IMPLEMENTATION_SKETCH.md",
+    "tests": "/DuoOpen-AgentBus/artifacts/research/20261002T180424Z-gen7-renderer-cutover/TEST_OUTPUT.txt",
+    "package": "/DuoOpen-AgentBus/artifacts/research/20261002T180424Z-gen7-renderer-cutover/DUO_OPEN_GEN7_RENDERER_CUTOVER_RESEARCH_20261002.zip",
+    "package_sha256": "058e558807c7e55da190a05687a15d16f82a0acb3731962513a9dfe6bcc1c713"
+  },
+  "test_summary": {
+    "primary_core_v1_packaged_harness_rerun": "PASS",
+    "renderer_cutover_harness": "PASS",
+    "randomized_iterations": 100000,
+    "optical_equivalence_max_abs_error": 0.000004616357201793139,
+    "naive_progress_envelope_worst_abs_error": 0.27035949978017876,
+    "ci": "NOT_RUN",
+    "field": "NOT_RUN_REQUIRED"
+  },
+  "live_reconciliation": {
+    "manager_core_v1_disposition": "NEEDS_MORE_EVIDENCE",
+    "same_attempt_generation_gap_independently_corroborated": true,
+    "clock_lane_findings_consumed_as_orthogonal": true,
+    "active_integrity_drift": "BETA_ENTRY_DIRECTIVE_V2.md only; not in discovery-v4 bootstrapOrder; no repair attempted"
+  },
+  "recommended_manager_action": "Review/promote renderer invariants into the next Gen7 core revision: exact-current generation/host/sequence render token, restricted progress-only renderer DTO, direct-vsync/no-second-smoother path, and calibrated progress-domain material mapping. Do not promote Core V1 unchanged on this evidence.",
+  "reply_to": "msg-primary-gen7-core-dev-round-v1-20261002t175000z",
+  "requires_ack": true,
+  "production_write": false,
+  "physical_fold7_validation_required": true,
+  "tags": ["gen7", "presentation-hinge", "renderer", "visual-progress", "generation-fence", "host-fence", "frame-sequence", "material-lut", "tiltfollower", "research-handoff", "no-production-write"]
+}

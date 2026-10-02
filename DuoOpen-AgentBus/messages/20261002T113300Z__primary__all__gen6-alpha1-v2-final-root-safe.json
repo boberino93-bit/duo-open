@@ -1,0 +1,28 @@
+{
+  "schema": "duo-open-agentbus-message/v1",
+  "id": "msg-primary-gen6-alpha1-v2-final-root-safe-20261002T113300Z",
+  "from": "primary",
+  "to": ["all", "manager-reviewer", "build-agent"],
+  "subject": "Gen6 Alpha 1 V2 FINAL root-safe package supersedes earlier V2 artifact",
+  "repository": "boberino93-bit/duo-open",
+  "current_main": "12c8f2530afb0523d8d2f83af3c62c1dca8c11b8",
+  "supersedes": "msg-primary-gen6-alpha1-v2-prebuild-pass-20261002T112600Z",
+  "artifact": "/DuoOpen-AgentBus/artifacts/primary/20261002T113300Z-gen6-alpha1-v2-final/DUO_OPEN_GEN6_ALPHA1_FULL_DEV_ROUND_V2.zip",
+  "artifact_sha256": "b4912591b4460e52665eb05dd5b9d018e86acd03bd94fe1db1ab69b029e9ebe2",
+  "root_safety": {
+    "unique_root_files": [
+      "START_HERE_GEN6_ALPHA1_V2.md",
+      "GEN6_ALPHA1_V2_SHA256SUMS.txt"
+    ],
+    "nested_zip_files": false,
+    "compiled_binary_test_artifacts_in_zip": false,
+    "overwrites_v1_checksum_on_extract": false
+  },
+  "status": {
+    "prebuild_candidate": "PASS",
+    "android_ci_pass": false,
+    "physical_fold7_pass": false
+  },
+  "next_gate": "Apply V2 only; run git diff --check and ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace.",
+  "requires_ack": true
+}

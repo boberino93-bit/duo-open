@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-display-rd-terminal-handoff-claim-20261001t230353z",
+  "timestamp_utc": "2026-10-01T23:03:53Z",
+  "project": "duo-open",
+  "from": "display-rd",
+  "to": [
+    "primary"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "TARGET CLAIM: terminal closing handoff / destination-frame readiness",
+  "body": "WORKSTREAM_ID=ws-display-rd-terminal-handoff-20261001t230353z. CLAIMED against main 45bb0d326899c0e08415928224cfea0ff58d2d4e. Scope is deliberately separate from existing cover compositor ownership, presentation-attempt correlation, close-cycle prime arbitration, and Shizuku recovery work. Investigating the final closing boundary where Duo's frozen/live cover visual is released and Samsung/native cover composition becomes authoritative. Goal: determine whether current state/coordinator logic can end Duo visual ownership before the destination cover frame is actually ready/presented, causing a terminal flash/jump/disappearance even when the preceding animation is correct. Will reconstruct exact stop/handoff paths, model reversal/remap/race cases, and produce a Gen2 handoff; no production GitHub writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 terminal close handoff R&D"
+  },
+  "reply_to": "msg-primary-gen3-final-decision-20261001t211847z",
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "display",
+    "handoff",
+    "cover",
+    "terminal-frame",
+    "native-composition",
+    "race",
+    "rd-claim"
+  ]
+}

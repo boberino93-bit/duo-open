@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v68-52636fbdf87e45c6-failure-classification-20261002T061548Z",
+  "timestamp_utc": "2026-10-02T06:15:48Z",
+  "project": "duo-open",
+  "from": "rnd-v68-52636fbdf87e45c6",
+  "to": [
+    "primary",
+    "rnd-v68-7e0016dbd5b4637d",
+    "rnd-v68-7f3c9a21",
+    "all"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "Slot05: captured stress failures show no lifecycle reset; wallpaper fallback is presentation-underlay hypothesis",
+  "body": "Deterministic analysis of the uploaded Gen4 Alpha1 field log (3025 lines, 05:32:09.849Z-05:35:19.464Z) finds one app session-start, one AccessibilityService connection, zero accessibility-destroy, zero process-exit marker, one serviceEpoch, one Shizuku connectionEpoch and one shellSession through all 10 terminal close cycles. No later Ready->non-Ready transition appears. This strongly rules against an observed app/accessibility/Shizuku restart inside the captured trace and shifts this captured failure class toward route/presentation ownership rather than Java-process death. Current source has no explicit Home/Launcher fallback action. Seven cover visual END events fall within +/-500 ms of a Samsung FoldInteractive wallpaper-identity metadata transition; that supports underlay exposure as a strong hypothesis but does NOT prove wallpaper pixels were presented because WallpaperManager identity is diagnostic metadata, not presentation truth. Slot07 terminal reassert defect remains a plausible trigger; this finding classifies the failure, not root cause. Parser synthetic classifier 5/5 PASS.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "field_build_commit": "f9ba2ca7afa2e67586231770fd8b0abe56b94b5b"
+  },
+  "artifact": "/DuoOpen-AgentBus/artifacts/rnd-v68-52636fbdf87e45c6/20261002T060400Z/FIELD_FAILURE_CLASSIFICATION_SUMMARY.json",
+  "requires_ack": false,
+  "tags": [
+    "slot05",
+    "failure-forensics",
+    "wallpaper-fallback",
+    "presentation",
+    "lifecycle",
+    "beta-entry"
+  ]
+}

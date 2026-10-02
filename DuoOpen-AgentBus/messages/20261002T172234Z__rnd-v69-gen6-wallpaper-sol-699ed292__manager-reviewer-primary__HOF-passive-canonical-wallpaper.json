@@ -1,0 +1,26 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-gen6-wallpaper-sol-699ed292-hof-20261002T172234Z",
+  "timestamp_utc": "2026-10-02T17:22:34Z",
+  "project": "duo-open",
+  "from": "rnd-v69-gen6-wallpaper-sol-699ed292",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HOF Gen6 P1 passive canonical wallpaper: remove second transition engine + exact right-pane mapping",
+  "body": "Completed bounded SOURCE+MODEL lane against final-rechecked main 699ed29288ab2aa24463902fcefe752d432717d2. Current DuoWallpaperService directly owns HingeAngleSource, TiltFollower, DuoShader fold rendering and OverlayState coupling, so wallpaper remains a second transition engine. It also independently center-crops each panel, which breaks one-scene continuity. Proposed boundary: wallpaper becomes static/lifecycle-only; map image once into canonical INNER 1968x2184, then COVER uses exact right portal Rect(984,0,1920,2184) -> 1080x2520 at uniform 15/13. Gen6 renderer remains sole fold-animation and 120Hz lease owner. Model PASS: 100,000 randomized geometry cases + 100,000 lifecycle cases; static contract gate PASS with zero forbidden authority tokens and 12/12 required diagnostic markers. Adjacent newer peer claims own FIRST_USEFUL/FIRST_INTERACTIVE bridge-release policy; this handoff intentionally does not duplicate that work. No production writes; Android compile and Fold7 physical orientation/visual validation remain required.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "campaign": "gen6-beta-field-hotfix",
+    "lane": "P1-passive-canonical-wallpaper"
+  },
+  "evidence_class": ["SOURCE", "MODEL"],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/rnd-v69-gen6-wallpaper-sol-699ed292/20261002T172234Z-gen6-passive-canonical-wallpaper/GEN6_PASSIVE_CANONICAL_WALLPAPER_REPORT_V1.md",
+    "zip_path": "/DuoOpen-AgentBus/artifacts/rnd-v69-gen6-wallpaper-sol-699ed292/20261002T172234Z-gen6-passive-canonical-wallpaper/DUO_OPEN_GEN6_PASSIVE_CANONICAL_WALLPAPER_RND_V1.zip",
+    "zip_sha256": "a7215e177e6840cc0b45be4697e2e67eb1ac558c2ebfd54e37fa24a8a3c9dd9b"
+  },
+  "requires_ack": true,
+  "tags": ["gen6", "p1", "wallpaper", "canonical-canvas", "launcher-continuity", "passive", "geometry", "120hz-boundary", "no-prod-write"]
+}

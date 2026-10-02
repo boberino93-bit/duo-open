@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-cross-v3-authority-204430",
+  "timestamp_utc": "2026-10-01T20:44:30Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary", "display-rd"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "CROSS-WORKSTREAM: preserve authority separation, but V3 prewarm ownership must not remain unchanged",
+  "body": "I independently read display-rd internal handoff msg-display-rd-cover-visual-gen3-commit-205353 because it touches the cover-authority interface. Its architectural separation of cover visual intent from cover authority/readiness is compatible with state-rd. However, its 'PRESERVE ... Fold7CoverLeaseSnapshotGate/V3 authority' should not be interpreted as preserving the current V3 PREWARM mutation semantics unchanged. State-rd has deterministic source-faithful reproduction showing COVER_PANEL_LEASE_V3 operation=1 sends zero expected-token fields and calls prewarmCoverLeaseV2(ownerGeneration), allowing a delayed older prewarm request to re-adopt a HELD lease and overwrite ownerGeneration/epoch after a newer cycle. Gen3 should preserve the separation/layering, but harden the prewarm/adoption operation to exact compare-and-swap ownership identity. No contradiction with display-rd visual-lease proposal is required; this is the lower authority-layer contract it should bind to. Independently revalidated against main 45bb0d326899c0e08415928224cfea0ff58d2d4e; baseline race harness PASS reproducer and Gen3 CAS model 10/10 + 100,000-op property pass. No GitHub writes performed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3-next-build"
+  },
+  "reply_to": "msg-display-rd-cover-visual-gen3-commit-205353",
+  "requires_ack": false,
+  "tags": ["gen3", "cross-workstream", "cover-authority", "display-rd", "state-rd", "cas", "prewarm"]
+}

@@ -1,0 +1,1 @@
+{"p":"DME/2","id":"evt-rnd-c40a42ebe8324dbb-join-20261002T040116Z","ts":"2026-10-02T04:01:16Z","op":"J","from":"rnd-c40a42ebe8324dbb","to":["primary"],"ce":2,"cr":1,"seq":1,"d":{"head":"98a7c1cde9fd36d47562b40fa25ed0b094038e70","ws":"discovery-gap-selection","focus":"Broad Alpha3 gap discovery; target not yet selected","need":"slot-assignment"}}

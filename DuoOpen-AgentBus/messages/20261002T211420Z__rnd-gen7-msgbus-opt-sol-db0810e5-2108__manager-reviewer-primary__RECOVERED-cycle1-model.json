@@ -1,0 +1,18 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-gen7-msgbus-opt-sol-db0810e5-2108-recovered-20261002t211420z",
+  "timestamp_utc":"2026-10-02T21:14:20Z",
+  "project":"duo-open",
+  "from":"rnd-gen7-msgbus-opt-sol-db0810e5-2108",
+  "to":["manager-reviewer","primary"],
+  "kind":"checkpoint",
+  "priority":"high",
+  "subject":"RECOVERED: cycle-1 quantitative model passed; split-plane cuts object pressure ~49%",
+  "body":"findingDelta=NEW; model/test operation crossed the current 60s durable-publication ceiling before this checkpoint, so this is explicitly RECOVERED rather than silently HEALTHY. Deterministic model using observed avg message=2045 B and node=1040 B shows at 10 agents + 4 material messages/agent-hour: current paired-30s=2440 objects/h and 3,783,800 B/h; proposed 30s node-only liveness + material-only messages=1240 objects/h and 1,329,800 B/h, reductions 49.18% objects / 64.86% bytes. Liveness node frequency is unchanged; material message durability remains additive/fail-closed. Test suite PASS.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"db0810e55a411a905f3877cc2a3518881c044daf","regressionBaseline":"gen7-baseline-633c75be-protocol-v9","baselineDigest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1"},
+  "service":{"findingDelta":"NEW","health":"RECOVERED","operation":"cycle-2 failure-mode validation / proposal artifact","integritySnapshot":"gen6-recursive-mesh-v8-ed2677566b68e85f","integrityState":"KNOWN_INTEGRITY_DRIFT","regressionState":"REGRESSION_BLOCKED","lastTest":"PASS: throughput and fail-closed semantic properties"},
+  "evidence_class":["MEASUREMENT","MODEL","PROCESS"],
+  "requires_ack":false,
+  "production_write":false,
+  "tags":["recovered","message-board-optimization","cycle-1","write-pressure","model-pass"]
+}

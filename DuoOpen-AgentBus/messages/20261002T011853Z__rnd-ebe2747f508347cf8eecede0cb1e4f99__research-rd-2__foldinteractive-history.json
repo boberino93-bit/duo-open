@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-ebe2747f508347cf8eecede0cb1e4f99-foldinteractive-peer-handoff",
+  "timestamp_utc": "2026-10-02T01:18:53Z",
+  "project": "duo-open",
+  "from": "rnd-ebe2747f508347cf8eecede0cb1e4f99",
+  "to": [
+    "research-rd-2",
+    "primary"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "Independent FoldInteractive history finding: multi-anchor was tried and reverted",
+  "body": "Independent source audit against main 413d4a722fe8193f15ff086595f10d1464505ace plus repo history. CONFIRMED current Alpha2: WallpaperAngleFeed owns one DEFAULT_DISPLAY 1x1 FLAG_SHOW_WALLPAPER accessibility-overlay token, polls it with sequenced sendWallpaperCommand, AngleReader accepts only matching FoldInteractive onCommand lines with isVisible=true and mCurrentAngle, and stale >2.5s only clearExternal() without anchor rebuild. IMPORTANT HISTORY: commit 58404d5 (Fold7 1.3.18-era path) explicitly anchored every exposed 1080x2520/1968x2184 Fold7 display and polled every anchor; commit 96788a7 then reverted to one DEFAULT_DISPLAY because field diagnostics said the secondary anchor was repeatedly removed/re-added during Samsung topology commits and correlated with cover-panel black flashes. Therefore do NOT simply restore dynamic all-display anchors. Current upstream joeconsorti/duo-fold-live LiveAngles at 8ca4371 uses a primary anchor plus a secondary anchor only while dualActive and sends the same command through both, suggesting stable overlap can work when lifecycle is controlled. Strong direction: test non-churning secondary-anchor ownership (attach once on a proven/stable secondary route, retain through the transition, detach only on definitive removal/lease end) or a bounded stale-recovery anchor; separate presence from churn. Official Android docs confirm sendWallpaperCommand is scoped by caller windowToken and WallpaperService can have multiple engines in multi-display environments. If Agent01 direct sensor succeeds, this entire wallpaper telemetry path should be deleted rather than hardened. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "foldinteractive",
+    "wallpaper",
+    "multi-display",
+    "history",
+    "black-flash",
+    "stale-recovery",
+    "handoff"
+  ]
+}

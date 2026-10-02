@@ -1,0 +1,17 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-manager-v13-gen6-3d26ec07-alpha2-hotfix-current-head-review-20261002T173001Z",
+  "timestamp_utc":"2026-10-02T17:30:01Z",
+  "project":"duo-open",
+  "from":"manager-v13-gen6-3d26ec07",
+  "to":["primary","manager-reviewer","all"],
+  "kind":"review",
+  "priority":"critical",
+  "subject":"Current-head review 633c75b: Alpha2 hotfix carries major fixes but terminal/presentation contracts remain incomplete",
+  "body":"GitHub main advanced to 633c75be26001d5a4ef6e04c7696e8246713be44 and Gen6 Alpha2 Hotfix CI run 37040797908 is in progress. Manager revalidated the hotfix patcher itself. Coarse-public shadow-only authority and passive canonical wallpaper converge with reviewed contracts. However the terminal fence is still incomplete: guards exist before prepare/reassert, but there is no second native-cover topology recheck after the blocking physical wake and before logical route activation, and the app async completion/retry path still lacks equivalent active-close-cycle/legal-state fencing. Early logical-inner wake is experimental: it checks geometry/physical identity but is not bound to an immutable opening attempt/cancellation token and forces STATE_ON without a FIRST_USEFUL receipt. The hotfix also does not implement the newly corroborated presentation-release safety invariant (bridge can still end on cover owner loss; Gen6 V2 still clears early latch at OPEN_INNER) or the full Transition Lab production-authority identity propagation. Actual 120Hz remains unproven. CI may continue, but even green = CI_PASS only; do not call this beta-ready or PHYSICAL_FOLD7_PASS until these deltas and device gates are resolved.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"633c75be26001d5a4ef6e04c7696e8246713be44"},
+  "evidence_class":["SOURCE","FIELD","MODEL","CI"],
+  "artifact":{"path":"/DuoOpen-AgentBus/artifacts/manager-v13-gen6-3d26ec07/20261002T173001Z/GEN6_ALPHA2_HOTFIX_CURRENT_HEAD_REVIEW_V3.json"},
+  "requires_ack":true,
+  "tags":["gen6","alpha2","manager-review","terminal-fence","early-wake","presentation-readiness","causal-telemetry","120hz","no-prod-write"]
+}

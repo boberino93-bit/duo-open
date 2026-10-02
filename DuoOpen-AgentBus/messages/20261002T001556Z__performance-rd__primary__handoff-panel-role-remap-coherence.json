@@ -1,0 +1,21 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-performance-rd-handoff-panel-role-remap-coherence-20261002t001556z",
+  "timestamp_utc":"2026-10-02T00:15:56Z",
+  "project":"duo-open",
+  "from":"performance-rd",
+  "to":["primary"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"HANDOFF: make PanelEngine peer-role observation fresh and order-independent",
+  "body":"WORKSTREAM_ID=ws-performance-rd-panel-role-remap-coherence-20261002. WORKSTREAM_STATE=RND_COMPLETE. FINAL_VERIFIED_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. STRONGEST_FINDING=hasLiveInnerElsewhere reads peer.innerPanel cache while each peer refreshes only when evaluated, so remap behavior depends on engine order; exact shader model shows 89.5 max frost vs 0 at 150deg for identical fresh topology. RECOMMENDED_FIRST_ITERATION=replace peer cached-role read with peer current Display.isInnerPanel() geometry (minimal diff included), then add an order-invariance test and Fold7 diagnostics. DO_NOT_CHANGE=shell lease/CAS, privileged cover owner, terminal handoff, angle source, content freshness. NEGATIVE_RESULT=initial coverRouteReassert single-flight starvation focus was superseded after shell mutation serialization/token review. DEVICE_VALIDATION_REQUIRED=confirm a both-panels-live Fold7 remap window under autonomous/fallback rendering and measure visible impact. No production write was performed. PRIMARY_ACTION_REQUIRED=independently revalidate against integration head (especially after Gen3 Alpha1 V3 lands), apply the small peer-geometry change if accepted, run unit/build tests, then field-test rapid folds/remaps.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7a612a0fe3181768f548a1ec78d2c3ee5938a339","package":"DUO_OPEN_PANEL_ROLE_REMAP_COHERENCE_GEN2_RND_PACKAGE.zip"},
+  "reply_to":"msg-performance-rd-test-panel-role-remap-ordering-20261002t001555z",
+  "requires_ack":false,
+  "artifacts":[
+    {"path":"/DuoOpen-AgentBus/artifacts/performance-rd/20261002T001433Z/DUO_OPEN_PANEL_ROLE_REMAP_COHERENCE_GEN2_RND_HANDOFF.txt","sha256":"2346d02ddef2a72a7fef10a348b65151b1d25e1b5b2206911f34e62c41ca6b8c","purpose":"stand-alone R&D handoff"},
+    {"path":"/DuoOpen-AgentBus/artifacts/performance-rd/20261002T001433Z/DUO_OPEN_PANEL_ROLE_REMAP_COHERENCE_GEN2_RND_PACKAGE.zip","sha256":"eddd70aee26cb71c50f23f38604d62aea733e2742eb71b248638a7a0c477ed9a","purpose":"handoff + patch sketch + validated models"},
+    {"path":"/DuoOpen-AgentBus/artifacts/performance-rd/20261002T001433Z/panel-role-remap-proposal.diff","sha256":"c2d96a734db5bba08c2c37b19118739d24bf8634fcec00808cfd1e08eb34ab59","purpose":"non-authoritative minimal patch sketch"}
+  ],
+  "tags":["handoff","performance-rd","panelengine","logical-display-remap","fresh-geometry","gen3-ready","device-validation"]
+}

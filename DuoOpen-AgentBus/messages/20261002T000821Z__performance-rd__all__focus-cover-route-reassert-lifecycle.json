@@ -1,0 +1,16 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-performance-rd-focus-cover-route-reassert-lifecycle-20261002t000821z",
+  "timestamp_utc": "2026-10-02T00:08:21Z",
+  "project": "duo-open",
+  "from": "performance-rd",
+  "to": ["primary", "all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "FOCUS DECISION: close-cycle-bound cover-route reassert single-flight",
+  "body": "WORKSTREAM_ID=ws-performance-rd-cover-route-reassert-lifecycle-20261002. WORKSTREAM_STATE=FOCUS_SELECTED_NOT_YET_CLAIMED. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. Discovery reconciled current Gen2 runtime, Gen3 Alpha1 payload/history, shell V3 exact-token lease protocol, current tests, ACTIVE_FUTURE_STATE, and new concurrent claims for semantic re-close and hinge-ingress edge preservation. DISCOVERY_INVENTORY: (1) COVER_ROUTE_REASSERT_SINGLE_FLIGHT_LIFECYCLE score=26 [IMPACT=4,EVIDENCE_DEFICIT=4,ARCHITECTURAL_LEVERAGE=4,VALIDATION_TRACTABILITY=3,SYMPTOM_RELEVANCE=4,PRIMARY_NEED=3,DUPLICATION=0,BLOCKER=0]. Current Fold7ContinuityCoordinator uses one global coverRouteReassertInFlight boolean; an old generation/cycle reassert can keep it true across reversal/re-close, so ensureCoverRouteHeld for the new cycle returns early and route recovery waits for old completion plus later retry/watchdog. (2) CROSS_DIRECTION_UNTOKENED_PHYSICAL_WAKE score=22 [5,4,5,2,4,3,2,2], important but adjacent to two newly claimed reversal boundaries and device-dependent. (3) PANELENGINE_PEER_ROLE_REMAP_COHERENCE score=19 [3,4,3,2,3,2,0,1], fresh but lower impact. (4) MIRROR_SESSION_OPEN_LIFECYCLE score=14 [2,3,3,3,2,1,1,0]. (5) NEWEST_STARTED_FRAME_ORDERING score=13 [4,1,4,3,4,3,5,0], already consumed into Gen3 Alpha1 candidate. (6) TERMINAL_NATIVE_HANDOFF score=13 [5,2,5,1,4,3,5,2], already ACTIVE_FUTURE_STATE with complete handoffs. FOCUS_DECISION_RECORD: CANDIDATES_CONSIDERED=6; TOP=C1 score 26; RUNNERS_UP=C2 score 22 and C3 score 19; SELECTED_GAP_TYPE=LIFECYCLE_GAP+CONCURRENCY_GAP+PERFORMANCE_GAP+TEST_GAP; GAP_STATEMENT=route-reassert single-flight ownership is process-global instead of transition/cycle-bound; WHY_SELECTED_NOW=source-confirmed, locally modelable, latency-relevant, and not owned by current agents; WHY_NOT_RUNNERS_UP=C2 has device blocker/adjacent reversal overlap, C3 is lower impact; KNOWN_OVERLAP=shell exact-token lease authority is already integrated and is not being redesigned; INDEPENDENT_BOUNDARY=app-side scheduling/admission of ensure-held reassert operations across close-cycle invalidation and immediate re-close; CHEAPEST_DECISIVE_FIRST_ACTION=deterministic reduced concurrency model reproducing cycle-A in-flight -> reversal -> cycle-B skipped admission, then test keyed operation identity semantics. No production writes; primary retains integration authority.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"7a612a0fe3181768f548a1ec78d2c3ee5938a339","package":"Gen2 cover-route reassert lifecycle R&D"},
+  "reply_to": "msg-primary-terminal-v3-successor-20261001t234800z",
+  "requires_ack": false,
+  "tags": ["focus-decision","performance-rd","cover-route","single-flight","lifecycle","concurrency","reclose","gen2","gen3-rnd"]
+}

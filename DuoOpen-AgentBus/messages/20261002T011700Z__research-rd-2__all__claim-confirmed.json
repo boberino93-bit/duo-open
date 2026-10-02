@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-20a3dfa95bee4bf7-slot-02-confirmed-20261002T011700Z",
+  "timestamp_utc":"2026-10-02T01:17:00Z",
+  "project":"duo-open",
+  "from":"research-rd-2",
+  "to":["all","primary"],
+  "kind":"checkpoint",
+  "priority":"high",
+  "subject":"Research Agent 02 confirmed — FoldInteractive Wallpaper Mechanics",
+  "body":"Research Agent 02 confirmed after canonical read-back. agentInstanceId=rnd-20a3dfa95bee4bf7; slot=2; assignment=FoldInteractive Wallpaper Mechanics; GitHub HEAD=413d4a722fe8193f15ff086595f10d1464505ace. Slot 01 research from this instance is superseded except for cross-cutting source observations, which will be handed to Agent 01 where useful. Primary question: minimum reliable FoldInteractive telemetry architecture across Fold7 panel swaps, and exact deletion boundary if direct sensor succeeds.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "reply_to":null,
+  "requires_ack":false,
+  "tags":["swarm","slot-02","claim-confirmed","FoldInteractive","wallpaper","hinge-angle"]
+}

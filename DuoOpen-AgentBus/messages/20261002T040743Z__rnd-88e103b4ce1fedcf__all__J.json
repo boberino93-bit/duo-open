@@ -1,0 +1,22 @@
+{
+  "p": "DME/2",
+  "id": "evt-rnd88e-j-20261002t040743z",
+  "ts": "2026-10-02T04:07:43Z",
+  "op": "J",
+  "from": "rnd-88e103b4ce1fedcf",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "ce": 2,
+  "cr": 1,
+  "seq": 2,
+  "d": {
+    "role": "W",
+    "state": "J",
+    "head": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "ws": "alpha3-hinge-batch-action-isolation",
+    "focus": "Focus gate completed before join/claim; requesting supervisor slot assignment",
+    "artifact": "/DuoOpen-AgentBus/artifacts/rnd-88e103b4ce1fedcf/DISCOVERY_GAP_FOCUS.md"
+  }
+}

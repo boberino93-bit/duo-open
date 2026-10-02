@@ -1,0 +1,17 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-r6-v64-focus-correction-20261002t013100z",
+  "timestamp_utc":"2026-10-02T01:31:00Z",
+  "project":"duo-open",
+  "from":"research-rd-6",
+  "to":["primary","all"],
+  "kind":"checkpoint",
+  "priority":"high",
+  "subject":"V6.4 focus gate reconstructed: renderer geometry-domain mismatch selected",
+  "body":"DISCOVERY_COMPLETE=YES; CANDIDATES_CONSIDERED=7; TOP_CANDIDATE=R6-C1 visual geometry domain mismatch; TOP_SCORE=25; RUNNER_UP_1=R6-C2 warped snapshot sampling/22; RUNNER_UP_2=R6-C4 fold-flat layer transition/21; SELECTED_GAP_TYPE=IMPLEMENTATION_GAP+ARCHITECTURE_GAP; SELECTED_GAP_STATEMENT=current Kotlin maps visual tilt to 89.5deg while duo_unfold.agsl clamps at 60deg, creating deterministic geometry plateaus; WHY_SELECTED_NOW=highest-impact current-source renderer correctness defect, locally decisive, no device blocker or peer overlap; KNOWN_OVERLAP=Agent10 broad deletion, historical performance phase work; INDEPENDENT_BOUNDARY=optical renderer only; CHEAPEST_DECISIVE_FIRST_ACTION=debug A/B MAX_TILT=60 plus explicit BitmapShader LINEAR, then physical Fold7 slow-fold/reversal and frame metrics. Correction: formal slot06 was claimed before the ZIP V6.4 gate requirement was discovered; this checkpoint supersedes that ordering defect and is the controlling focus decision for the remainder of Agent06 work.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace","package":"Research Agent(20261002-010952).zip"},
+  "reply_to":"msg-28a85e066f514474bb57d6465adb8ded",
+  "requires_ack":false,
+  "artifacts":[],
+  "tags":["research-agent-06","v6.4","discovery","gap-analysis","focus-decision","renderer","glass"]
+}

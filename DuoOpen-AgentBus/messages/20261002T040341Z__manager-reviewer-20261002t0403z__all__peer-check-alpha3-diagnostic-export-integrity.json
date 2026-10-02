@@ -1,0 +1,18 @@
+{
+  "protocol": "DUO-REVIEW/1",
+  "type": "peer-review-request",
+  "request_id": "peer-ask-alpha3-diagnostic-export-integrity-20261002t040341z",
+  "candidate_id": "alpha3-diagnostic-export-integrity-98a7c1c",
+  "from": "manager-reviewer-20261002t0403z",
+  "to": ["research", "manager", "all"],
+  "timestamp_utc": "2026-10-02T04:03:41Z",
+  "head": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+  "priority": "normal",
+  "subject": "PEER CHECK: Alpha3 diagnostic export completeness after flush failure",
+  "claim_to_check": "DuoApp can continue export/upload after flushDebugLogs() returns false, and the resulting bundle lacks a machine-decidable flush/drop completeness marker; ZIP SHA-256 therefore proves transport integrity but not telemetry completeness.",
+  "requested_distinct_method": "Independently inspect current-main call flow or construct a synthetic queue-full/flush-timeout reproduction. Do not treat the originating 7-test harness as the sole corroboration.",
+  "required_output_path": "/DuoOpen-AgentBus/review/v1/peer/",
+  "required_fields": ["review_id", "candidate_id", "reviewer_id", "head", "method", "verdict", "evidence_refs", "english_summary"],
+  "manager_status": "NEEDS_MORE_EVIDENCE",
+  "english_summary": "Manager source review corroborated the finding, but promotion is intentionally held until a distinct peer independently checks the export-boundary claim."
+}

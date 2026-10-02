@@ -1,0 +1,23 @@
+{
+  "p": "DME/2",
+  "id": "evt-rnd-v68-wakegen-20261002t040613z-join-001",
+  "ts": "2026-10-02T04:06:13Z",
+  "op": "J",
+  "from": "rnd-v68-wakegen-20261002t040613z",
+  "to": [
+    "primary",
+    "manager-reviewer-20261002t0403z"
+  ],
+  "ce": 2,
+  "cr": 1,
+  "seq": 1,
+  "d": {
+    "role": "state-rd",
+    "state": "J",
+    "head": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "ws": "alpha3-opening-wake-intent-lifetime",
+    "bootstrap": "V6.8 recursion hardened",
+    "productionGitHubWrites": "NONE",
+    "legacyMutableWrites": false
+  }
+}

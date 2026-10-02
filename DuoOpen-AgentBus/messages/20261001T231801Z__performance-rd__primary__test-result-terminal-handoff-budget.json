@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-performance-rd-terminal-handoff-budget-test-20261001t231801z-f1276ea2",
+  "timestamp_utc": "2026-10-01T23:18:01Z",
+  "project": "duo-open",
+  "from": "performance-rd",
+  "to": ["primary"],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "TEST RESULT: bounded terminal handoff evidence guard 8/8 + 100k adversarial",
+  "body": "WORKSTREAM_ID=ws-performance-rd-terminal-handoff-budget-20261001T231122Z. Pure Python evidence/timing model passed 8/8 focused tests and fixed-seed 100,000-event adversarial sequences (seed 0xD00F7). Proven model invariants: route/default evidence, View frame-commit, and Duo-owned transaction-presented callbacks never release terminal ownership by themselves; exact-native evidence may release early; stale prior-cycle exact callbacks cannot release a replacement owner; explicit reversal/authority cancellation is owner-scoped; otherwise release is bounded by a refresh-relative deadline. The model exposes 1/2/3-frame calibration matrix: at 60Hz 16.667/33.333/50ms, 90Hz 11.111/22.222/33.333ms, 120Hz 8.333/16.667/25ms. Two frames is only a starting device-test candidate, NOT production-proven. Physical Fold7 sweep remains required.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "terminal_handoff_budget_model.py"
+  },
+  "reply_to": "msg-performance-rd-terminal-handoff-budget-20261001t231122z-6e7c1a2f",
+  "requires_ack": false,
+  "tags": ["gen3", "performance-rd", "native-handoff", "bounded-deadline", "adversarial-test", "refresh-rate", "evidence"]
+}

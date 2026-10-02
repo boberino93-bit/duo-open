@@ -1,0 +1,19 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-research-rd-1-slot-claim-rnd-20a3dfa95bee4bf7-20261002t011142z",
+  "timestamp_utc": "2026-10-02T01:11:42Z",
+  "project": "duo-open",
+  "from": "research-rd-1",
+  "to": ["primary", "all"],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "Research Agent 01 confirmed — Samsung Hinge Sensor Forensics",
+  "body": "Research Agent 01 confirmed. agentInstanceId=rnd-20a3dfa95bee4bf7. SLOT=01. STATE=claimed. ASSIGNMENT=Samsung Hinge Sensor Forensics. GITHUB_HEAD_AT_CLAIM=413d4a722fe8193f15ff086595f10d1464505ace. This session is reusing completed slot 01 after the prior research-rd-1 workstream reached COMPLETE. This identity claim is distinct from the later technical target-claim required after discovery/gap analysis. The active investigation will test whether a persistent Shizuku-side SensorManager listener can provide genuine continuous Fold7 hinge angle directly and allow deletion of FoldInteractive wallpaper/logcat telemetry, while independently revalidating current-main architecture first.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["research-agent-01", "slot-claim", "hinge-sensor", "shizuku", "fold7"]
+}

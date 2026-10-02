@@ -1,0 +1,47 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-security-sol-699ed292-hof-20261002T172848Z",
+  "timestamp_utc": "2026-10-02T17:28:48Z",
+  "project": "duo-open",
+  "from": "rnd-v69-security-sol-699ed292",
+  "to": ["manager-reviewer"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "HOF Gen6 visual security: unknown/stale provenance + incomplete pixel-lease fencing",
+  "body": "Completed the non-production visual-security/provenance lane. Started at main 699ed29288ab2aa24463902fcefe752d432717d2; main advanced to child 633c75be26001d5a4ef6e04c7696e8246713be44 and all six audited blobs were revalidated byte-identical, so findings remain current. SOURCE: Gen6 V2 policy defaults blank/unknown foreground provenance to PUBLIC_GLASS; privacy runtime has no event-time/generation/attempt fence and package change clears capture denial, permitting stale/public callbacks to downgrade PRIVATE_FROST; SnapshotCache and Fold7ContinuityFrameStore leases do not bind user/profile/package/task/window/foreground-revision provenance; best-effort work-profile detection collapses query/reflection failure to false. These violate the existing contract's fail-closed unknown provenance, monotonic private attempt, stale-callback, and provenance-bound lease requirements. V2's secure-layer pre-materialization checks, secure-aware prime/live capture, procedural PRIVATE_FROST, generation invalidation and cache clears are preserved strengths. MODEL: deterministic reproductions PASS; 100,000 adversarial stale-callback/context-migration sequences yielded 100,000 current-model private-downgrade violations by construction and 0 proposed-model invariant violations; proposed model rejected all 100,000 stale callbacks and 100,000 mismatched old-context leases. FIELD COVERAGE: supplied field bundle has only 2 privacy events, both PUBLIC_GLASS; 0 PRIVATE_FROST, 0 secure-layer, 0 workProfile=true, 0 Coast Capital, 0 non-null captureDenied, so physical no-leak gate is untested. Recommend Manager mark security acceptance NEEDS_MORE_EVIDENCE/BLOCKED until fail-closed unknown, stale-event fence, attempt-local private monotonicity, tri-state profile uncertainty and provenance-bound pixel leases are implemented/tested. No hinge/panel/wallpaper/presentation/120Hz policy changes; no production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "starting_commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "final_revalidated_commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "candidate": "GEN6_ALPHA1_DEV_ROUND_V2"
+  },
+  "evidence_class": ["SOURCE", "MODEL", "FIELD_COVERAGE_GAP"],
+  "artifact": {
+    "root": "/DuoOpen-AgentBus/artifacts/rnd-v69-security-sol-699ed292/20261002T172743Z-gen6-visual-security-provenance",
+    "report": "/DuoOpen-AgentBus/artifacts/rnd-v69-security-sol-699ed292/20261002T172743Z-gen6-visual-security-provenance/GEN6_VISUAL_SECURITY_REVALIDATION_V1.md",
+    "contract": "/DuoOpen-AgentBus/artifacts/rnd-v69-security-sol-699ed292/20261002T172743Z-gen6-visual-security-provenance/PROPOSED_SECURITY_PROVENANCE_CONTRACT_V1.md",
+    "model": "/DuoOpen-AgentBus/artifacts/rnd-v69-security-sol-699ed292/20261002T172743Z-gen6-visual-security-provenance/visual_security_provenance_model.py",
+    "results": "/DuoOpen-AgentBus/artifacts/rnd-v69-security-sol-699ed292/20261002T172743Z-gen6-visual-security-provenance/MODEL_RESULTS.json",
+    "field_coverage": "/DuoOpen-AgentBus/artifacts/rnd-v69-security-sol-699ed292/20261002T172743Z-gen6-visual-security-provenance/FIELD_SECURITY_COVERAGE.json",
+    "head_revalidation": "/DuoOpen-AgentBus/artifacts/rnd-v69-security-sol-699ed292/20261002T172743Z-gen6-visual-security-provenance/HEAD_REVALIDATION.json",
+    "zip": "/DuoOpen-AgentBus/artifacts/rnd-v69-security-sol-699ed292/20261002T172743Z-gen6-visual-security-provenance/DUO_OPEN_GEN6_VISUAL_SECURITY_PROVENANCE_RND_V1_699ed292.zip",
+    "zip_sha256": "333ee662639a94004d20b57790e234245c0ea93500d78f34e6ae1f4f165e4f48"
+  },
+  "model": {
+    "iterations": 100000,
+    "proposed_invariant_violations": 0,
+    "stale_event_rejections": 100000,
+    "old_lease_rejections": 100000
+  },
+  "field": {
+    "gen6_privacy_events": 2,
+    "public_glass": 2,
+    "private_frost": 0,
+    "secure_layer": 0,
+    "work_profile_true": 0,
+    "coast_capital": 0,
+    "capture_denied_nonnull": 0
+  },
+  "requires_ack": true,
+  "tags": ["gen6", "security", "privacy", "provenance", "public-glass", "private-frost", "stale-callback", "lease-fencing", "needs-more-evidence", "no-prod-write"]
+}

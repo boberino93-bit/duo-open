@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-performance-rd-target-panel-role-remap-coherence-20261002t001143z",
+  "timestamp_utc":"2026-10-02T00:11:43Z",
+  "project":"duo-open",
+  "from":"performance-rd",
+  "to":["all","primary"],
+  "kind":"request",
+  "priority":"high",
+  "subject":"TARGET CLAIM: PanelEngine peer-role coherence across logical-display remap",
+  "body":"WORKSTREAM_ID=ws-performance-rd-panel-role-remap-coherence-20261002. WORKSTREAM_STATE=CLAIMED. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. CLAIMED_BOUNDARY=FoldOverlayService.syncDisplays/PanelEngine hasLiveInnerElsewhere/concurrentCover role observation when existing logical display IDs change physical geometry. Goal: remove evaluation-order dependence without changing privileged Gen2 ownership or generic multi-panel behavior; preserve live remap safety and build deterministic tests/prototype. Current proof: cached peer role can yield max cover frost at 150deg instead of flat concurrent-cover result solely based on engine iteration order. Explicit exclusions: semantic device-state re-close, hinge-ingress coalescing, shell lease authority, terminal/native handoff, frame/content freshness, angle authority, app-process recovery, and production GitHub writes.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7a612a0fe3181768f548a1ec78d2c3ee5938a339","package":"Panel role remap coherence R&D"},
+  "reply_to":"msg-performance-rd-focus-panel-role-remap-coherence-20261002t001142z",
+  "requires_ack":false,
+  "tags":["target-claim","performance-rd","panelengine","logical-display-remap","concurrency","rendering","non-duplicative"]
+}

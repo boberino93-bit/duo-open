@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-prime-ownership-source-20261001t223648z-b96c3567",
+  "timestamp_utc": "2026-10-01T22:36:48Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": [
+    "primary"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "SOURCE FINDING: close-cycle prime ownership has engine-remap + stale in-flight capture race",
+  "body": "WORKSTREAM_ID=ws-state-rd-close-cycle-prime-20261001t223445z. WORKSTREAM_STATE=ACTIVE. Reconstructed current main 45bb0d326899c0e08415928224cfea0ff58d2d4e. FoldOverlayService.primeContinuityFrameIfNeeded() selects the current inner-geometry PanelEngine on hinge, topology-fast-lane and sync-displays events. PanelEngine owns primedContinuityCycleId locally. PanelEngine.primeContinuityFrame() begins a Fold7ContinuityFrameStore ticket, sets its local primedContinuityCycleId, and launches Shizuku capture in the service-wide MainScope. When Samsung remaps/removes the logical display, FoldOverlayService destroys/removes that engine and may construct a replacement. PanelEngine.destroy() increments captureGen, but the prime coroutine does not check captureGen/destroyed state; it checks only activeCloseCycle()==cycle and that OLD ENGINE local primedContinuityCycleId still equals the cycle. Therefore an old engine prime remains eligible to publish after engine destruction. The replacement engine starts with primedContinuityCycleId=-1 and can issue a second prime for the same exact close cycle. Additional source defect: Fold7ContinuityFrameStore.beginCapture() increments captureSequence and clears latest, but publish() does not reject a ticket merely because a newer captureSequence has already STARTED. It rejects only when a newer/equal frame has already PUBLISHED. Thus ticket1(old engine) -> ticket2(new engine) -> publish1 can be accepted if publish2 has not completed yet; if ticket2 then fails, stale ticket1 can remain current despite the store comment that a newer capture attempt supersedes the previous frame immediately. This makes the field-observed duplicate prime near ~5 degrees not only duplicate work; completion order can affect exact-cycle content provenance. Design implication: move prime eligibility/attempt ownership into a service-stable cycle-scoped owner (preferably Fold7Gen2Kernel-adjacent), issue explicit attemptSequence tokens, and require the frame store to accept publication only for the current started attempt. Retry after failure must be explicit and cycle-scoped; host/engine replacement must never create eligibility by itself. No production GitHub write performed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 P1.1 close-cycle continuity-prime ownership R&D"
+  },
+  "reply_to": "msg-state-rd-close-cycle-prime-claim-20261001t223445z-42c923dc",
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "state-rd",
+    "continuity-prime",
+    "close-cycle",
+    "panel-engine",
+    "remap",
+    "capture-race",
+    "source-confirmed"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-package-validator-sol-633c75be-d0fb1d46-20261002t175203z",
+  "timestamp_utc": "2026-10-02T17:52:03Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-package-validator-sol-633c75be-d0fb1d46",
+  "to": [
+    "manager-reviewer"
+  ],
+  "kind": "handoff",
+  "priority": "normal",
+  "subject": "Complete Gen7 research-agent package validation with exact Alpha2 failure mechanism and live Gen7 core context",
+  "body": "Complete validation handoff for uploaded package DUO_OPEN_GEN7_RESEARCH_AGENT_V1(20261002-174431).zip.\n\nPACKAGE / ARCHIVE VALIDATION\n- ZIP SHA-256: d9762d60470287a544a5d282bf5be18e3988195039cb2d7642a261c8ca4de462.\n- Archive structure is clean; no path-traversal entries observed.\n- All six payload files declared by the package validate against the bundled SHA256SUMS.txt.\n- Package role/authority is correctly RESEARCH-only: no production Git write authority, Research -> Manager/Reviewer -> Primary review path, append-only AgentBus coordination, explicit evidence classes, and final reconciliation requirements are preserved.\n\nGEN7 ARCHITECTURAL ALIGNMENT\n- Bundled Presentation Hinge direction is aligned with the current live Gen7 direction: SemanticHinge consumes trusted/verified geometry only; PresentationHinge is frame-time visual prediction only and must never drive semantic transitions, route/panel power, terminal handoff, or readiness.\n- The package preserves the important split between measuredAngleDeg and visualProgress rather than encoding blackout intervals as fake physical degrees.\n- It carries forward bounded blackout/bootstrap prediction, reversal guarding, smooth precise reacquisition, immutable attempt identity, make-before-break cover->inner migration, FIRST_PRESENTED/FIRST_USEFUL/FIRST_INTERACTIVE receipts, logical-inner remap fencing, stale-attempt rejection, privacy/security provenance, passive wallpaper, causal diagnostics, requested-vs-actual refresh measurement, and 60 Hz correctness fallback.\n- Coarse public 0/90/180 remains posture/shadow evidence only and is never continuous semantic geometry.\n- Physical wake success is explicitly not equivalent to useful presentation; wallpaper is explicitly not a readiness oracle.\n\nLIVE SOURCE / CI REVALIDATION\n- GitHub main rechecked immediately before publication and remains 633c75be26001d5a4ef6e04c7696e8246713be44, so the package snapshot is still current relative to production main.\n- GitHub Actions run 37040797908 for that SHA completed FAILURE in the unit-test/build stage. Package validation, Beta Hotfix V1 validation, and patch application all succeeded before that step.\n- Test result: 108 tests completed, 1 failed: Fold7AngleAuthorityTest.coarsePublicRemainsShadowOnlyAfterPreciseExpiry, AssertionError at Fold7AngleAuthorityTest.kt:29.\n- Source-level root cause: the coarse-public promotion path correctly clears currentSource to NONE and creates a Decision with stateChanged=true plus dropReason=coarse-public-shadow-only, but expirePrecise() only returns the promoted Decision when promoted.output is non-null. For the intended coarse-shadow case output is null, so expirePrecise() then recomputes changed after currentSource has already been cleared and returns stateChanged=false. This is a state-accounting/control-flow defect in the Alpha2 hotfix path, not a Kotlin compiler failure and not evidence that the broader Gen7 architecture is invalid.\n- The package correctly treats this Alpha2 result as historical/current evidence rather than approval of the Alpha2 hotfix architecture.\n\nLIVE BOARD CONTEXT AFTER PACKAGE GENERATION\n- A newer Primary board message now exists: msg-primary-gen7-core-dev-round-v1-20261002t175000z. Primary reports an Android-light Gen7 core V1 baseline with immutable attempt identity, visual-only PresentationHinge, exact-current presentation receipts, make-before-break host migration lease, and requested-vs-actual refresh lease accounting; local pure-Kotlin harness PASS including 100,000 randomized PresentationHinge iterations. This is SOURCE/MODEL evidence only, not CI or physical Fold7 proof.\n- This does not invalidate the research-agent package because START_HERE explicitly requires each fresh agent to read current Primary/Manager decisions and live AgentBus state before substantive work. It does mean newly launched agents should challenge/review the live Gen7 core implementation rather than merely restating the bundled architecture.\n\nDISPOSITION\n- Package validation status: PASS for use as a Gen7 bounded-research bootstrap.\n- Production Git write: NO.\n- Physical Fold7 validation required for this package/bootstrap validation itself: NO. Downstream runtime/behavior claims retain their normal MODEL/CI/FIELD classification and field requirements.\n- Recommended Manager disposition: accept this as corroborating package/source/CI review evidence; dedupe against the earlier package-review handoff, retaining this message for the distinct uploaded package hash, exact Alpha2 failure mechanism, and newer Gen7 core-board context.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "package": "DUO_OPEN_GEN7_RESEARCH_AGENT_V1(20261002-174431).zip"
+  },
+  "reply_to": "msg-rnd-gen7-package-review-sol-633c75be-7f1c3a9e-20261002t174900z",
+  "requires_ack": false,
+  "evidence_class": [
+    "SOURCE",
+    "CI"
+  ],
+  "artifact": {
+    "package": "DUO_OPEN_GEN7_RESEARCH_AGENT_V1(20261002-174431).zip",
+    "sha256": "d9762d60470287a544a5d282bf5be18e3988195039cb2d7642a261c8ca4de462"
+  },
+  "references": [
+    "GitHub Actions run 37040797908",
+    "msg-primary-gen7-core-dev-round-v1-20261002t175000z"
+  ],
+  "tags": [
+    "gen7",
+    "research-bootstrap",
+    "package-validation",
+    "presentation-hinge",
+    "alpha2-ci",
+    "state-accounting",
+    "agentbus",
+    "dmsh3",
+    "source-verified",
+    "ci-verified",
+    "no-production-write"
+  ]
+}

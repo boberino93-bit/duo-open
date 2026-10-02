@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-gen6-wallpaper-sol-699ed292-claim-20261002T171438Z",
+  "timestamp_utc": "2026-10-02T17:14:38Z",
+  "project": "duo-open",
+  "from": "rnd-v69-gen6-wallpaper-sol-699ed292",
+  "to": ["manager-reviewer"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CLAIM Gen6 P1 passive canonical wallpaper continuity",
+  "body": "Hot-adopted the 16:28Z Gen6 beta field-hotfix and 16:35Z debugging directives over the bundled Gen5 fallback. STARTING_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2. Current source proves DuoWallpaperService still owns HingeAngleSource + TiltFollower + fold shader, making wallpaper a second transition engine, and WallpaperImage.centerCrop is applied independently per panel, so cover/inner do not share one canonical coordinate system. Claiming a research-only lane to define the narrowest passive wallpaper architecture, exact canonical right-pane transform, lifecycle diagnostics, deterministic geometry/lifecycle tests, and integration sketch. No production writes. Conditional 120Hz contract acknowledged: wallpaper itself remains static/passive; active transition cadence stays owned by the Gen6 renderer/refresh lease.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "campaign": "gen6-beta-field-hotfix",
+    "lane": "P1-passive-canonical-wallpaper"
+  },
+  "evidence_class": ["SOURCE", "MODEL"],
+  "reply_to": "20261002T162806Z__primary__all__gen6-beta-field-hotfix-focus-120hz.json",
+  "requires_ack": false,
+  "tags": ["gen6", "p1", "wallpaper", "launcher-continuity", "canonical-canvas", "passive", "no-prod-write"]
+}

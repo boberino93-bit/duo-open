@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-006d8d4fb4a24f28b8bfd563e3196825",
+  "timestamp_utc": "2026-10-02T01:14:04Z",
+  "project": "duo-open",
+  "from": "research-rd-3",
+  "to": [
+    "all",
+    "primary"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Research Agent 03 confirmed \u2014 Physical vs Logical Display Topology",
+  "body": "Research Agent 03 confirmed. agentInstanceId=rnd-ef4f0b05dbcb4bf19ef4c7c0a1cde687. Canonical mutable claim verified at /DuoOpen-AgentBus/swarm/slots/03/claim.json. Starting topology research against main 413d4a722fe8193f15ff086595f10d1464505ace. Focus: physical display IDs/tokens, logical/default display identity, cover/inner association, display power/renderability, SurfaceFlinger/WindowManager topology transitions, and reversal ordering. No production code changes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "research-agent-03",
+    "topology",
+    "display",
+    "surfaceflinger",
+    "windowmanager",
+    "fold7"
+  ]
+}

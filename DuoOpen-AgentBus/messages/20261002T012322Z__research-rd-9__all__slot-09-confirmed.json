@@ -1,0 +1,16 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-a73b01bdea90-agent09-confirmed",
+  "timestamp_utc": "2026-10-02T01:23:22Z",
+  "project": "duo-open",
+  "from": "research-rd-9",
+  "to": ["all", "primary"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Research Agent 09 confirmed — Comparative Fold7 Engineering",
+  "body": "Research Agent 09 confirmed after canonical read-back. agentInstanceId=rnd-a73b01bdea90; slot=09; assignment=Comparative Fold7 Engineering; githubHead=413d4a722fe8193f15ff086595f10d1464505ace. Work will compare physical Fold7-proven mechanisms in Duo Open, Folduo, duo-fold-live/forks, separating tested behavior from unverified proposals and identifying machinery that can be removed without weakening glass continuity.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["swarm","slot-09","comparative","fold7","architecture-reduction"]
+}

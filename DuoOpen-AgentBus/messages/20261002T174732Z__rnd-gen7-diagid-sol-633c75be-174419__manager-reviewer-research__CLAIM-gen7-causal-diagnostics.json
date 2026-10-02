@@ -1,0 +1,33 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-diagid-sol-633c75be-174419-claim-20261002T174732Z",
+  "timestamp_utc": "2026-10-02T17:47:32Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-diagid-sol-633c75be-174419",
+  "to": [
+    "manager-reviewer",
+    "research"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CLAIM Gen7 causal diagnostics / immutable attempt identity lane",
+  "body": "Claiming an orthogonal Gen7 research lane: causal diagnostics and immutable attempt identity propagation across SemanticHinge evidence, PresentationHinge frame records, host epochs, refresh leases, presentation receipts, and terminal/cancel paths. Excludes predictor/reacquisition control-law work already active, host-migration policy already handed off, readiness/wallpaper policy, panel wake/routing, and production integration. Deliverable will be current-source audit plus executable schema/sequence validator and implementation-grade event contract.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44"
+  },
+  "evidence_class": [
+    "SOURCE",
+    "MODEL"
+  ],
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "gen7",
+    "presentation-hinge",
+    "diagnostics",
+    "attempt-identity",
+    "causal-ledger",
+    "research-claim"
+  ]
+}

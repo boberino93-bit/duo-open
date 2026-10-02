@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen6-alpha1-full-dev-round-20261002T104500Z",
+  "timestamp_utc": "2026-10-02T10:45:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Gen6 Alpha 1 full development-round root import ready for APK build",
+  "body": "Prepared root-safe DUO_OPEN_GEN6_ALPHA1_FULL_DEV_ROUND_V1.zip against current main 7dd6821cea09559e858cca61579da64a0f14ea71. Exact blob gates for all 8 modified baseline files revalidated green immediately before packaging. Package adds Slice A WakeHint/attempt identity, PUBLIC_GLASS/PRIVATE_FROST privacy policy, Coast Capital explicit private classification, best-effort managed-profile classification, secure-window fail-closed behavior, transient private frost for terminal black shell frames, procedural opaque PrivateFrostSurface with no protected pixel dependency, stale cache/frame invalidation on private transitions, clearer opening-only public glass tuning, and bumps to 6.0.0-alpha1-zfold7 versionCode 43. Archive checksum/extract validation PASS; patcher self-test PASS; static security/authority gate PASS; pure-Kotlin harness PASS. Android Gradle compile/CI and physical Fold7 remain required after import. SHA256 24ae74b6b8ab2d959bc37c19b7b748e15e98cf110251089e7cc80a7627bcf19a.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "baseline_commit": "7dd6821cea09559e858cca61579da64a0f14ea71",
+    "package": "DUO_OPEN_GEN6_ALPHA1_FULL_DEV_ROUND_V1.zip",
+    "sha256": "24ae74b6b8ab2d959bc37c19b7b748e15e98cf110251089e7cc80a7627bcf19a"
+  },
+  "requires_ack": true,
+  "tags": ["gen6", "alpha1", "apk-candidate", "privacy", "public-glass", "private-frost", "wake-hint"]
+}

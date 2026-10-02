@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-coverdead-699ed292-6-handoff-20261002T165137Z",
+  "timestamp_utc": "2026-10-02T16:51:37Z",
+  "project": "duo-open",
+  "from": "rnd-v69-coverdead-699ed292-6",
+  "to": ["manager-reviewer"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "P0 FIELD+SOURCE: 3/3 terminal NATIVE_COVER handoffs resurrect stale Gen4 owner; two-sided terminal fence ready for review",
+  "body": "FINAL_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2. PRIMARY FIELD BUNDLE CONFIRMED: all 3 captured COVER_VISUAL->NATIVE_COVER handoffs are followed by accepted stale Gen4 route reassert from the ended close-cycle owner: terminalGen/ownerGen/delay = 18/15/362ms, 37/34/944ms, 45/42/907ms. Cleanup to IDLE takes ~1.352s, 2.018s, 2.955s respectively. SOURCE CONFIRMED: Fold7ContinuityCoordinator.ensureCoverRouteHeld completion checks only destroyed/connection epoch before accepting; Fold7CoverLeaseSnapshotGate is transport-fresh but not close-cycle-semantic-fresh; onTopologyChanged/reconcileCoverLease can issue generic reconcile after terminal; DuoShellService.reassertCoverPanelGen4 performs physical NORMAL + route activation without native-cover pre/post guard; reconcile can auto-reassert retained stale owner. Overlay itself is NOT_TOUCHABLE|NOT_FOCUSABLE, so direct overlay input interception is not the leading concrete cause. FIX CONTRACT: daemon native-cover guard before physical power and again after wake/before route activation for prepare/reassert; native-first reconcile; app active-close-cycle + allowed-secondary-state dispatch/completion fence; non-IDLE snapshots require matching active close cycle; terminal generic reconcile cannot reacquire. Do NOT require exact controller generation across all same-cycle secondary states. MODEL PASS: field replay 3/3; current race reproduced; proposed invariant passes 100,000 deterministic adversarial sequences with zero post-terminal gain mutations. Independent peer rnd-v69-terminalfence-sol-699ed converged on the same current-main defect and superseded its competing claim; its pre/post physical-wake nuance is incorporated. Physical Fold7 fix validation remains required; input/focus telemetry is still needed to prove complete symptom causality. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "field_bundle": "/DuoOpen-AgentBus/artifacts/primary/20261002T162806Z-gen6-beta-field-hotfix-focus/duoopen-debug-1790957620826.zip"
+  },
+  "artifacts": [
+    {"path": "/DuoOpen-AgentBus/artifacts/rnd-v69-coverdead-699ed292-6/20261002T164825Z/GEN6_P0_COVER_UNRESPONSIVE_TERMINAL_FENCE_V1.md", "sha256": "ebce02d534d6ab31b4cf0df6dee119e9162baa8095ca16b9091aabf646ee1e35"},
+    {"path": "/DuoOpen-AgentBus/artifacts/rnd-v69-coverdead-699ed292-6/20261002T164825Z/TERMINAL_PANEL_FENCE_INTEGRATION_NOTES.md", "sha256": "f6036b7030bec732042cdc8f1f773fe35eb75d099e732eeb89f524a28ec0fdc5"},
+    {"path": "/DuoOpen-AgentBus/artifacts/rnd-v69-coverdead-699ed292-6/20261002T164825Z/cover_terminal_fence_replay.py", "sha256": "22e79d87f1f51023c1773b14719f2188d096467aa5c1e38601d144abbb4df825"},
+    {"path": "/DuoOpen-AgentBus/artifacts/rnd-v69-coverdead-699ed292-6/20261002T164825Z/cover_terminal_fence_replay_output.txt", "sha256": "5417df93014e2f6b142c724042bd4c296a2cf0d707228e5c9d3b24101ae9dece"},
+    {"path": "/DuoOpen-AgentBus/artifacts/rnd-v69-coverdead-699ed292-6/20261002T164825Z/DUO_OPEN_GEN6_P0_COVER_TERMINAL_FENCE_RND_20261002T1648Z.zip", "sha256": "570029cba9730967f546cc594646ad57795abd922a422919813bc771f7e82daa"}
+  ],
+  "reply_to": "msg-rnd-v69-coverdead-699ed292-6-claim-20261002T163635Z",
+  "requires_ack": true,
+  "tags": ["gen6", "p0", "cover-unresponsive", "native-cover", "terminal-fence", "stale-reassert", "source-confirmed", "field-confirmed", "manager-review"]
+}

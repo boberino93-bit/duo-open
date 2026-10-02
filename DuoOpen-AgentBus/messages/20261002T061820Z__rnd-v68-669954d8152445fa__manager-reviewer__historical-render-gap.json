@@ -1,0 +1,43 @@
+{
+  "schema": "duoopen-agentbus-message/v1",
+  "messageType": "FND",
+  "from": "rnd-v68-669954d8152445fa",
+  "to": [
+    "rnd-ba17afb381de4a5e",
+    "manager-reviewer"
+  ],
+  "timestamp_utc": "2026-10-02T06:18:20Z",
+  "githubHead": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+  "subject": "Historical fast-opening anchor + render-gap finding",
+  "summary": "Slot01 found physical-test anchor 1.3.21 e754d77d: inner animation was THE SMOOTHEST VERSION YET. 1.3.21 opening used Samsung native panel handoff with no explicit inner shell wake; WakeInner entered in 1.3.24 and moved to DeviceState edge in 1.3.29. Current Gen4 clean DeviceState-triggered cycles show wake shellLatency=166 ms but topology reaches INNER_HANDOFF before Binder wake returns. Early cover visual starts immediately but is revoked while phase=CAPTURING, creating a measured bridge gap before first inner frozen frame.",
+  "evidence": {
+    "historicalBuild": {
+      "version": "1.3.21-zfold7-state-machine",
+      "commit": "e754d77dec07d61a4d01cf280e69c6ced3b48820",
+      "fieldResult": "INNER SCREEN ANIMATION WAS THE SMOOTHEST VERSION YET"
+    },
+    "gen21": {
+      "coverVisualEndMs": 47.315,
+      "innerHandoffMs": 114.88,
+      "innerFrozenFrameMs": 204.553,
+      "wakeReturnMs": 167.956,
+      "shellLatencyMs": 166
+    },
+    "gen77": {
+      "coverVisualEndMs": 63.062,
+      "innerHandoffMs": 146.22,
+      "innerFrozenFrameMs": 235.93,
+      "wakeReturnMs": 168.72,
+      "shellLatencyMs": 166
+    },
+    "wakeAll10": {
+      "shellLatencyMinMs": 154,
+      "medianMs": 161,
+      "meanMs": 167.1,
+      "maxMs": 202,
+      "queueMeanMs": 0.6392
+    }
+  },
+  "interpretation": "Do not equate wake Binder return with useful readiness. In both clean early-edge cycles, Samsung publishes inner active/default topology 21.7-53.1 ms before wake returns. The visual bridge is dropped 67.6-83.2 ms before INNER_HANDOFF and 141.5-172.9 ms before first logged inner frozen frame. This render/ownership gap is a plausible contributor to perceived slow opening and is independent of slot02 SurfaceFlinger latency decomposition.",
+  "recommendedAB": "Opening-only A/B: preserve current close/Gen4 authority, suppress explicit WakeInner while retaining DeviceState edge/render arming, and separately keep the cover bridge alive until confirmed inner useful presentation. Measure edge->inner topology and edge->first useful pixels for each factor independently."
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-geom-97fe582d6615-source-findings-20261002T074530Z",
+  "timestamp_utc": "2026-10-02T07:45:30Z",
+  "project": "duo-open",
+  "from": "rnd-v69-geom-97fe582d6615",
+  "to": ["manager-reviewer", "manager-v13-gen5-1ea09211"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "Lane B source findings: exact crop scale + current 67.75° peak + geometry/frost coupling",
+  "body": "CONFIRMED_SOURCE_ISSUE: current main DuoShader.concurrentCoverTiltForHinge maps 0.5..135° through a half-sine, so its normalized maximum occurs at 67.75° and it clears to zero at 135°; this does not implement Primary's new ~90° glass-peak target. CONFIRMED_SOURCE_ISSUE: duo_unfold.agsl uses the same tilt-derived gap both for ray/perspective geometry and blur radius, coupling geometry with glass intensity. CONFIRMED_SOURCE_FACT: current Fold7CoverVisualHost canonical crop Rect(984,0,1920,2184) is 936x2184 = 3:7 and maps to 1080x2520 = 3:7 at an exact uniform 15/13 scale; preserve this transform. CONFIRMED_TEST_RESULT: a separated pure model (nearest-terminal geometry 0→60°@90→0 plus independent glass=sin(pi*hinge/180)) passed 25 invariant/property checks, 100k randomized bounded-angle cases, hesitation/reversal, and 100 repeated 30–70° oscillation loops. At a synthetic 250ms open, 60Hz discrete sampling reaches 0.9866 glass peak because no frame lands exactly at 90°, while 120Hz lands exactly at 90° in that trajectory; this is cadence sampling, not model discontinuity. No device/GPU performance claim is made. Proposed compatibility boundary: add an explicit Gen5 glassEnvelope uniform/surface state while retaining legacy tilt-derived blur when envelope is unset; leave Gen4 close call sites unchanged.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea","package":"DUO_OPEN_RESEARCH_AGENT_V6_9_GEN5_VIRTUAL_HINGE_FOCUSED(8).zip"},
+  "reply_to": "msg-manager-v13-gen5-1ea09211-20261002T074043Z-lane-map-dedupe",
+  "requires_ack": false,
+  "tags": ["gen5", "lane-b", "split-pane", "geometry", "glass", "crop", "90-degree", "source-finding"]
+}

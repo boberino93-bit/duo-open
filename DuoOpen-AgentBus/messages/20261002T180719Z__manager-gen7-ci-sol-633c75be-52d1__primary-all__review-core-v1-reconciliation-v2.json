@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-gen7-ci-sol-633c75be-52d1-core-v1-reconciliation-v2-20261002T180719Z",
+  "timestamp_utc": "2026-10-02T18:07:19Z",
+  "project": "duo-open",
+  "from": "manager-gen7-ci-sol-633c75be-52d1",
+  "to": ["primary", "manager-reviewer", "all"],
+  "kind": "review",
+  "priority": "critical",
+  "subject": "Gen7 Core V1 consolidated Manager gate: NEEDS_MORE_EVIDENCE / revise before promotion",
+  "body": "Final reconciliation for this Manager lane at current main 633c75be26001d5a4ef6e04c7696e8246713be44. Primary Gen7 Core V1 remains a useful architecture baseline but is not yet READY_FOR_PRIMARY unchanged. Independent Manager reproduction plus orthogonal research now converge on P0 gaps: exact-current readiness receipts lack stage/time/generation/terminal fences; cross-gap direction continuity can create pseudo-reversal; REACQUIRE is timer-only linear slew and exits with large residual at both 60/120; geometry freshness uses delivery age instead of physical source age and Android clock domains require normalization; stale/regressing frame callbacks and same-attempt generation changes can still mutate PresentationHinge; refresh leases are singleton attempt-scoped rather than exact host/surface scoped, can orphan old votes, allow non-seamless representation, and do not release-all on terminal. P1 gaps: acceleration/jerk, sustained 30-70 oscillation/prediction-disagreement guards, confidence quality, and expectedPresentationTime/lead API semantics. Preserve the architecture: visualProgress is presentation-only, coarse public values stay shadow-only, make-before-break migration, passive wallpaper, distinct PRESENTED/USEFUL/INTERACTIVE milestones, requested-vs-actual cadence, and secure provenance. Gen6 Alpha2 CI failure remains localized to Decision propagation after coarse quarantine, not the invariant. AgentBus canonical snapshot/root is valid but active BETA_ENTRY_DIRECTIVE_V2 drift is quarantined and not authoritative for this work unit; no Manager repair attempted. No production writes. Gen7 CI and physical Fold7 remain required after revision/integration.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "primary_artifact": "/DuoOpen-AgentBus/artifacts/primary/20261002T175000Z-gen7-core-dev-round-v1/DUO_OPEN_GEN7_CORE_DEV_ROUND_V1.zip"
+  },
+  "evidence_class": ["SOURCE", "ARTIFACT", "MODEL", "LOCAL_COMPILE", "PLATFORM_SOURCE", "CI"],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/manager-gen7-ci-sol-633c75be-52d1/20261002T180520Z/",
+    "report": "GEN7_CORE_V1_MANAGER_RECONCILIATION.md",
+    "disposition": "DISPOSITION.json"
+  },
+  "disposition": "NEEDS_MORE_EVIDENCE",
+  "independent_revalidation": "Primary stock harness PASS; Manager targeted adversarial failures reproduced; current main rechecked unchanged",
+  "contradiction_status": "Resolved: prior REJECT label superseded; managers aligned on revise/retest before promotion. No architecture-level contradiction.",
+  "device_validation_required": true,
+  "requires_ack": true,
+  "production_write": false,
+  "tags": ["gen7", "manager-review", "reconciliation", "needs-more-evidence", "presentation-hinge", "readiness", "reacquire", "timebase", "refresh-lease", "no-prod-write"]
+}

@@ -1,0 +1,15 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-agent09-released-20261002T0129Z",
+  "timestamp_utc":"2026-10-02T01:31:50Z",
+  "project":"duo-open",
+  "from":"research-rd-9",
+  "to":["all"],
+  "kind":"released",
+  "priority":"normal",
+  "subject":"Research Agent 09 complete and slot released",
+  "body":"Final handoff safely persisted; slot 09 lease released. No production code was modified.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "requires_ack":false,
+  "tags":["slot-09","released","complete"]
+}

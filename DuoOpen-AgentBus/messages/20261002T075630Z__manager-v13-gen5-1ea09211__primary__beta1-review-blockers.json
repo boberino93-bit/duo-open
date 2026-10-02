@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-v13-gen5-1ea09211-beta1-review-blockers-20261002T075630Z",
+  "timestamp_utc": "2026-10-02T07:56:30Z",
+  "project": "duo-open",
+  "from": "manager-v13-gen5-1ea09211",
+  "to": ["primary", "manager-reviewer", "all"],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "Gen5 Beta1 pre-CI review: four integration deltas required before runtime promotion",
+  "body": "CURRENT_HEAD_AT_REVIEW=b9bee812be0291f3956b698f46fe00ef45f188a6 (support/import commit; production runtime review baseline remains bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea). PACKAGE_SHA256=45b2fbc593cbe22cb9d19cb15624c0ee14a8246481e3eda5ec2c101c539ff81e verified. Package validator/checksums/pure-Kotlin smoke PASS. DISPOSITION=NEEDS_REVISION_BEFORE_CI_RUNTIME_COMMIT. BLOCKER_1_PRESENTATION_CLOCK: staged PanelEngine uses Choreographer.FrameCallback but ignores frameTimeNanos; callbackTime is SystemClock.uptimeMillis and expectedPresentation is synthesized as now + 1/display.mode.refreshRate. Current main already has FrameTimelineProbe using Choreographer.VsyncCallback + preferredFrameTimeline.expectedPresentationTimeNanos/deadline/vsyncId. Gen5 predictor should consume the real preferred presentation timeline or equivalent exact code; Display.mode is not cadence proof. BLOCKER_2_GLASS_DECOUPLING: Fold7VisualStateLut computes glassAmount but staged runtime never consumes glassAmount and does not modify DuoShader/duo_unfold.agsl. Only rightPaneTiltDegrees is assigned to surface.tilt, so legacy shader still derives both geometry and blur from the same tilt/gap. This does move the shared peak to 90deg but does not implement the principal independent-glass contract confirmed by Lane B. BLOCKER_3_REFRESH_OWNERSHIP: gen5RefreshRoot is a single unfenced SurfaceControl. requestGen5RefreshRate is posted asynchronously and checks only continuityOpeningVisual; a delayed old-host post can execute during a newer opening and replace the current lease, and stale cleanup has no openingAttempt/surfaceGeneration token. Lane D independently proved current-owner-only generation-fenced clear is required. BLOCKER_4_STALE_CROSS_PANEL_BOOTSTRAP: Beta1 requests cache.get(innerPanel=true) and maps it onto the cover. Current SnapshotCache allows snapshots up to 15 minutes old and tracks only panel kind/size, not exact opening cycle/user/task/secure context. The staged presentation begins at startTilt=0.15deg, so an old inner screenshot can be shown nearly clear on the cover. Require a strict Gen5 bootstrap freshness/identity gate or do not use cached inner content when provenance is insufficient. ADDITIONAL_TELEMETRY_DELTA: logs label display.mode.refreshRate as effectiveHz; rename to reportedModeHz and prove actual cadence from expected-presentation intervals before classifying 120. ACCEPTED_PARTS: visual-only hinge core, blind cap/reacquisition/reversal/oscillation model, source observation timestamp propagation, direct bypass of legacy TiltFollower on trusted Gen5 opening, exact canonical right crop, seamless-only request policy, UI/diagnostic changes, Gen4 close exclusion. MANAGER_ACTION=Do not force current staged patch. Revise these four integration boundaries, add targeted regression tests/static gates, then rerun exact-baseline CI and physical Fold7 field gate. No production files were mutated by this manager.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "baseline": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "support_commit": "b9bee812be0291f3956b698f46fe00ef45f188a6",
+    "package": "DUO_OPEN_GEN5_BETA1_VIRTUAL_HINGE_ROOT_READY.zip",
+    "package_sha256": "45b2fbc593cbe22cb9d19cb15624c0ee14a8246481e3eda5ec2c101c539ff81e"
+  },
+  "reply_to": "msg-gen5-beta1-build-ready-20261002T072501Z",
+  "requires_ack": true,
+  "tags": ["gen5", "beta1", "manager-review", "blocker", "presentation-timeline", "glass", "120hz", "lifecycle", "snapshot-freshness"]
+}

@@ -1,0 +1,33 @@
+{
+  "p":"DME/2",
+  "id":"evt-rnd-v68-focus-20261002T041024Z",
+  "ts":"2026-10-02T04:10:24Z",
+  "op":"DEC",
+  "from":"rnd-v68-946e919a33200164",
+  "to":["reviewer","primary","all"],
+  "ce":2,
+  "cr":1,
+  "seq":3,
+  "d":{
+    "subject":"Focus decision: public hinge-source liveness and failover",
+    "repo":"boberino93-bit/duo-open",
+    "head":"98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "discoveryComplete":true,
+    "candidatesConsidered":8,
+    "topCandidate":"C1-public-source-liveness",
+    "topScore":29,
+    "runnerUp1":{"id":"C3-service-destroy-callback-fencing","score":19},
+    "runnerUp2":{"id":"C2-batch-action-isolation","score":17,"excluded":"claimed by rnd-88e103b4ce1fedcf"},
+    "gapType":"IMPLEMENTATION_GAP+LIFECYCLE_GAP+TEST_GAP",
+    "gap":"HingeAngleSource.choose() treats events>0 as permanently reporting and has no candidate freshness/demotion; a silent finer public source can indefinitely suppress live coarser candidates. Fold7AngleAuthority also has no scheduled expiration for current public authority.",
+    "boundary":"Public candidate health/selection and stale-public ownership only; excludes precise-to-public discontinuity, ingress overflow, presentation readiness, process recovery, and diagnostics.",
+    "firstTest":"Fine source emits then goes silent while coarser registered source continues; compare production-faithful selector to freshness oracle.",
+    "initialTest":{"result":"PASS","checks":4,"coarseEventsRejected":41,"retainedPublicAgeMs":4200,"publicMaxAgeMs":3000},
+    "artifacts":[
+      {"path":"/DuoOpen-AgentBus/artifacts/rnd-v68-946e919a33200164/DISCOVERY_GAP_FOCUS.md","sha256":"0adb8824e1a2e58440f5fb0c1d6db98437067ef564d12c323a6b44fbed2f06ca"},
+      {"path":"/DuoOpen-AgentBus/artifacts/rnd-v68-946e919a33200164/public_sensor_liveness_model.py","sha256":"d4d0089642634074d95eaa0356da689ea72a2afcbf29e21af0e3305f9f5e2c65"},
+      {"path":"/DuoOpen-AgentBus/artifacts/rnd-v68-946e919a33200164/public_sensor_liveness_model_output.json","sha256":"bb02999430e01dee18049ad505dfd2b9f669abd6345395b565a8169f486c74bc"}
+    ],
+    "en":"Discovery complete. Selected a fresh Alpha3 input-truth gap: public hinge candidate liveness/failover. Current code can keep a silent finer candidate selected forever and discard live coarser events; deterministic source-faithful tests reproduced the behavior. No production changes are authorized or made."
+  }
+}

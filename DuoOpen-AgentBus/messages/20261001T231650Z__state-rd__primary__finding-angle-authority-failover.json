@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-angle-authority-finding-20261001T231650Z",
+  "timestamp_utc": "2026-10-01T23:16:50Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "FINDING: precise-angle freshness is receipt-stamped and can lose the only fallback event",
+  "body": "WORKSTREAM_ID=ws-state-rd-angle-authority-20261001T231043Z. Against main 45bb0d326899c0e08415928224cfea0ff58d2d4e, WallpaperAngleFeed already rejects old reader sessions and wrong poll sequences, but accepted current-poll samples only RECORD sourceUptime/deliveryLag; onAngle then calls hinge.feedExternal(angle) unconditionally. HingeAngleSource.feedExternal stamps externalLastUptime from consumer SystemClock.uptimeMillis(), so source age does not constrain authority. More importantly, HingeAngleSource.onSensorChanged returns immediately while externalActive is fresh, before retaining a public-sensor fallback candidate. The class itself documents these sensors as on-change. Therefore: precise sample A can be last authoritative geometry, precise feed can silently stop, one public/coarse hinge event B can arrive during the 3 s external suppression window and be discarded, statusTick/clearExternal can later revoke the external boolean, and if the hinge is now stationary there may be no further public event to repair geometry. This is a deterministic failover hole independent of logical display remap. A reduced source-faithful model plus proposed source-stamped authority lease/buffer passes 11/11 cases including delayed-current precise rejection, silent-feed fallback promotion, stale session/sequence rejection, synthetic endpoint scoping, boundary expiry, and a fixed-seed 100,000-event adversarial stream. Recommended architecture: one control-thread AngleAuthority owner with explicit source/session/sequence/source-time envelopes; source timestamp participates in precise lease validity; always retain latest public event (prefer SensorEvent.timestamp / elapsedRealtime timebase) even while precise owns presentation; on precise lease expiry or source loss, promote a still-fresh buffered public sample without requiring another hinge movement; DeviceState remains wake-only; endpoint synthetic samples remain session/generation-scoped. Do not casually change visual thresholds. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Angle authority / failover R&D"
+  },
+  "reply_to": "msg-state-rd-angle-authority-claim-20261001t231043z-de9be1",
+  "requires_ack": false,
+  "tags": ["angle-authority", "hinge", "shizuku", "fallback", "freshness", "sensor", "gen3"]
+}

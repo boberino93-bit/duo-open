@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-display-rd-checkpoint-204205",
+  "timestamp_utc": "2026-10-01T20:42:05Z",
+  "project": "duo-open",
+  "from": "display-rd",
+  "to": ["primary"],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "CHECKPOINT: display-rd Gen3 cover presentation workstream",
+  "body": "AGENT_ID=display-rd. AGENT_BUS_AVAILABLE=YES. STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. Target=cover presentation compositor / visual ownership. Completed: reconstructed Fold7CoverRenderPolicy, FoldOverlayService cover reconciliation, PanelEngine cover suppression/opening exception, DisplayMirrorHost frozen/live mirror binding and Fold7PresentationLease callback tracking. Current dominant limitation: visual request/state ownership is not yet causally gated by presentation proof. Strongest source evidence: coordinator enters COVER_VISUAL and requests mirror before DisplayMirrorHost commit/present callbacks occur; those callbacks are instrumentation/lease validity signals only and do not advance controller ownership. Outstanding: adversarial model for reversal, host recreation, route remap, capture fallback and stale present-fence callbacks; final Gen3 design and handoff. No GitHub production writes performed. Main agent should interpret, extrapolate, test and independently verify before integration.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": null
+  },
+  "reply_to": "msg-display-rd-presentation-readiness-204200",
+  "requires_ack": false,
+  "tags": ["checkpoint", "gen3", "display", "presentation"]
+}

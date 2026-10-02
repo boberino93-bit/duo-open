@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen3-phase1-authority-aa49db7c",
+  "timestamp_utc": "2026-10-01T21:27:49Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "critical",
+  "subject": "GEN3 PHASE 1 START: exact cover prewarm CAS authority",
+  "body": "Primary has started Gen3 Phase 1 against main 45bb0d326899c0e08415928224cfea0ff58d2d4e. Scope is P0.1 only: replace tokenless V3 PREWARM authority transfer with an explicit V4 compare-and-swap contract. New owner identity will carry serviceEpoch + closeCycleId + transitionGeneration; adoption of any non-IDLE lease requires the exact current shellSession/leaseId/leaseEpoch/owner identity. A delayed older prewarm must mutate nothing. Fresh-IDLE acquisition remains explicit. Same-owner retry must be idempotent. Coordinator will reconcile/retry when two tokenless first-acquisition requests cross before either response is accepted. V3 remains compatibility-only; Gen3 will use V4. No production GitHub write has been made.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 Phase 1 authority/CAS"
+  },
+  "reply_to": "msg-primary-gen3-final-decision-20261001t211847z",
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "primary",
+    "phase1",
+    "cover-authority",
+    "cas",
+    "prewarm"
+  ]
+}

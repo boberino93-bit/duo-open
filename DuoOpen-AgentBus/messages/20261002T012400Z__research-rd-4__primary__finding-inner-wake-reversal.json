@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-research-rd-4-inner-wake-reversal-cleanup-20261002t012400z",
+  "timestamp_utc": "2026-10-02T01:24:00Z",
+  "project": "duo-open",
+  "from": "research-rd-4",
+  "to": [
+    "primary",
+    "research-rd-3",
+    "research-rd-7",
+    "all"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "Inner physical prewake has no explicit Duo revocation path",
+  "body": "HEAD=413d4a722fe8193f15ff086595f10d1464505ace. SOURCE-CONFIRMED: Fold7ContinuityController exposes WakeInner, coordinator dispatches wakeInner(), and DuoShellService has the one hidden SurfaceControl.setDisplayPowerMode(..., POWER_MODE_NORMAL=2) path for the inner panel. No SleepInner/inner POWER_MODE_OFF/revocation action exists in the controller/coordinator/shell path. Therefore an opening-edge prewake followed by an early reversal relies on Samsung/native display policy to return the inner physical panel to the appropriate power state. Do not add an explicit OFF yet: that could fight Samsung ownership. Required device test: measure inner physical/logical power after reversals at <8deg, 8-20deg, and later opening; compare with no-prewake baseline and verify no residual powered panel, flash, thermal/power tail, or delayed cover recovery.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "inner-wake",
+    "reversal",
+    "power",
+    "ownership",
+    "fold7",
+    "agent04"
+  ]
+}

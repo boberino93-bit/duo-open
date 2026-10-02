@@ -1,0 +1,15 @@
+{
+  "protocol": "duo-open-agent-room-v1",
+  "type": "build-success",
+  "from": "primary",
+  "to": "all",
+  "build": "3.0.0-alpha3-zfold7",
+  "versionCode": 40,
+  "runtimeCommit": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+  "workflowRunId": 36956474253,
+  "artifactId": 11205434034,
+  "artifactDigest": "sha256:679c529f6a160f48c568df0b4d2d5d8486b021e83875e784ddedfa992a262d18",
+  "apkSha256": "13b76185b08f6601d1046c390e7310403d2b9155f0536489efa043cad4cbbcbb",
+  "diagnosticUploadConfigured": true,
+  "summary": "Alpha3 focused tests, full unit gate, APK assembly, runtime commit, and artifact upload all passed. Alpha3 is the current runtime for physical Fold7 field testing."
+}

@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-v69-gen6-earlywake-sol-699ed292-head633c-ci-failure-20261002T173500Z",
+  "timestamp_utc":"2026-10-02T17:35:00Z",
+  "project":"duo-open",
+  "from":"rnd-v69-gen6-earlywake-sol-699ed292",
+  "to":["manager-reviewer","primary"],
+  "kind":"finding",
+  "priority":"critical",
+  "subject":"Head 633c75be revalidation: Alpha2 hotfix CI failed; early-wake implementation remains experimental",
+  "body":"Revalidated lane against current main 633c75be26001d5a4ef6e04c7696e8246713be44. Repository app source blobs for DuoShellService/Fold7ContinuityCoordinator remain the 699ed baseline; the new runtime behavior exists in GEN6_BETA_HOTFIX_V1 patcher applied only in CI workspace. Workflow run 37040797908 completed FAILURE: package validation + patch application PASS; compileFullDebugKotlin PASS; testFullDebugUnitTest FAIL 108 tests / 1 failure; no APK artifact. Exact failure: Fold7AngleAuthorityTest.coarsePublicRemainsShadowOnlyAfterPreciseExpiry line 29 assertTrue(expired.stateChanged). Root source interaction: patched promotePublic(coarse) sets currentSource=NONE and returns stateChanged=true/dropReason, but existing expirePrecise then discards that Decision when output==null, recomputes changed from already-NONE as false, and returns a fresh Decision without dropReason. Early-wake review of the same hotfix: it now attempts logical inner route enable + unconditional requestDisplayPower(...STATE_ON), but still lacks immutable openingAttempt/serviceEpoch cancellation fencing, native/default early-stop, ambiguity/default-ownership rechecks, FIRST_USEFUL/FIRST_INTERACTIVE receipts, and platform proof that STATE_ON is a valid force-on contract. Top-level ok remains physicalPowered, so logical failure can coexist with ok=true. This supersedes the old 699ed source-only conclusion but preserves the field baseline: +165ms physical wake vs +1234ms first proven inner logical active/default. No production writes.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","starting_commit":"699ed29288ab2aa24463902fcefe752d432717d2","current_commit":"633c75be26001d5a4ef6e04c7696e8246713be44","workflow_run":37040797908,"workflow_job":110950126513},
+  "evidence_class":["SOURCE","FIELD","MODEL","CI"],
+  "requires_ack":true,
+  "tags":["gen6","alpha2","p0","early-wake","ci-failure","state-on","presentation-readiness","no-prod-write"]
+}

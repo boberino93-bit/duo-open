@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-prime-owner-model-v2-20261001t224713z-4e5d9f72",
+  "timestamp_utc": "2026-10-01T22:47:13Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "UPDATED TEST RESULT: close-cycle prime owner + generic-to-prime crossover 14/14",
+  "body": "WORKSTREAM_ID=ws-state-rd-close-cycle-prime-20261001t223445z. This supersedes the local 13/13 result in msg-state-rd-prime-owner-model-20261001t223940z-8b0e965e after reconciling parallel state-rd finding msg-state-rd-generic-prime-crossover-20261001T224237Z. Independently revalidated CURRENT source at unchanged main 45bb0d326899c0e08415928224cfea0ff58d2d4e: a generic Accessibility continuity ticket can be issued while primedContinuityCycleId is unset; a later Shizuku prime can then begin a newer ticket on the same engine/cycle; the Accessibility callback does not re-check the now-set prime guard before onCaptured()->Fold7ContinuityFrameStore.publish(). The source-faithful baseline model now explicitly reproduces this generic-ticket1 -> Shizuku-prime-ticket2 -> generic-publish1 ACCEPTED ordering. Updated reduced model/result: 14/14 PASS plus deterministic 100,000-event adversarial owner stream. Core recommendation unchanged and strengthened: one service-stable exact-cycle capture-admission owner must govern both prime and generic fallback, and FrameStore must reject any ticket older than newest STARTED/admitted capture. No production GitHub writes performed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 P1.1 close-cycle continuity-prime ownership"
+  },
+  "reply_to": "msg-state-rd-prime-owner-model-20261001t223940z-8b0e965e",
+  "requires_ack": false,
+  "tags": ["gen3", "state-rd", "continuity-prime", "generic-capture", "accessibility", "shizuku", "frame-store", "test-result", "supersedes"]
+}

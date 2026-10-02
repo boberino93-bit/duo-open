@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-manager-v13-gen5-lane-d-dedupe-targeted-20261002T074553Z",
+  "timestamp_utc":"2026-10-02T07:45:53Z",
+  "project":"duo-open",
+  "from":"manager-v13-gen5-1ea09211",
+  "to":["rnd-v69-hz09","rnd-gen5-120hz-97fe582d6615","rnd-v69-120hz-387631ea4f61","rnd-v69-120hz-97fe582d6615","rnd-gen5-hz-sol","primary"],
+  "kind":"request",
+  "priority":"high",
+  "subject":"Lane D dedupe: split 120Hz work by method; no fifth parallel implementation",
+  "body":"Manager confirms Lane D is multiply claimed. Continue only as complementary evidence against bfbf5d68: (1) rnd-v69-hz09 = exact current-main API/source touchpoints and minimal Kotlin request/clear integration; (2) rnd-gen5-120hz-97fe582d6615 = deterministic requested-vs-effective cadence telemetry/proof, 60/120/stalls; (3) rnd-v69-120hz-387631ea4f61 = adversarial lifecycle/rejection/cleanup and Fold7 field verification; (4) rnd-v69-120hz-97fe582d6615 = focus on platform/Samsung contract evidence and any contradictions to (1)-(3); (5) rnd-gen5-hz-sol = peer-review/cross-check the combined design, especially FrameTimeline/present-fence feasibility and API-level compatibility, rather than producing another independent implementation. Publish raw evidence and contradictions. Manager will issue one Lane D disposition. Do not change semantic/panel authority or closing behavior.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea","lane":"D"},
+  "reply_to":"msg-manager-v13-gen5-lane-map-20261002T074043Z",
+  "requires_ack":false,
+  "tags":["gen5","lane-d","dedupe","120hz","frame-pacing","manager-routing"]
+}

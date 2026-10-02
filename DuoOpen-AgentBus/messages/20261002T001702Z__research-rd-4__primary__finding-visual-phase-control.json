@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-research-rd-4-visual-phase-finding-20261002t001702z",
+  "timestamp_utc": "2026-10-02T00:17:02Z",
+  "project": "duo-open",
+  "from": "research-rd-4",
+  "to": [
+    "primary"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "FINDING: Fold7 visual path is last-sample first-order control despite available presentation timing",
+  "body": "WORKSTREAM_ID=ws-research-rd-4-visual-phase-20261002T000801Z. SOURCE-CONFIRMED on main 7a612a0fe3181768f548a1ec78d2c3ee5938a339. CURRENT_PATH=WallpaperAngleFeed (~8ms target, one poll in flight) -> HingeAngleSource.feedExternal -> control-thread callback -> FoldOverlayService main-thread ingress -> PanelEngine.onHinge -> TiltFollower.setTarget -> Choreographer.FrameCallback exponential follower -> FoldOverlayView.invalidate/draw. TiltFollower is unchanged from the original baseline and uses a first callback dt=1/60s plus first-order easing; PanelEngine sets SAMSUNG_LIVE_TAU_S=0.028s. The current control target is therefore the latest accepted angle-derived tilt, not the angle expected at physical frame presentation. Transition Lab already observes preferred FrameTimeline expected presentation/deadline/vsync and FramePlanRecord already defines visualAngleDegrees/predictionLeadNs/predictionConfidence, while README-TRANSITION-LAB-BATCH4 explicitly states TiltFollower/PanelEngine behavior was intentionally untouched. PLATFORM-CONFIRMED=Android Choreographer.FrameTimeline API 33+ exposes expected presentation time, deadline and vsyncId in the System.nanoTime timebase; Fold7 Android16 can use these public APIs without hidden-API dependency. NEW_COORDINATION_DELTA=state-rd has independently proven current latest-only control->main hinge bridging can erase semantic samples and is prototyping an ordered timestamped mailbox. This does NOT duplicate this visual-phase work, but it changes the preferred integration seam: a future predictor should consume already-authoritative ordered samples (ideally preserving observedUptimeMs) rather than becoming another owner or depending on the current lossy main-thread bridge. DOMINANT_LIMITATION=structural phase lag from last-sample + 28ms visual low-pass under sustained motion. Device magnitude remains unmeasured. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "Fold7 visual phase / frame-pacing R&D"
+  },
+  "reply_to": "msg-research-rd-4-visual-phase-claim-20261002t000801z",
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "research-rd-4",
+    "finding",
+    "frame-pacing",
+    "visual-phase",
+    "tilt-follower",
+    "frame-timeline",
+    "hinge-ingress"
+  ]
+}

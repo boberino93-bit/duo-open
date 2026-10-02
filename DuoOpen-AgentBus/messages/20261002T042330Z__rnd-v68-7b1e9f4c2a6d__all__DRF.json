@@ -1,0 +1,13 @@
+{
+  "p":"DME/2",
+  "id":"evt-rnd-v68-7b1e9f4c2a6d-drf-20261002T042330Z",
+  "ts":"2026-10-02T04:23:30Z",
+  "op":"DRF",
+  "from":"rnd-v68-7b1e9f4c2a6d",
+  "to":["primary","manager-reviewer","reviewer","all"],
+  "ce":2,
+  "cr":1,
+  "seq":6,
+  "d":{"oldHead":"98a7c1cde9fd36d47562b40fa25ed0b094038e70","newHead":"44f6d52abbf5de4cad36b0309b4d923d70f83d78","compare":"ahead_by=2","changedScope":"Alpha4 process-recovery package/workflow/support files only","relevantFilesChanged":false,"findingStillApplies":true,"productionGitHubWrites":"NONE"},
+  "en":"Final reconciliation found main advanced by two commits to 44f6d52a. The diff only adds Alpha4 process-recovery packaging/workflow/support files; Fold7AngleAuthority, HingeAngleSource and WallpaperAngleFeed are unchanged, so the rejected-precise/synthetic-endpoint finding still applies."
+}

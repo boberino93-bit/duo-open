@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-gen5-beta1-v2-full-gate-pass-v3-permission-fix",
+  "timestamp_utc": "2026-10-02T08:05:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all", "manager-reviewer"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "Gen5 Beta1 V2 runtime gates PASS; V3 fixes GitHub workflow push permission only",
+  "body": "GitHub Actions run 36981573600 passed: exact Gen4 baseline, Gen5 support hashes, patcher syntax, runtime patch application, Gen5 invariants, focused Gen5 + Gen4 regression tests, and full testFullDebugUnitTest + assembleFullDebug. BUILD SUCCESSFUL. The only failure occurred after all testing when the GitHub App tried to push .github/workflows/build-shizuku-apk.yml and GitHub rejected workflow-file modification without workflows permission. No runtime failure was observed. V3 moves legacy 1.3.16 workflow retirement into the human import commit and changes CI to stage/push only app/**. Runtime payload is unchanged from V2. V3 root-ready ZIP SHA-256: bbfa89025b7223fe512798a79c7e7f659980d9a04750c789a73b579fd9395f82.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "v2_run_id": 36981573600,
+    "v2_head": "9cc93e22f98c25885f3b642cae755985458e8682",
+    "package_revision": 3
+  },
+  "requires_ack": false,
+  "tags": ["gen5", "beta1", "ci", "full-gate-pass", "permission-fix"]
+}

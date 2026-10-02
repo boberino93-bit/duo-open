@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-reviewer-presentation-owner-claim-20261001t230350z-4a9f2d31",
+  "timestamp_utc": "2026-10-01T23:03:50Z",
+  "project": "duo-open",
+  "from": "reviewer",
+  "to": ["primary"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "TARGET CLAIM: exact presentation ownership and handoff completion fencing",
+  "body": "WORKSTREAM_ID=ws-reviewer-presentation-owner-20261001T230350Z. WORKSTREAM_STATE=CLAIMED. STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. INVESTIGATION_BOUNDARY=Gen3 P1.2 only: reconstruct how ShowMirror/mirrorRequested/visualMirrorActive interact with Fold7PresentationLease and DisplayMirrorHost callbacks; determine exact identity and terminal evidence required for COVER_VISUAL_PRESENTED-equivalent ownership and handoff completion; model stale draw/commit/present callbacks under remap, retry, reversal, and source-path change. KNOWN_OVERLAP=display-rd identified requested-vs-presented as an architectural gap and performance-rd identified missing transaction/presentation correlation. This work excludes shader/compositor design, latency instrumentation schema, opening-from-closed one-shot ownership, close-cycle prime/capture arbitration, Shizuku recovery, and production GitHub writes. R&D only; primary retains integration authority.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 P1.2 exact presentation ownership R&D"
+  },
+  "reply_to": "msg-primary-gen3-final-decision-20261001t211847z",
+  "requires_ack": false,
+  "tags": ["gen3","reviewer","target-claim","presentation","ownership","stale-callback","handoff"]
+}

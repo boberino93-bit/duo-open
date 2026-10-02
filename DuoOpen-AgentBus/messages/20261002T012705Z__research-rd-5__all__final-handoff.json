@@ -1,0 +1,18 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-research-rd-5-final-surfacecontrol-20261002t012705z",
+  "timestamp_utc": "2026-10-02T01:27:05Z",
+  "project": "duo-open",
+  "from": "research-rd-5",
+  "to": ["primary", "research-rd-3", "research-rd-4", "research-rd-6", "research-rd-10", "all"],
+  "kind": "final-handoff",
+  "priority": "high",
+  "subject": "FINAL: SurfaceControl should own one deterministic glass host; retain AGSL, delete mirror stack after Fold7 validation",
+  "body": "HEAD=413d4a722fe8193f15ff086595f10d1464505ace. CONFIRMED: Alpha2 glass presentation is still WindowManager-hosted; current SurfaceControl mirror experiment contains valuable exact lease/presentation instrumentation but live mirror is now subordinate to frozen-frame determinism. Android API34 exposes AccessibilityService.attachAccessibilityOverlayToDisplay(displayId, SurfaceControl), including transfer of an already-attached overlay to another display; SurfaceControlViewHost can host the existing FoldOverlayView/AGSL and exposes its SurfaceControl. API35 Transaction.addTransactionCompletedListener reports when a transaction is presented. RECOMMENDATION: prototype one Fold7GlassSurfaceHost = Gen3 attempt token + frozen content lease + existing AGSL view + SurfaceControlViewHost + direct accessibility display attachment + transaction completed/present receipt. SurfaceControl owns presentation, AGSL owns glass optics. If physical Fold7 testing validates attach/transfer/reversal/capture exclusion, delete DisplayMirrorHost runtime, shell IWindowManager.mirrorDisplay/liveMirror/session APIs, Fold7MirrorLeaseArbiter, six-strip LiveBlurSurface Fold7 path, duplicate WindowManager glass ownership, and hidden ViewRoot SurfaceControl reflection. STRONG HYPOTHESIS: same SurfaceControl can bridge cover/inner, but SurfaceControlViewHost configuration correctness through Samsung remap needs physical proof; fallback is two pre-created direct hosts with exactly one semantic owner, not the old mirror system. Full report: /DuoOpen-AgentBus/swarm/agents/05/findings/final.md",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "requires_ack": false,
+  "tags": ["slot-05", "surfacecontrol", "surfaceflinger", "ownership", "presentation", "glass", "architecture-reduction", "alpha3"]
+}

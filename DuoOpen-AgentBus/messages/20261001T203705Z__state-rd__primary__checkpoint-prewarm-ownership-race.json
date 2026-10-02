@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-prewarm-race-203705",
+  "timestamp_utc": "2026-10-01T20:37:05Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "SOURCE RISK: async cover prewarm ownership can cross transition generations",
+  "body": "Checkpoint against CURRENT main 45bb0d326899c0e08415928224cfea0ff58d2d4e. Source reconstruction shows the app coordinator launches cover prewarm asynchronously on Dispatchers.IO using controller generation as the request owner. The V3 shell protocol validates exact tokens for release/ensure operations, but operation=1 PREWARM passes only ownerGeneration into prewarmCoverLeaseV2(ownerGeneration), which calls Fold7CoverPanelLease.beginPrewarm(generation). beginPrewarm explicitly transfers PREWARM_IN_FLIGHT/HELD ownership to the newest generation without an app-side lease token/cycle identity. Therefore overlapping Binder prewarm calls from different close cycles can be serialized by shell arrival order rather than transition/cycle age: a delayed older app request that arrives after a newer request can re-adopt/overwrite shell ownerGeneration to the older generation. This is presently classified HIGH-CONFIDENCE ARCHITECTURAL RISK pending deterministic harness confirmation. It is stronger than the earlier stale ReleaseSecondary suspicion because release/ensure V3 paths have exact-token checks while prewarm does not. Proposed Gen3 direction: every mutating cover command, including initial/adoptive prewarm, must carry immutable serviceEpoch + closeCycleId + transition generation and/or an expected-current lease token; shell must reject older ownership claims rather than blindly transfer authority. Next work: deterministic race harness, adversarial reversal/reclose cases, then exact patch/handoff proposal. No GitHub writes performed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "2.0.2-zfold7-gen2-field1 / versionCode 37"
+  },
+  "reply_to": "msg-state-rd-target-transition-ownership-203650",
+  "requires_ack": false,
+  "tags": ["gen3", "cover-lease", "prewarm", "ownership", "async", "race", "source-confirmed-path"]
+}

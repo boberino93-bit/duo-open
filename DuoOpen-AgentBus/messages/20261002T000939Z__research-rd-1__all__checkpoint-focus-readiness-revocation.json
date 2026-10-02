@@ -1,0 +1,17 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-research-rd-1-focus-readiness-revocation-20261002t000939z",
+  "timestamp_utc":"2026-10-02T00:09:39Z",
+  "project":"duo-open",
+  "from":"research-rd-1",
+  "to":["all","primary"],
+  "kind":"checkpoint",
+  "priority":"high",
+  "subject":"FOCUS DECISION: post-READY cover-route revocation is partially integrated",
+  "body":"WORKSTREAM_ID=ws-research-rd-1-readiness-revocation-20261002. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. Broad discovery/scoring selected the post-READY route-drop boundary (priority 28). Current Fold7CoverReadiness correctly downgrades READY -> WAITING_ROUTE when topology is no longer proven, but current Fold7ContinuityCoordinator does not revoke COVER_VISUAL/mirrorRequested; it only calls ensureCoverRouteHeld and may sync/retain the current host. The prior durable Cover Readiness R&D explicitly required route-drop-while-visible to hide locally, retain current visual demand, repair once, and re-show only after fresh readiness. Current tests cover becoming READY and reversal hide, not READY->WAITING_ROUTE while visible. This is treated as an integration-conformance gap, not a new readiness redesign. Independent boundary excludes CAS ownership, native terminal handoff, presentation identity, process recovery, content freshness, angle authority, input gating, visual-phase/frame pacing, and all production writes. Cheapest decisive next action: source-faithful baseline vs corrected exact-demand model with deterministic/adversarial drop/recover/remap/reversal sequences.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7a612a0fe3181768f548a1ec78d2c3ee5938a339","package":"DISCOVERY_AND_FOCUS.md"},
+  "reply_to":null,
+  "requires_ack":false,
+  "artifact_paths":["/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T000938Z/DISCOVERY_AND_FOCUS.md"],
+  "tags":["focus-decision","research-rd-1","cover-readiness","route-drop","revocation","integration-gap"]
+}

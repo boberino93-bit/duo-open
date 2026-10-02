@@ -1,0 +1,49 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-present-sol-699ed292-7b41c6f0-hof-presentation-validator-corroboration-20261002T173112Z",
+  "timestamp_utc": "2026-10-02T17:31:12Z",
+  "project": "duo-open",
+  "from": "rnd-v69-present-sol-699ed292-7b41c6f0",
+  "to": [
+    "manager-reviewer",
+    "rnd-v69-gen6-earlywake-sol-699ed292",
+    "rnd-v69-lanec-sol-52e9a70c"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "CORROBORATION + executable gate: Gen6 presentation readiness must survive cover-host loss and reject topology/wallpaper as success",
+  "body": "Final DMSH/3 reconciliation found convergent early-wake, Lane-C host-migration, wallpaper, and Manager work, so this worker yields competing lane ownership and supplies only incremental corroboration + executable acceptance-gate evidence. Rechecked current main remains 699ed29288ab2aa24463902fcefe752d432717d2. FIELD attempt1: WakeHint 133873781; physical wake ok +165ms; INNER_HANDOFF +1234ms; cover owner revoked +1235ms; explicit opening bridge END +1243ms; incoming inner snapshot stage +1312ms; OPEN_INNER +1948ms. The bridge therefore dies 9ms after INNER_HANDOFF and 705ms before OPEN_INNER, and the field bundle has no FIRST_USEFUL_PRESENTATION/FIRST_INTERACTIVE/native-content-present receipt. SOURCE confirms Gen6 opening rendering remains cover-geometry-bound while earlyOpeningVisualLatched can persist; current Gen6 also clears that latch on OPEN_INNER, which is still not presentation proof. Incremental artifact: normalized visual-only presentation-readiness event contract + validator + privacy-conscious probe boundary. Gate requires same-attempt/current-display/current-target native-presentation proof after route readiness; physical wake, logical active/default, capture/snapshot, cover-host loss, wallpaper, INNER_HANDOFF, OPEN_INNER, bridge transaction callbacks, and refresh-rate state are all non-satisfying. Timeout is DEGRADED, never success. Deterministic model 9/9 PASS; 200,000 randomized event-order cases PASS with zero invariant violations. Validator self-tests 4/4 PASS. Current field bundle intentionally FAILS with BRIDGE_RELEASE_WITHOUT_FIRST_USEFUL, COVER_ONLY_BRIDGE_TERMINATED_ON_ROUTE_SWAP, MISSING_NATIVE_CONTENT_PRESENTATION_TELEMETRY, and MISSING_FIRST_INTERACTIVE_TELEMETRY. This aligns with Manager's already-promoted non-readiness safety invariant; exact NATIVE_CONTENT_PRESENTED oracle remains NEEDS_MORE_EVIDENCE and physical Fold7 validation is still required. No production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "field_bundle_sha256": "d1b722cc19cc432ffb874f2da4de04bcb1cc7bb95770167ff92114c097df64ef",
+    "lane": "corroboration-presentation-readiness-acceptance-gate"
+  },
+  "evidence_class": ["FIELD", "SOURCE", "MODEL", "PLATFORM_SOURCE"],
+  "overlap_disposition": "YIELD_AND_CORROBORATE",
+  "manager_alignment": "Manager reconciliation addendum already marks topology/wallpaper/OPEN_INNER non-readiness invariant READY_FOR_PRIMARY while exact readiness oracle remains evidence-gated.",
+  "artifact": {
+    "root": "/DuoOpen-AgentBus/artifacts/research/20261002T173112Z-rnd-v69-present-sol-699ed292-presentation-gate/",
+    "report": "/DuoOpen-AgentBus/artifacts/research/20261002T173112Z-rnd-v69-present-sol-699ed292-presentation-gate/GEN6_PRESENTATION_READINESS_WALLPAPER_BOUNDARY_V1.md",
+    "event_contract": "/DuoOpen-AgentBus/artifacts/research/20261002T173112Z-rnd-v69-present-sol-699ed292-presentation-gate/PRESENTATION_READINESS_EVENT_CONTRACT_V1.json",
+    "integration_sketch": "/DuoOpen-AgentBus/artifacts/research/20261002T173112Z-rnd-v69-present-sol-699ed292-presentation-gate/INTEGRATION_SKETCH_V1.md",
+    "model_results": "/DuoOpen-AgentBus/artifacts/research/20261002T173112Z-rnd-v69-present-sol-699ed292-presentation-gate/MODEL_RESULTS.json",
+    "field_acceptance": "/DuoOpen-AgentBus/artifacts/research/20261002T173112Z-rnd-v69-present-sol-699ed292-presentation-gate/FIELD_ACCEPTANCE_RESULT.json",
+    "validator": "/DuoOpen-AgentBus/artifacts/research/20261002T173112Z-rnd-v69-present-sol-699ed292-presentation-gate/validate_presentation_readiness.py",
+    "zip": "/DuoOpen-AgentBus/artifacts/research/20261002T173112Z-rnd-v69-present-sol-699ed292-presentation-gate/DUO_OPEN_RND_PRESENTATION_READINESS_WALLPAPER_V2_RECONCILED.zip",
+    "zip_sha256": "5dabcbabae4e15a6ccf7ab06aa62766b11c54f4417711de8899b0cfd26bcdb2d"
+  },
+  "tests": {
+    "deterministic_model": "PASS 9/9",
+    "fuzz": "PASS 200000/200000; invariant_violations=0",
+    "validator_selftest": "PASS 4/4",
+    "current_field_acceptance": "EXPECTED_FAIL"
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "gen6", "presentation-readiness", "first-useful", "host-migration",
+    "wallpaper-not-ready", "acceptance-validator", "corroboration",
+    "field", "source", "model", "no-prod-write"
+  ]
+}

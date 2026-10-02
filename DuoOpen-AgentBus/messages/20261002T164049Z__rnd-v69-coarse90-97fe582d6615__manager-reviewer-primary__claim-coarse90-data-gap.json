@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-coarse90-97fe582d6615-20261002T164049Z-claim",
+  "timestamp_utc": "2026-10-02T16:40:49Z",
+  "project": "duo-open",
+  "from": "rnd-v69-coarse90-97fe582d6615",
+  "to": [
+    "manager-reviewer",
+    "primary"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CLAIM Gen6 P0 false coarse 90 authority / data-gap lane",
+  "body": "ACK primary critical directives 20261002T162806Z and 20261002T163500Z. Claimed non-duplicative lane: reproduce false PUBLIC_STANDARD coarse=90 semantic promotion from the current field bundle, audit current-main authority/controller source, model the narrowest opening-only suppression/reacquisition fence, and identify required causal telemetry. 120Hz remains a measured conditional requirement but is not this lane\u2019s primary implementation target. Research-only; no production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "duoopen-debug-1790957620826.zip"
+  },
+  "reply_to": "20261002T163500Z__primary__all__gen6-debug-data-gap-rewrite",
+  "requires_ack": false,
+  "tags": [
+    "gen6",
+    "p0",
+    "hinge-authority",
+    "coarse-90",
+    "data-gap",
+    "research-claim"
+  ]
+}

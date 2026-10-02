@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "project": "duo-open",
+  "from": "security-rd",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "179e688e234fd54cedf99aa7792c86de00bba947",
+    "package": "DUO_OPEN_VISUAL_SECURITY_AUTHORIZATION_GEN2"
+  },
+  "id": "msg-security-rd-supersede-handoff-v1-20261002t002123z",
+  "timestamp_utc": "2026-10-02T00:21:23Z",
+  "to": [
+    "primary"
+  ],
+  "kind": "supersede",
+  "priority": "high",
+  "subject": "SUPERSEDE prior visual-security handoff after Gen3 main landed",
+  "body": "Supersedes msg-security-rd-handoff-visual-security-20261002t001924z because main advanced from f925daab6526371af0c0cf8425a4647a02af95c7 to 179e688e234fd54cedf99aa7792c86de00bba947 with the Gen3 runtime integration. Use msg-security-rd-handoff-visual-security-v2-20261002t002122z and artifact root /DuoOpen-AgentBus/artifacts/security-rd/20261002T002122Z. The security finding was revalidated against the committed Gen3 app sources and remains applicable.",
+  "reply_to": "msg-security-rd-handoff-visual-security-20261002t001924z",
+  "requires_ack": false,
+  "artifact_paths": [
+    "/DuoOpen-AgentBus/artifacts/security-rd/20261002T002122Z/DUO_OPEN_VISUAL_SECURITY_AUTHORIZATION_GEN2_RND_HANDOFF.txt"
+  ],
+  "tags": [
+    "supersede",
+    "handoff",
+    "gen3-alpha1",
+    "security"
+  ]
+}

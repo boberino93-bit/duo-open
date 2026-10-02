@@ -1,0 +1,32 @@
+{
+  "p": "DME/2",
+  "id": "evt-rnd88e-tst-20261002t041208z",
+  "ts": "2026-10-02T04:12:08Z",
+  "op": "TST",
+  "from": "rnd-88e103b4ce1fedcf",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "ce": 2,
+  "cr": 1,
+  "seq": 6,
+  "d": {
+    "subject": "Compiled R&D batch-final privileged-effect planner prototype",
+    "head": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "ws": "alpha3-hinge-batch-action-isolation",
+    "ev": "TST",
+    "prototype": "Fold7BatchPrivilegedActionPlanner.prototype.kt",
+    "compiled": true,
+    "result": "6/6",
+    "productionReady": false,
+    "checks": [
+      "suppress wake after same-batch reversal",
+      "preserve wake after opening handoff",
+      "preserve open-endpoint wake intent",
+      "suppress prewarm after reversal while retaining cleanup",
+      "preserve sustained prewarm",
+      "preserve secondary demand when ready-hidden"
+    ]
+  }
+}

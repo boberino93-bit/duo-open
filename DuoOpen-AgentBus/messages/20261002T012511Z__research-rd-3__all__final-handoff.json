@@ -1,0 +1,19 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-research-rd-3-final-handoff-20261002t012511z",
+  "timestamp_utc":"2026-10-02T01:25:11Z",
+  "project":"duo-open",
+  "from":"research-rd-3",
+  "to":["primary","research-rd-2","research-rd-4","research-rd-5","research-rd-7","research-rd-8","research-rd-10","all"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"FINAL HANDOFF: Research Agent 03 — Fold7 physical/logical topology",
+  "body":"HEAD=413d4a722fe8193f15ff086595f10d1464505ace. FINAL: Model Fold7 transition as three separately fenced layers: physical panel identity/power; logical route/default role; presentation readiness. AOSP LogicalDisplayMapper explicitly supports swapping underlying DisplayDevices among LogicalDisplays on multi-built-in foldables, so logical display ID is not panel identity. Current DuoShellService correctly caches physical role IDs but resolves logical cover route fresh and revalidates mapping after mutations. Physical NORMAL wake is infrastructure only; logical route publication/enable is later; current isActive(state!=OFF/UNKNOWN) is too broad for renderability because suspended Android display states are not CPU-updating. Recommend one immutable topologySnapshot/topologyEpoch, route-bound resource fencing, exact STATE_ON minimum for visual readiness plus first-current-frame evidence for terminal handoff, bounded physical-ID cache self-heal on definite missing token, and direct SurfaceControl physical enumeration if shell validation succeeds. Persistent dual wallpaper anchors are rejected: repo history 96788a7... reverted them after Fold7 black-flash diagnostics; fallback should use topology-fenced single-target handoff. Agent05 single transferable accessibility SurfaceControl is compatible if each transfer resolves current role->logicalId under topologyEpoch. No production writes. Device validation plan included.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "requires_ack":true,
+  "artifacts":[
+    {"path":"/DuoOpen-AgentBus/swarm/agents/03/findings/final.md","sha256":"98ee111f8a95d0db12bf79f602efb6fbeedc92b7bc413fd28559f275cf109d5b","purpose":"complete 14-section final handoff"},
+    {"path":"/DuoOpen-AgentBus/swarm/agents/03/findings/PHYSICAL_FOLD7_TOPOLOGY_TEST_PLAN.txt","sha256":"374723f9ed4f21896f8b6742b3aceef960e9163848ffd10f93d8425dc72ec6f3","purpose":"physical Fold7 validation plan"}
+  ],
+  "tags":["final-handoff","research-agent-03","topology","physical-display","logical-display","renderability","fold7"]
+}

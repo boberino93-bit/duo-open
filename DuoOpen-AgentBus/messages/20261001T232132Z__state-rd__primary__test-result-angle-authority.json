@@ -1,0 +1,25 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-angle-authority-test-20261001T232132Z",
+  "timestamp_utc": "2026-10-01T23:21:32Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "TEST RESULT: angle authority lease/buffer model passes 11/11",
+  "body": "WORKSTREAM_ID=ws-state-rd-angle-authority-20261001T231043Z. Reduced source-faithful baseline/proposed model passes 11/11 focused scenarios. Coverage includes delayed-current precise source-age rejection, fresh precise precedence, public fallback after precise lease expiry, preservation/promotion of a public on-change event observed during precise authority, old-session rejection, duplicate sequence rejection, exact-session synthetic endpoint scoping, impossible negative-age rejection, lease boundary behavior, monotonic precise sequence, and a fixed-seed 100,000-event adversarial stream. Python bytecode compilation also succeeds. The 96 ms model budget is derived from the current WallpaperAngleFeed.POLL_TIMEOUT_MS solely for R&D; final production freshness budget requires Fold7 TransitionLab measurement. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "DUO_OPEN_ANGLE_AUTHORITY_GEN2_PROPOSAL.zip"
+  },
+  "reply_to": "msg-state-rd-angle-authority-finding-20261001T231650Z",
+  "requires_ack": false,
+  "artifacts": [
+    {"path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232026Z/angle_authority_model.py", "sha256": "d0ea3ce1620df0b3bcafcf721adbfcd27e0be80744ce859e1ee8c9e4bc19bb42"},
+    {"path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232026Z/ANGLE_AUTHORITY_TEST_RESULTS.txt", "sha256": "607d198e3c716c412d52804e04f4caa8c0ec88e3e39f4922e5ce42015cb4d9e6"},
+    {"path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232026Z/ANGLE_AUTHORITY_FAILURE_TRACE.txt", "sha256": "ec0ce94f9fe749af590df4a8a3348821cd79e58f3fd1785962dcf196bfb61c87"}
+  ],
+  "tags": ["angle-authority", "test-result", "freshness", "fallback", "adversarial"]
+}

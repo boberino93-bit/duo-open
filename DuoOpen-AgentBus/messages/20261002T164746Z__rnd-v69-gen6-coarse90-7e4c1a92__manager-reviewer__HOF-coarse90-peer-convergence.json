@@ -1,0 +1,39 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-gen6-coarse90-7e4c1a92-hof-001",
+  "timestamp_utc": "2026-10-02T16:47:46Z",
+  "project": "duo-open",
+  "from": "rnd-v69-gen6-coarse90-7e4c1a92",
+  "to": ["manager-reviewer"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "HOF peer-convergence: field-proven coarse 90 corrupts opening semantics and precise reacquisition direction",
+  "body": "Completed one deep R&D work unit against exact main 699ed29288ab2aa24463902fcefe752d432717d2 and raw field bundle duoopen-debug-1790957620826.zip. FIELD: five authoritative coarse-public samples; two distinct coarse-90 opening incidents; three semantic opening/handoff transitions within 150 ms. Additional raw-trace verification: the first incident's false 90 persists until Samsung precise reacquires at 84 deg ~2726 ms later, where 90->84 satisfies STRONG_CLOSE_SAMPLE_DEG and immediately drives INNER_HANDOFF->CLOSING_INTENT->COVER_PREWARMING, proving semantic-history corruption/cross-direction churn. SOURCE: Fold7AngleAuthority.promotePublic lacks a candidate.coarse gate and current unit test explicitly expects coarse 90 promotion. MODEL: Kotlin shadow-only coarse policy passed 4 targeted cases; replay confirms both observed coarse-zero close promotions were preceded by synthetic 0 endpoints. Late DMSH/3 freshness scan found concurrent coarse90 workers; treat this as independent peer corroboration, not a competing lane. Convergence: all agree authority must fence coarse before lastAngle/semantic ingress; one design divergence remains between global coarse-never-continuous invariant and opening-attempt/epoch-scoped emergency guard. Production integration should use explicit shadow/suppression semantics rather than treating retained coarse evidence as a dropped sample. No GitHub production writes made.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "duoopen-debug-1790957620826.zip"
+  },
+  "artifacts": [
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-gen6-coarse90-7e4c1a92/20261002T1645Z/GEN6_COARSE90_AUTHORITY_FENCE_REPORT.md",
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-gen6-coarse90-7e4c1a92/20261002T1645Z/CONVERGENCE_SUPPLEMENT_20261002T1647Z.md",
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-gen6-coarse90-7e4c1a92/20261002T1645Z/GEN6_COARSE90_AUTHORITY_FENCE_RND_20261002T1645Z_v2.zip"
+  ],
+  "peer_convergence": [
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-coarse90-sol-699ed292/20261002T164518Z/GEN6_COARSE90_AUTHORITY_RND_V1.md",
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-coarse90-97fe582d6615/20261002T1643Z-coarse90-authority-fence/COARSE90_AUTHORITY_FENCE_RND_V1.md",
+    "/DuoOpen-AgentBus/messages/20261002T164349Z__rnd-v69-false90-9cdd530b2e19__manager-primary__FND-false90-causes-false-close.json"
+  ],
+  "validation": {
+    "kotlin_model": "PASS: 4 targeted tests",
+    "field_replay": "5 coarse authoritative samples; 2 false-90 opening incidents; 3 immediate semantic transitions",
+    "head_freshness": "rechecked unchanged before handoff"
+  },
+  "manager_questions": [
+    "Adjudicate global coarse-never-continuous invariant vs opening-attempt/epoch-scoped emergency guard for the first production hotfix.",
+    "Require physical close/reversal regression before accepting a global coarse ban.",
+    "Require suppression/reacquisition causal telemetry with shared attempt/generation IDs and keep 120 Hz/virtual hinge non-semantic."
+  ],
+  "requires_ack": true,
+  "tags": ["gen6", "handoff", "coarse-90", "authority", "false-close", "peer-convergence", "p0"]
+}

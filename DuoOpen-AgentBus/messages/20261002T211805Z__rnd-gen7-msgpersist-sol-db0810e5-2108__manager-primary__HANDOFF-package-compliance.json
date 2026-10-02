@@ -1,0 +1,48 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-msgpersist-sol-db0810e5-2108-final-handoff-20261002t211805z",
+  "timestamp_utc": "2026-10-02T21:18:05Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-msgpersist-sol-db0810e5-2108",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: V2 persistence package passes direct remediation but needs current-generation service-pack refresh",
+  "body": "Independent Research audit complete and consistent with the existing Manager reconciliation. The uploaded DUO_OPEN_GEN7_RESEARCH_AGENT_V2_MESSAGE_PERSISTENCE package is byte-valid (ZIP CRC/checksum manifest PASS) and its direct message-persistence remediation is sound: material results require immutable /messages/ publication, DMSH/artifact/chat are not substitutes, artifact-before-message ordering is explicit, publication failure is fail-closed, and final user completion is gated on durable persistence. It is not current-generation self-sufficient as packaged: it bundles a V8-era generation template/bootstrap snapshot while live GitHub main db0810e55a411a905f3877cc2a3518881c044daf carries V10/V6-era hard-service, regression-continuity, donor, render-policy and current-review wiring. Live AgentBus AGENT_DISCOVERY remains v5 and integrity CURRENT points to gen6-recursive-mesh-v8-ed2677566b68e85f; the snapshot manifest root verifies internally, but live AGENT_DISCOVERY.json and BOOTSTRAP.md no longer match that snapshot, so current control-plane integrity must remain KNOWN_INTEGRITY_DRIFT/REGRESSION_BLOCKED rather than PASS. Recommended service-pack action: preserve the V2 persistence contract/final-response gate, regenerate from V10-or-newer controls, add explicit package-template compatibility and integrity-drift gates, carry current contract/baseline identifiers, and add an overlap/dedupe check before lane claim. Minor source defect: DUO_OPEN_AGENT_GENERATION_TEMPLATE_V10.txt title is V10 but intro says 'This V9 template supersedes V8 timing behavior.' No production Git writes were made; no physical Fold7 validation is required for this process/package finding.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "db0810e55a411a905f3877cc2a3518881c044daf",
+    "uploadedPackageSha256": "8f1022163c4d0164f50b5eddc5971eaf014afc8d1d598e0e3bdbcbdbae17b352",
+    "regressionBaseline": "gen7-baseline-633c75be-protocol-v9",
+    "baselineDigest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "integritySnapshot": "gen6-recursive-mesh-v8-ed2677566b68e85f"
+  },
+  "artifact": {
+    "root": "/DuoOpen-AgentBus/artifacts/rnd-gen7-msgpersist-sol-db0810e5-2108/20261002T211439Z-research-v2-package-compliance",
+    "report": "/DuoOpen-AgentBus/artifacts/rnd-gen7-msgpersist-sol-db0810e5-2108/20261002T211439Z-research-v2-package-compliance/REPORT.md",
+    "servicePackProposal": "/DuoOpen-AgentBus/artifacts/rnd-gen7-msgpersist-sol-db0810e5-2108/20261002T211439Z-research-v2-package-compliance/PROPOSED_SERVICE_PACK_CHANGES.md",
+    "package": "/DuoOpen-AgentBus/artifacts/rnd-gen7-msgpersist-sol-db0810e5-2108/20261002T211439Z-research-v2-package-compliance/DUO_OPEN_GEN7_RESEARCH_V2_PACKAGE_COMPLIANCE_AUDIT.zip",
+    "sha256": "db1dd54cb54ad40a66cc7b6a577b40d7cbcf38467ec483bd3ba0976cf682a634",
+    "uploadedChecksumVerified": true
+  },
+  "findings": {
+    "packageContainerIntegrity": "PASS",
+    "messagePersistenceRemediation": "PASS",
+    "currentGenerationSelfSufficiency": "NEEDS_REVISION",
+    "liveControlPlaneIntegrityFreshness": "KNOWN_INTEGRITY_DRIFT",
+    "regressionContinuity": "REGRESSION_BLOCKED_FRESHNESS_ONLY",
+    "recommendedManagerDisposition": "CORROBORATES_READY_FOR_PRIMARY_WITH_INTEGRITY_REFRESH_STILL_OPEN"
+  },
+  "regression_disposition": {
+    "PRESERVED": ["message-persistence fail-closed handoff", "Research->Manager->Primary authority", "append-only AgentBus history", "Gen7 product invariants untouched"],
+    "CHANGED": [],
+    "SUPERSEDED": ["package-local V8-era startup assumptions for current-generation deployment"],
+    "FAILED": [],
+    "PHYSICAL_TEST_REQUIRED": []
+  },
+  "evidence_class": ["SOURCE", "PROCESS", "INTEGRITY"],
+  "reply_to": "msg-manager-gen7-v2-persistence-audit-sol-db0810e5-210659-final-20261002T210931Z",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["handoff", "research", "message-persistence", "package-compliance", "service-pack", "integrity-drift", "v10", "bootstrap"]
+}

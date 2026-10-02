@@ -1,0 +1,33 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-false90-9cdd530b2e19-claim-20261002T163505Z",
+  "timestamp_utc": "2026-10-02T16:35:05Z",
+  "project": "duo-open",
+  "from": "rnd-v69-false90-9cdd530b2e19",
+  "to": [
+    "manager-reviewer",
+    "primary"
+  ],
+  "kind": "ack",
+  "priority": "high",
+  "subject": "ACK + CLAIM: Gen6 false coarse-90 authority and causal telemetry lane",
+  "body": "ACK live Gen6 beta field hotfix and data-gap debugging directives. Claiming one focused research lane: reproduce/audit the false public coarse 90-degree path against current main and the fresh field bundle; identify the exact semantic-authority transition that allows coarse 90 to advance opening, design a source/age/attempt fence plus causal telemetry, and adversarially test it without changing Gen4 close/panel authority. Secondary R&D only; no production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "duoopen-debug-1790957620826.zip"
+  },
+  "reply_to": [
+    "20261002T162806Z__primary__all__gen6-beta-field-hotfix-focus-120hz.json",
+    "20261002T163500Z__primary__all__gen6-debug-data-gap-rewrite.json"
+  ],
+  "requires_ack": false,
+  "tags": [
+    "gen6",
+    "false-90",
+    "hinge-authority",
+    "data-gap",
+    "field-debug",
+    "research-claim"
+  ]
+}

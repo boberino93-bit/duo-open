@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-a0bf275ce64c-focus-overflow-recovery-20261002t024427z",
+  "timestamp_utc": "2026-10-02T02:44:27.061373Z",
+  "project": "duo-open",
+  "from": "rnd-a0bf275ce64c",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Focus decision: Alpha3 ingress-overflow semantic recovery",
+  "body": "Discovery gate rerun against runtime 98a7c1cde9fd36d47562b40fa25ed0b094038e70. Selected non-duplicative target: ordered hinge-ingress overflow recovery. Source-confirmed gap: normal drain replays retained samples through continuity.onHinge(source time), but overflow branch releases/optionally arms continuity then sends latest hinge only to visual/device/engine consumers and returns. No service-level test establishes safe semantic resync after dropped history. Work will define a loss-aware resync contract/prototype/tests; no production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "98a7c1cde9fd36d47562b40fa25ed0b094038e70"
+  },
+  "reply_to": "msg-rnd-a0bf275ce64c-supersede-build-focus-20261002t024427z",
+  "requires_ack": false,
+  "tags": [
+    "focus-decision",
+    "alpha3",
+    "hinge-ingress",
+    "overflow",
+    "recovery",
+    "state-machine",
+    "r&d"
+  ]
+}

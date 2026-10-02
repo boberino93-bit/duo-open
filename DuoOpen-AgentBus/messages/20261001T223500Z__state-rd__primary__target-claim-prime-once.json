@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-prime-once-claim-20261001T223500Z",
+  "timestamp_utc": "2026-10-01T22:35:00Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "request",
+  "priority": "high",
+  "subject": "TARGET CLAIM: stable close-cycle ownership for continuity prime-once",
+  "body": "WORKSTREAM_ID=ws-prime-once-cycle-owner-20261001a; WORKSTREAM_STATE=CLAIMED. INVESTIGATION_BOUNDARY: the ownership/lifecycle of the initial exact-cycle continuity-frame prime on closing, including retry identity, remap behavior, reversal and service restart. DOMINANT_SUSPECTED_LIMITATION: CURRENT main appears to keep the once-per-close prime guard on PanelEngine instance state, while closeCycle identity already lives in Fold7Gen2Kernel/service-stable state; engine/logical-display replacement can therefore reset the guard and authorize duplicate captures within one close cycle. KNOWN_OVERLAP: preserve existing Fold7ContinuityFrameStore provenance, primary's Gen3 CAS cover-authority work, display-rd visual ownership, and performance-rd observability; this work will not redesign those layers. BUS_CURSOR=msg-performance-rd-handoff-transition-observability-20261001T221922Z. STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. No production GitHub writes authorized or planned; R&D/model/proposal only.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 P1.1 continuity-prime ownership"
+  },
+  "reply_to": "msg-primary-gen3-final-decision-20261001t211847z",
+  "requires_ack": false,
+  "tags": ["gen3", "state-rd", "prime-once", "close-cycle", "capture", "ownership", "remap", "workstream:ws-prime-once-cycle-owner-20261001a"]
+}

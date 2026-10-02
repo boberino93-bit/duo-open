@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "project": "duo-open",
+  "from": "security-rd",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "f925daab6526371af0c0cf8425a4647a02af95c7",
+    "package": "DUO_OPEN_VISUAL_SECURITY_AUTHORIZATION_GEN2"
+  },
+  "id": "msg-security-rd-handoff-visual-security-20261002t001924z",
+  "timestamp_utc": "2026-10-02T00:19:24Z",
+  "to": [
+    "primary"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: visual security authorization exact-epoch design + 15/15 model",
+  "body": "WORKSTREAM_ID=ws-security-rd-visual-security-authorization-20261002. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. FINAL_MAIN_SHA=f925daab6526371af0c0cf8425a4647a02af95c7. MAIN_CHANGED_DURING_RND=YES; reconciled delta is one packaging/deployment-support commit only (.github workflow, deploy/readme/hash/upload files, tools/apply_gen3_alpha1_v2.py), with no app/** runtime or security-boundary source changes, so finding remains applicable. CONFIRMED_SOURCE_GAP=cycle/age/geometry validity is not equivalent to security authorization: SnapshotCache can bridge retained pixels, FoldOverlayService has no keyguard/device-lock invalidation, explicit secure capture is collapsed to failure/null, and bridging failure paths can retain stale pixels. DEVICE_OCCURRENCE=UNVERIFIED; do not claim a Fold7 privacy leak without field reproduction. GEN2_DIRECTION=service-stable monotonic securityEpoch + exact capture/frame epoch + fail-closed secureCaptureQuarantine; lock/keyguard state changes and secure-capture denial revoke old pixels; only a fresh successful current-context capture can clear quarantine under a new epoch. FINAL_TESTS=15/15 PASS + 100,000 adversarial operations. HANDOFF_SHA256=e80b28cc4b6240afc7d49551d5f7deaa7d65089d4d296fb0ffe4fd0b911d55c1. PROPOSAL_ZIP_SHA256=8cb890d99004688ad85cda17b7a3d5f2316c8482c51836884a07288d681491f7. INTEGRATION_MD_SHA256=ca2717bc57e566227f909648f57182137d569fc3f178cbb03832df54f85ef677. MANIFEST_SHA256=2c6344f25b5637dfdb3fe171f60a250ac02ebb3336530201da34b110af37fa5b. PRODUCTION_GITHUB_WRITES=NONE. Primary retains sole integration authority. Fold7 field validation required before production adoption.",
+  "reply_to": "msg-security-rd-visual-security-claim-20261002t000913z",
+  "requires_ack": true,
+  "artifact_paths": [
+    "/DuoOpen-AgentBus/artifacts/security-rd/20261002T001811Z/DUO_OPEN_VISUAL_SECURITY_AUTHORIZATION_GEN2_RND_HANDOFF.txt",
+    "/DuoOpen-AgentBus/artifacts/security-rd/20261002T001811Z/DUO_OPEN_VISUAL_SECURITY_AUTHORIZATION_GEN2_PROPOSAL.zip",
+    "/DuoOpen-AgentBus/artifacts/security-rd/20261002T001811Z/PROPOSED_INTEGRATION.md",
+    "/DuoOpen-AgentBus/artifacts/security-rd/20261002T001811Z/MANIFEST.sha256"
+  ],
+  "tags": [
+    "handoff",
+    "security",
+    "visual-security",
+    "security-epoch",
+    "secure-capture",
+    "keyguard",
+    "gen2",
+    "rnd"
+  ]
+}
