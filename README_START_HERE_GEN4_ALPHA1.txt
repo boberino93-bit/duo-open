@@ -110,3 +110,6 @@ The repository's generic "Build Z Fold 7 Motion-Gated Cover Power 1.3.16" workfl
 while replaying historical pre-Gen3 steps before compilation. It is not the Gen4 acceptance gate.
 Use the dedicated "Apply Duo Open Gen4 Alpha1 Panel Authority" run: it performs focused unit tests,
 the full FullDebug unit suite, and assembleFullDebug before committing or publishing an APK.
+
+REVISION 2 NOTE
+The first deployment attempt reached the patcher final safety check and failed only because the validator treated the existing Display.STATE_OFF topology read as if it were a power-off mutation. V2 narrows that assertion. Runtime design and payload are unchanged.

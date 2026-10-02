@@ -1,5 +1,5 @@
 {
-  "package": "DUO_OPEN_GEN4_ALPHA1_PANEL_AUTHORITY",
+  "package": "DUO_OPEN_GEN4_ALPHA1_PANEL_AUTHORITY_V2",
   "target": "Samsung Galaxy Z Fold7",
   "baseline_main": "44f6d52abbf5de4cad36b0309b4d923d70f83d78",
   "baseline_runtime": "3.0.0-alpha3-zfold7",
@@ -14,5 +14,7 @@
     "Gen3 frozen-frame shader path",
     "Gen3 early opening wake",
     "Gen3 close-cycle and visual callback fencing"
-  ]
+  ],
+  "revision": 2,
+  "revision_note": "Validator-only correction: allow topology reads of Display.STATE_OFF; retain diff-level raw physical-off prohibition."
 }

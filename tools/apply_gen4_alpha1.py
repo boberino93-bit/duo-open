@@ -1415,10 +1415,13 @@ for needle in [
 ]:
     require(controller, needle, 1)
 
-# Gen4 may normalize a logical route with the existing power-reset primitive,
-# but it must not introduce raw physical OFF or task migration.
+# Gen4 may *observe* Display.STATE_OFF when classifying Android topology.
+# What it must never introduce is an app-side task migration or a direct
+# display-power mutation outside the daemon-owned shell path. The workflow
+# separately checks added diff lines for raw physical OFF requests.
 for path in [coord, service, model]:
     forbid(path, "moveTaskToDisplay")
-    forbid(path, "Display.STATE_OFF")
+    forbid(path, "setDisplayPowerMode")
+    forbid(path, "requestDisplayPower(")
 
 print("GEN4 ALPHA1 PANEL AUTHORITY PATCH: PASS")
