@@ -1,20 +1,22 @@
 {
-  "package": "DUO_OPEN_GEN4_ALPHA1_PANEL_AUTHORITY_V4",
+  "package": "DUO_OPEN_GEN5_BETA1_VIRTUAL_HINGE",
   "target": "Samsung Galaxy Z Fold7",
-  "baseline_main": "44f6d52abbf5de4cad36b0309b4d923d70f83d78",
-  "baseline_runtime": "3.0.0-alpha3-zfold7",
-  "target_runtime": "4.0.0-alpha1-zfold7",
-  "target_version_code": 41,
-  "production_authority": "primary-agent-gated-github-actions",
-  "architecture": "daemon-owned-panel-authority",
-  "trigger": "APPLY_GEN4_ALPHA1_NOW.txt uploaded last",
-  "preserves": [
-    "Gen3 ordered hinge authority",
-    "Gen3 controller thresholds",
-    "Gen3 frozen-frame shader path",
-    "Gen3 early opening wake",
-    "Gen3 close-cycle and visual callback fencing"
+  "baseline_runtime_commit": "f9ba2ca7afa2e67586231770fd8b0abe56b94b5b",
+  "packaging_head": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+  "versionCode": 42,
+  "versionName": "5.0.0-beta1-zfold7",
+  "architecture": [
+    "Gen4 daemon-owned panel authority preserved",
+    "Gen5 visual-only virtual hinge on opening",
+    "blind opening bootstrap",
+    "bounded reacquisition",
+    "direct vsync visual output",
+    "90-degree peak-glass envelope",
+    "canonical right-pane opening bootstrap",
+    "120Hz seamless-only request and telemetry",
+    "diagnostic share fallback",
+    "simplified app home UI"
   ],
-  "revision": 4,
-  "revision_note": "Patcher postcondition correction: require the Gen4 route-retry declaration exactly once instead of asserting a brittle total usage count. Runtime architecture is unchanged from V3."
+  "runtime_commit_policy": "CI commits only after focused and full Android gates pass",
+  "closing_path": "preserved"
 }

@@ -1,0 +1,29 @@
+Gen5 virtual hinge R&D validation
+=================================
+
+Pure Kotlin production-candidate core compiled locally with kotlinc.
+
+Focused deterministic/fuzz harness:
+- blind bootstrap advances immediately: PASS
+- blind bootstrap bounded to <=92 deg: PASS
+- stable-motion presentation prediction: PASS
+- reacquisition one-frame snap bound: PASS
+- 120 Hz slew bound: PASS
+- reversal detection: PASS
+- repeated oscillation guard: PASS
+- 0/90/180 glass envelope: PASS
+- 45/135 envelope symmetry: PASS
+- NaN/out-of-order rejection: PASS
+- 100,000-event deterministic fuzz bounded: PASS
+
+Result: 18/18 PASS
+
+Prior V2 trace/model evidence carried forward:
+- normal non-oscillation median equivalent visual lag: 31.62 ms -> 13.21 ms (~58.22% improvement)
+- trusted-prediction frames: 30.61 ms -> 12.16 ms (~60.27% improvement)
+- full moving trace mean angular error improvement: ~46.89%
+- synthetic 576-case matrix: zero worse mean-MAE cases
+- 120 Hz model reduced aggregate MAE/P95 further versus 60 Hz
+
+Important boundary:
+This validation covers the visual-only model. Android integration still requires the dedicated GitHub CI gate and physical Fold7 field testing.

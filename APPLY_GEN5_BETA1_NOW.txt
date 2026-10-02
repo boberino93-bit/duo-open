@@ -1,0 +1,3 @@
+GEN5_BETA1_VIRTUAL_HINGE
+
+This sentinel intentionally triggers the exact-baseline-gated Gen5 Beta1 workflow.

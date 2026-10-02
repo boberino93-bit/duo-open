@@ -1,0 +1,17 @@
+PRIMARY HANDOFF — GEN5 BETA1
+
+Principal change: visual-only virtual hinge for Fold7 opening.
+
+Key implementation constraints:
+- no production mutation until dedicated CI passes;
+- closing/panel authority are preserved;
+- blind bootstrap is visual-only and capped;
+- prediction is revoked on reversal/oscillation uncertainty;
+- direct vsync output replaces double-smoothing for explicit opening visual;
+- cached canonical right-pane content is preferred for opening bootstrap;
+- 120 Hz is requested seamless-only and never assumed;
+- all virtual state/corrections are logged;
+- diagnostics button falls back to share if remote upload is not configured;
+- front-page UI is simplified without removing settings functionality.
+
+If baseline hashes drift, stop and reconcile against main rather than forcing the patch.
