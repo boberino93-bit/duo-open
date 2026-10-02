@@ -13,6 +13,25 @@ val keystoreProps = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 
+fun buildConfigString(value: String): String =
+    "\"" +
+        value
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"") +
+        "\""
+
+val diagnosticUploadUrl =
+    providers.gradleProperty("DUO_DIAGNOSTIC_UPLOAD_URL")
+        .orElse(providers.environmentVariable("DUO_DIAGNOSTIC_UPLOAD_URL"))
+        .orElse("")
+        .get()
+
+val diagnosticIngestKey =
+    providers.gradleProperty("DUO_DIAGNOSTIC_INGEST_KEY")
+        .orElse(providers.environmentVariable("DUO_DIAGNOSTIC_INGEST_KEY"))
+        .orElse("")
+        .get()
+
 android {
     namespace = "com.duoopen"
     compileSdk = 35
@@ -22,8 +41,11 @@ android {
         // AGSL RuntimeShader needs API 33 (OnePlus Open ships Android 13+).
         minSdk = 33
         targetSdk = 35
-        versionCode = 38
-        versionName = "3.0.0-alpha1-zfold7"
+        versionCode = 39
+        versionName = "3.0.0-alpha2-zfold7"
+
+        buildConfigField("String", "DIAGNOSTIC_UPLOAD_URL", buildConfigString(diagnosticUploadUrl))
+        buildConfigField("String", "DIAGNOSTIC_INGEST_KEY", buildConfigString(diagnosticIngestKey))
     }
 
     // full: system-wide fold via the accessibility service (+ wallpaper).

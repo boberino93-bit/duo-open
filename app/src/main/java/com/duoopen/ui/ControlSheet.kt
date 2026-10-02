@@ -69,6 +69,9 @@ fun ControlSheet(
     onEnableOverlay: () -> Unit,
     onTestOverlay: () -> Unit,
     onExportDebugBundle: () -> Unit,
+    onSendDebugBundle: () -> Unit,
+    diagnosticUploadEnabled: Boolean,
+    diagnosticUploadStatus: String?,
     onDismiss: () -> Unit,
 ) {
     val clipboard =
@@ -821,8 +824,37 @@ fun ControlSheet(
                 Modifier.height(6.dp)
             )
 
+            OutlinedButton(
+                onClick =
+                    onSendDebugBundle,
+                enabled =
+                    diagnosticUploadEnabled,
+                modifier =
+                    Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    "Send diagnostic data"
+                )
+            }
+
+            Spacer(
+                Modifier.height(6.dp)
+            )
+
             Hint(
-                "Creates one ZIP containing the persistent field log, an in-memory diagnostics report, and the newest Transition Lab JSONL sessions. Share or save that ZIP, then upload it to the supervisor."
+                diagnosticUploadStatus
+                    ?: if (diagnosticUploadEnabled) {
+                        "Sends the same privacy-limited ZIP and only reports success after the server returns a checksum-matched Artifactory receipt."
+                    } else {
+                        "Diagnostic upload is not configured in this build. Manual export still works."
+                    },
+                warn =
+                    diagnosticUploadStatus
+                        ?.startsWith("Send failed") == true,
+            )
+
+            Hint(
+                "Creates one ZIP containing the persistent field log, an in-memory diagnostics report, and the newest Transition Lab JSONL sessions. No screen pixels, messages, passwords or keystrokes are intentionally added by the exporter."
             )
         }
     }
