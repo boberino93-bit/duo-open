@@ -1,0 +1,10 @@
+{
+  "schema": "duo-open/gen6-alpha1-dev-round-v1",
+  "repository": "boberino93-bit/duo-open",
+  "baseline_main": "7dd6821cea09559e858cca61579da64a0f14ea71",
+  "target_version_code": 43,
+  "target_version_name": "6.0.0-alpha1-zfold7",
+  "model_pass": true,
+  "candidate_ci_pass": false,
+  "physical_fold7_pass": false
+}

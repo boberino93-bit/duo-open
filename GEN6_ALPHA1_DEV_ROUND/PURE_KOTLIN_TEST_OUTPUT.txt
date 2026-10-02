@@ -1,0 +1,11 @@
+PASS: wake hint attempt created
+PASS: duplicate wake hint fenced
+PASS: semantic generation attaches
+PASS: attempt finishes
+PASS: normal app public glass
+PASS: normal app may capture
+PASS: Coast Capital private frost
+PASS: private frost captures no pixels
+PASS: runtime public start
+PASS: capture failure fail-closed
+PASS: new package clears transient denial
