@@ -24,5 +24,9 @@ object ShellProtocol {
     const val COVER_PANEL_LEASE_V3 = 16
     const val COVER_PANEL_LEASE_V4 = 17
 
+    // Gen4: daemon-owned Fold7 panel authority. App-side code sends semantic
+    // intents; only DuoShellService mutates cover power/routes.
+    const val COVER_PANEL_GEN4 = 18
+
     const val CB_ANGLE = 1
 }
