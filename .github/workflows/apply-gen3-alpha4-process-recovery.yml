@@ -1,0 +1,211 @@
+name: Apply Duo Open Gen3 Alpha4 Process Recovery
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/apply-gen3-alpha4-process-recovery.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: duo-open-gen3-alpha4-process-recovery
+  cancel-in-progress: false
+
+env:
+  DUO_DIAGNOSTIC_UPLOAD_URL: ${{ vars.DUO_DIAGNOSTIC_UPLOAD_URL }}
+  DUO_DIAGNOSTIC_INGEST_KEY: ${{ secrets.DUO_DIAGNOSTIC_INGEST_KEY }}
+
+jobs:
+  apply-test-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Verify exact Alpha3 production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BASE="98a7c1cde9fd36d47562b40fa25ed0b094038e70"
+          git merge-base --is-ancestor "$BASE" HEAD
+
+          check_blob() {
+            local path="$1"
+            local expected="$2"
+            local actual
+            actual="$(git hash-object "$path")"
+            if [[ "$actual" != "$expected" ]]; then
+              echo "ERROR: Alpha3 production source drift: $path"
+              echo "expected=$expected"
+              echo "actual=$actual"
+              exit 1
+            fi
+          }
+
+          check_blob app/build.gradle.kts ad3d7e60b427ed9b2de51d0e94944f600363f345
+          check_blob app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt 22426e1f24b51d4a921b7d565ac811ee7fbfb050
+          check_blob app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt e759bb85726a489959bf03248d3ae454d5cd3985
+
+          test ! -e app/src/full/java/com/duoopen/overlay/Fold7ProcessRecoveryGate.kt
+          test ! -e app/src/test/java/com/duoopen/overlay/Fold7ProcessRecoveryGateTest.kt
+
+          echo "GEN3 ALPHA4 BASELINE: PASS"
+
+      - name: Verify Alpha4 support-file checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum -c ALPHA4-SUPPORT-SHA256.txt
+
+      - name: Apply Alpha4 process-recovery patch
+        run: python3 tools/apply_gen3_alpha4_process_recovery.py
+
+      - name: Validate Alpha4 recovery invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          grep -F 'versionCode = 41' app/build.gradle.kts
+          grep -F 'versionName = "3.0.0-alpha4-zfold7"' app/build.gradle.kts
+
+          grep -F 'internal class Fold7ProcessRecoveryGate' \
+            app/src/full/java/com/duoopen/overlay/Fold7ProcessRecoveryGate.kt
+          grep -F 'Fold7ProcessRecoveryGate(serviceEpoch)' \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'releaseForeignProcessLease(' \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'serviceEpoch = serviceEpoch' \
+            app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'foreign-release-already-requested' \
+            app/src/full/java/com/duoopen/overlay/Fold7ProcessRecoveryGate.kt
+
+          if grep -Fq 'continuityAutoArmAttempted' \
+            app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt; then
+            echo "ERROR: pre-recovery immediate startup-arm mechanism survived"
+            exit 1
+          fi
+
+          # Alpha4 is a recovery-boundary patch. It must not alter the Gen3
+          # hinge thresholds or restore forbidden raw display/task behavior.
+          grep -F 'INNER_WAKE_MIN_DEG = 3f' \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'INNER_HANDOFF_MIN_DEG = 8f' \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'COVER_PREWARM_DEG = 174f' \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'COVER_VISUAL_START_DEG = 135f' \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'OPEN_LATCH_DEG = 172f' \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'OPEN_REARM_DEG = 166f' \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+
+          if git diff -- app | grep -E 'setDisplayPower.*OFF|moveTaskToDisplay'; then
+            echo "ERROR: forbidden raw OFF/task-migration behavior introduced"
+            exit 1
+          fi
+
+          git diff --check
+          git diff --stat
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+
+      - name: Run focused Alpha4 recovery tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew testFullDebugUnitTest --tests '*Fold7ProcessRecoveryGateTest' --stacktrace
+          ./gradlew testFullDebugUnitTest --tests '*Fold7CoverPanelLeaseV4Test' --stacktrace
+
+      - name: Run full Alpha4 gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Commit and push validated Alpha4 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add app
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+
+          if git diff --cached --name-only | grep -q '^\.github/workflows/'; then
+            echo "ERROR: workflow unexpectedly staged"
+            exit 1
+          fi
+          if git diff --cached --name-only | grep -q '^tools/'; then
+            echo "ERROR: tooling unexpectedly staged"
+            exit 1
+          fi
+          if git diff --cached --name-only | grep -q '^payload_alpha4/'; then
+            echo "ERROR: payload unexpectedly staged"
+            exit 1
+          fi
+
+          git commit -m "Reconcile foreign Fold7 cover authority before startup arm"
+          git push origin HEAD:main
+
+      - name: Prepare Alpha4 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          OUT="fold7-gen3-alpha4"
+          mkdir -p "$OUT"
+
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+
+          DEST="$OUT/DuoOpen-ZFold7-3.0.0-alpha4-debug.apk"
+          cp "$APK" "$DEST"
+          sha256sum "$DEST" > "$OUT/APK-SHA256.txt"
+
+          {
+            echo "version=3.0.0-alpha4-zfold7"
+            echo "versionCode=41"
+            echo "commit=$(git rev-parse HEAD)"
+            echo "baseline=98a7c1cde9fd36d47562b40fa25ed0b094038e70"
+            echo "target=Samsung Galaxy Z Fold7"
+            echo "change=foreign-daemon-cover-lease-cleanup-before-startup-arm"
+            echo "recovery=exact-token+serviceEpoch+fail-closed-disarm"
+            echo "hingeThresholds=unchanged-from-alpha3"
+            echo "diagnosticUploadConfigured=$([[ -n \"${DUO_DIAGNOSTIC_UPLOAD_URL:-}\" ]] && echo true || echo false)"
+            echo
+            sha256sum "$DEST"
+          } > "$OUT/BUILD-INFO.txt"
+
+          cat "$OUT/BUILD-INFO.txt"
+
+      - name: Upload Alpha4 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-3.0.0-alpha4
+          path: |
+            fold7-gen3-alpha4/DuoOpen-ZFold7-3.0.0-alpha4-debug.apk
+            fold7-gen3-alpha4/APK-SHA256.txt
+            fold7-gen3-alpha4/BUILD-INFO.txt
+          if-no-files-found: error
+          retention-days: 30

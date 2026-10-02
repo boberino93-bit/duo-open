@@ -1,0 +1,4 @@
+169cc28f07b3301c579cc7540c84defb5aab548e7efde6a875234d6a856c9d4a  .github/workflows/apply-gen3-alpha4-process-recovery.yml
+4a93b94c571ecb578eec9c05e7dc6ab5f417e5555d99ac938cc6222e25e0b750  tools/apply_gen3_alpha4_process_recovery.py
+5b8d45444893f22d783f646e33f180992e13bb224f0c04713b937d0296c79501  payload_alpha4/app/src/full/java/com/duoopen/overlay/Fold7ProcessRecoveryGate.kt
+cbbf76917f49c8b5a89f37933dd9065fc17f44246bb2a94e7bf431817ed1e3c9  payload_alpha4/app/src/test/java/com/duoopen/overlay/Fold7ProcessRecoveryGateTest.kt

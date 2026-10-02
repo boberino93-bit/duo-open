@@ -1,0 +1,35 @@
+PRIMARY AGENT HANDOFF — GEN3 ALPHA4 PROCESS RECOVERY
+===================================================
+
+Role of receiving agent
+-----------------------
+The receiving primary/production agent is the only authority expected to land
+runtime source. Treat this archive as a proposed, fail-closed change set.
+
+Mandatory first step
+--------------------
+Fetch actual boberino93-bit/duo-open main and compare it to the pinned Alpha3
+runtime blobs in README_START_HERE_ALPHA4.txt. The commit SHA may be ahead due
+to support-file uploads; the three runtime app blob hashes must remain exact.
+
+Do not assume this handoff is current merely because it is newer than an older
+agent package.
+
+Scope
+-----
+P0 only: fresh app/accessibility process versus surviving daemon-side cover
+lease. No presentation-owner work, terminal-handoff redesign, or semantic
+content-freshness redesign is bundled here.
+
+Acceptance
+----------
+Land only if the included workflow passes its focused recovery tests and full
+Gradle gate. Preserve Alpha3 transition thresholds and current angle authority.
+
+Expected validated runtime commit message
+-----------------------------------------
+Reconcile foreign Fold7 cover authority before startup arm
+
+Expected artifact
+-----------------
+DuoOpen-ZFold7-3.0.0-alpha4

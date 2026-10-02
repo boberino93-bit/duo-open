@@ -1,0 +1,46 @@
+DUO OPEN GEN3 ALPHA4 — VALIDATION RECORD
+========================================
+
+Verified live source baseline
+-----------------------------
+main SHA: 98a7c1cde9fd36d47562b40fa25ed0b094038e70
+Alpha3 workflow run: 36956474253 — SUCCESS
+Alpha3 artifact: DuoOpen-ZFold7-3.0.0-alpha3 (artifact 11205434034)
+
+P0 source verification
+----------------------
+Confirmed in live Alpha3 source:
+- FoldOverlayService Ready callback invokes onPrivilegedReady() and then
+  immediately arm().
+- onPrivilegedReady() starts asynchronous reconcileCoverLease().
+- arm() immediately sets renderOwnershipArmed=true.
+- Fold7CoverPanelLease.onTopology() does not clear HELD ownership.
+- accepted V3/V4 snapshots already expose ownerServiceEpoch and exact token
+  identity sufficient for safe cleanup.
+
+Generic APK workflow note
+-------------------------
+The generic "Build Z Fold 7 Motion-Gated Cover Power 1.3.16" run 36956474278
+failed before compilation while replaying obsolete historical build steps. It
+was not used as an Alpha4 source gate. Alpha4 uses focused tests plus a clean
+full Gradle unit-test + assemble gate.
+
+Local package validation
+------------------------
+PASS: Python patcher parses/py_compile.
+PASS: critical workflow static invariants present.
+PASS: every checked current-source patch anchor occurs exactly once on Alpha3.
+PASS: Fold7ProcessRecoveryGate compiles with Kotlin compiler against a matching
+      Fold7CoverLeaseSnapshotGate type surface.
+PASS: Fold7ProcessRecoveryGateTest source compiles against JUnit-compatible
+      stubs.
+PASS: local decision sequence:
+      foreign HELD -> exact release -> duplicate suppressed -> pending remains
+      disarmed -> IDLE -> arm once -> subsequent IDLE inert.
+
+Not claimed locally
+-------------------
+The Android project was not cloned/built in this package-building environment.
+The authoritative full project compile/test is therefore deliberately performed
+inside the included GitHub Actions workflow BEFORE it is allowed to commit
+runtime app/** changes.

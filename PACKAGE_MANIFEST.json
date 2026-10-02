@@ -1,0 +1,12 @@
+{
+  "package": "DUO_OPEN_GEN3_ALPHA4_PROCESS_RECOVERY",
+  "target": "Samsung Galaxy Z Fold7",
+  "repository": "boberino93-bit/duo-open",
+  "baseline_commit": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+  "baseline_version": "3.0.0-alpha3-zfold7",
+  "target_version": "3.0.0-alpha4-zfold7",
+  "target_version_code": 41,
+  "scope": "P0 app-process / surviving daemon cover-lease recovery",
+  "deployment_model": "fail-closed GitHub Actions apply-test-commit",
+  "direct_repository_writes_from_build_session": false
+}

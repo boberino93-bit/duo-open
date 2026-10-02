@@ -1,21 +1,19 @@
-DUO OPEN GEN3 ALPHA1 V3 — REPOSITORY ROOT UPLOAD
+UPLOAD THIS PACKAGE AT THE ROOT OF boberino93-bit/duo-open.
 
-Extract the contents of this ZIP directly into the root of the duo-open repository.
+IMPORTANT ORDER
+---------------
+1. Verify actual main first.
+2. Upload support files first:
+   tools/apply_gen3_alpha4_process_recovery.py
+   payload_alpha4/**
+   README_START_HERE_ALPHA4.txt
+   ALPHA4_RND_VALIDATION.txt
+   ALPHA4-SUPPORT-SHA256.txt
+3. Upload .github/workflows/apply-gen3-alpha4-process-recovery.yml LAST.
 
-After extraction, these paths must exist at repository root:
-  .github/workflows/apply-gen3-alpha1-integrated-v3.yml
-  tools/apply_gen3_alpha1_v2.py
-  tools/apply_gen3_phase1_authority.py
-  payload/Fold7ContinuityPrimeOwner.kt
-  payload/Fold7ContinuityPrimeOwnerGen3Test.kt
-  payload/Fold7ContinuityFrameStoreGen3OrderingTest.kt
-  payload/Fold7CoverPanelLease.kt
-  payload/Fold7CoverPanelLeaseV4Test.kt
-  payload/Fold7CoverVisualAttemptOwner.kt
-  payload/Fold7CoverVisualAttemptOwnerGen3Test.kt
-  payload/Fold7CoverVisualHost.kt
-  payload/Fold7Gen3VisualCoordinator.kt
+The workflow is the authorized patch/apply/test/commit path.
+Do not bypass its Alpha3 blob checks.
+Do not manually copy payload_alpha4 into app/**.
 
-Do NOT upload the containing folder itself. Upload/extract the CONTENTS of the ZIP at repository root.
-
-Commit and push these support files. The V3 workflow is configured to trigger when its workflow file lands on main.
+If main app source has drifted from the pinned blob hashes, stop and rebuild the
+patch against current main.
