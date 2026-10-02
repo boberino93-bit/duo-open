@@ -43,7 +43,7 @@ import kotlin.math.roundToInt
 @Composable
 fun ControlSheet(
     config: DuoConfig,
-    hinge: HingeAngleSource,
+    hinge: HingeAngleSource?,
     hingeAngle: Float,
     paneTilt: Float,
     simulate: Boolean,
@@ -78,17 +78,17 @@ fun ControlSheet(
         LocalClipboardManager.current
 
     val hasSensor =
-        hinge.sensor != null
+        hinge?.sensor != null
 
     val sensorStatus by
         produceState(
-            hinge.statusText(),
+            hinge?.statusText() ?: angleFeedStatus(),
             hinge,
         ) {
             while (true) {
                 delay(250)
                 value =
-                    hinge.statusText()
+                    hinge?.statusText() ?: angleFeedStatus()
             }
         }
 
@@ -248,90 +248,12 @@ fun ControlSheet(
             if (overlayAvailable) {
                 Divider()
                 Section(
-                    "How it's drawn",
-                    "Applies to the whole-screen fold.",
+                    "Glass renderer",
+                    "Fold7 uses one deterministic frozen-frame AGSL glass path.",
                 )
-
-                Choice(
-                    options =
-                        listOf(
-                            false to "Snapshot",
-                            true to "Live blur",
-                        ),
-                    selected =
-                        config.liveBlur,
-                    enabled = {
-                        !it ||
-                            liveBlurSupported
-                    },
-                    onSelect = { v ->
-                        DuoSettings.update {
-                            it.copy(
-                                liveBlur = v
-                            )
-                        }
-                    },
-                )
-
                 Hint(
-                    if (
-                        config.liveBlur &&
-                        liveBlurSupported
-                    ) {
-                        "Blurs the real screen with the system blur, live. No screenshot, no delay after the panel switches, and content keeps moving. The frost is stepped and there is no perspective bend."
-                    } else {
-                        "Takes one screenshot per fold and bends it like glass. Smooth frost and perspective, but the picture is frozen while it plays and there is a short delay after a panel switches on."
-                    }
+                    "Cross-window live blur is disabled on Fold7 because field testing showed unreliable attachment and weaker physical-glass geometry."
                 )
-
-                if (!liveBlurSupported) {
-                    Hint(
-                        "Live blur isn't available: this device has window blur turned off.",
-                        warn = true,
-                    )
-                }
-
-                Spacer(
-                    Modifier.height(8.dp)
-                )
-
-                Row(
-                    verticalAlignment =
-                        Alignment.CenterVertically
-                ) {
-                    Column(
-                        Modifier.weight(1f)
-                    ) {
-                        Text(
-                            "Start instantly after a screen switches on",
-                            style =
-                                MaterialTheme
-                                    .typography
-                                    .titleSmall,
-                        )
-
-                        Hint(
-                            "Begins from that screen's last picture and swaps in a fresh capture ~0.3 s later. Off: waits for the fresh capture, so the frost appears late. Snapshot mode only."
-                        )
-                    }
-
-                    Switch(
-                        checked =
-                            config.instantStart,
-                        onCheckedChange = { v ->
-                            DuoSettings.update {
-                                it.copy(
-                                    instantStart = v
-                                )
-                            }
-                        },
-                        enabled =
-                            !(
-                                config.liveBlur &&
-                                    liveBlurSupported
-                                ),
-                    )
-                }
             }
 
             Divider()
@@ -624,96 +546,33 @@ fun ControlSheet(
                         Modifier.height(8.dp)
                     )
 
-                    Row(
-                        verticalAlignment =
-                            Alignment.CenterVertically
-                    ) {
-                        Column(
-                            Modifier.weight(1f)
-                        ) {
-                            Text(
-                                "Fast live capture",
-                                style =
-                                    MaterialTheme
-                                        .typography
-                                        .titleSmall,
-                            )
-
-                            Hint(
-                                "Screen captured through Shizuku: instant after a panel switches, and the content under the frost keeps moving."
-                            )
-                        }
-
-                        Switch(
-                            checked =
-                                config.shizukuCapture,
-                            onCheckedChange = { v ->
-                                DuoSettings.update {
-                                    it.copy(
-                                        shizukuCapture =
-                                            v
-                                    )
-                                }
-                            },
-                        )
-                    }
-
-                    Spacer(
-                        Modifier.height(8.dp)
+                    Hint(
+                        "Fold7 capture and precise-angle transport are enabled automatically while Shizuku is ready."
                     )
 
-                    Row(
-                        verticalAlignment =
-                            Alignment.CenterVertically
-                    ) {
-                        Column(
-                            Modifier.weight(1f)
-                        ) {
-                            Text(
-                                "Continuous hinge angle (Samsung)",
-                                style =
-                                    MaterialTheme
-                                        .typography
-                                        .titleSmall,
-                            )
+                    Spacer(
+                        Modifier.height(6.dp)
+                    )
 
-                            Hint(
-                                if (foldWallpaperActive) {
-                                    "Samsung's Fold interactive wallpaper is set — the real angle is read from it. " +
-                                        angleFeedStatus()
-                                } else {
-                                    "Needs Samsung's built-in “Fold interactive” wallpaper as the home wallpaper (it's what receives the real angle). Set it, then come back."
-                                },
-                                warn =
-                                    !foldWallpaperActive,
-                            )
-                        }
-
-                        Switch(
-                            checked =
-                                config.shizukuAngle,
-                            onCheckedChange = { v ->
-                                DuoSettings.update {
-                                    it.copy(
-                                        shizukuAngle =
-                                            v
-                                    )
-                                }
-                            },
-                        )
-                    }
+                    Hint(
+                        if (foldWallpaperActive) {
+                            angleFeedStatus()
+                        } else {
+                            "Samsung Fold interactive wallpaper is still the temporary precise-angle fallback. Set it as the home wallpaper, then return here. " +
+                                angleFeedStatus()
+                        },
+                        warn = !foldWallpaperActive,
+                    )
 
                     if (!foldWallpaperActive) {
                         TextButton(
-                            onClick =
-                                onOpenWallpaperSettings
+                            onClick = onOpenWallpaperSettings
                         ) {
-                            Text(
-                                "Open wallpaper settings"
-                            )
+                            Text("Open wallpaper settings")
                         }
                     }
                 }
+
             }
 
             Divider()
@@ -729,7 +588,7 @@ fun ControlSheet(
 
             if (
                 hasSensor &&
-                hinge.isCoarse
+                hinge?.isCoarse == true
             ) {
                 Hint(
                     "This sensor only reports 0°, 90° and 180° (the continuous one is locked to system apps on Galaxy Z Fold 7 and earlier), so the fold plays as a short animation at each stop instead of tracking your hand.",
@@ -743,56 +602,58 @@ fun ControlSheet(
                 )
             )
 
-            Row(
-                verticalAlignment =
-                    Alignment.CenterVertically
-            ) {
-                Column(
-                    Modifier.weight(1f)
+            if (!overlayAvailable) {
+                Row(
+                    verticalAlignment =
+                        Alignment.CenterVertically
                 ) {
-                    Text(
-                        "Simulate the hinge",
-                        style =
-                            MaterialTheme
-                                .typography
-                                .titleSmall,
-                    )
+                    Column(
+                        Modifier.weight(1f)
+                    ) {
+                        Text(
+                            "Simulate the hinge",
+                            style =
+                                MaterialTheme
+                                    .typography
+                                    .titleSmall,
+                        )
 
-                    Hint(
-                        "Drive the preview above with a slider instead of the real hinge."
+                        Hint(
+                            "Drive the wallpaper preview with a slider instead of the real hinge."
+                        )
+                    }
+
+                    Switch(
+                        checked =
+                            simulate,
+                        onCheckedChange =
+                            onSimulateChange,
+                        enabled =
+                            hasSensor,
                     )
                 }
 
-                Switch(
-                    checked =
-                        simulate,
-                    onCheckedChange =
-                        onSimulateChange,
-                    enabled =
-                        hasSensor,
-                )
-            }
-
-            if (simulate) {
-                LabeledSlider(
-                    label = "Hinge angle",
-                    hint = null,
-                    valueText =
-                        "${simulatedAngle.roundToInt()}°",
-                    value =
-                        simulatedAngle,
-                    onValueChange =
-                        onSimulatedAngleChange,
-                    range =
-                        60f..180f,
-                )
+                if (simulate) {
+                    LabeledSlider(
+                        label = "Hinge angle",
+                        hint = null,
+                        valueText =
+                            "${simulatedAngle.roundToInt()}°",
+                        value =
+                            simulatedAngle,
+                        onValueChange =
+                            onSimulatedAngleChange,
+                        range =
+                            60f..180f,
+                    )
+                }
             }
 
             TextButton(
                 onClick = {
                     clipboard.setText(
                         AnnotatedString(
-                            hinge.report()
+                            hinge?.report() ?: angleFeedStatus()
                         )
                     )
                 }

@@ -13,34 +13,34 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * Reports the foldable's hinge angle in degrees (0 = closed, 180 = flat).
+ * Fold7 hinge acquisition plus the single authoritative geometry owner.
  *
- * Every sensor that looks like a real hinge *angle* is registered — the
- * platform `TYPE_HINGE_ANGLE` (non-wake-up first) plus vendor sensors that
- * mention the hinge/fold and report a ~180° range — and the finest one that
- * actually delivers events drives [onAngle]. Posture flags (0/1 range) are
- * skipped, and a sensor the OEM has permission-gated (Samsung's
- * `folding_angle` needs `com.samsung.permission.SSENSOR`) is logged and
- * ignored instead of crashing the registration.
- *
- * Some devices only expose three stops — the Galaxy Z Fold 7 and earlier
- * report 0 / 90 / 180 with `resolution 90` — which is [isCoarse]; callers
- * then play a timed fold per stop change instead of tracking the hinge.
- *
- * The sensors are on-change, so nothing arrives while the hinge is still
- * (and on the OnePlus Open nothing arrives on registration either).
+ * Public/vendor sensors and Samsung FoldInteractive are producers. They never
+ * arbitrate against each other directly. [Fold7AngleAuthority] owns that choice,
+ * retains public on-change samples while precise geometry is healthy, and can
+ * promote the retained fallback when precise geometry expires without waiting
+ * for another physical movement.
  */
 class HingeAngleSource(
     context: Context,
     private val onAngle: (Float) -> Unit,
+    private val onAuthoritativeSample: ((AuthoritativeSample) -> Unit)? = null,
     private val callbackHandler: Handler? = null,
 ) : SensorEventListener {
+
+    data class AuthoritativeSample(
+        val angle: Float,
+        val observedUptimeMs: Long,
+        val deliveredUptimeMs: Long,
+        val source: String,
+        val coarse: Boolean,
+        val reason: String,
+    )
 
     private class Stats(val sensor: Sensor) {
         var events = 0
         var last = Float.NaN
         var registered = false
-        /** Distinct readings seen (rounded), capped: three or fewer over many events means stops only. */
         val distinct = LinkedHashSet<Int>()
         val resolution: Float
             get() = sensor.resolution.takeIf { it.isFinite() && it > 0f } ?: 1f
@@ -52,7 +52,6 @@ class HingeAngleSource(
             if (distinct.size < MAX_DISTINCT) distinct += value.roundToInt()
         }
 
-        /** Only ever 0/90/180 (±2°) after enough events, or declared so. */
         val looksCoarse: Boolean
             get() = resolution >= COARSE_RESOLUTION ||
                 (events >= COARSE_MIN_EVENTS && distinct.size <= 3 &&
@@ -61,99 +60,195 @@ class HingeAngleSource(
 
     private val sensorManager = context.getSystemService(SensorManager::class.java)
     private val candidates: List<Stats> = discover().map(::Stats)
+    private val authority = Fold7AngleAuthority()
 
-    /** Candidate sensors, best first. */
     val sensors: List<Sensor> get() = candidates.map { it.sensor }
-
-    /** The sensor currently driving the effect, else the best guess before any reports. */
     val sensor: Sensor? get() = activeSensor ?: candidates.firstOrNull()?.sensor
 
-    /** Null until a candidate has reported. */
     var activeSensor: Sensor? = null
         private set
 
-    /** Latest angle from the active sensor. NaN until the first reading. */
+    /** Latest authoritative angle, regardless of which producer supplied it. */
     var lastAngle: Float = Float.NaN
         private set
 
-    /** Smoothed event rate over the last ~half second; 0 at rest. */
     var rateHz: Float = 0f
         private set
 
-    /** True when the best sensor we can get only reports the 0/90/180 stops. */
+    val externalActive: Boolean
+        get() {
+            val snapshot = authority.snapshot(SystemClock.uptimeMillis())
+            return snapshot.preciseLeaseRemainingMs > 0L &&
+                (snapshot.source == Fold7AngleAuthority.Source.SAMSUNG_PRECISE ||
+                    snapshot.source == Fold7AngleAuthority.Source.SYNTHETIC_ENDPOINT)
+        }
+
     val isCoarse: Boolean
-        get() = !externalActive && (active ?: candidates.firstOrNull())?.looksCoarse == true
+        get() {
+            val snapshot = authority.snapshot(SystemClock.uptimeMillis())
+            return when (snapshot.source) {
+                Fold7AngleAuthority.Source.PUBLIC_STANDARD,
+                Fold7AngleAuthority.Source.PUBLIC_VENDOR -> snapshot.coarse
+                Fold7AngleAuthority.Source.SAMSUNG_PRECISE,
+                Fold7AngleAuthority.Source.SYNTHETIC_ENDPOINT -> false
+                Fold7AngleAuthority.Source.NONE ->
+                    (active ?: candidates.firstOrNull())?.looksCoarse == true
+            }
+        }
 
     private var active: Stats? = null
     private var started = false
-
-    /**
-     * A continuous angle fed from outside the sensor framework (Shizuku mode:
-     * Samsung's fold wallpaper reports it). While fresh it overrides the
-     * sensors, which on a Galaxy Z Fold only give 0/90/180.
-     */
-    var externalActive = false
-        private set
-    private var externalLastUptime = 0L
-
-    fun feedExternal(angle: Float) {
-        if (!angle.isFinite()) return
-
-        val now = SystemClock.uptimeMillis()
-        val next = angle.coerceIn(0f, 180f)
-
-        externalActive = true
-        externalLastUptime = now
-
-        // Keep source freshness/rate diagnostics alive, but only
-        // animate when the physical angle actually changed.
-        tickRate(now)
-        lastEventUptime = now
-
-        val changed =
-            lastAngle.isNaN() ||
-                abs(next - lastAngle) >= EXTERNAL_CHANGE_EPS
-
-        lastAngle = next
-
-        if (changed) {
-            onAngle(next)
-        }
-    }
-
-    fun clearExternal() {
-        externalActive = false
-    }
     private var lastEventUptime = 0L
     private var rateWindowStart = 0L
     private var rateWindowCount = 0
 
-    /** Milliseconds since the last reading, or [Long.MAX_VALUE] if none yet. */
-    fun lastEventAgeMs(): Long =
-        if (lastEventUptime == 0L) Long.MAX_VALUE else SystemClock.uptimeMillis() - lastEventUptime
-
-    /** One line for the UI: which sensor, how fine, how fast, what it says. */
-    fun statusText(): String {
-        if (externalActive) {
-            val raw = if (lastAngle.isNaN()) "—" else "%.1f°".format(lastAngle)
-            val rate = if (rateHz > 0f) "%.0f Hz".format(rateHz) else "idle"
-            return "Samsung fold wallpaper via Shizuku · continuous · $rate · raw $raw · ${lastEventAgeMs()} ms ago"
+    private val preciseExpiryRunnable =
+        Runnable {
+            val now = SystemClock.uptimeMillis()
+            val decision =
+                authority.expirePrecise(
+                    nowUptimeMs = now,
+                    reason = "precise-lease-expired",
+                )
+            handleDecision(decision)
         }
-        val s = active ?: candidates.firstOrNull() ?: return "No hinge sensor found on this device"
-        val res = if (s.resolution >= 1f) "${s.resolution.roundToInt()}°" else "%.2f°".format(s.resolution)
-        val rate = if (rateHz > 0f) "%.0f Hz".format(rateHz) else "idle"
-        val raw = if (lastAngle.isNaN()) "—" else "%.1f°".format(lastAngle)
-        val age = lastEventAgeMs()
-        val ageText = if (age == Long.MAX_VALUE) "no events yet" else "${age} ms ago"
-        return "${s.sensor.name.trim()} · res $res · $rate · raw $raw · $ageText"
+
+    fun beginExternalSession(session: Long) {
+        val now = SystemClock.uptimeMillis()
+        callbackHandler?.removeCallbacks(preciseExpiryRunnable)
+        val decision = authority.startPreciseSession(session, now)
+        handleDecision(decision)
+        Log.i(TAG, "precise session start=$session")
     }
 
-    /** Full dump for a bug report: every fold-related sensor and what it did. */
+    fun feedExternal(
+        session: Long,
+        sequence: Long,
+        angle: Float,
+        sourceUptimeMs: Long,
+        receivedUptimeMs: Long = SystemClock.uptimeMillis(),
+    ) {
+        val decision =
+            authority.offerPrecise(
+                session = session,
+                sequence = sequence,
+                angle = angle,
+                observedUptimeMs = sourceUptimeMs,
+                receivedUptimeMs = receivedUptimeMs,
+            )
+        handleDecision(decision)
+        if (decision.accepted) schedulePreciseExpiry(receivedUptimeMs)
+    }
+
+    fun feedSyntheticExternal(
+        session: Long,
+        angle: Float,
+        sourceUptimeMs: Long = SystemClock.uptimeMillis(),
+        reason: String,
+    ) {
+        val decision =
+            authority.offerSyntheticEndpoint(
+                session = session,
+                angle = angle,
+                nowUptimeMs = sourceUptimeMs,
+                reason = reason,
+            )
+        handleDecision(decision)
+        if (decision.accepted) schedulePreciseExpiry(sourceUptimeMs)
+    }
+
+    /** Expire precise authority but keep the reader session eligible to recover. */
+    fun expireExternal(reason: String) {
+        val decision =
+            authority.expirePrecise(
+                nowUptimeMs = SystemClock.uptimeMillis(),
+                reason = reason,
+            )
+        handleDecision(decision)
+    }
+
+    /** Permanently revoke one reader session; late callbacks from it stay inert. */
+    fun revokeExternalSession(
+        session: Long,
+        reason: String,
+    ) {
+        callbackHandler?.removeCallbacks(preciseExpiryRunnable)
+        val decision =
+            authority.revokePreciseSession(
+                session = session,
+                nowUptimeMs = SystemClock.uptimeMillis(),
+                reason = reason,
+            )
+        handleDecision(decision)
+    }
+
+    /** Compatibility entrypoint for older callers; does not invalidate session identity. */
+    fun clearExternal() {
+        expireExternal("legacy-clear")
+    }
+
+    fun lastEventAgeMs(): Long {
+        val snapshot = authority.snapshot(SystemClock.uptimeMillis())
+        return snapshot.sourceAgeMs
+    }
+
+    fun statusText(): String {
+        val now = SystemClock.uptimeMillis()
+        val snapshot = authority.snapshot(now)
+        val raw = if (snapshot.angle.isNaN()) "—" else "%.1f°".format(snapshot.angle)
+        val age =
+            if (snapshot.sourceAgeMs == Long.MAX_VALUE) "no sample"
+            else "${snapshot.sourceAgeMs} ms old"
+        val rate = if (rateHz > 0f) "%.0f Hz".format(rateHz) else "idle"
+        val shadow =
+            if (snapshot.publicShadowAngle.isFinite()) {
+                " · public shadow %.1f°/%dms".format(
+                    snapshot.publicShadowAngle,
+                    snapshot.publicShadowAgeMs,
+                )
+            } else {
+                ""
+            }
+
+        return when (snapshot.source) {
+            Fold7AngleAuthority.Source.SAMSUNG_PRECISE ->
+                "Authoritative Samsung precise · $rate · raw $raw · $age · lease ${snapshot.preciseLeaseRemainingMs} ms$shadow"
+
+            Fold7AngleAuthority.Source.SYNTHETIC_ENDPOINT ->
+                "Authoritative endpoint bridge · raw $raw · $age · lease ${snapshot.preciseLeaseRemainingMs} ms$shadow"
+
+            Fold7AngleAuthority.Source.PUBLIC_STANDARD,
+            Fold7AngleAuthority.Source.PUBLIC_VENDOR -> {
+                val s = active ?: candidates.firstOrNull()
+                val name = s?.sensor?.name?.trim() ?: "public hinge sensor"
+                val coarse = if (snapshot.coarse) "coarse" else "fine"
+                "Authoritative $name · $coarse · $rate · raw $raw · $age"
+            }
+
+            Fold7AngleAuthority.Source.NONE ->
+                if (snapshot.angle.isFinite()) {
+                    "Geometry unknown/stale · holding $raw · $age$shadow"
+                } else {
+                    "Geometry unknown · waiting for first authoritative sample$shadow"
+                }
+        }
+    }
+
     fun report(): String = buildString {
-        appendLine("Duo Open hinge sensor report")
+        val snapshot = authority.snapshot(SystemClock.uptimeMillis())
+        appendLine("Duo Open hinge authority report")
         appendLine("device=${Build.MANUFACTURER} ${Build.MODEL} (${Build.DEVICE}) android=${Build.VERSION.RELEASE}")
-        appendLine("active=${activeSensor?.name ?: "none"} coarse=$isCoarse rate=${"%.1f".format(rateHz)}Hz")
-        appendLine("candidates:")
+        appendLine(
+            "authority=${snapshot.source} angle=${snapshot.angle} ageMs=${snapshot.sourceAgeMs} " +
+                "coarse=${snapshot.coarse} preciseSession=${snapshot.preciseSession} " +
+                "leaseRemainingMs=${snapshot.preciseLeaseRemainingMs}",
+        )
+        appendLine(
+            "publicShadow=${snapshot.publicShadowAngle} shadowAgeMs=${snapshot.publicShadowAgeMs} " +
+                "drops(stale/session/sequence)=${snapshot.droppedStalePrecise}/" +
+                "${snapshot.droppedSessionPrecise}/${snapshot.droppedSequencePrecise}",
+        )
+        appendLine("public candidates:")
         if (candidates.isEmpty()) appendLine("- (none)")
         for (c in candidates) {
             val s = c.sensor
@@ -183,9 +278,6 @@ class HingeAngleSource(
             return
         }
         for (c in candidates) {
-            // Vendor sensors can be permission-gated (Samsung's folding_angle
-            // needs com.samsung.permission.SSENSOR); that throws instead of
-            // returning false.
             c.registered = try {
                 if (callbackHandler != null) {
                     sm.registerListener(this, c.sensor, SAMPLING_PERIOD_US, callbackHandler)
@@ -196,13 +288,18 @@ class HingeAngleSource(
                 Log.w(TAG, "register denied for ${c.sensor.name}: ${e.message}")
                 false
             }
-            Log.i(TAG, "candidate ${c.sensor.name} type=${c.sensor.stringType} res=${c.sensor.resolution} wakeUp=${c.sensor.isWakeUpSensor} registered=${c.registered}")
+            Log.i(
+                TAG,
+                "candidate ${c.sensor.name} type=${c.sensor.stringType} " +
+                    "res=${c.sensor.resolution} wakeUp=${c.sensor.isWakeUpSensor} registered=${c.registered}",
+            )
         }
     }
 
     fun stop() {
         if (!started) return
         started = false
+        callbackHandler?.removeCallbacks(preciseExpiryRunnable)
         sensorManager?.unregisterListener(this)
         for (c in candidates) c.registered = false
     }
@@ -210,58 +307,98 @@ class HingeAngleSource(
     override fun onSensorChanged(event: SensorEvent) {
         val value = event.values.firstOrNull() ?: return
         val stats = candidates.firstOrNull { it.sensor == event.sensor } ?: return
-        // An external continuous source wins while it's alive; if it goes
-        // quiet the sensors take over again.
-        if (externalActive) {
-            if (SystemClock.uptimeMillis() - externalLastUptime < EXTERNAL_STALE_MS) return
-            externalActive = false
-        }
 
-        val coarseMidpointAfterContinuousEndpoint =
-            lastAngle.isFinite() &&
-                value in COARSE_MIDPOINT_MIN_DEG..
-                    COARSE_MIDPOINT_MAX_DEG &&
-                (
-                    lastAngle <=
-                        CONTINUOUS_ENDPOINT_LOW_GUARD_DEG ||
-                        lastAngle >=
-                            CONTINUOUS_ENDPOINT_HIGH_GUARD_DEG
-                    )
-
-        if (coarseMidpointAfterContinuousEndpoint) {
-            Log.d(
-                TAG,
-                "ignoring coarse midpoint $value after continuous endpoint $lastAngle"
-            )
-            return
-        }
-
-        // Not an angle in degrees (state code, radians, normalized): ignore.
         if (!value.isFinite() || value < -PLAUSIBLE_SLACK || value > 180f + PLAUSIBLE_SLACK) return
+
         stats.observe(value)
         if (choose() !== stats) return
 
-        val now = SystemClock.uptimeMillis()
-        tickRate(now)
-        lastEventUptime = now
-        lastAngle = value.coerceIn(0f, 180f)
-        onAngle(lastAngle)
+        val receivedUptimeMs = SystemClock.uptimeMillis()
+        val elapsedNowNs = SystemClock.elapsedRealtimeNanos()
+        val ageNs = (elapsedNowNs - event.timestamp).coerceAtLeast(0L)
+        val observedUptimeMs =
+            (receivedUptimeMs - ageNs / 1_000_000L)
+                .coerceAtLeast(0L)
+
+        val source =
+            if (stats.isStandard) {
+                Fold7AngleAuthority.Source.PUBLIC_STANDARD
+            } else {
+                Fold7AngleAuthority.Source.PUBLIC_VENDOR
+            }
+
+        val decision =
+            authority.offerPublic(
+                source = source,
+                angle = value,
+                observedUptimeMs = observedUptimeMs,
+                receivedUptimeMs = receivedUptimeMs,
+                coarse = stats.looksCoarse,
+            )
+
+        handleDecision(decision)
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
 
-    /**
-     * Finest reporting sensor wins, the standard type on ties; sticky once
-     * chosen unless a strictly finer one starts reporting, so a slow vendor
-     * sensor can't flip-flop with the platform one mid-fold.
-     */
+    private fun handleDecision(decision: Fold7AngleAuthority.Decision) {
+        if (!decision.accepted && decision.dropReason != null) {
+            Log.d(
+                TAG,
+                "angle authority drop reason=${decision.dropReason} age=${decision.sourceAgeMs}",
+            )
+        }
+
+        if (decision.output == null) {
+            if (
+                decision.stateChanged &&
+                authority.snapshot(SystemClock.uptimeMillis()).source ==
+                    Fold7AngleAuthority.Source.NONE
+            ) {
+                // No source currently owns geometry. Do not let downstream
+                // code mistake the last precise sample for a current angle.
+                lastAngle = Float.NaN
+            }
+            return
+        }
+
+        val output = decision.output
+        val delivered = output.deliveredUptimeMs
+        tickRate(delivered)
+        lastEventUptime = output.observedUptimeMs
+        lastAngle = output.angle
+
+        val sample =
+            AuthoritativeSample(
+                angle = output.angle,
+                observedUptimeMs = output.observedUptimeMs,
+                deliveredUptimeMs = output.deliveredUptimeMs,
+                source = output.source.name,
+                coarse = output.coarse,
+                reason = output.reason,
+            )
+
+        onAuthoritativeSample?.invoke(sample)
+        onAngle(output.angle)
+    }
+
+    private fun schedulePreciseExpiry(nowUptimeMs: Long) {
+        val h = callbackHandler ?: return
+        h.removeCallbacks(preciseExpiryRunnable)
+        val expiry = authority.nextPreciseExpiryUptimeMs() ?: return
+        h.postDelayed(
+            preciseExpiryRunnable,
+            (expiry - nowUptimeMs + 1L).coerceAtLeast(1L),
+        )
+    }
+
     private fun choose(): Stats? {
         val reporting = candidates.filter { it.events > 0 }
         if (reporting.isEmpty()) return null
         val best = reporting.minWithOrNull(compareBy<Stats> { it.resolution }.thenBy { !it.isStandard })!!
         val current = active
         if (current == null || best.resolution < current.resolution) {
-            if (current !== best) Log.i(TAG, "hinge angle source: ${best.sensor.name} (res ${best.resolution})")
+            if (current !== best) Log.i(TAG, "public hinge source: ${best.sensor.name} (res ${best.resolution})")
             active = best
             activeSensor = best.sensor
             return best
@@ -288,14 +425,14 @@ class HingeAngleSource(
 
     private fun discover(): List<Sensor> {
         val all = allSensors()
-        val standard = all.filter { it.type == Sensor.TYPE_HINGE_ANGLE }
-            .ifEmpty { listOfNotNull(sensorManager?.getDefaultSensor(Sensor.TYPE_HINGE_ANGLE)) }
-            .sortedBy { it.isWakeUpSensor }
+        val standard =
+            all.filter { it.type == Sensor.TYPE_HINGE_ANGLE }
+                .ifEmpty { listOfNotNull(sensorManager?.getDefaultSensor(Sensor.TYPE_HINGE_ANGLE)) }
+                .sortedBy { it.isWakeUpSensor }
         val vendor = all.filter { it.type >= Sensor.TYPE_DEVICE_PRIVATE_BASE && isAngleCandidate(it) }
         return (standard + vendor).distinctBy { "${it.type}|${it.name}|${it.isWakeUpSensor}" }
     }
 
-    /** A vendor sensor that reports a hinge *angle*: named for it, with a ~180° range. */
     private fun isAngleCandidate(s: Sensor): Boolean {
         if (!isFoldRelated(s)) return false
         val range = s.maximumRange
@@ -311,29 +448,11 @@ class HingeAngleSource(
 
     private companion object {
         const val TAG = "DuoHinge"
-        /** ~125 Hz ceiling; the sensors only report on change anyway. */
         const val SAMPLING_PERIOD_US = 8_000
         const val PLAUSIBLE_SLACK = 5f
         const val COARSE_RESOLUTION = 45f
         const val COARSE_MIN_EVENTS = 6
         const val MAX_DISTINCT = 8
-        const val EXTERNAL_STALE_MS = 3_000L
-
-        const val CONTINUOUS_ENDPOINT_LOW_GUARD_DEG =
-            20f
-
-        const val CONTINUOUS_ENDPOINT_HIGH_GUARD_DEG =
-            160f
-
-        const val COARSE_MIDPOINT_MIN_DEG =
-            45f
-
-        const val COARSE_MIDPOINT_MAX_DEG =
-            135f
-
-        // Ignore tiny Samsung wallpaper jitter / duplicates.
-        const val EXTERNAL_CHANGE_EPS = 0.10f
-
         val STOPS = intArrayOf(0, 90, 180)
     }
 }

@@ -117,12 +117,12 @@ class FoldOverlayView(
         private val shader: RuntimeShader? = DuoShader.create(context)
         private val pxPerMm = DuoShader.pxPerMm(context) / renderScale
         private val paint = Paint(Paint.FILTER_BITMAP_FLAG)
-        private var image = BitmapShader(snapshot, Shader.TileMode.DECAL, Shader.TileMode.DECAL)
+        private var image = BitmapShader(snapshot, Shader.TileMode.DECAL, Shader.TileMode.DECAL).apply { setFilterMode(BitmapShader.FILTER_MODE_LINEAR) }
         private val matrix = Matrix()
 
         fun setSnapshot(bitmap: Bitmap) {
             snapshot = bitmap
-            image = BitmapShader(bitmap, Shader.TileMode.DECAL, Shader.TileMode.DECAL)
+            image = BitmapShader(bitmap, Shader.TileMode.DECAL, Shader.TileMode.DECAL).apply { setFilterMode(BitmapShader.FILTER_MODE_LINEAR) }
             if (width > 0 && height > 0) onSizeChanged(width, height, width, height)
             invalidate()
         }
