@@ -1,0 +1,21 @@
+DUO OPEN GEN6 ALPHA 1 V2 — CI FIX 2
+
+This hotfix addresses the Android compile failures from workflow run 37002421589.
+
+Fixed:
+1. Fold7WorkProfileDetector.kt
+   - Replaced unsupported Kotlin synthetic UserHandle.identifier access
+   - Uses reflective getIdentifier() to obtain the user id
+
+2. FoldSurface.kt generation inside apply_gen6_alpha1.py
+   - PublicGlassSurface.view is now private
+   - PrivateFrostSurface.view is now private
+   - Prevents public properties from exposing private nested view types
+
+Validation completed before packaging:
+- Python patcher compile: PASS
+- Gen6 Alpha 1 V2 patcher self-test: PASS
+- Gen6 Alpha 1 V2 package static gate: PASS
+
+Extract at repository root and commit to main.
+The existing Build Gen6 Alpha 1 V2 Fold7 workflow should trigger automatically.

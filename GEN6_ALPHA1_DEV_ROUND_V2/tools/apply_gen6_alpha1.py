@@ -99,7 +99,7 @@ class PublicGlassSurface(
     context: Context,
     private val windowManager: WindowManager,
 ) : FoldSurface {
-    val view = PublicGlassView(context)
+    private val view = PublicGlassView(context)
     val attached: Boolean
     private var materialAnimator: ValueAnimator? = null
 
@@ -220,7 +220,7 @@ class PrivateFrostSurface(
     context: Context,
     private val windowManager: WindowManager,
 ) : FoldSurface {
-    val view = PrivateFrostView(context)
+    private val view = PrivateFrostView(context)
     val attached: Boolean
     private var materialAnimator: ValueAnimator? = null
 

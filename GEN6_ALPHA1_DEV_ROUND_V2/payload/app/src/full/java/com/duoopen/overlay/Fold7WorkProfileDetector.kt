@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.LauncherApps
 import android.os.Process
 import android.os.UserManager
+import android.os.UserHandle
 
 /** Best-effort managed-profile package detector; failures degrade to unknown. */
 internal object Fold7WorkProfileDetector {
@@ -33,9 +34,14 @@ internal object Fold7WorkProfileDetector {
                                 Integer.TYPE,
                             )
 
+                        val userId =
+                            UserHandle::class.java
+                                .getMethod("getIdentifier")
+                                .invoke(profile) as Int
+
                         method.invoke(
                             userManager,
-                            profile.identifier,
+                            userId,
                         ) as Boolean
                     }.getOrDefault(false)
 
