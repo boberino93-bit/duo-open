@@ -1,0 +1,20 @@
+test_raw_gen4_replay_wake_hint_gain (__main__.FieldReplayTests.test_raw_gen4_replay_wake_hint_gain) ... ok
+test_blackout_bootstrap_bounded_and_reacquisition (__main__.Gen6Pass1Tests.test_blackout_bootstrap_bounded_and_reacquisition) ... ok
+test_close_terminal_reassert_fence (__main__.Gen6Pass1Tests.test_close_terminal_reassert_fence) ... ok
+test_content_provenance_and_secure_no_pixels (__main__.Gen6Pass1Tests.test_content_provenance_and_secure_no_pixels) ... ok
+test_exact_right_pane_transform_roundtrip_and_strip (__main__.Gen6Pass1Tests.test_exact_right_pane_transform_roundtrip_and_strip) ... ok
+test_false_wake_hint_then_close_aborts_cleanly (__main__.Gen6Pass1Tests.test_false_wake_hint_then_close_aborts_cleanly) ... ok
+test_general_app_relayout_native_fresh (__main__.Gen6Pass1Tests.test_general_app_relayout_native_fresh) ... ok
+test_host_make_before_break_and_stale_callbacks (__main__.Gen6Pass1Tests.test_host_make_before_break_and_stale_callbacks) ... ok
+test_native_fresh_home_rejects_wallpaper_only (__main__.Gen6Pass1Tests.test_native_fresh_home_rejects_wallpaper_only) ... ok
+test_optics_and_geometry_independent_bounded_midpoint (__main__.Gen6Pass1Tests.test_optics_and_geometry_independent_bounded_midpoint) ... ok
+test_oscillation_1000_loops_bounded (__main__.Gen6Pass1Tests.test_oscillation_1000_loops_bounded) ... ok
+test_randomized_100k_lifecycle_events (__main__.Gen6Pass1Tests.test_randomized_100k_lifecycle_events) ... ok
+test_secure_native_handoff_and_reversal_no_leak (__main__.Gen6Pass1Tests.test_secure_native_handoff_and_reversal_no_leak) ... ok
+test_terminal_cleanup_on_faults (__main__.Gen6Pass1Tests.test_terminal_cleanup_on_faults) ... ok
+test_wake_hint_starts_attempt_not_semantic_angle (__main__.Gen6Pass1Tests.test_wake_hint_starts_attempt_not_semantic_angle) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.222s
+
+OK

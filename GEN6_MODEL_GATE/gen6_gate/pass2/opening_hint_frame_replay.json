@@ -1,0 +1,105 @@
+{
+  "hint_count": 10,
+  "usable_immediate_frame_count": 9,
+  "events": [
+    {
+      "hint_ns": 109692070000000,
+      "hint": "0->1",
+      "usable_frame": false,
+      "frame_delay_ms": 2522.2656
+    },
+    {
+      "hint_ns": 109726392000000,
+      "hint": "0->1",
+      "usable_frame": true,
+      "frame_delay_ms": 8.768088,
+      "expected_present_delay_ms": 25.127479,
+      "first_visual_angle_deg": 1.40289408,
+      "vsync_id": 38277013
+    },
+    {
+      "hint_ns": 109743785000000,
+      "hint": "0->1",
+      "usable_frame": true,
+      "frame_delay_ms": 16.307769,
+      "expected_present_delay_ms": 32.458868,
+      "first_visual_angle_deg": 2.60924304,
+      "vsync_id": 38290414
+    },
+    {
+      "hint_ns": 109754765000000,
+      "hint": "0->1",
+      "usable_frame": true,
+      "frame_delay_ms": 5.954796,
+      "expected_present_delay_ms": 22.274001,
+      "first_visual_angle_deg": 0.95276736,
+      "vsync_id": 38298366
+    },
+    {
+      "hint_ns": 109763250000000,
+      "hint": "0->1",
+      "usable_frame": true,
+      "frame_delay_ms": 12.206459,
+      "expected_present_delay_ms": 28.583254,
+      "first_visual_angle_deg": 1.95303344,
+      "vsync_id": 38307416
+    },
+    {
+      "hint_ns": 109770440000000,
+      "hint": "0->1",
+      "usable_frame": true,
+      "frame_delay_ms": 12.295206,
+      "expected_present_delay_ms": 28.68391,
+      "first_visual_angle_deg": 1.96723296,
+      "vsync_id": 38315387
+    },
+    {
+      "hint_ns": 109779642000000,
+      "hint": "0->1",
+      "usable_frame": true,
+      "frame_delay_ms": 6.646818,
+      "expected_present_delay_ms": 22.665922,
+      "first_visual_angle_deg": 1.06349088,
+      "vsync_id": 38325951
+    },
+    {
+      "hint_ns": 109788422000000,
+      "hint": "0->1",
+      "usable_frame": true,
+      "frame_delay_ms": 0.36572,
+      "expected_present_delay_ms": 15.478808,
+      "first_visual_angle_deg": 0.058515199999999996,
+      "vsync_id": 38335805
+    },
+    {
+      "hint_ns": 109798142000000,
+      "hint": "0->1",
+      "usable_frame": true,
+      "frame_delay_ms": 11.125717,
+      "expected_present_delay_ms": 27.433803,
+      "first_visual_angle_deg": 1.78011472,
+      "vsync_id": 38345301
+    },
+    {
+      "hint_ns": 109810774000000,
+      "hint": "0->2",
+      "usable_frame": true,
+      "frame_delay_ms": 10.104879,
+      "expected_present_delay_ms": 26.348286,
+      "first_visual_angle_deg": 1.61678064,
+      "vsync_id": 38356501
+    }
+  ],
+  "frame_delay_ms": {
+    "min": 0.36572,
+    "median": 10.104879,
+    "p95": 12.295206,
+    "worst": 16.307769
+  },
+  "expected_present_delay_ms": {
+    "min": 15.478808,
+    "median": 26.348286,
+    "p95": 28.68391,
+    "worst": 32.458868
+  }
+}

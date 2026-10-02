@@ -1,0 +1,28 @@
+test_diagnostic_schema_is_metadata_only (__main__.Pass2Tests.test_diagnostic_schema_is_metadata_only) ... ok
+test_diagnostic_transport_requires_https_key_and_checksum_receipt (__main__.Pass2Tests.test_diagnostic_transport_requires_https_key_and_checksum_receipt) ... ok
+test_display_mode_never_proves_effective_120 (__main__.Pass2Tests.test_display_mode_never_proves_effective_120) ... ok
+test_duplicate_vsync_does_not_fake_cadence (__main__.Pass2Tests.test_duplicate_vsync_does_not_fake_cadence) ... ok
+test_frame_timeline_is_primary_presentation_time (__main__.Pass2Tests.test_frame_timeline_is_primary_presentation_time) ... ok
+test_general_app_requires_current_layout_generation (__main__.Pass2Tests.test_general_app_requires_current_layout_generation) ... ok
+test_home_wallpaper_only_is_never_fresh (__main__.Pass2Tests.test_home_wallpaper_only_is_never_fresh) ... ok
+test_host_loss_before_pending_ready_degrades_native_not_blank (__main__.Pass2Tests.test_host_loss_before_pending_ready_degrades_native_not_blank) ... ok
+test_host_migration_100k_fuzz_no_owned_blank (__main__.Pass2Tests.test_host_migration_100k_fuzz_no_owned_blank) ... ok
+test_native_fresh_route_generation_fenced (__main__.Pass2Tests.test_native_fresh_route_generation_fenced) ... ok
+test_observed_120_requires_direct_cadence (__main__.Pass2Tests.test_observed_120_requires_direct_cadence) ... ok
+test_provenance_100k_fuzz_never_accepts_mismatch (__main__.Pass2Tests.test_provenance_100k_fuzz_never_accepts_mismatch) ... ok
+test_provenance_rejects_user_task_window_package_generation_drift (__main__.Pass2Tests.test_provenance_rejects_user_task_window_package_generation_drift) ... ok
+test_refresh_lifecycle_100k_fuzz (__main__.Pass2Tests.test_refresh_lifecycle_100k_fuzz) ... ok
+test_refresh_replacement_clears_old_view_and_surface_first (__main__.Pass2Tests.test_refresh_replacement_clears_old_view_and_surface_first) ... ok
+test_refresh_same_surface_new_generation_stale_clear_safe (__main__.Pass2Tests.test_refresh_same_surface_new_generation_stale_clear_safe) ... ok
+test_secure_native_handoff_requires_secure_ready_not_pixels (__main__.Pass2Tests.test_secure_native_handoff_requires_secure_ready_not_pixels) ... ok
+test_secure_transition_drops_all_pixel_state (__main__.Pass2Tests.test_secure_transition_drops_all_pixel_state) ... ok
+test_virtual_hinge_uses_frame_timeline_horizon (__main__.Pass2Tests.test_virtual_hinge_uses_frame_timeline_horizon) ... ok
+test_wallpaper_loss_not_terminal_but_faults_cleanup (__main__.Pass2Tests.test_wallpaper_loss_not_terminal_but_faults_cleanup) ... ok
+test_zero_gap_migration_keeps_old_until_new_presents (__main__.Pass2Tests.test_zero_gap_migration_keeps_old_until_new_presents) ... ok
+test_real_trace_duplicate_events_do_not_distort_cadence (__main__.TraceReplayTests.test_real_trace_duplicate_events_do_not_distort_cadence) ... ok
+test_real_trace_has_frame_timeline_not_synthetic_mode_timing (__main__.TraceReplayTests.test_real_trace_has_frame_timeline_not_synthetic_mode_timing) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 1.370s
+
+OK

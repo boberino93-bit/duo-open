@@ -1,0 +1,12 @@
+{
+  "source": "/mnt/data/gen6_evidence/debug_unzip/transition-lab/transition-3be7c752-289e-4671-968f-54729be42d3b.jsonl",
+  "accepted_unique_vsync": 6838,
+  "duplicates": 1,
+  "invalid": 0,
+  "observed_hz": 60.31826025248319,
+  "cadence_class": "OBSERVED_60",
+  "recent_interval_ms_median": 16.5787275,
+  "expected_present_lead_ms_median": 16.666666,
+  "expected_present_lead_ms_p95": 16.666666,
+  "conclusion": "FrameTimeline provides direct presentation timing; display.mode is not used as effective cadence proof."
+}

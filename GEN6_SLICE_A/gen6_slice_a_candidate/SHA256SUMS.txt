@@ -1,0 +1,7 @@
+263557cc954798466c42f359a096bbcc90c57a46d421a4b811d4e1754945505f  ./README_START_HERE.md
+39e0a65f28a4809e895fc9ca0052f8ebf5c94ceee7d5239c812d5fc13a493f5e  ./kotlin_owner_harness.kt
+fb6b6c2c96508f77984a61689f1a8cb1d673d6d4416dacef43a2608f8fbf37ed  ./owner-harness.jar
+089db2a149a183ea56072a14137687ad8ebe58772e795857956f495b721bfaa8  ./payload/app/src/full/java/com/duoopen/overlay/Fold7Gen6OpeningAttemptOwner.kt
+45df188fdda87ee3a285432f3e757f2a0b1942d84d16571ae1fc6b04836e8e97  ./payload/app/src/test/java/com/duoopen/overlay/Fold7Gen6OpeningAttemptOwnerTest.kt
+a455d38a0554f032750e8d96de0386690ecfff1a170db66b0be7165864fce34f  ./tools/apply_gen6_slice_a.py
+dbf4c80f5e4a6265f64486acd95118ffc776c86c9599069b52c48f1a4d17bcd8  ./validate_slice_a.py

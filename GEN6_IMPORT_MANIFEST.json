@@ -1,0 +1,17 @@
+{
+  "schema": "duo-open-gen6-root-import/v1",
+  "repository": "boberino93-bit/duo-open",
+  "verified_main_at_packaging": "de9eb45086f6eee00dd4e1e01d5e9782e39773d5",
+  "processing_order": [
+    "START_HERE_GEN6_ROOT_IMPORT.md",
+    "GEN6_MODEL_GATE/",
+    "GEN6_SLICE_A/"
+  ],
+  "nested_zip_files": false,
+  "production_status": {
+    "model_pass": true,
+    "gen6_ci_pass": false,
+    "physical_fold7_pass": false,
+    "main_modified_by_packaging_agent": false
+  }
+}

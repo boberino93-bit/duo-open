@@ -1,0 +1,384 @@
+=== SHA256SUMS ===
+./.github/workflows/apply-gen3-alpha1-integrated-v3.yml: OK
+./AGENTBUS_FAST_MESH_COMMUNICATION_PROTOCOL_V1.md: OK
+./AGENTBUS_HISTORY/ACTIVE_FUTURE_STATE.json: OK
+./AGENTBUS_HISTORY/CURRENT_STATE.json: OK
+./AGENTBUS_HISTORY/HISTORY_PROTOCOL_v2.md: OK
+./AGENTBUS_HISTORY/MESSAGE_LIFECYCLE_LEDGER.json: OK
+./AGENTBUS_HISTORY/README.md: OK
+./AGENTBUS_HISTORY/SUPERSESSION_INDEX.json: OK
+./AGENTBUS_HISTORY/WORKSTREAM_INDEX.json: OK
+./AGENTBUS_PRIMARY_HISTORIC_STATE_PROTOCOL.md: OK
+./BOOTSTRAP_LEARNING_GATE_V1.md: OK
+./DEPLOY_GEN3_ALPHA1_V3_FROM_ANYWHERE.ps1: OK
+./DEPLOY_GEN3_ALPHA1_V3_FROM_ANYWHERE.sh: OK
+./FAST_MESH_ITERATION_CHANGELOG.txt: OK
+./GEN6_CANONICAL_CANVAS_PROGRAM.md: OK
+./ITERATION_METADATA.json: OK
+./LEAD_AGENT_FAST_MESH_ROLE_V1.md: OK
+./LEARNING_KERNEL_V1.json: OK
+./PRIMARY_ACCEPTANCE_GATE_V1.md: OK
+./PRIMARY_MAIN_RESEARCHER_PROMPT_v2.txt: OK
+./PRIMARY_MAIN_RESEARCHER_PROMPT_v3.txt: OK
+./PRIMARY_MAIN_RESEARCHER_PROMPT_v3_SUPERSEDED.txt: OK
+./PRIMARY_MAIN_RESEARCHER_PROMPT_v4.txt: OK
+./PRIMARY_MAIN_RESEARCHER_PROMPT_v4_SUPERSEDED.txt: OK
+./PRIMARY_MAIN_RESEARCHER_PROMPT_v5.txt: OK
+./PRIMARY_MAIN_RESEARCHER_PROMPT_v6.txt: OK
+./PRIMARY_MAIN_RESEARCHER_PROMPT_v7_GEN6_CANONICAL_CANVAS.txt: OK
+./PROCESS_LEARNING_PATHS.json: OK
+./PROCESS_LEARNING_PERFORMANCE_MODEL.md: OK
+./PROCESS_LEARNING_PROTOCOL_V1.md: OK
+./README_GEN3_ALPHA1.txt: OK
+./README_GEN3_ALPHA1_V3.txt: OK
+./README_START_HERE_V3.txt: OK
+./README_START_HERE_V4.txt: OK
+./RECURSION_CONVERGENCE_GUARD_V1.md: OK
+./RECURSION_LIMITS.json: OK
+./REVIEW_MESH_PERFORMANCE_MODEL.md: OK
+./REVIEW_PATHS.json: OK
+./REVIEW_ROUTED_MESH_PROTOCOL_V1.md: OK
+./SUCCESSOR_HANDOFF/DEPLOY_CURRENT_RECONCILED_BUILD.md: OK
+./SUCCESSOR_HANDOFF/FAILED_ALPHA1_V1_CI.md: OK
+./SUCCESSOR_HANDOFF/HANDOFF_METADATA.json: OK
+./SUCCESSOR_HANDOFF/HANDOFF_METADATA_V3.json: OK
+./SUCCESSOR_HANDOFF/LATE_RND_SHA256SUMS.txt: OK
+./SUCCESSOR_HANDOFF/PRIMARY_MAIN_RESEARCHER_PROMPT_v1_SUPERSEDED.txt: OK
+./SUCCESSOR_HANDOFF/START_HERE_SUCCESSOR.md: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_ANGLE_AUTHORITY_GEN2_PROPOSAL.zip: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_ANGLE_AUTHORITY_GEN2_RND_HANDOFF.txt: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_APP_PROCESS_RECOVERY_GEN3_RND_HANDOFF.txt: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_APP_PROCESS_RECOVERY_GEN3_RND_PROPOSAL.zip: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_CLOSE_CYCLE_PRIME_GEN2_PROPOSAL.zip: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_CLOSE_CYCLE_PRIME_GEN2_RND_HANDOFF.txt: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_LAUNCHER_CONTENT_CONTINUITY_GEN2_PROPOSAL_V2.zip: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_LAUNCHER_CONTENT_CONTINUITY_GEN2_RND_HANDOFF_V2.txt: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_OPENING_OWNER_GEN3_RND_HANDOFF.txt: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_OPENING_OWNER_GEN3_RND_PROPOSAL.zip: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_OPENING_TERMINAL_INNER_HANDOFF_GEN2_PROPOSAL.zip: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_OPENING_TERMINAL_INNER_HANDOFF_GEN2_RND_HANDOFF.txt: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_PRESENTATION_OWNER_GEN3_PROPOSAL.zip: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_PRESENTATION_OWNER_GEN3_RND_HANDOFF.txt: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_SHIZUKU_RECOVERY_GEN2_PROPOSAL.zip: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_SHIZUKU_RECOVERY_GEN2_RND_HANDOFF.txt: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_TERMINAL_HANDOFF_BUDGET_GEN3_RND_HANDOFF.txt: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_TERMINAL_HANDOFF_BUDGET_GEN3_RND_PROPOSAL.zip: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_TERMINAL_NATIVE_HANDOFF_GEN2_PROPOSAL.zip: OK
+./SUCCESSOR_HANDOFF/late_rnd/DUO_OPEN_TERMINAL_NATIVE_HANDOFF_GEN2_RND_HANDOFF.txt: OK
+./SUCCESSOR_HANDOFF/provenance/DUO_OPEN_GEN3_ALPHA1_INTEGRATED_ORIGINAL.zip: OK
+./SUCCESSOR_HANDOFF/provenance/README_GEN3_ALPHA1_ORIGINAL.txt: OK
+./ZERO_OVERWRITE_TRANSPORT_RULES.md: OK
+./payload/Fold7ContinuityFrameStoreGen3OrderingTest.kt: OK
+./payload/Fold7ContinuityPrimeOwner.kt: OK
+./payload/Fold7ContinuityPrimeOwnerGen3Test.kt: OK
+./payload/Fold7CoverPanelLease.kt: OK
+./payload/Fold7CoverPanelLeaseV4Test.kt: OK
+./payload/Fold7CoverVisualAttemptOwner.kt: OK
+./payload/Fold7CoverVisualAttemptOwnerGen3Test.kt: OK
+./payload/Fold7CoverVisualHost.kt: OK
+./payload/Fold7Gen3VisualCoordinator.kt: OK
+./schemas/bootstrap_bundle.example.json: OK
+./schemas/manager_dossier.example.json: OK
+./schemas/primary_review_feedback.example.json: OK
+./schemas/process_lesson.example.json: OK
+./schemas/process_observation.example.json: OK
+./seed_process_observations.json: OK
+./tests/test_bootstrap_bundle_integrity.py: OK
+./tests/test_learning_gate_hardening.py: OK
+./tests/test_learning_write_budget.py: OK
+./tests/test_manager_gate_evidence.py: OK
+./tests/test_process_learning_model.py: OK
+./tests/test_recursion_guard.py: OK
+./tools/apply_gen3_alpha1_v2.py: OK
+./tools/apply_gen3_phase1_authority.py: OK
+./tools/bootstrap_lessons_compile.py: OK
+./tools/manager_review_gate.py: OK
+./tools/primary_ready_queue.py: OK
+./tools/process_learning_gate.py: OK
+./tools/recursion_guard.py: OK
+./tools/verify_bootstrap_bundle.py: OK
+./validate_gen6_primary.py: OK
+./validate_lead_fast_mesh.py: OK
+./validate_learning_primary.py: OK
+./validate_primary_manager_gate.py: OK
+./validate_process_learning.py: OK
+=== validate_gen6_primary ===
+PASS	files
+PASS	gen6_name
+PASS	two_pass
+PASS	ordinary_apps
+PASS	secure_apps
+PASS	secure_no_bypass
+PASS	wake_hint
+PASS	remap_survival
+PASS	peak_glass_90
+PASS	frame_timeline
+PASS	native_fresh
+PASS	wallpaper_decoupling
+PASS	gen4_reassert
+PASS	diagnostic_direct
+PASS	gmail_secondary
+PASS	regression
+PASS	process_learning
+PASS	recursion
+PASS	current_main
+PASS	active_prompt_metadata
+PROMPT_SHA256=0b5152c892333ee5fa1bcfe3860bf79fb14622a6918e8590a45429acdb3d9991
+=== validate_learning_primary ===
+MANAGER_GATE_EVIDENCE: PASS
+PASS	files
+PASS	manager_gate
+PASS	not_acceptance
+PASS	primary_authority
+PASS	raw_sample
+PASS	head_check
+PASS	build_gate
+PROMPT_SHA256=d5a8205e06b94596e87ff5929f8d5f6ec980c39d59945239475fc42b9836e69d
+PASS low-reviewed True
+PASS medium-single False
+PASS medium-two True
+PASS medium-primary True
+PASS high-never-auto False
+PASS no-evidence False
+PROCESS_LEARNING_MODEL: PASS
+optimized_extra_writes=17
+naive_extra_writes=201
+reduction=91.5%
+PROCESS_LEARNING_WRITE_BUDGET: PASS
+PROCESS_LEARNING_GATE_HARDENING: PASS
+RECURSION_GUARD: PASS
+PASS lessons=1 rejected=0 sha256=187ef1a35bf5c7fd87363501e38f27dae4fcb66b6934ee8565967535a8c087ea
+{
+  "valid": true,
+  "errors": [],
+  "generation": "g0001",
+  "verified_chain": [
+    "g0001"
+  ]
+}
+PASS lessons=1 rejected=0 sha256=9c63784ae76fc314245a22ad1e8713ed7a705c45ee3ff2fc50aa13004e1d1c76
+{
+  "valid": true,
+  "errors": [],
+  "generation": "g0002",
+  "verified_chain": [
+    "g0002",
+    "g0001"
+  ]
+}
+{
+  "valid": false,
+  "errors": [
+    "parent-required"
+  ],
+  "generation": "g0002",
+  "verified_chain": [
+    "g0002"
+  ]
+}
+{
+  "valid": false,
+  "errors": [
+    "g0002:bundle-self-hash"
+  ],
+  "generation": "g0002",
+  "verified_chain": [
+    "g0002",
+    "g0001"
+  ]
+}
+BOOTSTRAP_BUNDLE_INTEGRITY: PASS
+PASS ok
+PASS learning-files []
+PASS dual_learning
+PASS no_raw_auto
+PASS write_budget
+PASS risk_boundary
+PASS authority_boundary
+PASS immutable_supersession
+PASS outcome_closure
+PASS kernel_pin
+PASS external_quarantine
+PASS recursion_budget
+PASS lineage
+PASS	files
+PASS	gen6_name
+PASS	two_pass
+PASS	ordinary_apps
+PASS	secure_apps
+PASS	secure_no_bypass
+PASS	wake_hint
+PASS	remap_survival
+PASS	peak_glass_90
+PASS	frame_timeline
+PASS	native_fresh
+PASS	wallpaper_decoupling
+PASS	gen4_reassert
+PASS	diagnostic_direct
+PASS	gmail_secondary
+PASS	regression
+PASS	process_learning
+PASS	recursion
+PASS	current_main
+PASS	active_prompt_metadata
+PROMPT_SHA256=0b5152c892333ee5fa1bcfe3860bf79fb14622a6918e8590a45429acdb3d9991
+PASS RECURSION / LEARNING HARDENING
+PASS LEARNING_KERNEL_V1.json
+PASS tools/verify_bootstrap_bundle.py
+PASS PROCESS_LEARNING_PROTOCOL=DPL/1
+PASS BOOTSTRAP_LESSON_SOURCE=
+PASS bootstrap_lessons_compile.py
+PASS HIGH-risk lessons never auto-apply
+PASS RUN -> OBSERVE TECHNICAL + PROCESS OUTCOMES
+PASS apply only its `primary` operational overlay
+=== validate_process_learning ===
+PASS low-reviewed True
+PASS medium-single False
+PASS medium-two True
+PASS medium-primary True
+PASS high-never-auto False
+PASS no-evidence False
+PROCESS_LEARNING_MODEL: PASS
+optimized_extra_writes=17
+naive_extra_writes=201
+reduction=91.5%
+PROCESS_LEARNING_WRITE_BUDGET: PASS
+PROCESS_LEARNING_GATE_HARDENING: PASS
+RECURSION_GUARD: PASS
+PASS lessons=1 rejected=0 sha256=187ef1a35bf5c7fd87363501e38f27dae4fcb66b6934ee8565967535a8c087ea
+{
+  "valid": true,
+  "errors": [],
+  "generation": "g0001",
+  "verified_chain": [
+    "g0001"
+  ]
+}
+PASS lessons=1 rejected=0 sha256=9c63784ae76fc314245a22ad1e8713ed7a705c45ee3ff2fc50aa13004e1d1c76
+{
+  "valid": true,
+  "errors": [],
+  "generation": "g0002",
+  "verified_chain": [
+    "g0002",
+    "g0001"
+  ]
+}
+{
+  "valid": false,
+  "errors": [
+    "parent-required"
+  ],
+  "generation": "g0002",
+  "verified_chain": [
+    "g0002"
+  ]
+}
+{
+  "valid": false,
+  "errors": [
+    "g0002:bundle-self-hash"
+  ],
+  "generation": "g0002",
+  "verified_chain": [
+    "g0002",
+    "g0001"
+  ]
+}
+BOOTSTRAP_BUNDLE_INTEGRITY: PASS
+PASS ok
+PASS learning-files []
+PASS dual_learning
+PASS no_raw_auto
+PASS write_budget
+PASS risk_boundary
+PASS authority_boundary
+PASS immutable_supersession
+PASS outcome_closure
+PASS kernel_pin
+PASS external_quarantine
+PASS recursion_budget
+PASS lineage
+=== validate_lead_fast_mesh ===
+PASS	files
+PASS	dmc
+PASS	lead_loop
+PASS	board_cadence
+PASS	stale_nonblocking
+PASS	no_human_relay
+PASS	primary_authority
+PASS	source_truth
+PASS	build_gate
+PROMPT_SHA256=ee530e21e11acb5c5151e9c6bf4ec474aa8faeefb974bed4c3c4ce609c56bbec
+=== validate_primary_manager_gate ===
+MANAGER_GATE_EVIDENCE: PASS
+PASS	files
+PASS	manager_gate
+PASS	not_acceptance
+PASS	primary_authority
+PASS	raw_sample
+PASS	head_check
+PASS	build_gate
+PROMPT_SHA256=d5a8205e06b94596e87ff5929f8d5f6ec980c39d59945239475fc42b9836e69d
+=== script tests ===
+--- /mnt/data/gen6_primary/tests/test_bootstrap_bundle_integrity.py
+PASS lessons=1 rejected=0 sha256=187ef1a35bf5c7fd87363501e38f27dae4fcb66b6934ee8565967535a8c087ea
+{
+  "valid": true,
+  "errors": [],
+  "generation": "g0001",
+  "verified_chain": [
+    "g0001"
+  ]
+}
+PASS lessons=1 rejected=0 sha256=9c63784ae76fc314245a22ad1e8713ed7a705c45ee3ff2fc50aa13004e1d1c76
+{
+  "valid": true,
+  "errors": [],
+  "generation": "g0002",
+  "verified_chain": [
+    "g0002",
+    "g0001"
+  ]
+}
+{
+  "valid": false,
+  "errors": [
+    "parent-required"
+  ],
+  "generation": "g0002",
+  "verified_chain": [
+    "g0002"
+  ]
+}
+{
+  "valid": false,
+  "errors": [
+    "g0002:bundle-self-hash"
+  ],
+  "generation": "g0002",
+  "verified_chain": [
+    "g0002",
+    "g0001"
+  ]
+}
+BOOTSTRAP_BUNDLE_INTEGRITY: PASS
+--- /mnt/data/gen6_primary/tests/test_learning_gate_hardening.py
+PROCESS_LEARNING_GATE_HARDENING: PASS
+--- /mnt/data/gen6_primary/tests/test_learning_write_budget.py
+optimized_extra_writes=17
+naive_extra_writes=201
+reduction=91.5%
+PROCESS_LEARNING_WRITE_BUDGET: PASS
+--- /mnt/data/gen6_primary/tests/test_manager_gate_evidence.py
+MANAGER_GATE_EVIDENCE: PASS
+--- /mnt/data/gen6_primary/tests/test_process_learning_model.py
+PASS low-reviewed True
+PASS medium-single False
+PASS medium-two True
+PASS medium-primary True
+PASS high-never-auto False
+PASS no-evidence False
+PROCESS_LEARNING_MODEL: PASS
+--- /mnt/data/gen6_primary/tests/test_recursion_guard.py
+RECURSION_GUARD: PASS

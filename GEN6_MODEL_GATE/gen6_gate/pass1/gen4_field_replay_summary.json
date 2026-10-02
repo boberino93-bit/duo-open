@@ -1,0 +1,82 @@
+{
+  "source": "/mnt/data/gen6_evidence/duoopen-field-debug.log",
+  "leave_closed_events": 10,
+  "zero_to_one": 9,
+  "opening_state_delay_ms": {
+    "min": 1,
+    "median": 810.5,
+    "max": 2487
+  },
+  "events": [
+    {
+      "hint_uptime_ms": 109692070,
+      "hint": "0->1",
+      "first_angle_delay_ms": 2484,
+      "first_angle_deg": 90.0,
+      "opening_state_delay_ms": 2487
+    },
+    {
+      "hint_uptime_ms": 109726392,
+      "hint": "0->1",
+      "first_angle_delay_ms": 1761,
+      "first_angle_deg": 90.0,
+      "opening_state_delay_ms": 1763
+    },
+    {
+      "hint_uptime_ms": 109743785,
+      "hint": "0->1",
+      "first_angle_delay_ms": 401,
+      "first_angle_deg": 108.0,
+      "opening_state_delay_ms": 12
+    },
+    {
+      "hint_uptime_ms": 109754765,
+      "hint": "0->1",
+      "first_angle_delay_ms": 587,
+      "first_angle_deg": 90.0,
+      "opening_state_delay_ms": 588
+    },
+    {
+      "hint_uptime_ms": 109763250,
+      "hint": "0->1",
+      "first_angle_delay_ms": 502,
+      "first_angle_deg": 90.0,
+      "opening_state_delay_ms": 503
+    },
+    {
+      "hint_uptime_ms": 109770440,
+      "hint": "0->1",
+      "first_angle_delay_ms": 710,
+      "first_angle_deg": 90.0,
+      "opening_state_delay_ms": 711
+    },
+    {
+      "hint_uptime_ms": 109779642,
+      "hint": "0->1",
+      "first_angle_delay_ms": 910,
+      "first_angle_deg": 90.0,
+      "opening_state_delay_ms": 910
+    },
+    {
+      "hint_uptime_ms": 109788422,
+      "hint": "0->1",
+      "first_angle_delay_ms": 1530,
+      "first_angle_deg": 90.0,
+      "opening_state_delay_ms": 1532
+    },
+    {
+      "hint_uptime_ms": 109798142,
+      "hint": "0->1",
+      "first_angle_delay_ms": 1010,
+      "first_angle_deg": 90.0,
+      "opening_state_delay_ms": 1011
+    },
+    {
+      "hint_uptime_ms": 109810774,
+      "hint": "0->2",
+      "first_angle_delay_ms": 380,
+      "first_angle_deg": 90.0,
+      "opening_state_delay_ms": 1
+    }
+  ]
+}
