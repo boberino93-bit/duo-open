@@ -71,17 +71,6 @@ class FoldOverlayService : AccessibilityService() {
     private lateinit var gen3Visual: Fold7Gen3VisualCoordinator
 
     /**
-     * Automatically arm Fold7 geometry continuity once per accessibility-service
-     * lifetime after Shizuku becomes ready.
-     *
-     * This is equivalent to pressing "Arm geometry continuity (4°)" once after
-     * startup. It deliberately does not repeatedly re-arm on later Shizuku state
-     * emissions, which could otherwise reset an active fold transition.
-     */
-    private var continuityAutoArmAttempted =
-        false
-
-    /**
      * Semantic CLOSED -> OPEN visual latch.
      *
      * Topology can enter INNER_HANDOFF long before Samsung precise angle
@@ -227,6 +216,7 @@ class FoldOverlayService : AccessibilityService() {
             handler = handler,
             scope = scope,
             currentHingeAngle = { hinge.lastAngle },
+            serviceEpoch = serviceEpoch,
             gen2 = gen2,
             onStatus = { message -> _secondaryDisplayStatus.value = message },
         )
@@ -323,17 +313,10 @@ class FoldOverlayService : AccessibilityService() {
                 syncAngleFeed()
 
                 if (
-                    state is
-                        ShizukuBridge.State.Ready
+                    state is ShizukuBridge.State.Ready &&
+                    ShizukuBridge.ready
                 ) {
                     continuity.onPrivilegedReady()
-
-                    if (!continuityAutoArmAttempted) {
-                        continuityAutoArmAttempted =
-                            true
-
-                        continuity.arm()
-                    }
                     primeCoverRoute(
                         "shizuku-ready"
                     )

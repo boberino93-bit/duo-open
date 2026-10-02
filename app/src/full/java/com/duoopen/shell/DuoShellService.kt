@@ -63,6 +63,9 @@ class DuoShellService : Binder() {
     private val coverPanelLease =
         Fold7CoverPanelLease()
 
+    private val gen4PanelAuthority =
+        Fold7PanelAuthorityGen4()
+
     private val shellSession =
         (SystemClock.elapsedRealtimeNanos().takeIf { it > 0L } ?: 1L)
 
@@ -101,6 +104,11 @@ class DuoShellService : Binder() {
                 }.get(1, TimeUnit.SECONDS)
             }
             mirrorMutationExecutor.shutdownNow()
+            runCatching {
+                coverMutationExecutor.submit {
+                    gen4ShutdownCleanup()
+                }.get(1, TimeUnit.SECONDS)
+            }
             coverMutationExecutor.shutdownNow()
             System.exit(0)
             return true
@@ -110,6 +118,25 @@ class DuoShellService : Binder() {
         if (owner < 0) owner = caller
         if (caller != owner) throw SecurityException("wrong caller")
         val out = reply ?: return false
+
+        if (
+            code == ShellProtocol.ENABLE_SECONDARY_DISPLAY ||
+            code == ShellProtocol.RESET_SECONDARY_DISPLAY ||
+            code == ShellProtocol.COVER_PANEL_LEASE_V2 ||
+            code == ShellProtocol.COVER_PANEL_LEASE_V3 ||
+            code == ShellProtocol.COVER_PANEL_LEASE_V4
+        ) {
+            out.writeNoException()
+            out.writeBundle(
+                Bundle().apply {
+                    putBoolean("ok", false)
+                    putBoolean("stale", true)
+                    putString("error", "legacy cover mutation rejected: Gen4 panel authority is active")
+                }
+            )
+            return true
+        }
+
         when (code) {
             ShellProtocol.PING -> {
                 out.writeNoException()
@@ -496,6 +523,37 @@ class DuoShellService : Binder() {
                         }
                     } catch (t: Throwable) {
                         failureBundle("cover-lease-v4", t)
+                    } finally {
+                        restoreCallingIdentity(identity)
+                    }
+
+                out.writeNoException()
+                out.writeBundle(result)
+            }
+
+            ShellProtocol.COVER_PANEL_GEN4 -> {
+                val operation = data.readInt()
+                val serviceEpoch = data.readLong()
+                val closeCycleId = data.readLong()
+                val transitionGeneration = data.readLong()
+                val intentSequence = data.readLong()
+                val reason = data.readString() ?: "unspecified"
+                val identity = clearCallingIdentity()
+
+                val result =
+                    try {
+                        runCoverMutation {
+                            handleGen4PanelCommand(
+                                operation = operation,
+                                serviceEpoch = serviceEpoch,
+                                closeCycleId = closeCycleId,
+                                transitionGeneration = transitionGeneration,
+                                intentSequence = intentSequence,
+                                reason = reason,
+                            )
+                        }
+                    } catch (t: Throwable) {
+                        failureBundle("cover-panel-gen4", t)
                     } finally {
                         restoreCallingIdentity(identity)
                     }
@@ -1422,6 +1480,521 @@ class DuoShellService : Binder() {
                         null
                 },
         )
+    }
+
+    private data class Gen4CleanupResult(
+        val ok: Boolean,
+        val nativeCover: Boolean,
+        val error: String? = null,
+    )
+
+    private fun ensureGen4StartupRecovered(
+        reason: String,
+    ): Boolean {
+        if (gen4PanelAuthority.snapshot().recoveryReady) return true
+
+        repeat(GEN4_RECOVERY_ATTEMPTS) { attempt ->
+            val topology = coverLeaseTopology()
+            when (
+                val plan = gen4PanelAuthority.recoveryPlan(
+                    nativeCover = topology.nativeCover,
+                    innerIsDefault = topology.innerIsDefault,
+                    coverSecondaryLogicalId = topology.coverSecondaryLogicalId,
+                )
+            ) {
+                Fold7PanelAuthorityGen4.RecoveryPlan.ReadyInner -> {
+                    gen4PanelAuthority.completeRecovery(nativeCover = false)
+                    return true
+                }
+
+                Fold7PanelAuthorityGen4.RecoveryPlan.ReadyNativeCover -> {
+                    gen4PanelAuthority.completeRecovery(nativeCover = true)
+                    return true
+                }
+
+                is Fold7PanelAuthorityGen4.RecoveryPlan.ResetSecondaryRoute -> {
+                    val reset = secondaryDisplayCommand(false, plan.logicalId)
+                    if (reset.getBoolean("ok", false)) {
+                        gen4PanelAuthority.completeRecovery(nativeCover = false)
+                        return true
+                    }
+                }
+
+                Fold7PanelAuthorityGen4.RecoveryPlan.RetryAmbiguous -> Unit
+            }
+
+            if (attempt + 1 < GEN4_RECOVERY_ATTEMPTS) {
+                Thread.sleep(GEN4_RECOVERY_RETRY_MS)
+            }
+        }
+
+        gen4PanelAuthority.recoveryFailed()
+        return false
+    }
+
+    private fun normalizeGen4SecondaryRoute(
+        reason: String,
+    ): Gen4CleanupResult {
+        var lastError: String? = null
+
+        repeat(GEN4_RECOVERY_ATTEMPTS) { attempt ->
+            val topology = coverLeaseTopology()
+
+            if (topology.nativeCover) {
+                return Gen4CleanupResult(
+                    ok = true,
+                    nativeCover = true,
+                )
+            }
+
+            if (topology.innerIsDefault) {
+                val logicalId = topology.coverSecondaryLogicalId
+                if (logicalId == null || logicalId < 0) {
+                    return Gen4CleanupResult(
+                        ok = true,
+                        nativeCover = false,
+                    )
+                }
+
+                val reset = secondaryDisplayCommand(false, logicalId)
+                if (reset.getBoolean("ok", false)) {
+                    return Gen4CleanupResult(
+                        ok = true,
+                        nativeCover = false,
+                    )
+                }
+
+                lastError = reset.getString("error") ?: reset.getString("commandOutput")
+            } else {
+                lastError = "ambiguous Fold7 topology during $reason"
+            }
+
+            if (attempt + 1 < GEN4_RECOVERY_ATTEMPTS) {
+                Thread.sleep(GEN4_RECOVERY_RETRY_MS)
+            }
+        }
+
+        return Gen4CleanupResult(
+            ok = false,
+            nativeCover = false,
+            error = lastError ?: "cover route normalization failed",
+        )
+    }
+
+    private fun handleGen4PanelCommand(
+        operation: Int,
+        serviceEpoch: Long,
+        closeCycleId: Long,
+        transitionGeneration: Long,
+        intentSequence: Long,
+        reason: String,
+    ): Bundle {
+        if (!ensureGen4StartupRecovered(reason)) {
+            return gen4PanelBundle(
+                operation = "startup-recovery:$reason",
+                ok = false,
+                decision = "startup-recovery-pending",
+                error = "daemon could not prove a safe Fold7 topology",
+            )
+        }
+
+        var admission =
+            gen4PanelAuthority.admit(
+                serviceEpoch = serviceEpoch,
+                intentSequence = intentSequence,
+            )
+
+        if (admission.cleanupRequired) {
+            val cleanup =
+                normalizeGen4SecondaryRoute(
+                    "service-rollover:$reason"
+                )
+
+            if (!cleanup.ok) {
+                return gen4PanelBundle(
+                    operation = "service-rollover:$reason",
+                    ok = false,
+                    decision = admission.reason,
+                    cleanupRequired = true,
+                    error = cleanup.error,
+                )
+            }
+
+            gen4PanelAuthority.completeServiceRollover(
+                serviceEpoch = serviceEpoch,
+                intentSequence = intentSequence,
+                nativeCover = cleanup.nativeCover,
+            )
+
+            admission =
+                Fold7PanelAuthorityGen4.Admission(
+                    accepted = true,
+                    stale = false,
+                    cleanupRequired = false,
+                    reason = "service-rollover-clean",
+                )
+        }
+
+        if (!admission.accepted) {
+            return gen4PanelBundle(
+                operation = "rejected:$reason",
+                ok = false,
+                stale = admission.stale,
+                cleanupRequired = admission.cleanupRequired,
+                decision = admission.reason,
+            )
+        }
+
+        return when (operation) {
+            1 ->
+                admitPanelSessionGen4(
+                    serviceEpoch = serviceEpoch,
+                    intentSequence = intentSequence,
+                    reason = reason,
+                )
+
+            2 ->
+                prepareCoverPanelGen4(
+                    serviceEpoch = serviceEpoch,
+                    closeCycleId = closeCycleId,
+                    transitionGeneration = transitionGeneration,
+                    intentSequence = intentSequence,
+                    reason = reason,
+                )
+
+            3 ->
+                reassertCoverPanelGen4(
+                    serviceEpoch = serviceEpoch,
+                    closeCycleId = closeCycleId,
+                    transitionGeneration = transitionGeneration,
+                    intentSequence = intentSequence,
+                    reason = reason,
+                )
+
+            4 ->
+                returnCoverPanelGen4(
+                    serviceEpoch = serviceEpoch,
+                    intentSequence = intentSequence,
+                    reason = reason,
+                )
+
+            5 ->
+                reconcileCoverPanelGen4(
+                    serviceEpoch = serviceEpoch,
+                    intentSequence = intentSequence,
+                    reason = reason,
+                )
+
+            else ->
+                gen4PanelBundle(
+                    operation = "unknown:$operation",
+                    ok = false,
+                    decision = "unsupported-operation",
+                    error = "unknown Gen4 panel operation $operation",
+                )
+        }
+    }
+
+    private fun admitPanelSessionGen4(
+        serviceEpoch: Long,
+        intentSequence: Long,
+        reason: String,
+    ): Bundle {
+        val before = gen4PanelAuthority.snapshot()
+
+        if (
+            before.phase in setOf(
+                Fold7PanelAuthorityGen4.Phase.COVER_PREPARING,
+                Fold7PanelAuthorityGen4.Phase.COVER_READY_HIDDEN,
+                Fold7PanelAuthorityGen4.Phase.RELEASE_PENDING,
+            )
+        ) {
+            gen4PanelAuthority.beginRelease(
+                serviceEpoch = serviceEpoch,
+                intentSequence = intentSequence,
+            )
+
+            val cleanup =
+                normalizeGen4SecondaryRoute(
+                    "session-admission:$reason"
+                )
+
+            gen4PanelAuthority.completeRelease(
+                intentSequence = intentSequence,
+                success = cleanup.ok,
+                nativeCover = cleanup.nativeCover,
+            )
+
+            return gen4PanelBundle(
+                operation = "session-admission:$reason",
+                ok = cleanup.ok,
+                decision = if (cleanup.ok) "native-session-admitted" else "release-pending",
+                error = cleanup.error,
+            )
+        }
+
+        return gen4PanelBundle(
+            operation = "session-admission:$reason",
+            ok = true,
+            decision = "native-session-admitted",
+        )
+    }
+
+    private fun prepareCoverPanelGen4(
+        serviceEpoch: Long,
+        closeCycleId: Long,
+        transitionGeneration: Long,
+        intentSequence: Long,
+        reason: String,
+    ): Bundle {
+        if (closeCycleId <= 0L || transitionGeneration < 0L) {
+            return gen4PanelBundle(
+                operation = "prepare:$reason",
+                ok = false,
+                stale = true,
+                decision = "invalid-owner-identity",
+            )
+        }
+
+        val owner =
+            Fold7PanelAuthorityGen4.Owner(
+                serviceEpoch = serviceEpoch,
+                closeCycleId = closeCycleId,
+                transitionGeneration = transitionGeneration,
+            )
+
+        gen4PanelAuthority.beginPrepare(
+            owner = owner,
+            intentSequence = intentSequence,
+        )
+
+        val physicalId = resolveFold7CoverPhysicalDisplayId(-1)
+        val (physicalPowered, physicalError) =
+            setPhysicalPowerNormal(physicalId)
+
+        val activation =
+            if (physicalPowered) {
+                activateOwnedCoverRouteAfterPhysicalWake(physicalId)
+            } else {
+                CoverRouteActivation(
+                    logicalId = -1,
+                    physicalId = physicalId,
+                    routeEnabled = false,
+                    logicalPowered = false,
+                    stillSafe = false,
+                    error = physicalError ?: "physical cover wake failed",
+                )
+            }
+
+        gen4PanelAuthority.completePrepare(
+            intentSequence = intentSequence,
+            success = physicalPowered,
+            physicalDisplayId = physicalId.takeIf { it >= 0L },
+            logicalDisplayId = activation.logicalId.takeIf { activation.stillSafe },
+            routeReady = physicalPowered && activation.ok,
+        )
+
+        return gen4PanelBundle(
+            operation = "prepare:$reason",
+            ok = physicalPowered,
+            decision =
+                if (activation.ok) {
+                    "cover-ready-hidden"
+                } else {
+                    "physical-ready-route-pending"
+                },
+            error = activation.error ?: physicalError,
+        )
+    }
+
+    private fun reassertCoverPanelGen4(
+        serviceEpoch: Long,
+        closeCycleId: Long,
+        transitionGeneration: Long,
+        intentSequence: Long,
+        reason: String,
+    ): Bundle {
+        val before = gen4PanelAuthority.snapshot()
+        val expectedOwner =
+            Fold7PanelAuthorityGen4.Owner(
+                serviceEpoch = serviceEpoch,
+                closeCycleId = closeCycleId,
+                transitionGeneration = transitionGeneration,
+            )
+
+        if (before.owner != expectedOwner) {
+            return gen4PanelBundle(
+                operation = "reassert:$reason",
+                ok = false,
+                stale = true,
+                decision = "owner-changed",
+            )
+        }
+
+        val physicalId =
+            before.physicalDisplayId
+                ?: resolveFold7CoverPhysicalDisplayId(-1)
+
+        val (physicalPowered, physicalError) =
+            setPhysicalPowerNormal(physicalId)
+
+        val activation =
+            if (physicalPowered) {
+                activateOwnedCoverRouteAfterPhysicalWake(physicalId)
+            } else {
+                CoverRouteActivation(
+                    logicalId = -1,
+                    physicalId = physicalId,
+                    routeEnabled = false,
+                    logicalPowered = false,
+                    stillSafe = false,
+                    error = physicalError ?: "cover reassert physical wake failed",
+                )
+            }
+
+        gen4PanelAuthority.completePrepare(
+            intentSequence = intentSequence,
+            success = physicalPowered,
+            physicalDisplayId = physicalId.takeIf { it >= 0L },
+            logicalDisplayId = activation.logicalId.takeIf { activation.stillSafe },
+            routeReady = physicalPowered && activation.ok,
+        )
+
+        return gen4PanelBundle(
+            operation = "reassert:$reason",
+            ok = physicalPowered,
+            decision = if (activation.ok) "cover-ready-hidden" else "route-pending",
+            error = activation.error ?: physicalError,
+        )
+    }
+
+    private fun returnCoverPanelGen4(
+        serviceEpoch: Long,
+        intentSequence: Long,
+        reason: String,
+    ): Bundle {
+        gen4PanelAuthority.beginRelease(
+            serviceEpoch = serviceEpoch,
+            intentSequence = intentSequence,
+        )
+
+        val cleanup =
+            normalizeGen4SecondaryRoute(
+                "return:$reason"
+            )
+
+        gen4PanelAuthority.completeRelease(
+            intentSequence = intentSequence,
+            success = cleanup.ok,
+            nativeCover = cleanup.nativeCover,
+        )
+
+        return gen4PanelBundle(
+            operation = "return:$reason",
+            ok = cleanup.ok,
+            decision = if (cleanup.ok) "native-authority-restored" else "release-pending",
+            error = cleanup.error,
+        )
+    }
+
+    private fun reconcileCoverPanelGen4(
+        serviceEpoch: Long,
+        intentSequence: Long,
+        reason: String,
+    ): Bundle {
+        val before = gen4PanelAuthority.snapshot()
+
+        return when (before.phase) {
+            Fold7PanelAuthorityGen4.Phase.RELEASE_PENDING ->
+                returnCoverPanelGen4(
+                    serviceEpoch = serviceEpoch,
+                    intentSequence = intentSequence,
+                    reason = "reconcile:$reason",
+                )
+
+            Fold7PanelAuthorityGen4.Phase.COVER_PREPARING,
+            Fold7PanelAuthorityGen4.Phase.COVER_READY_HIDDEN -> {
+                val owner = before.owner
+                    ?: return gen4PanelBundle(
+                        operation = "reconcile:$reason",
+                        ok = false,
+                        decision = "prepared-state-without-owner",
+                    )
+
+                reassertCoverPanelGen4(
+                    serviceEpoch = owner.serviceEpoch,
+                    closeCycleId = owner.closeCycleId,
+                    transitionGeneration = owner.transitionGeneration,
+                    intentSequence = intentSequence,
+                    reason = "reconcile:$reason",
+                )
+            }
+
+            else ->
+                gen4PanelBundle(
+                    operation = "reconcile:$reason",
+                    ok = true,
+                    decision = "already-native",
+                )
+        }
+    }
+
+    private fun gen4ShutdownCleanup() {
+        // Graceful daemon exit normalizes observable cover routing even if the
+        // app never completed Gen4 admission. Crash recovery remains the next
+        // daemon lifetime's startup responsibility.
+        normalizeGen4SecondaryRoute("shizuku-destroy")
+    }
+
+    private fun gen4PanelBundle(
+        operation: String,
+        ok: Boolean,
+        stale: Boolean = false,
+        cleanupRequired: Boolean = false,
+        decision: String,
+        error: String? = null,
+    ): Bundle {
+        val snapshot = gen4PanelAuthority.snapshot()
+        val owner = snapshot.owner
+
+        val leaseState =
+            when (snapshot.phase) {
+                Fold7PanelAuthorityGen4.Phase.RECOVERING -> "UNKNOWN_RECOVERY"
+                Fold7PanelAuthorityGen4.Phase.COVER_PREPARING -> "PREWARM_IN_FLIGHT"
+                Fold7PanelAuthorityGen4.Phase.COVER_READY_HIDDEN -> "HELD"
+                Fold7PanelAuthorityGen4.Phase.RELEASE_PENDING -> "RELEASE_PENDING"
+                Fold7PanelAuthorityGen4.Phase.INNER_NATIVE,
+                Fold7PanelAuthorityGen4.Phase.NATIVE_COVER -> "IDLE"
+            }
+
+        return Bundle().apply {
+            putBoolean("ok", ok)
+            putBoolean("stale", stale)
+            putBoolean("cleanupRequired", cleanupRequired)
+            putString("operation", operation)
+            putString("decision", decision)
+            putString("error", error)
+
+            putBoolean("gen4", true)
+            putString("gen4Phase", snapshot.phase.name)
+            putBoolean("gen4RecoveryReady", snapshot.recoveryReady)
+            putLong("gen4IntentSequence", snapshot.lastIntentSequence)
+
+            putLong("shellSession", shellSession)
+            putLong("shellRevision", coverMutationRevision.incrementAndGet())
+            putString("leaseState", leaseState)
+            putLong("leaseId", owner?.serviceEpoch ?: 0L)
+            // Compatibility receipt identity for the existing app-side readiness gate:
+            // stable for one close cycle. intentSequence remains daemon-internal ordering.
+            putLong("leaseEpoch", owner?.closeCycleId ?: 0L)
+            putLong("ownerGeneration", owner?.transitionGeneration ?: -1L)
+            putLong("ownerServiceEpoch", owner?.serviceEpoch ?: 0L)
+            putLong("ownerCloseCycleId", owner?.closeCycleId ?: 0L)
+            putLong("physicalDisplayId", snapshot.physicalDisplayId ?: -1L)
+            putInt("targetDisplayId", snapshot.logicalDisplayId ?: -1)
+            putBoolean("physicalLeaseHeld", snapshot.physicalHeld)
+            putBoolean("routeReady", snapshot.routeReady)
+        }
     }
 
     private fun prewarmCoverLeaseV2(
@@ -2557,6 +3130,9 @@ class DuoShellService : Binder() {
     private companion object {
         /** Shizuku asks user services to exit with this code. */
         const val SHIZUKU_DESTROY = 16777115
+
+        const val GEN4_RECOVERY_ATTEMPTS = 4
+        const val GEN4_RECOVERY_RETRY_MS = 50L
 
         const val PROBE_OUTPUT_LIMIT =
             16_000

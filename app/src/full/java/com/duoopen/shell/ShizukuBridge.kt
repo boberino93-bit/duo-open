@@ -559,6 +559,97 @@ object ShizukuBridge {
             parcel.writeString("status")
         }
 
+    private fun coverPanelGen4(
+        operation: Int,
+        serviceEpoch: Long,
+        closeCycleId: Long,
+        transitionGeneration: Long,
+        intentSequence: Long,
+        reason: String,
+    ): Bundle? =
+        call(ShellProtocol.COVER_PANEL_GEN4) { parcel ->
+            parcel.writeInt(operation)
+            parcel.writeLong(serviceEpoch)
+            parcel.writeLong(closeCycleId)
+            parcel.writeLong(transitionGeneration)
+            parcel.writeLong(intentSequence)
+            parcel.writeString(reason)
+        }
+
+    internal fun coverPanelStatusGen4(
+        serviceEpoch: Long,
+        intentSequence: Long,
+        reason: String,
+    ): Bundle? =
+        coverPanelGen4(
+            operation = 1,
+            serviceEpoch = serviceEpoch,
+            closeCycleId = 0L,
+            transitionGeneration = -1L,
+            intentSequence = intentSequence,
+            reason = reason,
+        )
+
+    internal fun prepareCoverPanelGen4(
+        serviceEpoch: Long,
+        closeCycleId: Long,
+        transitionGeneration: Long,
+        intentSequence: Long,
+        reason: String,
+    ): Bundle? =
+        coverPanelGen4(
+            operation = 2,
+            serviceEpoch = serviceEpoch,
+            closeCycleId = closeCycleId,
+            transitionGeneration = transitionGeneration,
+            intentSequence = intentSequence,
+            reason = reason,
+        )
+
+    internal fun reassertCoverPanelGen4(
+        serviceEpoch: Long,
+        closeCycleId: Long,
+        transitionGeneration: Long,
+        intentSequence: Long,
+        reason: String,
+    ): Bundle? =
+        coverPanelGen4(
+            operation = 3,
+            serviceEpoch = serviceEpoch,
+            closeCycleId = closeCycleId,
+            transitionGeneration = transitionGeneration,
+            intentSequence = intentSequence,
+            reason = reason,
+        )
+
+    internal fun returnCoverPanelGen4(
+        serviceEpoch: Long,
+        intentSequence: Long,
+        reason: String,
+    ): Bundle? =
+        coverPanelGen4(
+            operation = 4,
+            serviceEpoch = serviceEpoch,
+            closeCycleId = 0L,
+            transitionGeneration = -1L,
+            intentSequence = intentSequence,
+            reason = reason,
+        )
+
+    internal fun reconcileCoverPanelGen4(
+        serviceEpoch: Long,
+        intentSequence: Long,
+        reason: String,
+    ): Bundle? =
+        coverPanelGen4(
+            operation = 5,
+            serviceEpoch = serviceEpoch,
+            closeCycleId = 0L,
+            transitionGeneration = -1L,
+            intentSequence = intentSequence,
+            reason = reason,
+        )
+
     fun requestDisplayPower(
         displayId: Int,
         requestedState: Int,
