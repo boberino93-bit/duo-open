@@ -1,0 +1,21 @@
+DUO OPEN GEN6 ALPHA 1 V2 — WORKFLOW ROOT IMPORT
+
+Drop/extract this ZIP at the repository root.
+
+It installs exactly:
+
+.github/workflows/build-gen6-alpha1-v2.yml
+
+After committing the extracted file to main, GitHub Actions should trigger the
+Gen6 Alpha 1 V2 workflow automatically because the workflow listens for changes
+to its own file on main.
+
+The workflow:
+- validates GEN6_ALPHA1_DEV_ROUND_V2
+- applies the Gen6 Alpha 1 V2 patch in the CI workspace
+- runs git diff --check
+- runs testFullDebugUnitTest
+- runs assembleFullDebug
+- uploads the resulting APK plus SHA256SUMS.txt and BUILD-INFO.txt
+
+No production source files are included in this ZIP.
