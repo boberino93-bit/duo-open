@@ -1,0 +1,17 @@
+PASS: wake hint attempt created
+PASS: duplicate wake hint fenced
+PASS: semantic generation attaches
+PASS: attempt finishes
+PASS: second cycle gets new identity
+PASS: 100k opening-attempt lifecycle fuzz
+PASS: normal app public glass
+PASS: normal app may capture
+PASS: Coast Capital private frost
+PASS: private frost captures no pixels
+PASS: work profile private frost
+PASS: FLAG_SECURE private frost
+PASS: runtime public start
+PASS: capture failure fail-closed
+PASS: same package keeps denial sticky
+PASS: new package clears transient denial
+PASS: 100k privacy invariant fuzz

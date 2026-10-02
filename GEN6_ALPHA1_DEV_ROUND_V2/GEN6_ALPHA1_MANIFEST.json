@@ -1,0 +1,31 @@
+{
+  "schema": "duo-open/gen6-alpha1-dev-round-v2",
+  "repository": "boberino93-bit/duo-open",
+  "current_main_observed": "12c8f2530afb0523d8d2f83af3c62c1dca8c11b8",
+  "runtime_baseline_strategy": "exact_git_blob_gate",
+  "target_version_code": 43,
+  "target_version_name": "6.0.0-alpha1-zfold7",
+  "v1_blockers_fixed": [
+    "wake_hint_was_telemetry_only",
+    "private_transition_could_retain_presented_public_frame"
+  ],
+  "security_hardening": [
+    "private_frost_is_procedural_opaque",
+    "secure_layer_checked_before_bitmap_materialization",
+    "private_transition_revokes_gen3_pixel_host",
+    "private_transition_clears_reusable_snapshot_and_continuity_leases",
+    "public_opening_does_not_reuse_cached_previous_app_pixels"
+  ],
+  "prebuild_tests": {
+    "patcher_self_test": "PASS",
+    "package_static_gate": "PASS",
+    "opening_attempt_fuzz_iterations": 100000,
+    "privacy_invariant_fuzz_iterations": 100000,
+    "gen4_wake_hint_replay_events": 9,
+    "gen4_wake_hint_legacy_wait_median_ms": 910,
+    "gen4_wake_hint_legacy_wait_max_ms": 2484
+  },
+  "model_pass": true,
+  "android_ci_pass": false,
+  "physical_fold7_pass": false
+}

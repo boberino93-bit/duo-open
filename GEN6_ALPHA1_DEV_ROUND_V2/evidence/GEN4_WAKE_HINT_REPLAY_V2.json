@@ -1,0 +1,93 @@
+{
+  "event_count": 9,
+  "legacy_wait_ms": {
+    "min": 401,
+    "median": 910,
+    "p95": 2484,
+    "max": 2484
+  },
+  "interpretation": "Gen6 V2 dispatches physical wake and visual material from 0->1 instead of waiting for the next hinge sample. This is replay/model evidence, not a physical Gen6 timing measurement.",
+  "events": [
+    {
+      "wake_hint_uptime_ms": 109692070,
+      "next_angle_uptime_ms": 109694554,
+      "legacy_wait_ms": 2484,
+      "next_angle_source": "PUBLIC_STANDARD",
+      "next_angle_degrees": 90.0,
+      "gen6_v2_wake_dispatch_offset_ms": 0,
+      "gen6_v2_visual_dispatch_offset_ms": 0
+    },
+    {
+      "wake_hint_uptime_ms": 109726392,
+      "next_angle_uptime_ms": 109728153,
+      "legacy_wait_ms": 1761,
+      "next_angle_source": "PUBLIC_STANDARD",
+      "next_angle_degrees": 90.0,
+      "gen6_v2_wake_dispatch_offset_ms": 0,
+      "gen6_v2_visual_dispatch_offset_ms": 0
+    },
+    {
+      "wake_hint_uptime_ms": 109743785,
+      "next_angle_uptime_ms": 109744186,
+      "legacy_wait_ms": 401,
+      "next_angle_source": "SAMSUNG_PRECISE",
+      "next_angle_degrees": 108.0,
+      "gen6_v2_wake_dispatch_offset_ms": 0,
+      "gen6_v2_visual_dispatch_offset_ms": 0
+    },
+    {
+      "wake_hint_uptime_ms": 109754765,
+      "next_angle_uptime_ms": 109755352,
+      "legacy_wait_ms": 587,
+      "next_angle_source": "PUBLIC_STANDARD",
+      "next_angle_degrees": 90.0,
+      "gen6_v2_wake_dispatch_offset_ms": 0,
+      "gen6_v2_visual_dispatch_offset_ms": 0
+    },
+    {
+      "wake_hint_uptime_ms": 109763250,
+      "next_angle_uptime_ms": 109763752,
+      "legacy_wait_ms": 502,
+      "next_angle_source": "PUBLIC_STANDARD",
+      "next_angle_degrees": 90.0,
+      "gen6_v2_wake_dispatch_offset_ms": 0,
+      "gen6_v2_visual_dispatch_offset_ms": 0
+    },
+    {
+      "wake_hint_uptime_ms": 109770440,
+      "next_angle_uptime_ms": 109771150,
+      "legacy_wait_ms": 710,
+      "next_angle_source": "PUBLIC_STANDARD",
+      "next_angle_degrees": 90.0,
+      "gen6_v2_wake_dispatch_offset_ms": 0,
+      "gen6_v2_visual_dispatch_offset_ms": 0
+    },
+    {
+      "wake_hint_uptime_ms": 109779642,
+      "next_angle_uptime_ms": 109780552,
+      "legacy_wait_ms": 910,
+      "next_angle_source": "PUBLIC_STANDARD",
+      "next_angle_degrees": 90.0,
+      "gen6_v2_wake_dispatch_offset_ms": 0,
+      "gen6_v2_visual_dispatch_offset_ms": 0
+    },
+    {
+      "wake_hint_uptime_ms": 109788422,
+      "next_angle_uptime_ms": 109789952,
+      "legacy_wait_ms": 1530,
+      "next_angle_source": "PUBLIC_STANDARD",
+      "next_angle_degrees": 90.0,
+      "gen6_v2_wake_dispatch_offset_ms": 0,
+      "gen6_v2_visual_dispatch_offset_ms": 0
+    },
+    {
+      "wake_hint_uptime_ms": 109798142,
+      "next_angle_uptime_ms": 109799152,
+      "legacy_wait_ms": 1010,
+      "next_angle_source": "PUBLIC_STANDARD",
+      "next_angle_degrees": 90.0,
+      "gen6_v2_wake_dispatch_offset_ms": 0,
+      "gen6_v2_visual_dispatch_offset_ms": 0
+    }
+  ]
+}
