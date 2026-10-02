@@ -40,3 +40,6 @@ GitHub Actions required before runtime acceptance:
 Physical Fold7 testing remains mandatory after CI. CI cannot prove Samsung route-publication
 latency, panel wake latency, visual crossover quality, or vendor-specific remap behavior.
 - new authority model fixed-seed 100,000-operation intent fuzz: PASS locally.
+
+V3 COMPILE-GATE CORRECTION
+GitHub Actions V2 passed baseline, checksums, patch application and Gen4 invariants, then Kotlin compilation caught undeclared gen4RouteRetryCount / MAX_GEN4_ROUTE_RETRIES / GEN4_RECOVERY_ATTEMPTS / GEN4_RECOVERY_RETRY_MS. V3 declares them and requires them in patcher postconditions.

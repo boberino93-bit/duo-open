@@ -113,3 +113,6 @@ the full FullDebug unit suite, and assembleFullDebug before committing or publis
 
 REVISION 2 NOTE
 The first deployment attempt reached the patcher final safety check and failed only because the validator treated the existing Display.STATE_OFF topology read as if it were a power-off mutation. V2 narrows that assertion. Runtime design and payload are unchanged.
+
+REVISION 3 NOTE
+The second deployment reached Kotlin compilation and exposed missing retry declarations in the patcher. V3 adds those declarations and explicit postconditions so this cannot recur. Gen4 panel-authority behavior is otherwise unchanged.

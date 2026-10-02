@@ -648,6 +648,13 @@ gen4_impl = r'''    private data class Gen4CleanupResult(
 '''
 replace_exact(p, insert_marker, gen4_impl + insert_marker)
 
+# Gen4 shell recovery constants live with the daemon that uses them.
+replace_exact(
+    p,
+    """    private companion object {\n        /** Shizuku asks user services to exit with this code. */\n        const val SHIZUKU_DESTROY = 16777115\n\n        const val PROBE_OUTPUT_LIMIT =\n""",
+    """    private companion object {\n        /** Shizuku asks user services to exit with this code. */\n        const val SHIZUKU_DESTROY = 16777115\n\n        const val GEN4_RECOVERY_ATTEMPTS = 4\n        const val GEN4_RECOVERY_RETRY_MS = 50L\n\n        const val PROBE_OUTPUT_LIMIT =\n""",
+)
+
 # ---------------------------------------------------------------------------
 # Coordinator: semantic controller keeps its proven thresholds/renderer, while
 # privileged panel authority is admitted and mutated exclusively through Gen4.
@@ -675,7 +682,7 @@ replace_exact(
 replace_exact(
     p,
     """    @Volatile private var destroyed = false\n    @Volatile private var renderOwnershipArmed = false\n""",
-    """    @Volatile private var destroyed = false\n    @Volatile private var renderOwnershipArmed = false\n    @Volatile private var armRequested = true\n    @Volatile private var gen4AdmissionInFlight = false\n    @Volatile private var gen4AdmittedConnectionEpoch = -1L\n    @Volatile private var gen4StartupRetryCount = 0\n    @Volatile private var gen4ReleaseRetryCount = 0\n""",
+    """    @Volatile private var destroyed = false\n    @Volatile private var renderOwnershipArmed = false\n    @Volatile private var armRequested = true\n    @Volatile private var gen4AdmissionInFlight = false\n    @Volatile private var gen4AdmittedConnectionEpoch = -1L\n    @Volatile private var gen4StartupRetryCount = 0\n    @Volatile private var gen4ReleaseRetryCount = 0\n    @Volatile private var gen4RouteRetryCount = 0\n""",
 )
 
 # Arm is now conditional on actual binder + daemon recovery admission.
@@ -1319,7 +1326,7 @@ replace_between(p, authority_start, authority_end, new_authority)
 replace_exact(
     p,
     """        const val READINESS_WATCHDOG_MS = 80L\n        const val FROZEN_FRAME_MAX_AGE_MS = 10_000L\n        const val MAX_PREWARM_CAS_RETRIES = 2\n""",
-    """        const val READINESS_WATCHDOG_MS = 80L\n        const val FROZEN_FRAME_MAX_AGE_MS = 10_000L\n        const val MAX_GEN4_STARTUP_RETRIES = 4\n        const val GEN4_STARTUP_RETRY_MS = 60L\n        const val MAX_GEN4_RELEASE_RETRIES = 3\n        const val GEN4_RELEASE_RETRY_MS = 80L\n""",
+    """        const val READINESS_WATCHDOG_MS = 80L\n        const val FROZEN_FRAME_MAX_AGE_MS = 10_000L\n        const val MAX_GEN4_STARTUP_RETRIES = 4\n        const val GEN4_STARTUP_RETRY_MS = 60L\n        const val MAX_GEN4_RELEASE_RETRIES = 3\n        const val GEN4_RELEASE_RETRY_MS = 80L\n        const val MAX_GEN4_ROUTE_RETRIES = 3\n""",
 )
 
 # ---------------------------------------------------------------------------
@@ -1385,7 +1392,11 @@ require(shell, "Fold7PanelAuthorityGen4()", 1)
 require(shell, "legacy cover mutation rejected: Gen4 panel authority is active", 1)
 require(shell, "ensureGen4StartupRecovered(", 2)
 require(shell, "gen4ShutdownCleanup()", 2)
+require(shell, "const val GEN4_RECOVERY_ATTEMPTS = 4", 1)
+require(shell, "const val GEN4_RECOVERY_RETRY_MS = 50L", 1)
 require(coord, "serviceEpoch: Long,", 1)
+require(coord, "gen4RouteRetryCount", 4)
+require(coord, "const val MAX_GEN4_ROUTE_RETRIES = 3", 1)
 require(coord, "coverPanelStatusGen4(", 1)
 require(coord, "prepareCoverPanelGen4(", 1)
 require(coord, "reassertCoverPanelGen4(", 1)

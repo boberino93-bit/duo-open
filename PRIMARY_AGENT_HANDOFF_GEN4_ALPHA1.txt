@@ -31,3 +31,5 @@ REVISION 2
 - Corrects an overbroad patcher postcondition that rejected the existing topology read `display.state != Display.STATE_OFF`.
 - No Gen4 architecture/runtime payload behavior changed.
 - Import all support files, then commit APPLY_GEN4_ALPHA1_NOW.txt last so the dedicated workflow reruns.
+
+V3: Import over V2. Commit all support files first and APPLY_GEN4_ALPHA1_NOW.txt last. V3 fixes only missing retry declarations revealed by the Kotlin compile gate; do not alter the Gen4 authority design while applying.
