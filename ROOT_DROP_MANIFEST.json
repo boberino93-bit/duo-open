@@ -1,6 +1,6 @@
 {
-  "schema": "duoopen-root-drop-service-pack/v2",
-  "name": "DUO_OPEN_GEN7_ROOT_DROP_SP2_USER_MODEL",
+  "schema": "duoopen-root-drop-service-pack/v3",
+  "name": "DUO_OPEN_GEN7_ROOT_DROP_SP3_DEPLOYABLE_CI",
   "target_repo": "boberino93-bit/duo-open",
   "baseline_main_sha": "db0810e55a411a905f3877cc2a3518881c044daf",
   "copy_semantics": "extract archive contents directly into repository root, then run APPLY_AFTER_COPY",
@@ -10,12 +10,16 @@
     "project-local append-only user interaction model",
     "likely-next-question predictions",
     "successor/initiation ZIP self-replication hook",
-    "AgentBus import payload"
+    "AgentBus import payload",
+    "GitHub Actions deployable APK workflow with automatic push trigger and artifact evidence"
   ],
   "privacy_guardrails": [
     "no sensitive-trait inference",
     "no credentials/secrets/private account identifiers",
     "predictions are advisory only",
     "explicit current user instructions always win"
-  ]
+  ],
+  "observed_main_sha_at_packaging": "9c04f3d44c6e8af8bdb3a7da4698cb5b8e5c679d",
+  "ci_workflow": ".github/workflows/build-gen7-service-pack.yml",
+  "ci_artifact": "DuoOpen-ZFold7-Gen7-ServicePack-Shizuku-Onboarding"
 }
