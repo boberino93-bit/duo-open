@@ -1,0 +1,16 @@
+Alpha3 local pre-integration validation
+
+- Fold7AngleAuthority + Fold7HingeIngressBatch compiled with local kotlinc.
+- Alpha3PureSmoke: PASS.
+- GitHub current main reverified at 413d4a722fe8193f15ff086595f10d1464505ace.
+- Every exact Alpha3 transform anchor was checked against current GitHub source.
+- Current Alpha2 blob hashes are embedded in the workflow as fail-closed baseline guards.
+
+Research provenance consumed:
+- state-rd hinge ingress edge preservation: ordered bounded mailbox; 5/5 Kotlin prototype; exhaustive/adversarial models.
+- angle authority R&D: finite precise lease + retained public shadow fallback.
+- Agent01: direct private Samsung sensor not proven; retain FoldInteractive.
+- Agent02: do not restore persistent all-display wallpaper anchors; retain one owner/fail explicitly.
+- Agent03/04/08: separate physical power, logical route, presentation readiness; do not change wake thresholds yet.
+- Agent05/09: future one SurfaceControl glass host is an Alpha4 experiment, not this patch.
+- Agent06: MAX_TILT 89.5 vs AGSL clamp 60 is a confirmed optical-domain defect; explicit linear BitmapShader sampling is the first renderer correction.
