@@ -19,6 +19,12 @@
   ],
   "runtime_commit_policy": "CI commits only after focused and full Android gates pass",
   "closing_path": "preserved",
-  "package_revision": 2,
-  "revision_reason": "Correct focused CI selector to existing Fold7CoverVisualAttemptOwnerGen3Test; runtime payload unchanged."
+  "package_revision": 3,
+  "revision_reason": "V2 focused and full Android gates passed. V3 moves legacy workflow retirement into the human import commit so GitHub Actions only pushes app/** and does not require workflows permission.",
+  "ci_evidence": {
+    "v2_run_id": 36981573600,
+    "focused_gen5_and_regression_tests": "PASS",
+    "full_test_and_assemble_gate": "PASS",
+    "only_failure": "GitHub App could not push .github/workflows/build-shizuku-apk.yml without workflows permission"
+  }
 }

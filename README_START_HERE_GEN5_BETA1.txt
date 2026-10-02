@@ -10,3 +10,7 @@ This package also changes the obsolete `Build Z Fold 7 Motion-Gated Cover Power 
 
 Do not treat import alone as a successful build. The dedicated workflow result is authoritative.
 V2 CI correction: focused regression selector now targets existing Fold7CoverVisualAttemptOwnerGen3Test. Runtime payload is unchanged from V1.
+
+V3 CI PERMISSION FIX
+--------------------
+V2 run 36981573600 passed focused Gen5/Gen4 regressions and the full testFullDebugUnitTest + assembleFullDebug gate. The only failure was the final push because GitHub Actions cannot update another workflow file without workflows permission. V3 therefore human-commits the legacy build-shizuku workflow as manual-only during package import; the validated CI runtime commit stages only app/**. Runtime payload is unchanged from V2.

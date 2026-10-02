@@ -192,20 +192,8 @@ replace_exact(
 )
 
 
-# --- Retire obsolete always-on 1.3.16 push gate; keep manual history access ---
-p = ROOT / ".github/workflows/build-shizuku-apk.yml"
-replace_exact(
-    p,
-    """on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-""",
-    """on:
-  workflow_dispatch:
-""",
-)
+# Legacy 1.3.16 workflow retirement is human-committed by the import package.
+# CI intentionally never edits .github/workflows/** because GITHUB_TOKEN lacks workflows permission.
 
 # --- Simplified app home UI ---
 home = ROOT / "app/src/main/java/com/duoopen/ui/HomePreview.kt"

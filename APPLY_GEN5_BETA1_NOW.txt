@@ -1,3 +1,3 @@
-GEN5_BETA1_VIRTUAL_HINGE_V2
+GEN5_BETA1_VIRTUAL_HINGE_V3
 
-This sentinel retriggers the exact-baseline-gated Gen5 Beta1 workflow with the corrected Gen3 visual-owner test selector.
+This sentinel intentionally retriggers the exact-baseline-gated Gen5 Beta1 workflow after the V2 full-gate PASS / workflow-permission push fix.

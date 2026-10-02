@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parent
 
 required = [
     ".github/workflows/apply-gen5-beta1-virtual-hinge.yml",
+    ".github/workflows/build-shizuku-apk.yml",
     "APPLY_GEN5_BETA1_NOW.txt",
     "GEN5_BETA1_IMPLEMENTATION_PLAN.md",
     "GEN5_BETA1_FIELD_TEST_CHECKLIST.md",
@@ -45,10 +46,18 @@ for needle in [
     "Fold7RightPaneComposer",
     "GEN5_REQUESTED_HZ",
     "Share diagnostic data",
-    "workflow_dispatch",
 ]:
     if needle not in patcher:
         raise SystemExit(f"patcher missing invariant: {needle}")
+
+
+legacy = (ROOT / ".github/workflows/build-shizuku-apk.yml").read_text()
+if "workflow_dispatch:" not in legacy or "  push:" in legacy:
+    raise SystemExit("legacy 1.3.16 workflow must be manual-only in V3 import")
+if 'ROOT / ".github/workflows/build-shizuku-apk.yml"' in patcher:
+    raise SystemExit("V3 patcher must not mutate workflow files")
+if "git add app .github/workflows" in workflow:
+    raise SystemExit("V3 CI must stage only app/**")
 
 subprocess.run([sys.executable, "-m", "py_compile", str(ROOT / "tools/apply_gen5_beta1.py")], check=True)
 

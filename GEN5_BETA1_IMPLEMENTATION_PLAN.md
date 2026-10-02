@@ -58,3 +58,7 @@ CI must pass:
 - full `testFullDebugUnitTest assembleFullDebug`.
 
 Only then does CI commit runtime files and publish the Beta1 APK.
+
+V3 CI PERMISSION FIX
+--------------------
+V2 run 36981573600 passed focused Gen5/Gen4 regressions and the full testFullDebugUnitTest + assembleFullDebug gate. The only failure was the final push because GitHub Actions cannot update another workflow file without workflows permission. V3 therefore human-commits the legacy build-shizuku workflow as manual-only during package import; the validated CI runtime commit stages only app/**. Runtime payload is unchanged from V2.

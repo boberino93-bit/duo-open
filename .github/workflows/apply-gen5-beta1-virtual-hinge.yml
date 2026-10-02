@@ -57,7 +57,7 @@ jobs:
           check_blob app/src/main/java/com/duoopen/ui/DuoApp.kt 4eb7e485414b2577a3fe9d737346d26ca22730fb
           check_blob app/src/main/java/com/duoopen/ui/HomePreview.kt 8b4c8675de7fb286beecf11b89a704f9b3956039
           check_blob app/src/main/java/com/duoopen/ui/ControlSheet.kt 6aa9a14ba641a33002ee0efff32d4ca239ff0133
-          check_blob .github/workflows/build-shizuku-apk.yml 7924aa360c4d58d64a0274db674cb4db106f7375
+          check_blob .github/workflows/build-shizuku-apk.yml 8cd5b449df281eb14c02ead17bc9e59931db0c13
 
           test ! -e app/src/main/java/com/duoopen/fold/Fold7VirtualHingeGen5.kt
           test ! -e app/src/main/java/com/duoopen/fold/Fold7VisualStateLut.kt
@@ -128,7 +128,7 @@ jobs:
             exit 1
           fi
 
-          ALLOWED='^(app/build.gradle.kts|app/src/full/java/com/duoopen/overlay/PanelEngine.kt|app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt|app/src/full/java/com/duoopen/overlay/Fold7RightPaneComposer.kt|app/src/main/java/com/duoopen/fold/Fold7VirtualHingeGen5.kt|app/src/main/java/com/duoopen/fold/Fold7VisualStateLut.kt|app/src/main/java/com/duoopen/ui/DuoApp.kt|app/src/main/java/com/duoopen/ui/HomePreview.kt|app/src/main/java/com/duoopen/ui/ControlSheet.kt|app/src/test/java/com/duoopen/fold/Fold7VirtualHingeGen5Test.kt|\.github/workflows/build-shizuku-apk.yml)$'
+          ALLOWED='^(app/build.gradle.kts|app/src/full/java/com/duoopen/overlay/PanelEngine.kt|app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt|app/src/full/java/com/duoopen/overlay/Fold7RightPaneComposer.kt|app/src/main/java/com/duoopen/fold/Fold7VirtualHingeGen5.kt|app/src/main/java/com/duoopen/fold/Fold7VisualStateLut.kt|app/src/main/java/com/duoopen/ui/DuoApp.kt|app/src/main/java/com/duoopen/ui/HomePreview.kt|app/src/main/java/com/duoopen/ui/ControlSheet.kt|app/src/test/java/com/duoopen/fold/Fold7VirtualHingeGen5Test.kt)$'
           unexpected="$(git diff --name-only | grep -Ev "$ALLOWED" || true)"
           if [[ -n "$unexpected" ]]; then
             echo "ERROR: unexpected runtime files changed"
@@ -173,7 +173,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add app .github/workflows/build-shizuku-apk.yml
+          git add app
           git diff --cached --check
           test -n "$(git diff --cached --name-only)"
 
