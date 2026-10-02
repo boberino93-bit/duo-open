@@ -527,7 +527,10 @@ class FoldOverlayService : AccessibilityService() {
             )
 
         for (engine in engines.values.toList()) {
-            engine.onHinge(angle)
+            engine.onHinge(
+                angle = angle,
+                observedUptimeMs = last.observedUptimeMs,
+            )
         }
     }
     /** Starts engines for panels that lit up, stops those that went dark, then lets each re-evaluate. */
