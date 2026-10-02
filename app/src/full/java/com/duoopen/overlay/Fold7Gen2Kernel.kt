@@ -17,6 +17,7 @@ internal class Fold7Gen2Kernel<T>(
     val coverAuthority = Fold7CoverLeaseSnapshotGate()
     val coverReadiness = Fold7CoverReadiness()
     val frames = Fold7ContinuityFrameStore<T>()
+    val primeOwner = Fold7ContinuityPrimeOwner()
 
     val activeCycle: Fold7CycleEnvelope.CloseCycle?
         get() = cycles.activeCloseCycle
@@ -35,6 +36,7 @@ internal class Fold7Gen2Kernel<T>(
         ) {
             val cycle = cycles.beginClose(nowUptimeMs)
             frames.beginCycle(cycle)
+            primeOwner.beginCycle(cycle)
             return CycleChange(started = cycle)
         }
 
@@ -55,6 +57,7 @@ internal class Fold7Gen2Kernel<T>(
         ) {
             cycles.invalidateClose(current.closeCycleId)
             frames.invalidateCycle(current.serviceEpoch, current.closeCycleId)
+            primeOwner.invalidate(current)
             coverReadiness.invalidate(current.serviceEpoch, current.closeCycleId)
             return CycleChange(ended = current)
         }
@@ -66,6 +69,7 @@ internal class Fold7Gen2Kernel<T>(
         val current = activeCycle ?: return null
         cycles.invalidateClose(current.closeCycleId)
         frames.invalidateCycle(current.serviceEpoch, current.closeCycleId)
+        primeOwner.invalidate(current)
         coverReadiness.invalidate(current.serviceEpoch, current.closeCycleId)
         return current
     }

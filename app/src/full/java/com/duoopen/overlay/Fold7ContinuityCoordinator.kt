@@ -47,6 +47,8 @@ internal class Fold7ContinuityCoordinator(
     @Volatile private var coverRouteReassertInFlight = false
     @Volatile private var prewarmInFlightGeneration = -1L
     @Volatile private var prewarmInFlightConnectionEpoch = -1L
+    @Volatile private var prewarmRetryGeneration = -1L
+    @Volatile private var prewarmRetryCount = 0
     @Volatile private var destroyed = false
     @Volatile private var renderOwnershipArmed = false
 
@@ -61,11 +63,13 @@ internal class Fold7ContinuityCoordinator(
     val state: Fold7ContinuityController.State
         get() = controller.state
 
+    val generation: Long
+        get() = controller.generation
+
     fun arm() {
         gen2.cancelActiveCycle()
         destroyed = false
         renderOwnershipArmed = true
-        ensureMirrorSession("arm")
 
         val angle =
             currentHingeAngle()
@@ -100,9 +104,6 @@ internal class Fold7ContinuityCoordinator(
 
         apply(decision)
 
-        if (visualMirrorActive) {
-            mirrorHost?.onHinge(angle)
-        }
     }
 
     /**
@@ -168,12 +169,6 @@ internal class Fold7ContinuityCoordinator(
             ensureCoverRouteHeld("fast:$reason")
         }
 
-        if (visualMirrorActive) {
-            syncMirrorHost(
-                reason = "fast:$reason",
-                generation = mirrorGeneration,
-            )
-        }
     }
 
     fun onTopologyChanged(reason: String) {
@@ -247,7 +242,6 @@ internal class Fold7ContinuityCoordinator(
         gen2.coverAuthority.onConnectionEpoch(
             ShizukuBridge.connectionEpoch
         )
-        ensureMirrorSession("shizuku-ready")
         reconcileCoverLease("shizuku-ready")
 
         if (
@@ -260,16 +254,48 @@ internal class Fold7ContinuityCoordinator(
     }
 
     fun onPrivilegedUnavailable() {
+        val previousState =
+            controller.state
+
+        hideMirror(
+            generation = controller.generation,
+            reason = "privilege-unavailable",
+            stopShellMirror = false,
+        )
+
+        gen2.cancelActiveCycle()
+
         mirrorSession = 0L
         mirrorSessionOpening = false
         mirrorSequence.set(0L)
         coverRouteReassertInFlight = false
         prewarmInFlightGeneration = -1L
         prewarmInFlightConnectionEpoch = -1L
+
         gen2.coverAuthority.onConnectionEpoch(
             ShizukuBridge.connectionEpoch
         )
+
         gen2.coverReadiness.invalidate()
+
+        val angle =
+            currentHingeAngle()
+                .takeIf { it.isFinite() }
+                ?: inferredRestAngle()
+
+        val reset =
+            controller.reset(
+                angle = angle,
+                nowMs = SystemClock.uptimeMillis(),
+                topology = topology(),
+            )
+
+        DuoDiagnostics.event(
+            "gen3-recovery",
+            "privilege lost state=$previousState -> ${reset.state} " +
+                "generation=${reset.generation} angle=$angle; " +
+                "cycle/readiness/visual authority revoked",
+        )
     }
 
     private fun apply(
@@ -347,7 +373,13 @@ internal class Fold7ContinuityCoordinator(
             return
         }
 
+        if (prewarmRetryGeneration != generation) {
+            prewarmRetryGeneration = generation
+            prewarmRetryCount = 0
+        }
+
         val requestConnectionEpoch = ShizukuBridge.connectionEpoch
+        val expectedToken = gen2.coverAuthority.acceptedToken
         if (
             prewarmInFlightGeneration == generation &&
             prewarmInFlightConnectionEpoch == requestConnectionEpoch
@@ -380,7 +412,12 @@ internal class Fold7ContinuityCoordinator(
 
             val result =
                 runCatching {
-                    ShizukuBridge.prewarmSecondaryDisplayV3(generation)
+                    ShizukuBridge.prewarmSecondaryDisplayV4(
+                        ownerServiceEpoch = cycle.serviceEpoch,
+                        ownerCloseCycleId = cycle.closeCycleId,
+                        ownerGeneration = generation,
+                        expectedToken = expectedToken,
+                    )
                 }.getOrNull()
 
             handler.post {
@@ -407,12 +444,39 @@ internal class Fold7ContinuityCoordinator(
                 val token = acceptance.token
                 val currentCycle = gen2.activeCycle
 
+                val ownsRequestedCycle =
+                    token != null &&
+                        token.ownerServiceEpoch == cycle.serviceEpoch &&
+                        token.ownerCloseCycleId == cycle.closeCycleId &&
+                        token.ownerGeneration == generation
+
+                if (
+                    acceptance.accepted &&
+                    snapshot != null &&
+                    currentCycle == cycle &&
+                    result?.getBoolean("stale", false) == true &&
+                    !ownsRequestedCycle &&
+                    token != null &&
+                    prewarmRetryCount < MAX_PREWARM_CAS_RETRIES
+                ) {
+                    prewarmRetryCount += 1
+                    DuoDiagnostics.event(
+                        "fold7-state",
+                        "prewarm-v4 CAS retry generation=$generation " +
+                            "serviceEpoch=${cycle.serviceEpoch} closeCycle=${cycle.closeCycleId} " +
+                            "retry=$prewarmRetryCount tokenOwner=${token.ownerGeneration}",
+                    )
+                    beginPrewarm(generation)
+                    return@post
+                }
+
                 if (
                     !acceptance.accepted ||
                     snapshot == null ||
                     token == null ||
                     currentCycle == null ||
                     currentCycle != cycle ||
+                    !ownsRequestedCycle ||
                     !snapshot.physicalLeaseHeld
                 ) {
                     val decision =
@@ -425,6 +489,8 @@ internal class Fold7ContinuityCoordinator(
                     apply(decision)
                     return@post
                 }
+
+                prewarmRetryCount = 0
 
                 val demand =
                     Fold7CoverReadiness.Demand(
@@ -463,6 +529,10 @@ internal class Fold7ContinuityCoordinator(
             return
         }
 
+        /*
+         * Gen3 interprets this as VISUAL DEMAND only.
+         * Fold7Gen3VisualCoordinator owns the one privileged shader host.
+         */
         mirrorRequested = true
         mirrorGeneration = generation
 
@@ -478,9 +548,9 @@ internal class Fold7ContinuityCoordinator(
             )
         }
 
-        syncMirrorHost(
-            reason = "state-show",
-            generation = generation,
+        DuoDiagnostics.event(
+            "gen3-visual",
+            "closing visual demand generation=$generation",
         )
     }
 
@@ -757,6 +827,8 @@ internal class Fold7ContinuityCoordinator(
                 leaseEpoch = result.getLong("leaseEpoch", -1L),
                 ownerGeneration = result.getLong("ownerGeneration", -1L),
                 physicalDisplayId = result.getLong("physicalDisplayId", -1L),
+                ownerServiceEpoch = result.getLong("ownerServiceEpoch", 0L),
+                ownerCloseCycleId = result.getLong("ownerCloseCycleId", 0L),
                 targetLogicalId = result.getInt("targetDisplayId", -1),
                 physicalLeaseHeld = result.getBoolean("physicalLeaseHeld", false),
                 routeReady = result.getBoolean("routeReady", false),
@@ -1119,5 +1191,6 @@ internal class Fold7ContinuityCoordinator(
         const val COVER_HEIGHT = 2520
         const val READINESS_WATCHDOG_MS = 80L
         const val FROZEN_FRAME_MAX_AGE_MS = 10_000L
+        const val MAX_PREWARM_CAS_RETRIES = 2
     }
 }

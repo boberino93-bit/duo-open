@@ -3,16 +3,9 @@ package com.duoopen.shell
 /**
  * Android-free model for explicit ownership of a Fold7 cover-panel prewarm.
  *
- * The model never emits a raw physical OFF. A successful physical prewarm is
- * represented by a lease that remains owned until either:
- *  - Samsung is observed to have reclaimed the cover as native/default; or
- *  - a freshly validated non-default cover logical route is available and a
- *    framework power reset succeeds for that route.
- *
- * Every mutating command carries both leaseId and epoch. leaseId prevents one
- * prewarm cycle from affecting another. epoch prevents an older queued release
- * operation from mutating a lease that has since been re-adopted by a newer
- * close cycle.
+ * Gen3 adds exact compare-and-swap (CAS) ownership for prewarm/adoption.
+ * Legacy V2/V3 callers remain supported through [beginPrewarm], but Gen3 must
+ * use [beginPrewarmV4] so Binder arrival order can never transfer a lease.
  */
 internal class Fold7CoverPanelLease {
     enum class State {
@@ -23,6 +16,12 @@ internal class Fold7CoverPanelLease {
         RELEASING,
         UNKNOWN_RECOVERY,
     }
+
+    data class OwnerIdentity(
+        val serviceEpoch: Long,
+        val closeCycleId: Long,
+        val transitionGeneration: Long,
+    )
 
     data class Topology(
         val nativeCover: Boolean,
@@ -54,12 +53,39 @@ internal class Fold7CoverPanelLease {
         val ownerGeneration: Long,
         val physicalId: Long?,
         val pendingReleaseReason: String?,
+        val ownerServiceEpoch: Long = 0L,
+        val ownerCloseCycleId: Long = 0L,
+    ) {
+        val ownerIdentity: OwnerIdentity?
+            get() =
+                if (
+                    ownerGeneration >= 0L &&
+                    ownerServiceEpoch >= 0L &&
+                    ownerCloseCycleId >= 0L
+                ) {
+                    OwnerIdentity(
+                        serviceEpoch = ownerServiceEpoch,
+                        closeCycleId = ownerCloseCycleId,
+                        transitionGeneration = ownerGeneration,
+                    )
+                } else {
+                    null
+                }
+    }
+
+    data class PrewarmV4Result(
+        val accepted: Boolean,
+        val stale: Boolean,
+        val reason: String,
+        val actions: List<Action>,
     )
 
     private var state = State.IDLE
     private var leaseId = 0L
     private var epoch = 0L
     private var ownerGeneration = -1L
+    private var ownerServiceEpoch = -1L
+    private var ownerCloseCycleId = -1L
     private var physicalId: Long? = null
     private var pendingReleaseReason: String? = null
     private var releaseRequestedDuringPrewarm = false
@@ -71,12 +97,12 @@ internal class Fold7CoverPanelLease {
         ownerGeneration = ownerGeneration,
         physicalId = physicalId,
         pendingReleaseReason = pendingReleaseReason,
+        ownerServiceEpoch = ownerServiceEpoch,
+        ownerCloseCycleId = ownerCloseCycleId,
     )
 
     /**
-     * Begin or adopt a cover prewarm for a new transition generation.
-     * Existing held/pending ownership is reused instead of issuing a duplicate
-     * physical wake.
+     * Legacy ownership transfer used by V2/V3 protocol compatibility only.
      */
     fun beginPrewarm(generation: Long): List<Action> {
         require(generation >= 0L)
@@ -85,7 +111,13 @@ internal class Fold7CoverPanelLease {
             State.IDLE, State.UNKNOWN_RECOVERY -> {
                 leaseId += 1L
                 epoch += 1L
-                ownerGeneration = generation
+                setOwner(
+                    OwnerIdentity(
+                        serviceEpoch = 0L,
+                        closeCycleId = 0L,
+                        transitionGeneration = generation,
+                    ),
+                )
                 physicalId = null
                 pendingReleaseReason = null
                 releaseRequestedDuringPrewarm = false
@@ -94,26 +126,124 @@ internal class Fold7CoverPanelLease {
             }
 
             State.PREWARM_IN_FLIGHT -> {
-                // Same physical operation remains authoritative; just transfer
-                // transition ownership to the newest close cycle.
                 epoch += 1L
-                ownerGeneration = generation
+                setOwner(
+                    OwnerIdentity(
+                        serviceEpoch = 0L,
+                        closeCycleId = 0L,
+                        transitionGeneration = generation,
+                    ),
+                )
                 releaseRequestedDuringPrewarm = false
                 pendingReleaseReason = null
                 emptyList()
             }
 
             State.HELD, State.RELEASE_PENDING, State.RELEASING -> {
-                // A new close supersedes a prior release intent. Incrementing
-                // epoch makes any queued/late reset command stale.
                 epoch += 1L
-                ownerGeneration = generation
+                setOwner(
+                    OwnerIdentity(
+                        serviceEpoch = 0L,
+                        closeCycleId = 0L,
+                        transitionGeneration = generation,
+                    ),
+                )
                 pendingReleaseReason = null
                 releaseRequestedDuringPrewarm = false
                 state = State.HELD
                 emptyList()
             }
         }
+    }
+
+    /**
+     * Gen3 exact-CAS prewarm/adoption.
+     *
+     * Fresh acquisition is legal only while IDLE and only without an expected
+     * token. Every adoption/reclose of an existing lease requires the exact
+     * current leaseId + epoch + owner identity. A stale request is inert.
+     */
+    fun beginPrewarmV4(
+        newOwner: OwnerIdentity,
+        expectedLeaseId: Long,
+        expectedEpoch: Long,
+        expectedOwnerServiceEpoch: Long,
+        expectedOwnerCloseCycleId: Long,
+        expectedOwnerGeneration: Long,
+    ): PrewarmV4Result {
+        require(newOwner.serviceEpoch > 0L)
+        require(newOwner.closeCycleId > 0L)
+        require(newOwner.transitionGeneration >= 0L)
+
+        val expectedProvided =
+            expectedLeaseId > 0L &&
+                expectedEpoch > 0L &&
+                expectedOwnerServiceEpoch >= 0L &&
+                expectedOwnerCloseCycleId >= 0L &&
+                expectedOwnerGeneration >= 0L
+
+        if (state == State.IDLE) {
+            if (expectedProvided) {
+                return rejected("expected-token-on-idle")
+            }
+
+            leaseId += 1L
+            epoch += 1L
+            setOwner(newOwner)
+            physicalId = null
+            pendingReleaseReason = null
+            releaseRequestedDuringPrewarm = false
+            state = State.PREWARM_IN_FLIGHT
+
+            return PrewarmV4Result(
+                accepted = true,
+                stale = false,
+                reason = "fresh-acquire",
+                actions = listOf(Action.PowerPhysicalCover(leaseId, epoch)),
+            )
+        }
+
+        if (state == State.UNKNOWN_RECOVERY) {
+            return rejected("unknown-recovery-requires-reconcile")
+        }
+
+        if (
+            !expectedProvided ||
+            !matchesExpected(
+                expectedLeaseId = expectedLeaseId,
+                expectedEpoch = expectedEpoch,
+                expectedOwnerServiceEpoch = expectedOwnerServiceEpoch,
+                expectedOwnerCloseCycleId = expectedOwnerCloseCycleId,
+                expectedOwnerGeneration = expectedOwnerGeneration,
+            )
+        ) {
+            return rejected("stale-expected-token")
+        }
+
+        if (ownerIdentity() == newOwner) {
+            return PrewarmV4Result(
+                accepted = true,
+                stale = false,
+                reason = "idempotent-retry",
+                actions = emptyList(),
+            )
+        }
+
+        epoch += 1L
+        setOwner(newOwner)
+        pendingReleaseReason = null
+        releaseRequestedDuringPrewarm = false
+
+        if (state != State.PREWARM_IN_FLIGHT) {
+            state = State.HELD
+        }
+
+        return PrewarmV4Result(
+            accepted = true,
+            stale = false,
+            reason = "exact-adopt",
+            actions = emptyList(),
+        )
     }
 
     fun onPhysicalPrewarmResult(
@@ -125,9 +255,6 @@ internal class Fold7CoverPanelLease {
     ): List<Action> {
         if (resultLeaseId != leaseId || state == State.IDLE) return emptyList()
 
-        // The physical command may have completed after a newer transition
-        // adopted this lease. It still belongs to the same leaseId, so record
-        // the physical result, but never restore the old epoch/owner.
         if (!success) {
             if (resultEpoch == epoch && state == State.PREWARM_IN_FLIGHT) {
                 clear()
@@ -140,11 +267,7 @@ internal class Fold7CoverPanelLease {
         val releaseWasRequested = releaseRequestedDuringPrewarm
         state = if (releaseWasRequested) State.RELEASE_PENDING else State.HELD
 
-        return if (releaseWasRequested) {
-            reconcile(topology)
-        } else {
-            emptyList()
-        }
+        return if (releaseWasRequested) reconcile(topology) else emptyList()
     }
 
     fun requestRelease(
@@ -162,35 +285,25 @@ internal class Fold7CoverPanelLease {
             return emptyList()
         }
 
-        if (state == State.RELEASING) {
-            // A reset command for this exact lease/epoch is already in flight.
-            // Do not create duplicate privileged mutations.
-            return emptyList()
-        }
+        if (state == State.RELEASING) return emptyList()
 
         state = State.RELEASE_PENDING
         return reconcile(topology)
     }
 
-    /**
-     * Re-evaluate a pending release when DisplayManager topology changes.
-     */
-    fun onTopology(topology: Topology): List<Action> {
-        return when (state) {
+    fun onTopology(topology: Topology): List<Action> =
+        when (state) {
             State.RELEASE_PENDING, State.UNKNOWN_RECOVERY -> reconcile(topology)
             else -> emptyList()
         }
-    }
 
-    /**
-     * Called when the privileged daemon restarted and in-memory lease ownership
-     * is lost. This deliberately does not infer that Duo owns any physical panel.
-     */
     fun onPrivilegedDaemonRestart(topology: Topology): List<Action> {
         state = State.UNKNOWN_RECOVERY
         leaseId += 1L
         epoch += 1L
         ownerGeneration = -1L
+        ownerServiceEpoch = -1L
+        ownerCloseCycleId = -1L
         physicalId = null
         pendingReleaseReason = "privileged-daemon-restart"
         releaseRequestedDuringPrewarm = false
@@ -221,13 +334,54 @@ internal class Fold7CoverPanelLease {
         return emptyList()
     }
 
+    private fun rejected(reason: String) =
+        PrewarmV4Result(
+            accepted = false,
+            stale = true,
+            reason = reason,
+            actions = emptyList(),
+        )
+
+    private fun ownerIdentity(): OwnerIdentity? =
+        if (
+            ownerGeneration >= 0L &&
+            ownerServiceEpoch >= 0L &&
+            ownerCloseCycleId >= 0L
+        ) {
+            OwnerIdentity(
+                serviceEpoch = ownerServiceEpoch,
+                closeCycleId = ownerCloseCycleId,
+                transitionGeneration = ownerGeneration,
+            )
+        } else {
+            null
+        }
+
+    private fun setOwner(owner: OwnerIdentity) {
+        ownerServiceEpoch = owner.serviceEpoch
+        ownerCloseCycleId = owner.closeCycleId
+        ownerGeneration = owner.transitionGeneration
+    }
+
+    private fun matchesExpected(
+        expectedLeaseId: Long,
+        expectedEpoch: Long,
+        expectedOwnerServiceEpoch: Long,
+        expectedOwnerCloseCycleId: Long,
+        expectedOwnerGeneration: Long,
+    ): Boolean =
+        leaseId == expectedLeaseId &&
+            epoch == expectedEpoch &&
+            ownerServiceEpoch == expectedOwnerServiceEpoch &&
+            ownerCloseCycleId == expectedOwnerCloseCycleId &&
+            ownerGeneration == expectedOwnerGeneration &&
+            state != State.IDLE
+
     private fun reconcile(topology: Topology): List<Action> {
         if (state != State.RELEASE_PENDING && state != State.UNKNOWN_RECOVERY) {
             return emptyList()
         }
 
-        // Samsung-native/default cover ownership is authoritative. No raw
-        // physical OFF or extra logical reset is needed or safe here.
         if (topology.nativeCover) {
             clear()
             return emptyList()
@@ -244,16 +398,10 @@ internal class Fold7CoverPanelLease {
                 (physicalId == null || routePhysicalId == physicalId)
 
         if (!routeIsSafe) {
-            if (state != State.UNKNOWN_RECOVERY) {
-                state = State.RELEASE_PENDING
-            }
+            if (state != State.UNKNOWN_RECOVERY) state = State.RELEASE_PENDING
             return emptyList()
         }
 
-        // UNKNOWN_RECOVERY is allowed to issue a framework reset only because
-        // the route is freshly validated as the non-default cover while the
-        // inner panel is default. This asks Android to restore its intended
-        // state; it is not a raw physical power-off.
         state = State.RELEASING
         epoch += 1L
         return listOf(
@@ -269,6 +417,8 @@ internal class Fold7CoverPanelLease {
         state = State.IDLE
         epoch += 1L
         ownerGeneration = -1L
+        ownerServiceEpoch = -1L
+        ownerCloseCycleId = -1L
         physicalId = null
         pendingReleaseReason = null
         releaseRequestedDuringPrewarm = false

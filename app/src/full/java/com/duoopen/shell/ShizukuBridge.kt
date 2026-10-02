@@ -487,6 +487,27 @@ object ShizukuBridge {
             parcel.writeString(reason)
         }
 
+    internal fun prewarmSecondaryDisplayV4(
+        ownerServiceEpoch: Long,
+        ownerCloseCycleId: Long,
+        ownerGeneration: Long,
+        expectedToken: com.duoopen.overlay.Fold7CoverLeaseSnapshotGate.LeaseToken?,
+        reason: String = "prewarm-v4",
+    ): Bundle? =
+        call(ShellProtocol.COVER_PANEL_LEASE_V4) { parcel ->
+            parcel.writeInt(1)
+            parcel.writeLong(expectedToken?.shellSession ?: 0L)
+            parcel.writeLong(expectedToken?.leaseId ?: 0L)
+            parcel.writeLong(expectedToken?.leaseEpoch ?: 0L)
+            parcel.writeLong(expectedToken?.ownerServiceEpoch ?: -1L)
+            parcel.writeLong(expectedToken?.ownerCloseCycleId ?: -1L)
+            parcel.writeLong(expectedToken?.ownerGeneration ?: -1L)
+            parcel.writeLong(ownerServiceEpoch)
+            parcel.writeLong(ownerCloseCycleId)
+            parcel.writeLong(ownerGeneration)
+            parcel.writeString(reason)
+        }
+
     internal fun ensureSecondaryDisplayHeldV3(
         token: com.duoopen.overlay.Fold7CoverLeaseSnapshotGate.LeaseToken,
         reason: String,

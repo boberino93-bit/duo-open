@@ -43,6 +43,7 @@ internal class Fold7ContinuityFrameStore<T> {
 
     private var activeCycle: Fold7CycleEnvelope.CloseCycle? = null
     private var nextCaptureSequence = 0L
+    private var newestStartedCaptureSequence = 0L
     private var nextContentLeaseId = 0L
     private var latest: FrameLease<T>? = null
 
@@ -52,6 +53,7 @@ internal class Fold7ContinuityFrameStore<T> {
         if (activeCycle == cycle) return
         activeCycle = cycle
         nextCaptureSequence = 0L
+        newestStartedCaptureSequence = 0L
         latest = null
     }
 
@@ -67,6 +69,7 @@ internal class Fold7ContinuityFrameStore<T> {
             return
         }
         activeCycle = null
+        newestStartedCaptureSequence = 0L
         latest = null
     }
 
@@ -85,10 +88,16 @@ internal class Fold7ContinuityFrameStore<T> {
         // resurrecting an older same-cycle image.
         latest = null
 
+        val sequence =
+            ++nextCaptureSequence
+
+        newestStartedCaptureSequence =
+            sequence
+
         return CaptureTicket(
             serviceEpoch = cycle.serviceEpoch,
             closeCycleId = cycle.closeCycleId,
-            captureSequence = ++nextCaptureSequence,
+            captureSequence = sequence,
             width = width,
             height = height,
             requestStartedUptimeMs = requestStartedUptimeMs,
@@ -109,6 +118,7 @@ internal class Fold7ContinuityFrameStore<T> {
             ticket.serviceEpoch != cycle.serviceEpoch ||
             ticket.closeCycleId != cycle.closeCycleId ||
             ticket.captureSequence <= 0L ||
+            ticket.captureSequence != newestStartedCaptureSequence ||
             completedUptimeMs < ticket.requestStartedUptimeMs ||
             capturedUptimeMs > completedUptimeMs
         ) {

@@ -23,7 +23,6 @@ class MainActivity : ComponentActivity() {
 
     /** Exact hinge placement from Jetpack WindowManager, when the window spans a fold. */
     private val foldLine = MutableStateFlow<FoldLine?>(null)
-    private lateinit var dualScreen: DualScreen
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,10 +42,9 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        dualScreen = DualScreen(this)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                DuoApp(foldLine, dualScreen)
+                DuoApp(foldLine)
             }
         }
     }

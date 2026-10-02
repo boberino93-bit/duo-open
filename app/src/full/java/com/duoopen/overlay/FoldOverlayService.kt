@@ -69,6 +69,7 @@ class FoldOverlayService : AccessibilityService() {
         null
 
     private lateinit var continuity: Fold7ContinuityCoordinator
+    private lateinit var gen3Visual: Fold7Gen3VisualCoordinator
 
     /**
      * Automatically arm Fold7 geometry continuity once per accessibility-service
@@ -245,6 +246,18 @@ class FoldOverlayService : AccessibilityService() {
             hinge = hinge,
         )
 
+        gen3Visual =
+            Fold7Gen3VisualCoordinator(
+                service = this,
+                displayManager = displayManager,
+                handler = handler,
+                serviceEpoch = serviceEpoch,
+                gen2 = gen2,
+                currentHingeAngle = {
+                    hinge.lastAngle
+                },
+            )
+
         deviceStateObserver =
             Fold7DeviceStateObserver(
                 context = this,
@@ -282,8 +295,8 @@ class FoldOverlayService : AccessibilityService() {
                     continuity.state ==
                         Fold7ContinuityController.State.OPENING_FROM_CLOSED
                 ) {
-                    setEarlyOpeningVisualLatched(
-                        value = true,
+                    gen3Visual.beginOpening(
+                        generation = continuity.generation,
                         reason = "device-state:$reason",
                     )
                 }
@@ -367,6 +380,10 @@ class FoldOverlayService : AccessibilityService() {
         deviceStateObserver =
             null
 
+        if (::gen3Visual.isInitialized) {
+            gen3Visual.destroy()
+        }
+
         if (::continuity.isInitialized) {
             setEarlyOpeningVisualLatched(
                 value = false,
@@ -435,8 +452,8 @@ class FoldOverlayService : AccessibilityService() {
             continuity.state ==
                 Fold7ContinuityController.State.OPENING_FROM_CLOSED
         ) {
-            setEarlyOpeningVisualLatched(
-                value = true,
+            gen3Visual.beginOpening(
+                generation = continuity.generation,
                 reason = "precise-hinge-opening-edge",
             )
         }
@@ -447,6 +464,10 @@ class FoldOverlayService : AccessibilityService() {
 
         reconcileContinuityCoverRendering(
             "hinge:$angle"
+        )
+
+        gen3Visual.onHinge(
+            angle
         )
 
         deviceStateObserver
@@ -488,7 +509,13 @@ class FoldOverlayService : AccessibilityService() {
                     onShowingChanged = ::updateRunning,
                     cache = snapshots,
                     continuityFrames = gen2.frames,
+                    continuityPrimeOwner = gen2.primeOwner,
                     activeCloseCycle = { gen2.activeCycle },
+                    onContinuityFrameChanged = { frameReason ->
+                        reconcileContinuityCoverRendering(
+                            "continuity-frame:$frameReason"
+                        )
+                    },
                 )
             }
         }
@@ -587,99 +614,78 @@ class FoldOverlayService : AccessibilityService() {
             gen2.activeCycle
                 ?: return
 
-        engines.values
-            .firstOrNull {
-                it.isFold7InnerGeometryNow()
-            }
-            ?.primeContinuityFrame(
+        if (!ShizukuBridge.ready) {
+            return
+        }
+
+        val engine =
+            engines.values
+                .firstOrNull {
+                    it.isFold7InnerGeometryNow()
+                }
+                ?: return
+
+        val attempt =
+            gen2.primeOwner.reserve(
                 cycle = cycle,
+                requestedSource =
+                    Fold7ContinuityPrimeOwner.Source.SHIZUKU,
+            ) ?: return
+
+        val started =
+            engine.primeContinuityFrame(
+                cycle = cycle,
+                attempt = attempt,
                 reason = reason,
             )
+
+        if (!started) {
+            gen2.primeOwner.markFailed(
+                attempt,
+                "source-rejected",
+            )
+        }
     }
 
     private fun reconcileContinuityCoverRendering(
         reason: String,
     ) {
-        if (!::continuity.isInitialized) return
-
-        if (
-            !ShizukuBridge.ready ||
-            !continuity.renderOwnershipEnabled ||
-            continuity.state !in
-                setOf(
-                    Fold7ContinuityController.State.OPENING_FROM_CLOSED,
-                    Fold7ContinuityController.State.INNER_HANDOFF,
-                )
-        ) {
-            setEarlyOpeningVisualLatched(
-                value = false,
-                reason = "state-or-ownership:$reason",
-            )
+        if (!::continuity.isInitialized) {
+            return
         }
 
-        val coverEngines =
-            engines.values
-                .filter {
-                    it.isFold7CoverGeometryNow()
-                }
-
-        if (
-            earlyOpeningVisualLatched &&
-            coverEngines.isEmpty()
-        ) {
-            setEarlyOpeningVisualLatched(
-                value = false,
-                reason = "cover-route-missing:$reason",
-            )
-        }
-
-        val policy =
-            Fold7CoverRenderPolicy.decide(
-                privilegedGen2Ready =
-                    ShizukuBridge.ready &&
-                        continuity.renderOwnershipEnabled,
-                openingFromClosedLatched =
-                    earlyOpeningVisualLatched,
-                state =
-                    continuity.state,
-            )
+        val privilegedReady =
+            ShizukuBridge.ready &&
+                continuity.renderOwnershipEnabled
 
         for (
             engine in
             engines.values.toList()
         ) {
-            /*
-             * Fold7 logical display IDs can remap between physical panels.
-             * Render ownership follows fresh geometry, never cached innerPanel.
-             */
             val shouldOwnCover =
-                policy.gen2OwnsCover &&
+                privilegedReady &&
                     engine.isFold7CoverGeometryNow()
 
             engine.setContinuityCoverOwned(
-                owned =
-                    shouldOwnCover,
+                owned = shouldOwnCover,
+                reason = "gen3:$reason",
+            )
+
+            engine.endContinuityOpeningVisual(
+                "gen3-exclusive:$reason"
+            )
+        }
+
+        if (::gen3Visual.isInitialized) {
+            gen3Visual.reconcile(
+                state = continuity.state,
+                closingVisible =
+                    continuity.visualMirrorActive,
+                privilegedReady =
+                    privilegedReady,
                 reason =
                     reason,
             )
-
-            if (
-                shouldOwnCover &&
-                policy.runEarlyOpeningVisual
-            ) {
-                if (!earlyOpeningVisualStarted) {
-                    engine.beginContinuityOpeningVisual(
-                        reason
-                    )
-
-                    earlyOpeningVisualStarted =
-                        true
-                }
-            } else {
-                engine.endContinuityOpeningVisual(
-                    reason
-                )
-            }
         }
     }
 

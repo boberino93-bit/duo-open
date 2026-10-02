@@ -35,7 +35,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.duoopen.DualScreen
 import com.duoopen.debug.DebugBundleExporter
 import com.duoopen.fold.DuoShader
 import com.duoopen.fold.FoldLine
@@ -54,7 +53,6 @@ import kotlinx.coroutines.withContext
 @Composable
 fun DuoApp(
     foldLineFlow: StateFlow<FoldLine?>,
-    dualScreen: DualScreen? = null,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -215,22 +213,6 @@ fun DuoApp(
                 )
         }
 
-    val dualStatus by
-        (
-            dualScreen?.status
-                ?: kotlinx.coroutines.flow
-                    .MutableStateFlow("")
-            )
-            .collectAsStateWithLifecycle()
-
-    val dualActive by
-        (
-            dualScreen?.active
-                ?: kotlinx.coroutines.flow
-                    .MutableStateFlow(false)
-            )
-            .collectAsStateWithLifecycle()
-
     val pickImage =
         rememberLauncherForActivityResult(
             ActivityResultContracts
@@ -343,8 +325,6 @@ fun DuoApp(
                     overlayEnabled,
                 liveBlurSupported =
                     liveBlurSupported,
-                dualStatus =
-                    dualStatus,
                 shizukuAvailable =
                     OverlayFeature.SHIZUKU_AVAILABLE,
                 shizukuStatus =
@@ -372,15 +352,6 @@ fun DuoApp(
                     openWallpaperSettings(
                         context
                     )
-                },
-                dualActive =
-                    dualActive,
-                onDualChange = { on ->
-                    if (on) {
-                        dualScreen?.start()
-                    } else {
-                        dualScreen?.stop()
-                    }
                 },
                 onEnableOverlay = {
                     openAccessibilitySettings(

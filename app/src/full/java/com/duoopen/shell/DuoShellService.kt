@@ -439,6 +439,71 @@ class DuoShellService : Binder() {
                 out.writeBundle(result)
             }
 
+            ShellProtocol.COVER_PANEL_LEASE_V4 -> {
+                val operation = data.readInt()
+                val requestShellSession = data.readLong()
+                val requestLeaseId = data.readLong()
+                val requestLeaseEpoch = data.readLong()
+                val expectedOwnerServiceEpoch = data.readLong()
+                val expectedOwnerCloseCycleId = data.readLong()
+                val expectedOwnerGeneration = data.readLong()
+                val newOwnerServiceEpoch = data.readLong()
+                val newOwnerCloseCycleId = data.readLong()
+                val newOwnerGeneration = data.readLong()
+                val reason = data.readString() ?: "unspecified"
+                val identity = clearCallingIdentity()
+                val result =
+                    try {
+                        runCoverMutation {
+                            val expectedTokenProvided =
+                                requestLeaseId > 0L &&
+                                    requestLeaseEpoch > 0L
+
+                            val base =
+                                if (operation != 1) {
+                                    coverLeaseBundle(
+                                        "v4-unsupported-operation:$operation",
+                                        false,
+                                    ).apply {
+                                        putBoolean("stale", true)
+                                        putString("error", "Gen3 V4 currently supports PREWARM only")
+                                    }
+                                } else if (
+                                    expectedTokenProvided &&
+                                    requestShellSession != shellSession
+                                ) {
+                                    coverLeaseBundle(
+                                        "prewarm-v4-stale-session",
+                                        false,
+                                    ).apply {
+                                        putBoolean("stale", true)
+                                    }
+                                } else {
+                                    prewarmCoverLeaseV4(
+                                        expectedLeaseId = requestLeaseId,
+                                        expectedLeaseEpoch = requestLeaseEpoch,
+                                        expectedOwnerServiceEpoch = expectedOwnerServiceEpoch,
+                                        expectedOwnerCloseCycleId = expectedOwnerCloseCycleId,
+                                        expectedOwnerGeneration = expectedOwnerGeneration,
+                                        newOwnerServiceEpoch = newOwnerServiceEpoch,
+                                        newOwnerCloseCycleId = newOwnerCloseCycleId,
+                                        newOwnerGeneration = newOwnerGeneration,
+                                        reason = reason,
+                                    )
+                                }
+
+                            stampCoverLeaseV3(base)
+                        }
+                    } catch (t: Throwable) {
+                        failureBundle("cover-lease-v4", t)
+                    } finally {
+                        restoreCallingIdentity(identity)
+                    }
+
+                out.writeNoException()
+                out.writeBundle(result)
+            }
+
             ShellProtocol.MIRROR_DISPLAY -> {
                 val enable = data.readInt() != 0
                 val identity = clearCallingIdentity()
@@ -1202,6 +1267,8 @@ class DuoShellService : Binder() {
             putLong("leaseId", snapshot.leaseId)
             putLong("leaseEpoch", snapshot.epoch)
             putLong("ownerGeneration", snapshot.ownerGeneration)
+            putLong("ownerServiceEpoch", snapshot.ownerServiceEpoch)
+            putLong("ownerCloseCycleId", snapshot.ownerCloseCycleId)
             putLong("physicalDisplayId", snapshot.physicalId ?: -1L)
             putString("pendingReleaseReason", snapshot.pendingReleaseReason)
             putBoolean("released", snapshot.state == Fold7CoverPanelLease.State.IDLE)
@@ -1476,6 +1543,116 @@ class DuoShellService : Binder() {
         }
     }
 
+    private fun prewarmCoverLeaseV4(
+        expectedLeaseId: Long,
+        expectedLeaseEpoch: Long,
+        expectedOwnerServiceEpoch: Long,
+        expectedOwnerCloseCycleId: Long,
+        expectedOwnerGeneration: Long,
+        newOwnerServiceEpoch: Long,
+        newOwnerCloseCycleId: Long,
+        newOwnerGeneration: Long,
+        reason: String,
+    ): Bundle {
+        val decision =
+            coverPanelLease.beginPrewarmV4(
+                newOwner =
+                    Fold7CoverPanelLease.OwnerIdentity(
+                        serviceEpoch = newOwnerServiceEpoch,
+                        closeCycleId = newOwnerCloseCycleId,
+                        transitionGeneration = newOwnerGeneration,
+                    ),
+                expectedLeaseId = expectedLeaseId,
+                expectedEpoch = expectedLeaseEpoch,
+                expectedOwnerServiceEpoch = expectedOwnerServiceEpoch,
+                expectedOwnerCloseCycleId = expectedOwnerCloseCycleId,
+                expectedOwnerGeneration = expectedOwnerGeneration,
+            )
+
+        if (!decision.accepted) {
+            return coverLeaseBundle(
+                operation = "prewarm-v4:$reason",
+                ok = false,
+            ).apply {
+                putBoolean("stale", decision.stale)
+                putString("decision", decision.reason)
+            }
+        }
+
+        var physicalOk = true
+        var physicalError: String? = null
+
+        for (action in decision.actions) {
+            if (action is Fold7CoverPanelLease.Action.PowerPhysicalCover) {
+                val physicalId =
+                    resolveFold7CoverPhysicalDisplayId(-1)
+
+                val (powered, error) =
+                    setPhysicalPowerNormal(physicalId)
+
+                physicalOk = powered
+                physicalError = error
+
+                val followUp =
+                    coverPanelLease.onPhysicalPrewarmResult(
+                        action.leaseId,
+                        action.epoch,
+                        powered,
+                        physicalId.takeIf { it >= 0L },
+                        coverLeaseTopology(),
+                    )
+
+                executeCoverLeaseActions(followUp)
+            }
+        }
+
+        val snapshot = coverPanelLease.snapshot()
+        val leaseHeld =
+            snapshot.state != Fold7CoverPanelLease.State.IDLE
+
+        val activation =
+            if (physicalOk && leaseHeld) {
+                activateOwnedCoverRouteAfterPhysicalWake(
+                    snapshot.physicalId ?: -1L
+                )
+            } else {
+                CoverRouteActivation(
+                    logicalId = -1,
+                    physicalId = snapshot.physicalId ?: -1L,
+                    routeEnabled = false,
+                    logicalPowered = false,
+                    stillSafe = false,
+                    error = physicalError ?: "cover lease was not established",
+                )
+            }
+
+        val ok =
+            physicalOk &&
+                leaseHeld &&
+                activation.ok
+
+        return coverLeaseBundle(
+            operation = "prewarm-v4:$reason",
+            ok = ok,
+        ).apply {
+            putBoolean("stale", false)
+            putString("decision", decision.reason)
+            putInt(
+                "targetDisplayId",
+                if (activation.stillSafe) activation.logicalId else -1,
+            )
+            putBoolean("physicalPowered", physicalOk)
+            putBoolean("routeEnabled", activation.routeEnabled)
+            putBoolean("logicalPowered", activation.logicalPowered)
+            putBoolean("routeStillCover", activation.stillSafe)
+            putString(
+                "command",
+                "Gen3 exact-CAS physical+logical Fold7 cover prewarm",
+            )
+            putString("error", activation.error ?: physicalError)
+        }
+    }
+
     /**
      * Keep an existing HELD cover lease alive without transferring ownership.
      *
@@ -1663,6 +1840,8 @@ class DuoShellService : Binder() {
         bundle.putLong("leaseId", snapshot.leaseId)
         bundle.putLong("leaseEpoch", snapshot.epoch)
         bundle.putLong("ownerGeneration", snapshot.ownerGeneration)
+        bundle.putLong("ownerServiceEpoch", snapshot.ownerServiceEpoch)
+        bundle.putLong("ownerCloseCycleId", snapshot.ownerCloseCycleId)
         bundle.putLong("physicalDisplayId", snapshot.physicalId ?: -1L)
         bundle.putBoolean("physicalLeaseHeld", held)
 
