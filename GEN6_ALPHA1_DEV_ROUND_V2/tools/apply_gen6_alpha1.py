@@ -529,10 +529,23 @@ def patch_service(text: str) -> str:
         "WakeHint early wake callback",
     )
 
-    semantic_old = '''                if (\n                    beforeOpeningState ==\n                        Fold7ContinuityController.State.NATIVE_COVER &&\n                    continuity.state ==\n                        Fold7ContinuityController.State.OPENING_FROM_CLOSED\n                ) {\n                    gen3Visual.beginOpening('''
-    semantic_new = '''                if (\n                    beforeOpeningState ==\n                        Fold7ContinuityController.State.NATIVE_COVER &&\n                    continuity.state ==\n                        Fold7ContinuityController.State.OPENING_FROM_CLOSED\n                ) {\n                    gen6OpeningAttempts\n                        .markSemanticAccepted(continuity.generation)\n                        ?.let { attempt ->\n                            DuoDiagnostics.event(\n                                "gen6-opening-attempt",\n                                "SEMANTIC_ACCEPT attempt=${attempt.id} generation=${continuity.generation}",\n                            )\n                        }\n                    gen3Visual.beginOpening('''
-    require(text.count(semantic_old) >= 2, "expected two semantic-opening markers")
-    text = text.replace(semantic_old, semantic_new, 2)
+    semantic_opening_old = '''                if (\n                    beforeOpeningState ==\n                        Fold7ContinuityController.State.NATIVE_COVER &&\n                    continuity.state ==\n                        Fold7ContinuityController.State.OPENING_FROM_CLOSED\n                ) {\n                    gen3Visual.beginOpening('''
+    semantic_opening_new = '''                if (\n                    beforeOpeningState ==\n                        Fold7ContinuityController.State.NATIVE_COVER &&\n                    continuity.state ==\n                        Fold7ContinuityController.State.OPENING_FROM_CLOSED\n                ) {\n                    gen6OpeningAttempts\n                        .markSemanticAccepted(continuity.generation)\n                        ?.let { attempt ->\n                            DuoDiagnostics.event(\n                                "gen6-opening-attempt",\n                                "SEMANTIC_ACCEPT attempt=${attempt.id} generation=${continuity.generation}",\n                            )\n                        }\n                    gen3Visual.beginOpening('''
+    text = replace_once(
+        text,
+        semantic_opening_old,
+        semantic_opening_new,
+        "device-state semantic opening marker",
+    )
+
+    semantic_hinge_old = '''            if (\n                beforeState ==\n                    Fold7ContinuityController.State.NATIVE_COVER &&\n                continuity.state ==\n                    Fold7ContinuityController.State.OPENING_FROM_CLOSED\n            ) {\n                gen3Visual.beginOpening('''
+    semantic_hinge_new = '''            if (\n                beforeState ==\n                    Fold7ContinuityController.State.NATIVE_COVER &&\n                continuity.state ==\n                    Fold7ContinuityController.State.OPENING_FROM_CLOSED\n            ) {\n                gen6OpeningAttempts\n                    .markSemanticAccepted(continuity.generation)\n                    ?.let { attempt ->\n                        DuoDiagnostics.event(\n                            "gen6-opening-attempt",\n                            "SEMANTIC_ACCEPT attempt=${attempt.id} generation=${continuity.generation}",\n                        )\n                    }\n                gen3Visual.beginOpening('''
+    text = replace_once(
+        text,
+        semantic_hinge_old,
+        semantic_hinge_new,
+        "authoritative-hinge semantic opening marker",
+    )
 
     text = replace_once(
         text,

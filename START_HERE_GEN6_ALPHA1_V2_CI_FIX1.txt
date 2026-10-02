@@ -1,0 +1,22 @@
+DUO OPEN GEN6 ALPHA 1 V2 — CI FIX 1
+
+Root-safe hotfix for failed workflow run 37001928284.
+
+Failure:
+GEN6_ALPHA1_DEV_ROUND_V2/tools/apply_gen6_alpha1.py expected two identical
+semantic-opening markers in FoldOverlayService.kt.
+
+Current Gen5 main has two semantic opening sites, but they intentionally use
+different local names:
+- device-state path: beforeOpeningState
+- authoritative hinge path: beforeState
+
+Fix:
+Patch each site explicitly and independently rather than requiring two copies
+of one textual marker.
+
+After extracting this ZIP at repository root, commit the changed files to main.
+The existing Build Gen6 Alpha 1 V2 Fold7 workflow will automatically re-run.
+
+No production app source is directly changed by this hotfix; it only corrects
+the CI-time Gen6 V2 patch application logic.
