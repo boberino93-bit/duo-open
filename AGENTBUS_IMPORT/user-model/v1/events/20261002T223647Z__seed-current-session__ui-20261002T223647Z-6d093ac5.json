@@ -1,0 +1,38 @@
+{
+  "schema": "duoopen-user-interaction-event/v1",
+  "id": "ui-20261002T223647Z-6d093ac5",
+  "timestamp_utc": "2026-10-02T22:36:47Z",
+  "agent_instance_id": "seed-current-session",
+  "source": "USER_MESSAGE",
+  "user_text": "create a package I can copy into root of main",
+  "user_text_sha256": "c1c8ed0fa9cf1673177bba6af7bdf6ca30c72411694566fff52bcbda01dcb04c",
+  "intent_tags": [
+    "IMPLEMENT",
+    "PACKAGE"
+  ],
+  "mannerism_features": {
+    "brevity": "HIGH",
+    "action_bias": "HIGH",
+    "prefers_direct_answer": true,
+    "spelling_normalization_needed": false
+  },
+  "workflow_preferences": [
+    "ROOT_SAFE_PACKAGE",
+    "DIRECT_COMPACT_REQUESTS"
+  ],
+  "candidate_followups": [
+    {
+      "question": "Can I copy or drag this directly into the root of main?",
+      "confidence": 0.82
+    },
+    {
+      "question": "Does this package contain everything the next agent needs?",
+      "confidence": 0.72
+    },
+    {
+      "question": "What did you actually change versus only document?",
+      "confidence": 0.74
+    }
+  ],
+  "sensitive_redaction_applied": false
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "duoopen-init-package-user-model-hook/v1",
+  "required_protocol": "USER_INTERACTION_MODEL_PROTOCOL_V1.md",
+  "required_reference": "USER_MODEL_REFERENCE_V1.json",
+  "required_bootstrap": "BOOTSTRAP_V7.md",
+  "required_generation_template": "DUO_OPEN_AGENT_GENERATION_TEMPLATE_V11.txt",
+  "live_model_lookup": "/DuoOpen-AgentBus/user-model/v1/models/",
+  "live_event_append": "/DuoOpen-AgentBus/user-model/v1/events/",
+  "cached_model_allowed": true,
+  "selection": "prefer newest valid live immutable model; packaged cache only when live lookup is unavailable",
+  "authority": "ADVISORY_ONLY",
+  "packager_rule": "Every newly generated initiation/successor ZIP must carry this hook or a newer superseding hook and must expose the user-model lookup during startup."
+}

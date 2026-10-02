@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-user-interaction-event/v1",
+  "id": "example-001",
+  "timestamp_utc": "2026-10-02T22:00:00Z",
+  "agent_instance_id": "example-agent",
+  "source": "USER_MESSAGE",
+  "user_text": "create a package I can copy into root of main",
+  "intent_tags": ["PACKAGE", "IMPLEMENT"],
+  "mannerism_features": {
+    "brevity": "HIGH",
+    "action_bias": "HIGH",
+    "prefers_direct_answer": true,
+    "spelling_normalization_needed": false
+  },
+  "workflow_preferences": ["ROOT_SAFE_PACKAGE"],
+  "candidate_followups": [
+    {"question": "Can I copy this directly into root of main?", "confidence": 0.82}
+  ],
+  "sensitive_redaction_applied": false
+}

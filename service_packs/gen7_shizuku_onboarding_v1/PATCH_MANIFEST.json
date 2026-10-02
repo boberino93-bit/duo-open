@@ -1,0 +1,37 @@
+{
+  "name": "DUO_OPEN_GEN7_SERVICE_PACK_SHIZUKU_ONBOARDING_V1",
+  "version": 1,
+  "created_utc": "2026-10-02T21:23:28Z",
+  "target_repository": "boberino93-bit/duo-open",
+  "baseline_main_sha": "db0810e55a411a905f3877cc2a3518881c044daf",
+  "target_files": {
+    "app/src/full/java/com/duoopen/shell/ShizukuBridge.kt": {
+      "baseline_git_blob": "d276f950eb279b3af281b9930dda7a8e8c3fd6a1",
+      "purpose": "truthful readiness, bind timeout, retry/recovery, non-no-op permission action"
+    },
+    "app/src/main/java/com/duoopen/ui/ControlSheet.kt": {
+      "baseline_git_blob": "4686116fac055634039fc3384f7112fbf849e803",
+      "purpose": "actionable Shizuku states and explicit wallpaper setup/verification UX"
+    },
+    "app/src/main/java/com/duoopen/ui/HomePreview.kt": {
+      "baseline_git_blob": "1608af1ba754174013c87be221618626926c8ada",
+      "purpose": "show real Shizuku state instead of generic waiting/off text"
+    },
+    "app/src/main/java/com/duoopen/ui/DuoApp.kt": {
+      "baseline_git_blob": "21ea9df5d9d55f4cd116ae7ce511e3bc30a4911e",
+      "purpose": "system-confirmation guidance and direct Samsung FoldInteractive live-wallpaper picker attempt"
+    }
+  },
+  "release_claims": {
+    "source_patch_self_tests": "PASS",
+    "android_gradle_build": "NOT_RUN_NO_CHECKOUT",
+    "physical_fold7": "NOT_RUN",
+    "github_integrated": false
+  },
+  "safety": {
+    "exact_blob_guard_default": true,
+    "exact_snippet_guard": true,
+    "idempotent": true,
+    "fails_closed_on_drift": true
+  }
+}

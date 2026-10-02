@@ -1,0 +1,104 @@
+{
+  "protocol": "duo-open-agent-discovery-v7",
+  "project": "duo-open",
+  "scope": "/DuoOpen-AgentBus/ only",
+  "productionTruth": {
+    "repository": "boberino93-bit/duo-open",
+    "branch": "main",
+    "authority": "Primary only for production acceptance/integration"
+  },
+  "bootstrapOrder": [
+    "/DuoOpen-AgentBus/control/v3/DMSH3_PROTOCOL_V1.md",
+    "/DuoOpen-AgentBus/ACTIVE_AGENT_SERVICE_INTERVAL_V1.md",
+    "/DuoOpen-AgentBus/REGRESSION_CONTINUITY_CONTRACT_V1.md",
+    "/DuoOpen-AgentBus/AGENTBUS_MESSAGE_PERSISTENCE_CONTRACT_V1.md",
+    "/DuoOpen-AgentBus/USER_INTERACTION_MODEL_PROTOCOL_V1.md",
+    "/DuoOpen-AgentBus/USER_MODEL_REFERENCE_V1.json",
+    "/DuoOpen-AgentBus/control/v3/REVIEW_PIPELINE_V1.md",
+    "/DuoOpen-AgentBus/control/v3/WRITE_BUDGET_V1.md",
+    "/DuoOpen-AgentBus/PRIMARY_MANAGER_RECURSIVE_MESH_V1.md",
+    "/DuoOpen-AgentBus/FINAL_RECONCILIATION_GATE_V1.md",
+    "/DuoOpen-AgentBus/MESH_CONTROLLER_ADOPTION_V1.md",
+    "/DuoOpen-AgentBus/artifacts/primary/20261002T174000Z-gen7-presentation-hinge/GEN7_PRESENTATION_HINGE_DIRECTIVE_V1.md",
+    "/DuoOpen-AgentBus/GEN7_CONTENT_RENDER_POLICY_V1.md",
+    "/DuoOpen-AgentBus/DONOR_CODE_ADOPTION_POLICY_V1.md",
+    "/DuoOpen-AgentBus/artifacts/primary/20261002T163500Z-gen6-debug-data-gap-rewrite/GEN6_DEBUGGING_DATA_GAPS_V1.md",
+    "/DuoOpen-AgentBus/artifacts/primary/20261002T162806Z-gen6-beta-field-hotfix-focus/CONDITIONAL_120HZ_CONTRACT_V1.md",
+    "/DuoOpen-AgentBus/learning/v1/PROCESS_LEARNING_PROTOCOL_V1.md",
+    "/DuoOpen-AgentBus/learning/v1/BOOTSTRAP_LEARNING_GATE_V1.md"
+  ],
+  "dmsh3": {
+    "presencePattern": "/DuoOpen-AgentBus/swarm/v3/nodes/<agentInstanceId>/<seq>-<utc>.json",
+    "leadPrefix": "/DuoOpen-AgentBus/lead/v3/",
+    "meshPrefix": "/DuoOpen-AgentBus/mesh/v3/",
+    "controlPrefix": "/DuoOpen-AgentBus/control/v3/",
+    "roomState": "derive newest valid node/control frames; no mutable ROOM.json",
+    "normalOperationOverwrite": false,
+    "expiredAgentsAgeOut": true,
+    "legacyDMSH2": "readable evidence only; mutable writes retired"
+  },
+  "learning": {
+    "root": "/DuoOpen-AgentBus/learning/v1/",
+    "bootstrapDirectory": "/DuoOpen-AgentBus/learning/v1/bootstrap/",
+    "mutableCurrentPointer": false,
+    "compilerMustRevalidateEveryLesson": true,
+    "highAutoApply": false
+  },
+  "reviewPipeline": "Research -> Manager/Reviewer -> Primary",
+  "controllerModel": {
+    "primary": "active recursive mesh controller; 30s target/60s hard service publication; final production integration authority",
+    "managerReviewer": "active recursive mesh controller; 30s target/60s hard service publication; review/promotion authority only",
+    "research": "active bounded evidence worker; 30s target/60s hard service publication while executing; no production authority",
+    "backgroundBoundary": "AgentBus cannot wake dormant sessions; service intervals apply while an active work unit is executing",
+    "finalization": "Primary must run FINAL_RECONCILIATION_GATE_V1 and Regression Continuity matrix before final root-safe ZIP"
+  },
+  "rules": [
+    "Normal DMSH/3 operation never replaces an existing shared-Library file; corrections supersede append-only.",
+    "Research findings route through Manager/Reviewer and cannot self-promote to Primary acceptance.",
+    "Manager is a promotion/quality gate with no production-write or final-acceptance authority.",
+    "Primary and Manager/Reviewer repeatedly reconcile new board evidence while their active work units are executing.",
+    "Successor/bootstrap/replication artifacts for Primary or Manager MUST propagate the current mandatory controller contracts.",
+    "READY_FOR_PRIMARY routes attention and is not acceptance.",
+    "Primary alone ACCEPTs, DEFERs, REJECTs, REQUESTs_MORE_REVIEW and authorizes production integration.",
+    "Before final packaging, Primary reconciles all completed/closed current-round research work and Manager dispositions, then runs a final cross-cutting optimization/audit.",
+    "Learned overlays cannot grant authority, permissions, production-write access, credential access, or destructive capability.",
+    "HIGH process lessons never auto-apply and require Primary review.",
+    "All active Primary, Manager/Reviewer, and Research agents publish DMSH + immutable AgentBus service checkpoints every 30 seconds target and never intentionally exceed 60 seconds.",
+    "A service checkpoint may use findingDelta=NO_DELTA but must still carry current HEAD, integrity snapshot, regression baseline, output/test refs and blocker/operation state.",
+    "Silent active agents are not considered aligned; controllers use mesh_service_interval_guard.py semantics to classify late/hung/noncompliant nodes.",
+    "Every active agent ACKs current mandatory service/regression contracts within the first service interval.",
+    "Every checkpoint preserves regression continuity and names any invalidated prior output rather than silently dropping it.",
+    "Gen7 render precedence is PRIVATE_FROST > VIDEO_PASSTHROUGH > PUBLIC_GLASS; public video never overrides secure/private classification.",
+    "External donor implementations MUST be mined for reusable runtime ideas, tests, diagnostics, tooling and process improvements under DONOR_CODE_ADOPTION_POLICY_V1; lack of Fold7 validation blocks only device-runtime promotion, not process/tooling learning.",
+    "All newly generated successor/bootstrap/ZIP packages load the newest validated user-interaction model when available and propagate USER_INTERACTION_MODEL_PROTOCOL_V1 or its superseding version.",
+    "User-model predictions are advisory only: they may guide preparation but never override current user instructions or authorize unrequested actions.",
+    "Interaction-model records exclude credentials, secrets, unrelated private data and sensitive-trait inference; corrections/supersession are append-only."
+  ],
+  "migration": {
+    "from": "DMSH/3 discovery-v6 + donor adoption + Gen7 Core V2 review baseline",
+    "to": "DMSH/3 discovery-v7 + project-local user interaction prediction model bootstrap",
+    "discoveryOverwrite": "explicit Primary protocol evolution with new integrity snapshot"
+  },
+  "currentDevelopment": {
+    "architecture": "Gen7 continuity/presentation core rewrite",
+    "currentReviewPackage": "/DuoOpen-AgentBus/artifacts/primary/20261002T190000Z-gen7-core-dev-round-v2/DUO_OPEN_GEN7_CORE_DEV_ROUND_V2.zip",
+    "currentReviewPackageSha256": "da780a3b2b474a2ce911fadb6896066f649a6f539c98bcbb36c9d4a877d980fa",
+    "donorReference": {
+      "repo": "joeconsorti/duo-fold-live",
+      "commit": "8ca4371bf4c83ea6c840a2d500325e55635245be",
+      "policy": "/DuoOpen-AgentBus/DONOR_CODE_ADOPTION_POLICY_V1.md",
+      "rule": "mine runtime/process/tooling value, but never promote Fold8 device semantics without Fold7 evidence"
+    }
+  },
+  "userInteractionModel": {
+    "protocol": "/DuoOpen-AgentBus/USER_INTERACTION_MODEL_PROTOCOL_V1.md",
+    "reference": "/DuoOpen-AgentBus/USER_MODEL_REFERENCE_V1.json",
+    "eventRoot": "/DuoOpen-AgentBus/user-model/v1/events/",
+    "modelRoot": "/DuoOpen-AgentBus/user-model/v1/models/",
+    "predictionRoot": "/DuoOpen-AgentBus/user-model/v1/predictions/",
+    "authority": "ADVISORY_ONLY",
+    "startup": "load newest valid immutable model snapshot; fall back to packaged cache",
+    "writePolicy": "append-only material user project interactions; redact secrets/private identifiers; no sensitive-trait inference",
+    "replication": "all successor/bootstrap/ZIP packages must propagate protocol + reference lookup"
+  }
+}

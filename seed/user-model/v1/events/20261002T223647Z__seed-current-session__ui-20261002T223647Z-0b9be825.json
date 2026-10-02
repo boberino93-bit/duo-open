@@ -1,0 +1,33 @@
+{
+  "schema": "duoopen-user-interaction-event/v1",
+  "id": "ui-20261002T223647Z-0b9be825",
+  "timestamp_utc": "2026-10-02T22:36:47Z",
+  "agent_instance_id": "seed-current-session",
+  "source": "USER_MESSAGE",
+  "user_text": "do I drag the entire folder into the root of main?",
+  "user_text_sha256": "beaa072e02596e79c3ae3511be3475e5e918c82372f930f6ae7781c9b98c4667",
+  "intent_tags": [
+    "PACKAGE"
+  ],
+  "mannerism_features": {
+    "brevity": "HIGH",
+    "action_bias": "MEDIUM",
+    "prefers_direct_answer": true,
+    "spelling_normalization_needed": false
+  },
+  "workflow_preferences": [
+    "ROOT_SAFE_PACKAGE",
+    "DIRECT_COMPACT_REQUESTS"
+  ],
+  "candidate_followups": [
+    {
+      "question": "Can I copy or drag this directly into the root of main?",
+      "confidence": 0.82
+    },
+    {
+      "question": "Does this package contain everything the next agent needs?",
+      "confidence": 0.72
+    }
+  ],
+  "sensitive_redaction_applied": false
+}

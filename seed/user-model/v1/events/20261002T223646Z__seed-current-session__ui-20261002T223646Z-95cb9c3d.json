@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-user-interaction-event/v1",
+  "id": "ui-20261002T223646Z-95cb9c3d",
+  "timestamp_utc": "2026-10-02T22:36:46Z",
+  "agent_instance_id": "seed-current-session",
+  "source": "USER_MESSAGE",
+  "user_text": "do what you can to implement fixes to the best of your abilities",
+  "user_text_sha256": "3b6fe0454909cfdebfc8c54e178385ae05bda7b275ab5f6c6c8030282c59b2fb",
+  "intent_tags": [
+    "IMPLEMENT"
+  ],
+  "mannerism_features": {
+    "brevity": "HIGH",
+    "action_bias": "HIGH",
+    "prefers_direct_answer": true,
+    "spelling_normalization_needed": false
+  },
+  "workflow_preferences": [
+    "IMPLEMENT_OVER_ONLY_DESCRIBE",
+    "DIRECT_COMPACT_REQUESTS"
+  ],
+  "candidate_followups": [
+    {
+      "question": "What did you actually change versus only document?",
+      "confidence": 0.74
+    }
+  ],
+  "sensitive_redaction_applied": false
+}

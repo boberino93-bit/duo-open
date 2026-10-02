@@ -1,0 +1,18 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "20261002T223700Z-user-interaction-model-v1",
+  "timestamp_utc": "2026-10-02T22:37:00Z",
+  "project": "duo-open",
+  "from": "user-directive-bridge",
+  "to": ["all"],
+  "kind": "decision",
+  "priority": "high",
+  "subject": "Adopt project-local user interaction prediction model in all successor bootstraps",
+  "body": "Record material project questions/directives and recurring workflow mannerisms as append-only user-model events; compile inspectable next-question predictions; every initiation/successor ZIP must load the newest valid model automatically. Predictions are advisory only and never override current user instructions. Exclude secrets, unrelated private data, and sensitive-trait inference.",
+  "evidence_class": ["USER_DIRECTIVE"],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/USER_INTERACTION_MODEL_PROTOCOL_V1.md"
+  },
+  "requires_ack": true,
+  "tags": ["user-model", "next-question-prediction", "bootstrap", "self-replication", "agentbus"]
+}

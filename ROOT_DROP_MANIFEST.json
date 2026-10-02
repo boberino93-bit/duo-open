@@ -1,0 +1,21 @@
+{
+  "schema": "duoopen-root-drop-service-pack/v2",
+  "name": "DUO_OPEN_GEN7_ROOT_DROP_SP2_USER_MODEL",
+  "target_repo": "boberino93-bit/duo-open",
+  "baseline_main_sha": "db0810e55a411a905f3877cc2a3518881c044daf",
+  "copy_semantics": "extract archive contents directly into repository root, then run APPLY_AFTER_COPY",
+  "features": [
+    "Shizuku truthful readiness + bind watchdog/retry",
+    "wallpaper onboarding clarification",
+    "project-local append-only user interaction model",
+    "likely-next-question predictions",
+    "successor/initiation ZIP self-replication hook",
+    "AgentBus import payload"
+  ],
+  "privacy_guardrails": [
+    "no sensitive-trait inference",
+    "no credentials/secrets/private account identifiers",
+    "predictions are advisory only",
+    "explicit current user instructions always win"
+  ]
+}

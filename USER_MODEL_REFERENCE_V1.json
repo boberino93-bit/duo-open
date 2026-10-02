@@ -1,0 +1,10 @@
+{
+  "schema": "duoopen-user-model-reference/v1",
+  "protocol": "USER_INTERACTION_MODEL_PROTOCOL_V1.md",
+  "live_event_root": "/DuoOpen-AgentBus/user-model/v1/events/",
+  "live_model_root": "/DuoOpen-AgentBus/user-model/v1/models/",
+  "live_prediction_root": "/DuoOpen-AgentBus/user-model/v1/predictions/",
+  "selection": "newest lexicographically ordered valid immutable model snapshot whose referenced event digests validate",
+  "fallback": "use packaged cached snapshot if live AgentBus user-model storage is unavailable",
+  "authority": "ADVISORY_ONLY"
+}

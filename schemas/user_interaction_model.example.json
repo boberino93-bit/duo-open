@@ -1,0 +1,13 @@
+{
+  "schema": "duoopen-user-interaction-model/v1",
+  "id": "example-model-001",
+  "timestamp_utc": "2026-10-02T22:00:00Z",
+  "source_event_ids": ["example-001"],
+  "workflow_preferences": [
+    {"name": "ROOT_SAFE_PACKAGE", "evidence_count": 1, "confidence": 0.75}
+  ],
+  "likely_next_questions": [
+    {"question": "Can I copy this directly into root of main?", "confidence": 0.82, "evidence_event_ids": ["example-001"]}
+  ],
+  "notes": ["Predictions are advisory and must never override the user's current instruction."]
+}
