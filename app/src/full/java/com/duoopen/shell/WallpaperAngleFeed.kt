@@ -185,7 +185,7 @@ class WallpaperAngleFeed(
                 ) {
                     controlHandler.post {
                         if (running) {
-                            hinge.clearExternal()
+                            hinge.expireExternal("reader-stale")
                         }
                     }
                 }
@@ -268,6 +268,7 @@ class WallpaperAngleFeed(
                 return@post
             }
 
+            hinge.beginExternalSession(session)
             pipeline.startSession()
 
             TransitionLab.recordIngressStage(
@@ -308,7 +309,10 @@ class WallpaperAngleFeed(
 
         controlHandler.post {
             pipeline.invalidateSession()
-            hinge.clearExternal()
+            hinge.revokeExternalSession(
+                session = oldSession,
+                reason = "feed-stop",
+            )
 
             TransitionLab.recordIngressStage(
                 type = "angle-session-stop",
@@ -677,9 +681,16 @@ class WallpaperAngleFeed(
             duplicateAngles++
         }
 
-        hinge.feedExternal(angle)
+        hinge.feedExternal(
+            session = session,
+            sequence = sample.sampleSequence,
+            angle = angle,
+            sourceUptimeMs = sourceUptime,
+            receivedUptimeMs = now,
+        )
 
         scheduleEndpointBridge(
+            session = session,
             angle = angle,
             priorAngle = priorAngle,
             priorChangeUptime = priorChangeUptime,
@@ -728,6 +739,7 @@ class WallpaperAngleFeed(
     }
 
     private fun scheduleEndpointBridge(
+        session: Long,
         angle: Float,
         priorAngle: Float,
         priorChangeUptime: Long,
@@ -776,7 +788,7 @@ class WallpaperAngleFeed(
         controlHandler.postDelayed(
             {
                 if (
-                    !running ||
+                    !isCurrent(session) ||
                     endpointBridgeGeneration != generation ||
                     SystemClock.uptimeMillis() -
                     lastCallbackUptime <
@@ -800,7 +812,12 @@ class WallpaperAngleFeed(
                         "endpoint bridge from=$angle velocity=$velocity",
                 )
 
-                hinge.feedExternal(target)
+                hinge.feedSyntheticExternal(
+                    session = session,
+                    angle = target,
+                    sourceUptimeMs = SystemClock.uptimeMillis(),
+                    reason = "endpoint-bridge",
+                )
             },
             ENDPOINT_BRIDGE_DELAY_MS,
         )

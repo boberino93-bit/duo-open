@@ -23,7 +23,7 @@ object DuoShader {
     const val COVER_VISUAL_MAX_HINGE = 135f
     const val FOLD7_COVER_CLOSED_VISUAL_HINGE = 0.5f
     /** Pane tilt cap; beyond this the kernel is mostly black anyway. */
-    const val MAX_TILT = 89.5f
+    const val MAX_TILT = 60f
 
     /** Pane tilts below this draw the plain image (effect visually off). */
     const val FLAT_EPSILON = 0.05f

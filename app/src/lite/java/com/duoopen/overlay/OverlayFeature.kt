@@ -29,7 +29,9 @@ object OverlayFeature {
     fun requestShizuku() = Unit
     fun refreshShizuku() = Unit
     fun foldWallpaperActive(context: Context): Boolean = false
-    fun angleFeedStatus(): String = ""
+    fun authoritativeHingeAngle(): Float = Float.NaN
+    fun angleFeedStatus(): String = "Lite edition local sensor"
+    fun hingeReport(): String = "Lite edition local sensor"
 
     fun flushDebugLogs(): Boolean = true
 }

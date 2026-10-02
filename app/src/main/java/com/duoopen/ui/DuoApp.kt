@@ -61,28 +61,47 @@ fun DuoApp(
     val config by DuoSettings.config.collectAsStateWithLifecycle()
     val foldLine by foldLineFlow.collectAsStateWithLifecycle()
 
-    var hingeAngle by remember { mutableFloatStateOf(Float.NaN) }
+    var localHingeAngle by remember { mutableFloatStateOf(Float.NaN) }
     val hinge =
         remember {
-            HingeAngleSource(
-                context = context.applicationContext,
-                onAngle = { angle ->
-                    hingeAngle = angle
-                },
-            )
+            if (OverlayFeature.AVAILABLE) {
+                null
+            } else {
+                HingeAngleSource(
+                    context = context.applicationContext,
+                    onAngle = { angle ->
+                        localHingeAngle = angle
+                    },
+                )
+            }
         }
 
     DisposableEffect(hinge) {
-        hinge.start()
+        hinge?.start()
         onDispose {
-            hinge.stop()
+            hinge?.stop()
         }
     }
+
+    val serviceHingeAngle by
+        produceState(
+            Float.NaN,
+            OverlayFeature.AVAILABLE,
+        ) {
+            if (!OverlayFeature.AVAILABLE) {
+                value = Float.NaN
+                return@produceState
+            }
+            while (true) {
+                value = OverlayFeature.authoritativeHingeAngle()
+                kotlinx.coroutines.delay(50)
+            }
+        }
 
     var simulate by
         rememberSaveable {
             mutableStateOf(
-                hinge.sensor == null
+                !OverlayFeature.AVAILABLE && hinge?.sensor == null
             )
         }
 
@@ -94,21 +113,27 @@ fun DuoApp(
         }
 
     val angle =
-        if (
+        if (OverlayFeature.AVAILABLE) {
+            serviceHingeAngle
+        } else if (
             simulate ||
-            hinge.sensor == null
+            hinge?.sensor == null
         ) {
             simulatedAngle
         } else {
-            hingeAngle
+            localHingeAngle
         }
 
     LocalConfiguration.current
 
     val onCover =
-        !simulate &&
-            hinge.sensor != null &&
+        if (OverlayFeature.AVAILABLE) {
             !context.display.isInnerPanel()
+        } else {
+            !simulate &&
+                hinge?.sensor != null &&
+                !context.display.isInnerPanel()
+        }
 
     val targetTilt =
         if (

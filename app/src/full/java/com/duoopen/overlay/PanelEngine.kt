@@ -788,7 +788,7 @@ internal class PanelEngine(
         accessibilityCapture(gen, attempt, afterSwap, startTilt, t0, ::retry, ::stale)
     }
 
-    private fun shellCapture(): Boolean = DuoSettings.config.value.shizukuCapture && ShizukuBridge.ready
+    private fun shellCapture(): Boolean = ShizukuBridge.ready
 
     /** Our own overlay's layer, so a capture taken while it's up sees the screen beneath it. */
     private fun excludedLayers(): List<SurfaceControl> {

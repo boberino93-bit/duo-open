@@ -31,7 +31,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.util.concurrent.atomic.AtomicBoolean
+
 
 /**
  * System-wide fold effect. Accessibility services may screenshot any display
@@ -51,8 +51,7 @@ class FoldOverlayService : AccessibilityService() {
     private val handler = Handler(Looper.getMainLooper())
     private val controlThread = HandlerThread("duo-fold7-angle-control").apply { start() }
     private val controlHandler = Handler(controlThread.looper)
-    private val hingeDeliveryPending = AtomicBoolean(false)
-    @Volatile private var latestControlAngle = Float.NaN
+    private val hingeIngress = Fold7HingeIngressBatch()
     private val scope = MainScope()
     private lateinit var hinge: HingeAngleSource
     private lateinit var displayManager: DisplayManager
@@ -234,7 +233,8 @@ class FoldOverlayService : AccessibilityService() {
         displayManager.registerDisplayListener(displayListener, handler)
         hinge = HingeAngleSource(
             context = this,
-            onAngle = ::enqueueHingeFromControl,
+            onAngle = { },
+            onAuthoritativeSample = ::enqueueHingeFromControl,
             callbackHandler = controlHandler,
         )
         hinge.start()
@@ -413,6 +413,7 @@ class FoldOverlayService : AccessibilityService() {
         engines.clear()
         OverlayState.setRunning(false)
         scope.cancel()
+        hingeIngress.reset()
         controlThread.quitSafely()
         super.onDestroy()
     }
@@ -420,43 +421,106 @@ class FoldOverlayService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
     override fun onInterrupt() = Unit
 
-    /** Latest-only bridge from the serialized Fold7 control thread to main. */
-    private fun enqueueHingeFromControl(angle: Float) {
-        latestControlAngle = angle
-        if (!hingeDeliveryPending.compareAndSet(false, true)) return
+    /**
+     * Ordered bridge from the serialized Fold7 control thread to main.
+     * Semantic samples are replayed in source-observation order; render work is
+     * intentionally collapsed to the final angle in each drain.
+     */
+    private fun enqueueHingeFromControl(
+        sample: HingeAngleSource.AuthoritativeSample,
+    ) {
+        val shouldPost =
+            hingeIngress.offer(
+                angle = sample.angle,
+                observedUptimeMs = sample.observedUptimeMs,
+            )
+
+        DuoDiagnostics.event(
+            "angle-authority",
+            "accepted source=${sample.source} angle=${sample.angle} " +
+                "observed=${sample.observedUptimeMs} delivered=${sample.deliveredUptimeMs} " +
+                "coarse=${sample.coarse} reason=${sample.reason}",
+        )
+
+        if (!shouldPost) return
 
         handler.post {
-            while (true) {
-                val delivered = latestControlAngle
-                onHinge(delivered)
-                hingeDeliveryPending.set(false)
-
-                if (latestControlAngle == delivered ||
-                    !hingeDeliveryPending.compareAndSet(false, true)
-                ) {
-                    break
-                }
-            }
+            drainHingeIngress()
         }
     }
 
-    private fun onHinge(angle: Float) {
-        val beforeState =
-            continuity.state
+    private fun drainHingeIngress() {
+        val drain =
+            hingeIngress.drain()
 
-        continuity.onHinge(angle)
+        if (drain.samples.isEmpty()) return
 
-        if (
-            beforeState ==
-                Fold7ContinuityController.State.NATIVE_COVER &&
-            continuity.state ==
-                Fold7ContinuityController.State.OPENING_FROM_CLOSED
-        ) {
-            gen3Visual.beginOpening(
-                generation = continuity.generation,
-                reason = "precise-hinge-opening-edge",
+        val now = SystemClock.uptimeMillis()
+        val first = drain.samples.first()
+        val last = drain.samples.last()
+
+        DuoDiagnostics.event(
+            "hinge-ingress",
+            "batch size=${drain.samples.size} overflow=${drain.overflowed} " +
+                "dropped=${drain.droppedSamples} seq=${first.sequence}->${last.sequence} " +
+                "oldestAgeMs=${(now - first.observedUptimeMs).coerceAtLeast(0L)} " +
+                "newestAgeMs=${(now - last.observedUptimeMs).coerceAtLeast(0L)}",
+        )
+
+        if (drain.overflowed) {
+            DuoDiagnostics.event(
+                "hinge-ingress",
+                "OVERFLOW fail-closed dropped=${drain.droppedSamples}; " +
+                    "revoking temporary continuity authority and resyncing",
             )
+
+            continuity.release("hinge-ingress-overflow")
+            if (ShizukuBridge.ready) {
+                continuity.arm()
+            }
+
+            primeContinuityFrameIfNeeded("hinge-overflow-resync")
+            reconcileContinuityCoverRendering("hinge-overflow-resync")
+
+            val latest = hinge.lastAngle
+            if (latest.isFinite()) {
+                gen3Visual.onHinge(latest)
+                deviceStateObserver?.corroborateFoldedRest(
+                    nativeCover =
+                        continuity.state ==
+                            Fold7ContinuityController.State.NATIVE_COVER,
+                    preciseAngle = latest,
+                )
+                for (engine in engines.values.toList()) {
+                    engine.onHinge(latest)
+                }
+            }
+            return
         }
+
+        for (sample in drain.samples) {
+            val beforeState =
+                continuity.state
+
+            continuity.onHinge(
+                angle = sample.angle,
+                observedUptimeMs = sample.observedUptimeMs,
+            )
+
+            if (
+                beforeState ==
+                    Fold7ContinuityController.State.NATIVE_COVER &&
+                continuity.state ==
+                    Fold7ContinuityController.State.OPENING_FROM_CLOSED
+            ) {
+                gen3Visual.beginOpening(
+                    generation = continuity.generation,
+                    reason = "authoritative-hinge-opening-edge",
+                )
+            }
+        }
+
+        val angle = last.angle
 
         primeContinuityFrameIfNeeded(
             "hinge:$angle"
@@ -483,7 +547,6 @@ class FoldOverlayService : AccessibilityService() {
             engine.onHinge(angle)
         }
     }
-
     /** Starts engines for panels that lit up, stops those that went dark, then lets each re-evaluate. */
     private fun syncDisplays() {
         // `adb shell settings put global duoopen_test_displays 1` lets a
@@ -729,8 +792,7 @@ class FoldOverlayService : AccessibilityService() {
          * continue arriving from the Shizuku-side log reader.
          */
         val want =
-            DuoSettings.config.value.shizukuAngle &&
-                ShizukuBridge.ready
+            ShizukuBridge.ready
 
         if (
             want &&
@@ -746,7 +808,13 @@ class FoldOverlayService : AccessibilityService() {
     }
 
     fun angleFeedStatus(): String =
-        angleFeed?.status ?: "Idle"
+        hinge.statusText() + " · " + (angleFeed?.status ?: "Reader idle")
+
+    fun authoritativeHingeAngle(): Float =
+        hinge.lastAngle
+
+    fun hingeReport(): String =
+        hinge.report()
 
     private fun scheduleDisplayProbe(
         reason: String,

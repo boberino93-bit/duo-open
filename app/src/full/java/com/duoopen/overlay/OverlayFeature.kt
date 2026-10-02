@@ -59,8 +59,16 @@ object OverlayFeature {
     /** Whether Samsung's fold-reactive wallpaper (the continuous-angle source) is the home wallpaper. */
     fun foldWallpaperActive(context: Context): Boolean = WallpaperAngleFeed.foldWallpaperActive(context)
 
-    /** Status of the continuous-angle reader, from the running service. */
-    fun angleFeedStatus(): String = FoldOverlayService.instance?.angleFeedStatus() ?: "Service not running"
+    /** Service-owned authoritative Fold7 geometry. */
+    fun authoritativeHingeAngle(): Float =
+        FoldOverlayService.instance?.authoritativeHingeAngle() ?: Float.NaN
+
+    /** Status of the one authoritative angle owner plus its current transport. */
+    fun angleFeedStatus(): String =
+        FoldOverlayService.instance?.angleFeedStatus() ?: "Service not running"
+
+    fun hingeReport(): String =
+        FoldOverlayService.instance?.hingeReport() ?: "Duo Open accessibility service is not running."
 
     /** Flush Transition Lab before packaging a user-visible debug export. */
     fun flushDebugLogs(): Boolean =

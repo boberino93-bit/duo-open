@@ -94,11 +94,14 @@ internal class Fold7ContinuityCoordinator(
         )
     }
 
-    fun onHinge(angle: Float) {
+    fun onHinge(
+        angle: Float,
+        observedUptimeMs: Long = SystemClock.uptimeMillis(),
+    ) {
         val decision =
             controller.onHinge(
                 angle = angle,
-                nowMs = SystemClock.uptimeMillis(),
+                nowMs = observedUptimeMs,
                 topology = topology(),
             )
 
