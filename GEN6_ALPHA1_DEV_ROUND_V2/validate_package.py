@@ -59,6 +59,23 @@ assert "ERROR_TAKE_SCREENSHOT_SECURE_WINDOW" in patcher
 assert "gen6ForcePrivateFrost" in patcher
 assert 'accessibilityEventTypes="typeWindowStateChanged"' in patcher
 
+
+# Gen6 Fix3 proactive compile/security invariants.
+for marker in [
+    "val refreshView: View",
+    "created.refreshView",
+    "shell-secure-layer-prime",
+    "shell-secure-layer-live",
+    "packageChanged",
+    "Never allow an old app's pixels to bootstrap a new app context",
+    "secure-layer provenance cannot be",
+]:
+    assert marker in patcher, marker
+
+# All Gen6 Shizuku capture lanes that may feed presentation state must preserve
+# secure-layer metadata instead of collapsing it to a generic null bitmap.
+assert patcher.count("ShizukuBridge.captureResult") >= 3
+
 # WakeHint may wake infrastructure and visual material, but must not call the
 # semantic opening ingress from its callback block.
 wake_block_start = patcher.index('onWakeHint = { previousStateId, currentStateId ->')

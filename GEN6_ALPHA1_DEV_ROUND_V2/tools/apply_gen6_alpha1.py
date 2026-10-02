@@ -100,6 +100,8 @@ class PublicGlassSurface(
     private val windowManager: WindowManager,
 ) : FoldSurface {
     private val view = PublicGlassView(context)
+    val refreshView: View
+        get() = view
     val attached: Boolean
     private var materialAnimator: ValueAnimator? = null
 
@@ -453,7 +455,7 @@ def patch_panel(text: str) -> str:
     )
 
     shell_old = '''            scope.launch {\n                val bitmap = withContext(Dispatchers.IO) {\n                    ShizukuBridge.capture(displayId, excludedLayers(), INITIAL_SHELL_SCALE)\n                }\n                if (stale()) return@launch\n                if (bitmap == null) {\n                    Log.i(TAG, "display $displayId: shell capture unavailable; using accessibility screenshot")\n                    accessibilityCapture(gen, attempt, afterSwap, startTilt, t0, ::retry, ::stale)\n                    return@launch\n                }'''
-    shell_new = '''            scope.launch {\n                val shellResult = withContext(Dispatchers.IO) {\n                    ShizukuBridge.captureResult(displayId, excludedLayers(), INITIAL_SHELL_SCALE)\n                }\n                if (stale()) return@launch\n\n                if (shellResult?.secure == true) {\n                    onCaptureBlocked("shell-secure-layer")\n                    showPrivateFrostImmediately(\n                        afterSwap = afterSwap,\n                        requestedTilt = startTilt,\n                        reason = "shell-secure-layer",\n                    )\n                    return@launch\n                }\n\n                val bitmap = shellResult?.bitmap\n                if (bitmap == null) {\n                    Log.i(TAG, "display $displayId: shell capture unavailable; using accessibility screenshot")\n                    accessibilityCapture(gen, attempt, afterSwap, startTilt, t0, ::retry, ::stale)\n                    return@launch\n                }'''
+    shell_new = '''            scope.launch {\n                val shellResult = withContext(Dispatchers.IO) {\n                    ShizukuBridge.captureResult(displayId, excludedLayers(), INITIAL_SHELL_SCALE)\n                }\n                if (stale()) {\n                    shellResult?.bitmap?.let { bitmap ->\n                        if (!bitmap.isRecycled) bitmap.recycle()\n                    }\n                    return@launch\n                }\n\n                if (shellResult?.secure == true) {\n                    onCaptureBlocked("shell-secure-layer")\n                    showPrivateFrostImmediately(\n                        afterSwap = afterSwap,\n                        requestedTilt = startTilt,\n                        reason = "shell-secure-layer",\n                    )\n                    return@launch\n                }\n\n                val bitmap = shellResult?.bitmap\n                if (bitmap == null) {\n                    Log.i(TAG, "display $displayId: shell capture unavailable; using accessibility screenshot")\n                    accessibilityCapture(gen, attempt, afterSwap, startTilt, t0, ::retry, ::stale)\n                    return@launch\n                }'''
     text = replace_once(text, shell_old, shell_new, "secure-aware shell capture")
 
     text = replace_once(
@@ -495,7 +497,7 @@ def patch_panel(text: str) -> str:
     text = replace_once(
         text,
         '''            startGen5OpeningFrameLoop()\n            (created as? SnapshotSurface)?.let(::requestGen5RefreshRate)''',
-        '''            startGen5OpeningFrameLoop()\n            when (created) {\n                is SnapshotSurface -> requestGen5RefreshRate(created.view)\n                is PublicGlassSurface -> requestGen5RefreshRate(created.view)\n                else -> Unit\n            }''',
+        '''            startGen5OpeningFrameLoop()\n            when (created) {\n                is SnapshotSurface -> requestGen5RefreshRate(created.view)\n                is PublicGlassSurface -> requestGen5RefreshRate(created.refreshView)\n                else -> Unit\n            }''',
         "Gen6 opening refresh target",
     )
 
@@ -504,6 +506,127 @@ def patch_panel(text: str) -> str:
         '''    private fun requestGen5RefreshRate(snapshot: SnapshotSurface) {\n        snapshot.view.post {\n            if (!continuityOpeningVisual) return@post\n            val root = rootSurfaceControl(snapshot.view)''',
         '''    private fun requestGen5RefreshRate(view: View) {\n        view.post {\n            if (!continuityOpeningVisual) return@post\n            val root = rootSurfaceControl(view)''',
         "generic opening refresh view",
+    )
+
+    # Gen6 Fix3: preserve secure-layer provenance in the continuity-prime path.
+    prime_old = '''        scope.launch {
+            val bitmap =
+                withContext(Dispatchers.IO) {
+                    ShizukuBridge.capture(
+                        displayId,
+                        excludedLayers(),
+                        INITIAL_SHELL_SCALE,
+                    )
+                }
+
+            if (
+                activeCloseCycle() != cycle ||
+                !continuityPrimeOwner.isCurrent(attempt)
+            ) {
+                bitmap?.let {
+                    runCatching {
+                        it.recycle()
+                    }
+                }
+                return@launch
+            }
+
+            if (bitmap == null) {'''
+    prime_new = '''        scope.launch {
+            val shellResult =
+                withContext(Dispatchers.IO) {
+                    ShizukuBridge.captureResult(
+                        displayId,
+                        excludedLayers(),
+                        INITIAL_SHELL_SCALE,
+                    )
+                }
+
+            if (
+                activeCloseCycle() != cycle ||
+                !continuityPrimeOwner.isCurrent(attempt)
+            ) {
+                shellResult?.bitmap?.let {
+                    runCatching {
+                        it.recycle()
+                    }
+                }
+                return@launch
+            }
+
+            if (shellResult?.secure == true) {
+                continuityPrimeOwner.markFailed(
+                    attempt,
+                    "secure-layer",
+                )
+                onCaptureBlocked("shell-secure-layer-prime")
+                onContinuityFrameChanged(
+                    "prime-secure-layer"
+                )
+                return@launch
+            }
+
+            val bitmap = shellResult?.bitmap
+            if (bitmap == null) {'''
+    text = replace_once(
+        text,
+        prime_old,
+        prime_new,
+        "secure-aware continuity prime",
+    )
+
+    # Gen6 Fix3: live re-capture must preserve the secure-layer signal.
+    live_old = '''            scope.launch {
+                val frame =
+                    withContext(
+                        Dispatchers.IO,
+                    ) {
+                        ShizukuBridge.capture(
+                            displayId,
+                            excluded,
+                            LIVE_SHELL_SCALE,
+                        )
+                    }
+
+                if (
+                    liveLoop &&'''
+    live_new = '''            scope.launch {
+                val shellResult =
+                    withContext(
+                        Dispatchers.IO,
+                    ) {
+                        ShizukuBridge.captureResult(
+                            displayId,
+                            excluded,
+                            LIVE_SHELL_SCALE,
+                        )
+                    }
+
+                if (shellResult?.secure == true) {
+                    onCaptureBlocked("shell-secure-layer-live")
+                    if (
+                        liveLoop &&
+                        phase == Phase.SHOWING &&
+                        myGen == captureGen
+                    ) {
+                        showPrivateFrostImmediately(
+                            afterSwap = false,
+                            requestedTilt = surface?.tilt ?: currentTilt(),
+                            reason = "shell-secure-layer-live",
+                        )
+                    }
+                    return@launch
+                }
+
+                val frame = shellResult?.bitmap
+
+                if (
+                    liveLoop &&'''
+    text = replace_once(
+        text,
+        live_old,
+        live_new,
+        "secure-aware live recapture",
     )
 
     return text
@@ -564,7 +687,7 @@ def patch_service(text: str) -> str:
     text = replace_once(
         text,
         '''    override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit\n    override fun onInterrupt() = Unit''',
-        '''    override fun onAccessibilityEvent(event: AccessibilityEvent?) {\n        val foregroundPackage =\n            event\n                ?.packageName\n                ?.toString()\n                ?.takeIf { it.isNotBlank() && it != packageName }\n                ?: return\n\n        val isWorkProfile =\n            Fold7WorkProfileDetector.packageExistsInManagedProfile(\n                context = this,\n                packageName = foregroundPackage,\n            )\n\n        // Ignore transient system windows (permission panels, SystemUI, IME)\n        // rather than accidentally downgrading a private foreground app.\n        val launchable =\n            runCatching {\n                packageManager.getLaunchIntentForPackage(foregroundPackage) != null\n            }.getOrDefault(false)\n\n        if (!launchable && !isWorkProfile) {\n            return\n        }\n\n        val label =\n            runCatching {\n                val info = packageManager.getApplicationInfo(foregroundPackage, 0)\n                packageManager.getApplicationLabel(info).toString()\n            }.getOrNull()\n\n        applyPrivacyTransition(\n            transition =\n                privacyRuntime.onForegroundApp(\n                    packageName = foregroundPackage,\n                    appLabel = label,\n                    isWorkProfile = isWorkProfile,\n                ),\n            source = "accessibility-event:${event.eventType}",\n        )\n    }\n\n    private fun onCaptureBlocked(reason: String) {\n        applyPrivacyTransition(\n            transition = privacyRuntime.markCaptureDenied(reason),\n            source = reason,\n        )\n    }\n\n    private fun applyPrivacyTransition(\n        transition: Fold7PrivacyRuntime.Transition,\n        source: String,\n    ) {\n        if (!transition.changed) return\n\n        val current = transition.current\n        DuoDiagnostics.event(\n            "gen6-privacy",\n            "mode=${current.decision.mode} reason=${current.decision.reason} " +\n                "package=${current.packageName} workProfile=${current.isWorkProfile} " +\n                "captureDenied=${current.captureDeniedReason} source=$source",\n        )\n\n        if (current.decision.mode == Fold7GlassMode.PRIVATE_FROST) {\n            snapshots.clear()\n            gen2.frames.clearLatest()\n        }\n\n        // Generic/non-continuity captures must also fail closed immediately.\n        for (engine in engines.values.toList()) {\n            engine.onPrivacyDecisionChanged()\n        }\n\n        // This call revokes any Gen3 frozen-frame host before a private\n        // procedural surface is admitted for the same transition.\n        reconcileContinuityCoverRendering("privacy:$source")\n    }\n\n    override fun onInterrupt() = Unit''',
+        '''    override fun onAccessibilityEvent(event: AccessibilityEvent?) {\n        val foregroundPackage =\n            event\n                ?.packageName\n                ?.toString()\n                ?.takeIf { it.isNotBlank() && it != packageName }\n                ?: return\n\n        val isWorkProfile =\n            Fold7WorkProfileDetector.packageExistsInManagedProfile(\n                context = this,\n                packageName = foregroundPackage,\n            )\n\n        // Ignore transient system windows (permission panels, SystemUI, IME)\n        // rather than accidentally downgrading a private foreground app.\n        val launchable =\n            runCatching {\n                packageManager.getLaunchIntentForPackage(foregroundPackage) != null\n            }.getOrDefault(false)\n\n        if (!launchable && !isWorkProfile) {\n            return\n        }\n\n        val label =\n            runCatching {\n                val info = packageManager.getApplicationInfo(foregroundPackage, 0)\n                packageManager.getApplicationLabel(info).toString()\n            }.getOrNull()\n\n        applyPrivacyTransition(\n            transition =\n                privacyRuntime.onForegroundApp(\n                    packageName = foregroundPackage,\n                    appLabel = label,\n                    isWorkProfile = isWorkProfile,\n                ),\n            source = "accessibility-event:${event.eventType}",\n        )\n    }\n\n    private fun onCaptureBlocked(reason: String) {\n        applyPrivacyTransition(\n            transition = privacyRuntime.markCaptureDenied(reason),\n            source = reason,\n        )\n    }\n\n    private fun applyPrivacyTransition(\n        transition: Fold7PrivacyRuntime.Transition,\n        source: String,\n    ) {\n        if (!transition.changed) return\n\n        val current = transition.current\n        DuoDiagnostics.event(\n            "gen6-privacy",\n            "mode=${current.decision.mode} reason=${current.decision.reason} " +\n                "package=${current.packageName} workProfile=${current.isWorkProfile} " +\n                "captureDenied=${current.captureDeniedReason} source=$source",\n        )\n\n        val packageChanged =\n            transition.previous.packageName !=\n                current.packageName\n\n        if (\n            packageChanged ||\n            current.decision.mode == Fold7GlassMode.PRIVATE_FROST\n        ) {\n            // Never allow an old app's pixels to bootstrap a new app context.\n            snapshots.clear()\n            gen2.frames.clearLatest()\n        }\n\n        // Generic/non-continuity captures must also fail closed immediately.\n        for (engine in engines.values.toList()) {\n            engine.onPrivacyDecisionChanged()\n        }\n\n        // This call revokes any Gen3 frozen-frame host before a private\n        // procedural surface is admitted for the same transition.\n        reconcileContinuityCoverRendering("privacy:$source")\n    }\n\n    override fun onInterrupt() = Unit''',
         "accessibility privacy tracking",
     )
 
@@ -600,7 +723,11 @@ def patch_shell_service(text: str) -> str:
         try {
             val secure = runCatching {
                 result.javaClass.getMethod("containsSecureLayers").invoke(result) as Boolean
-            }.getOrDefault(false)
+            }.getOrElse {
+                // Gen6 security contract: if secure-layer provenance cannot be
+                // established, do not materialize the capture.
+                true
+            }
 
             // Gen6 privacy boundary: never materialize protected pixels.
             if (secure) {
@@ -724,6 +851,7 @@ def self_test():
     surface_marker = '''/**\n * The system's cross-window blur over the live screen: no screenshot, no\n * capture delay, content keeps moving underneath. SurfaceFlinger blurs a\n'''
     surface_out = patch_surface(surface_marker)
     require("class PublicGlassSurface" in surface_out, "PUBLIC_GLASS surface self-test")
+    require("val refreshView: View" in surface_out, "PUBLIC_GLASS refresh handle self-test")
     require("class PrivateFrostSurface" in surface_out, "PRIVATE_FROST surface self-test")
 
     shell_fixture = '''        var buffer: HardwareBuffer? = null
@@ -738,6 +866,11 @@ def self_test():
     require(
         shell_out.index("containsSecureLayers") < shell_out.index("getHardwareBuffer"),
         "secure metadata precedes buffer access",
+    )
+    require(
+        "secure-layer provenance cannot be" in shell_out and
+            "getOrElse" in shell_out,
+        "secure metadata lookup fails closed",
     )
 
     bridge_fixture = '''    /** Blocking; call off the main thread. Null if unavailable or the frame had secure content. */

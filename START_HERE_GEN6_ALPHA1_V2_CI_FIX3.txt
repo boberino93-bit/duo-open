@@ -1,0 +1,14 @@
+DUO OPEN GEN6 ALPHA 1 V2 — CI FIX 3
+
+This is the combined proactive hotfix after workflow run #3.
+
+Drop/extract this ZIP at the repository root and commit the changed files to main.
+
+It includes the remaining PUBLIC_GLASS compile fix plus additional secure-capture
+and stale-frame corrections found during a full preflight review.
+
+The existing `Build Gen6 Alpha 1 V2 Fold7` workflow will trigger automatically.
+
+No production `app/**` source is directly committed by this hotfix. The corrected
+V2 patcher applies the production changes inside the CI workspace, where Gradle
+then runs `testFullDebugUnitTest` and `assembleFullDebug`.
