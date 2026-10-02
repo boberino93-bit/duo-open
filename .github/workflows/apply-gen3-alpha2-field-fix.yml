@@ -1,0 +1,206 @@
+name: Apply Duo Open Gen3 Alpha2 Field Fix
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/apply-gen3-alpha2-field-fix.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: duo-open-gen3-alpha2-field-fix
+  cancel-in-progress: false
+
+env:
+  DUO_DIAGNOSTIC_UPLOAD_URL: ${{ vars.DUO_DIAGNOSTIC_UPLOAD_URL }}
+  DUO_DIAGNOSTIC_INGEST_KEY: ${{ secrets.DUO_DIAGNOSTIC_INGEST_KEY }}
+
+jobs:
+  apply-test-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Verify exact Alpha1 production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="179e688e234fd54cedf99aa7792c86de00bba947"
+          git merge-base --is-ancestor "$BASE" HEAD
+
+          check_blob() {
+            local path="$1"
+            local expected="$2"
+            local actual
+            actual="$(git hash-object "$path")"
+            if [[ "$actual" != "$expected" ]]; then
+              echo "ERROR: Alpha1 production source drift: $path"
+              echo "expected=$expected"
+              echo "actual=$actual"
+              exit 1
+            fi
+          }
+
+          check_blob app/build.gradle.kts abb51a01ebdc08d1d85e56adf5d2adc41fbd7f6c
+          check_blob app/src/main/AndroidManifest.xml 8ad425580f44d5ecc26da6186977ba00225ed6ce
+          check_blob app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt 364ea50f07f3221f0fcf808a98442f90845b25c3
+          check_blob app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt 3c6ac53364aebd3d6bf060f6a3f7f93252d94ae0
+          check_blob app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt 04bf4617368f5257cfc9b82a6f367124827c9ffa
+          check_blob app/src/full/java/com/duoopen/overlay/PanelEngine.kt 2b3a81624d269f5f8165bf158dbb94251b045549
+          check_blob app/src/main/java/com/duoopen/ui/DuoApp.kt e77893eec684c4a59de67b5ffe0ed016c3260a05
+          check_blob app/src/main/java/com/duoopen/ui/ControlSheet.kt 49d4e6c7fdf5113f2ce7850da3bab9c8d668bbbf
+          check_blob app/src/main/java/com/duoopen/debug/DebugBundleExporter.kt 4ed34da1b9d51375823f65c24b97a22c0f29c289
+
+          echo "GEN3 ALPHA2 BASELINE: PASS"
+
+      - name: Apply Alpha2 field-driven patch
+        run: python3 tools/apply_gen3_alpha2.py
+
+      - name: Validate Alpha2 invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          grep -F 'versionCode = 39' app/build.gradle.kts
+          grep -F 'versionName = "3.0.0-alpha2-zfold7"' app/build.gradle.kts
+          grep -F 'DIAGNOSTIC_UPLOAD_URL' app/build.gradle.kts
+          grep -F 'android.permission.INTERNET' app/src/main/AndroidManifest.xml
+
+          grep -F 'val openingVisualDemandActive: Boolean' app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt
+          grep -F 'GEN3_OPENING_SNAPSHOT_SHADER' app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt
+          if grep -Fq 'GEN3_LIVE_BLUR' app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt; then
+            echo "ERROR: Alpha1 Fold7 opening live-blur render path survived"
+            exit 1
+          fi
+          grep -F 'engine.beginContinuityOpeningVisual(' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'gen3-opening-snapshot:' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'Live blur is intentionally disabled on Fold7.' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+
+          grep -F 'queueMs=' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'shellLatencyMs=' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'totalMs=' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+
+          grep -F 'object DebugBundleUploader' app/src/main/java/com/duoopen/debug/DebugBundleUploader.kt
+          grep -F 'object DiagnosticReceiptStore' app/src/main/java/com/duoopen/debug/DiagnosticReceiptStore.kt
+          grep -F 'Diagnostic received:' app/src/main/java/com/duoopen/ui/DuoApp.kt
+          grep -F 'Send diagnostic data' app/src/main/java/com/duoopen/ui/ControlSheet.kt
+          grep -F 'remoteSha256 != localSha256' app/src/main/java/com/duoopen/debug/DebugBundleUploader.kt
+
+          grep -F 'INNER_WAKE_MIN_DEG = 3f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'INNER_HANDOFF_MIN_DEG = 8f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'COVER_PREWARM_DEG = 174f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'COVER_VISUAL_START_DEG = 135f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'OPEN_LATCH_DEG = 172f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'OPEN_REARM_DEG = 166f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+
+          if git diff | grep -E 'STATE_OFF|setDisplayPower.*OFF|moveTaskToDisplay'; then
+            echo "ERROR: forbidden raw OFF/task migration behavior introduced"
+            exit 1
+          fi
+
+          git diff --check
+          git diff --stat
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+
+      - name: Run focused Alpha2 tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew testFullDebugUnitTest --tests '*DebugBundleUploaderTest' --stacktrace
+          ./gradlew testFullDebugUnitTest --tests '*Fold7CoverVisualAttemptOwnerGen3Test' --stacktrace
+          ./gradlew testFullDebugUnitTest --tests '*Fold7ContinuityPrimeOwnerGen3Test' --stacktrace
+          ./gradlew testFullDebugUnitTest --tests '*Fold7CoverPanelLeaseV4Test' --stacktrace
+
+      - name: Run full Alpha2 gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Commit and push validated Alpha2 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add app
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+
+          if git diff --cached --name-only | grep -q '^\.github/workflows/'; then
+            echo "ERROR: workflow unexpectedly staged"
+            exit 1
+          fi
+          if git diff --cached --name-only | grep -q '^tools/'; then
+            echo "ERROR: tooling unexpectedly staged"
+            exit 1
+          fi
+          if git diff --cached --name-only | grep -q '^diagnostics-relay/'; then
+            echo "ERROR: relay unexpectedly staged into runtime commit"
+            exit 1
+          fi
+
+          git commit -m "Restore Fold7 opening shader and add diagnostic receipts"
+          git push origin HEAD:main
+
+      - name: Prepare Alpha2 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          OUT="fold7-gen3-alpha2"
+          mkdir -p "$OUT"
+
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+
+          DEST="$OUT/DuoOpen-ZFold7-3.0.0-alpha2-debug.apk"
+          cp "$APK" "$DEST"
+          sha256sum "$DEST" > "$OUT/APK-SHA256.txt"
+
+          {
+            echo "version=3.0.0-alpha2-zfold7"
+            echo "versionCode=39"
+            echo "commit=$(git rev-parse HEAD)"
+            echo "baseline=179e688e234fd54cedf99aa7792c86de00bba947"
+            echo "target=Samsung Galaxy Z Fold7"
+            echo "field-fix=opening-snapshot-shader-under-gen3-owner"
+            echo "instrumentation=inner-wake-queue-shell-total"
+            echo "diagnostics=receipt-verified-upload-client"
+            echo "diagnosticUploadConfigured=$([[ -n \"${DUO_DIAGNOSTIC_UPLOAD_URL:-}\" ]] && echo true || echo false)"
+            echo
+            sha256sum "$DEST"
+          } > "$OUT/BUILD-INFO.txt"
+
+          cat "$OUT/BUILD-INFO.txt"
+
+      - name: Upload Alpha2 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-3.0.0-alpha2
+          path: |
+            fold7-gen3-alpha2/DuoOpen-ZFold7-3.0.0-alpha2-debug.apk
+            fold7-gen3-alpha2/APK-SHA256.txt
+            fold7-gen3-alpha2/BUILD-INFO.txt
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,10 @@
+name = "duo-open-diagnostics-relay"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+ARTIFACTORY_REPO = "duoopen-diagnostics-local"
+MAX_DIAGNOSTIC_BYTES = "12000000"
+# Configure ARTIFACTORY_BASE_URL as a non-secret variable.
+# Configure ARTIFACTORY_TOKEN, DUO_UPLOAD_KEY and optional GITHUB_TOKEN as secrets.
+# Configure optional GITHUB_REPOSITORY, e.g. boberino93-bit/duo-open.
