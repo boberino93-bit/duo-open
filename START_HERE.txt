@@ -1,0 +1,1 @@
+Use LEAD_COORDINATOR_DEPLOYMENT_PROMPT_GEN7_V2.txt as the deployment prompt. Then fetch live GitHub main, AgentBus discovery/integrity and all newer messages before work.
