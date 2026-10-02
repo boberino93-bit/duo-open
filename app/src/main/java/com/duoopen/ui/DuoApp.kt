@@ -36,6 +36,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.duoopen.debug.DebugBundleExporter
+import com.duoopen.debug.DebugBundleUploader
+import com.duoopen.debug.DiagnosticReceiptStore
 import com.duoopen.fold.DuoShader
 import com.duoopen.fold.FoldLine
 import com.duoopen.fold.HingeAngleSource
@@ -254,6 +256,17 @@ fun DuoApp(
             mutableStateOf(false)
         }
 
+    var diagnosticUploadStatus by
+        remember(context) {
+            mutableStateOf(
+                DiagnosticReceiptStore
+                    .last(context)
+                    ?.let { receipt ->
+                        "Last received: ${receipt.diagnosticId} · ${receipt.sha256.take(12)}…"
+                    }
+            )
+        }
+
     Box(
         Modifier
             .fillMaxSize()
@@ -410,6 +423,49 @@ fun DuoApp(
                         }
                     }
                 },
+                onSendDebugBundle = {
+                    diagnosticUploadStatus =
+                        "Sending diagnostic data…"
+
+                    scope.launch {
+                        val upload =
+                            withContext(
+                                Dispatchers.IO
+                            ) {
+                                runCatching {
+                                    OverlayFeature
+                                        .flushDebugLogs()
+
+                                    val bundle =
+                                        DebugBundleExporter
+                                            .create(
+                                                context.applicationContext
+                                            )
+
+                                    DebugBundleUploader
+                                        .upload(
+                                            context.applicationContext,
+                                            bundle.file,
+                                        )
+                                }
+                            }
+
+                        upload
+                            .onSuccess { receipt ->
+                                diagnosticUploadStatus =
+                                    "Diagnostic received: ${receipt.diagnosticId} · ${receipt.sha256.take(12)}…"
+                            }
+                            .onFailure { error ->
+                                diagnosticUploadStatus =
+                                    "Send failed: ${error.message ?: error.javaClass.simpleName}"
+                            }
+                    }
+                },
+                diagnosticUploadEnabled =
+                    DebugBundleUploader
+                        .isConfigured(),
+                diagnosticUploadStatus =
+                    diagnosticUploadStatus,
                 onDismiss = {
                     showSheet = false
                 },

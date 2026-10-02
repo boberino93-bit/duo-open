@@ -335,7 +335,13 @@ internal class Fold7ContinuityCoordinator(
             return
         }
 
+        val queuedAtNs =
+            SystemClock.elapsedRealtimeNanos()
+
         scope.launch(Dispatchers.IO) {
+            val startedAtNs =
+                SystemClock.elapsedRealtimeNanos()
+
             if (!controller.isGenerationCurrent(generation)) {
                 return@launch
             }
@@ -345,11 +351,25 @@ internal class Fold7ContinuityCoordinator(
                     ShizukuBridge.wakeInnerDisplay()
                 }.getOrNull()
 
+            val completedAtNs =
+                SystemClock.elapsedRealtimeNanos()
+
+            val queueMs =
+                (startedAtNs - queuedAtNs) /
+                    1_000_000.0
+
+            val totalMs =
+                (completedAtNs - queuedAtNs) /
+                    1_000_000.0
+
             DuoDiagnostics.event(
                 "fold7-state",
                 "inner-wake generation=$generation " +
                     "ok=${result?.getBoolean("ok", false) == true} " +
                     "physical=${result?.getLong("physicalDisplayId", -1L) ?: -1L} " +
+                    "queueMs=${"%.3f".format(queueMs)} " +
+                    "shellLatencyMs=${result?.getLong("latencyMs", -1L) ?: -1L} " +
+                    "totalMs=${"%.3f".format(totalMs)} " +
                     "error=${result?.getString("error")}",
             )
         }

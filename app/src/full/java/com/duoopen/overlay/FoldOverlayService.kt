@@ -658,21 +658,18 @@ class FoldOverlayService : AccessibilityService() {
             ShizukuBridge.ready &&
                 continuity.renderOwnershipEnabled
 
-        for (
-            engine in
-            engines.values.toList()
-        ) {
-            val shouldOwnCover =
-                privilegedReady &&
-                    engine.isFold7CoverGeometryNow()
-
+        /*
+         * Alpha2 keeps Gen3 as the semantic/exact owner, but restores the
+         * validated Fold7 snapshot/shader renderer for OPENING. The Alpha1
+         * field trace showed its LiveBlur host failing to attach on every
+         * accepted opening attempt.
+         */
+        for (engine in engines.values.toList()) {
             engine.setContinuityCoverOwned(
-                owned = shouldOwnCover,
+                owned =
+                    privilegedReady &&
+                        engine.isFold7CoverGeometryNow(),
                 reason = "gen3:$reason",
-            )
-
-            engine.endContinuityOpeningVisual(
-                "gen3-exclusive:$reason"
             )
         }
 
@@ -686,6 +683,36 @@ class FoldOverlayService : AccessibilityService() {
                 reason =
                     reason,
             )
+        }
+
+        val openingDemand =
+            ::gen3Visual.isInitialized &&
+                gen3Visual.openingVisualDemandActive
+
+        val openingHostDisplayId =
+            if (::gen3Visual.isInitialized) {
+                gen3Visual.openingHostDisplayId
+            } else {
+                null
+            }
+
+        for (engine in engines.values.toList()) {
+            val runOpeningRenderer =
+                privilegedReady &&
+                    openingDemand &&
+                    engine.isFold7CoverGeometryNow() &&
+                    engine.display.displayId ==
+                        openingHostDisplayId
+
+            if (runOpeningRenderer) {
+                engine.beginContinuityOpeningVisual(
+                    "gen3-opening-snapshot:$reason"
+                )
+            } else {
+                engine.endContinuityOpeningVisual(
+                    "gen3-opening-not-owner:$reason"
+                )
+            }
         }
     }
 

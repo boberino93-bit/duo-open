@@ -48,6 +48,23 @@ internal class Fold7Gen3VisualCoordinator(
     private var lastAttachFailureUptimeMs =
         0L
 
+    /**
+     * Alpha2: exact Gen3 ownership remains authoritative while the physical
+     * Fold7 opening renderer is delegated to the proven PanelEngine
+     * snapshot/shader backend.
+     */
+    val openingVisualDemandActive: Boolean
+        get() =
+            currentMovement?.direction ==
+                Fold7CoverVisualAttemptOwner.Direction.OPENING &&
+                owner.snapshot().visibleDemand
+
+    val openingHostDisplayId: Int?
+        get() =
+            owner.snapshot()
+                .host
+                ?.logicalDisplayId
+
     fun beginOpening(
         generation: Long,
         reason: String,
@@ -165,10 +182,32 @@ internal class Fold7Gen3VisualCoordinator(
                 reason,
             )
 
-            ensureRenderer(
-                existing,
-                frame = null,
-                reason = reason,
+            /*
+             * Alpha1 used LiveBlurSurface here. Fold7 field evidence shows
+             * that backend failing attachment on accepted opening attempts,
+             * while the last validated Fold7 implementation explicitly
+             * disabled live blur and used the snapshot/fold shader path.
+             *
+             * Keep exact attempt/host ownership here, but let
+             * FoldOverlayService bind this exact host to the current
+             * PanelEngine snapshot renderer. This also lets a replacement
+             * cover engine rebind the same semantic attempt after remap.
+             */
+            detachRenderer(
+                "opening-snapshot-backend:$reason"
+            )
+
+            recordStage(
+                type =
+                    "gen3-opening-render-delegated",
+                movement =
+                    existing,
+                hostEpoch =
+                    owner.snapshot()
+                        .host
+                        ?.hostEpoch,
+                reason =
+                    reason,
             )
             return
         }
@@ -618,7 +657,7 @@ internal class Fold7Gen3VisualCoordinator(
                         "GEN3_FROZEN_SHADER"
 
                     Fold7CoverVisualAttemptOwner.Direction.OPENING ->
-                        "GEN3_LIVE_BLUR"
+                        "GEN3_OPENING_SNAPSHOT_SHADER"
                 },
             reason =
                 reason,
