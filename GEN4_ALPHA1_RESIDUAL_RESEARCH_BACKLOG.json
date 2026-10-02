@@ -1,0 +1,82 @@
+{
+  "baseline": {
+    "commit": "f9ba2ca7afa2e67586231770fd8b0abe56b94b5b",
+    "version": "4.0.0-alpha1-zfold7",
+    "versionCode": 41
+  },
+  "landed_or_superseded": [
+    "daemon-owned cover panel authority",
+    "new-daemon startup reconciliation",
+    "app-process/daemon-lifetime admission fencing",
+    "binder-ready vs authority-ready gating",
+    "bounded cover route/release recovery",
+    "Alpha4 same-service transitional gate defect (Alpha4 not landed; superseded by Gen4)"
+  ],
+  "remaining": [
+    {
+      "priority": "P0/P1",
+      "id": "opening-wake-async-lifetime",
+      "status": "SRC+TST+PEER",
+      "production": false
+    },
+    {
+      "priority": "P0/P1",
+      "id": "hinge-ingress-overflow-resync",
+      "status": "MANAGER_CORROBORATED",
+      "production": false
+    },
+    {
+      "priority": "P0/P1",
+      "id": "opening-terminal-inner-readiness",
+      "status": "RND_MODELLED",
+      "production": false
+    },
+    {
+      "priority": "P0/P1",
+      "id": "terminal-native-cover-landing",
+      "status": "RND_MODELLED",
+      "production": false
+    },
+    {
+      "priority": "P1",
+      "id": "diagnostic-export-completeness",
+      "status": "MANAGER+PEER_CORROBORATED",
+      "production": false
+    },
+    {
+      "priority": "P1",
+      "id": "public-hinge-source-liveness",
+      "status": "SRC+TST",
+      "production": false
+    },
+    {
+      "priority": "P1",
+      "id": "live-mirror-stop-lifecycle",
+      "status": "SRC+TST",
+      "production": false
+    },
+    {
+      "priority": "P1/P2",
+      "id": "foreground-runtime-liveness",
+      "status": "SRC+TST",
+      "production": false
+    },
+    {
+      "priority": "P1",
+      "id": "single-accessibility-surfacecontrol-host",
+      "status": "ARCHITECTURE_RND",
+      "production": false
+    },
+    {
+      "priority": "P1/P2",
+      "id": "presentation-time-visual-phase",
+      "status": "MODELED_DEVICE_VALIDATION_REQUIRED",
+      "production": false
+    }
+  ],
+  "partially_absorbed": [
+    "renderer MAX_TILT=60f is already in production",
+    "ordered hinge ingress exists, but overflow resync contract is not fixed",
+    "Gen4 panel authority incorporates daemon-restart recovery direction"
+  ]
+}
