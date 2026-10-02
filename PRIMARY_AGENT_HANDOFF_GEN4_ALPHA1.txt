@@ -33,3 +33,6 @@ REVISION 2
 - Import all support files, then commit APPLY_GEN4_ALPHA1_NOW.txt last so the dedicated workflow reruns.
 
 V3: Import over V2. Commit all support files first and APPLY_GEN4_ALPHA1_NOW.txt last. V3 fixes only missing retry declarations revealed by the Kotlin compile gate; do not alter the Gen4 authority design while applying.
+
+REVISION 4 NOTE
+The V3 deployment patch applied successfully but a final postcondition expected four total references to gen4RouteRetryCount; the correct patched source contains five. V4 checks the declaration itself exactly once instead, avoiding a brittle usage-count assertion. Runtime architecture and payload are unchanged.

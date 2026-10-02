@@ -116,3 +116,6 @@ The first deployment attempt reached the patcher final safety check and failed o
 
 REVISION 3 NOTE
 The second deployment reached Kotlin compilation and exposed missing retry declarations in the patcher. V3 adds those declarations and explicit postconditions so this cannot recur. Gen4 panel-authority behavior is otherwise unchanged.
+
+REVISION 4 NOTE
+The V3 deployment patch applied successfully but a final postcondition expected four total references to gen4RouteRetryCount; the correct patched source contains five. V4 checks the declaration itself exactly once instead, avoiding a brittle usage-count assertion. Runtime architecture and payload are unchanged.
