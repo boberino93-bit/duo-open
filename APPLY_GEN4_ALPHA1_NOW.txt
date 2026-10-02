@@ -1,0 +1,3 @@
+GEN4_ALPHA1_PANEL_AUTHORITY
+Upload/commit this sentinel LAST after all other files in this package are present at repository root.
+Its main-branch change is the only automatic trigger for the Gen4 Alpha1 apply workflow.

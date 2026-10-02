@@ -1,0 +1,42 @@
+GEN4 ALPHA1 PRE-DEPLOYMENT VALIDATION
+====================================
+
+Research/audit basis:
+- all 62 Kotlin production files on live main were statically scanned;
+- all 15 existing unit-test files were enumerated and their test coverage reviewed;
+- key race surfaces were reread multiple times: FoldOverlayService,
+  Fold7ContinuityCoordinator, DuoShellService, ShizukuBridge,
+  Fold7CoverPanelLease, Fold7CoverLeaseSnapshotGate and readiness logic;
+- live Alpha3 dedicated workflow previously passed full unit/build gate;
+- Alpha4 failed before Gradle/runtime commit and app/** remained Alpha3.
+
+Concrete issues Gen4 addresses:
+1. app could arm before asynchronous cover-lease reconciliation completed;
+2. Shizuku State.Ready may be emitted before the user-service binder is usable;
+3. app process and shell daemon have independent lifetimes;
+4. onPrivilegedDaemonRestart() existed in the legacy lease model but was not wired into daemon startup;
+5. SHIZUKU_DESTROY stopped the cover executor without first guaranteeing route normalization;
+6. release/recovery could rely on a future topology callback that may never arrive;
+7. the app still participated in privileged cover lease adoption/release instead of sending semantic intents.
+
+Local Gen4 pure-model validation:
+- Fold7PanelAuthorityGen4.kt compiles with kotlinc;
+- custom authority state-machine harness: PASS;
+- Fold7PanelAuthorityGen4Test.kt compiles against a minimal JUnit API stub: PASS;
+- patcher Python syntax compilation: PASS;
+- every exact live-source replacement anchor checked unique against main: PASS.
+
+GitHub Actions required before runtime acceptance:
+- exact touched-blob baseline verification;
+- support checksum verification;
+- patcher postconditions;
+- no unexpected app files changed;
+- focused Gen4 + existing ownership/hinge/controller tests;
+- complete testFullDebugUnitTest;
+- assembleFullDebug;
+- app-only bot commit;
+- APK SHA-256 artifact.
+
+Physical Fold7 testing remains mandatory after CI. CI cannot prove Samsung route-publication
+latency, panel wake latency, visual crossover quality, or vendor-specific remap behavior.
+- new authority model fixed-seed 100,000-operation intent fuzz: PASS locally.
