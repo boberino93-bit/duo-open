@@ -1,0 +1,38 @@
+PRIMARY AGENT HANDOFF — GEN4 ALPHA1
+==================================
+
+Treat live GitHub main as truth. This package was generated against:
+44f6d52abbf5de4cad36b0309b4d923d70f83d78
+
+Do not deploy Alpha4 first. Gen4 Alpha1 supersedes the Alpha4 recovery experiment and includes the
+underlying process-recovery requirement at the daemon ownership boundary.
+
+Primary integration authority remains unchanged: the workflow may commit runtime app/** only after
+its exact-baseline, focused-test, full-test and assemble gates succeed.
+
+IMPORTANT TRIGGER RULE:
+APPLY_GEN4_ALPHA1_NOW.txt MUST be uploaded/committed last. The workflow intentionally triggers only
+on that sentinel so changing a patcher/payload cannot silently fail to start a new run.
+
+If main app/** has drifted from the pinned blob hashes, do not edit the hashes to force deployment.
+Reconstruct current main, compare the new changes, and regenerate the package.
+
+After a green run, verify:
+- main version 4.0.0-alpha1-zfold7 / versionCode 41;
+- bot commit message: Move Fold7 panel authority into the Gen4 shell daemon;
+- artifact DuoOpen-ZFold7-4.0.0-alpha1 exists and is not expired;
+- BUILD-INFO.txt commit equals the new runtime commit.
+
+Do not treat the known-red legacy "Build Z Fold 7 Motion-Gated Cover Power 1.3.16" replay workflow
+as a Gen4 failure. The dedicated Gen4 workflow owns acceptance and independently runs the full
+Gradle test/build gate.
+
+REVISION 2
+- Corrects an overbroad patcher postcondition that rejected the existing topology read `display.state != Display.STATE_OFF`.
+- No Gen4 architecture/runtime payload behavior changed.
+- Import all support files, then commit APPLY_GEN4_ALPHA1_NOW.txt last so the dedicated workflow reruns.
+
+V3: Import over V2. Commit all support files first and APPLY_GEN4_ALPHA1_NOW.txt last. V3 fixes only missing retry declarations revealed by the Kotlin compile gate; do not alter the Gen4 authority design while applying.
+
+REVISION 4 NOTE
+The V3 deployment patch applied successfully but a final postcondition expected four total references to gen4RouteRetryCount; the correct patched source contains five. V4 checks the declaration itself exactly once instead, avoiding a brittle usage-count assertion. Runtime architecture and payload are unchanged.

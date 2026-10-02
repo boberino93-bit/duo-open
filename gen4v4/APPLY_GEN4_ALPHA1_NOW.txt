@@ -1,0 +1,4 @@
+GEN4_ALPHA1_PANEL_AUTHORITY_V4
+Upload/commit this sentinel LAST after all other files in this package are present at repository root.
+Its main-branch change is the automatic trigger for the corrected Gen4 Alpha1 apply workflow.
+Revision 4 replaces the brittle total-reference count for gen4RouteRetryCount with an exact declaration-presence postcondition. Runtime architecture is unchanged.

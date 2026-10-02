@@ -1,0 +1,234 @@
+name: Apply Duo Open Gen4 Alpha1 Panel Authority
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "APPLY_GEN4_ALPHA1_NOW.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: duo-open-gen4-alpha1-panel-authority
+  cancel-in-progress: false
+
+env:
+  DUO_DIAGNOSTIC_UPLOAD_URL: ${{ vars.DUO_DIAGNOSTIC_UPLOAD_URL }}
+  DUO_DIAGNOSTIC_INGEST_KEY: ${{ secrets.DUO_DIAGNOSTIC_INGEST_KEY }}
+
+jobs:
+  apply-test-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Verify exact Gen3 Alpha3 runtime baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BASE="44f6d52abbf5de4cad36b0309b4d923d70f83d78"
+          git merge-base --is-ancestor "$BASE" HEAD
+
+          check_blob() {
+            local path="$1"
+            local expected="$2"
+            local actual
+            actual="$(git hash-object "$path")"
+            if [[ "$actual" != "$expected" ]]; then
+              echo "ERROR: Gen4 baseline source drift: $path"
+              echo "expected=$expected"
+              echo "actual=$actual"
+              exit 1
+            fi
+          }
+
+          check_blob app/build.gradle.kts ad3d7e60b427ed9b2de51d0e94944f600363f345
+          check_blob app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt 22426e1f24b51d4a921b7d565ac811ee7fbfb050
+          check_blob app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt e759bb85726a489959bf03248d3ae454d5cd3985
+          check_blob app/src/full/java/com/duoopen/shell/DuoShellService.kt 8861092dad4011fbaacd4d1ef3247bd6ea33faaa
+          check_blob app/src/full/java/com/duoopen/shell/ShizukuBridge.kt a9aef224442d36b8676b053a7c2acb386441c301
+          check_blob app/src/full/java/com/duoopen/shell/ShellProtocol.kt fb02673e47bae4140891f6b61cb67eceba44c73d
+
+          test ! -e app/src/full/java/com/duoopen/shell/Fold7PanelAuthorityGen4.kt
+          test ! -e app/src/test/java/com/duoopen/shell/Fold7PanelAuthorityGen4Test.kt
+
+          echo "GEN4 ALPHA1 BASELINE: PASS"
+
+      - name: Verify Gen4 support-file checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum -c GEN4-SUPPORT-SHA256.txt
+
+      - name: Validate patcher syntax
+        run: python3 -m py_compile tools/apply_gen4_alpha1.py
+
+      - name: Apply Gen4 panel-authority architecture
+        run: python3 tools/apply_gen4_alpha1.py
+
+      - name: Validate Gen4 invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          grep -F 'versionCode = 41' app/build.gradle.kts
+          grep -F 'versionName = "4.0.0-alpha1-zfold7"' app/build.gradle.kts
+
+          grep -F 'internal class Fold7PanelAuthorityGen4' \
+            app/src/full/java/com/duoopen/shell/Fold7PanelAuthorityGen4.kt
+          grep -F 'const val COVER_PANEL_GEN4 = 18' \
+            app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+          grep -F 'legacy cover mutation rejected: Gen4 panel authority is active' \
+            app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'ensureGen4StartupRecovered(' \
+            app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'gen4ShutdownCleanup()' \
+            app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'coverPanelStatusGen4(' \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'prepareCoverPanelGen4(' \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'reassertCoverPanelGen4(' \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'returnCoverPanelGen4(' \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+
+          if grep -Fq 'continuityAutoArmAttempted' \
+            app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt; then
+            echo "ERROR: immediate pre-admission startup arm survived"
+            exit 1
+          fi
+
+          if grep -Eq 'prewarmSecondaryDisplayV4\(|ensureSecondaryDisplayHeldV3\(|releaseSecondaryDisplayV3\(|reconcileSecondaryDisplayLeaseV3\(' \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt; then
+            echo "ERROR: coordinator still owns a legacy cover mutation path"
+            exit 1
+          fi
+
+          # Preserve the field-measured Gen3 geometry policy exactly.
+          grep -F 'INNER_WAKE_MIN_DEG = 3f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'INNER_HANDOFF_MIN_DEG = 8f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'COVER_PREWARM_DEG = 174f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'COVER_VISUAL_START_DEG = 135f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'OPEN_LATCH_DEG = 172f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'OPEN_REARM_DEG = 166f' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+
+          # New code may use the already-proven logical power-reset primitive,
+          # but must never introduce raw physical OFF or task migration.
+          if git diff -U0 -- app | grep '^+' | grep -E 'moveTaskToDisplay|Display\.STATE_OFF|setDisplayPowerMode.*[, (]0[), ]'; then
+            echo "ERROR: forbidden physical-off/task-migration behavior introduced"
+            exit 1
+          fi
+
+          ALLOWED='^(app/build.gradle.kts|app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt|app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt|app/src/full/java/com/duoopen/shell/DuoShellService.kt|app/src/full/java/com/duoopen/shell/ShizukuBridge.kt|app/src/full/java/com/duoopen/shell/ShellProtocol.kt|app/src/full/java/com/duoopen/shell/Fold7PanelAuthorityGen4.kt|app/src/test/java/com/duoopen/shell/Fold7PanelAuthorityGen4Test.kt)$'
+          unexpected="$(git diff --name-only -- app | grep -Ev "$ALLOWED" || true)"
+          if [[ -n "$unexpected" ]]; then
+            echo "ERROR: unexpected runtime files changed"
+            echo "$unexpected"
+            exit 1
+          fi
+
+          git diff --check
+          git diff --stat
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+
+      - name: Run focused Gen4 authority tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew testFullDebugUnitTest --tests '*Fold7PanelAuthorityGen4Test' --stacktrace
+          ./gradlew testFullDebugUnitTest --tests '*Fold7ContinuityControllerTest' --stacktrace
+          ./gradlew testFullDebugUnitTest --tests '*Fold7CoverPanelLeaseV4Test' --stacktrace
+          ./gradlew testFullDebugUnitTest --tests '*Fold7MirrorLeaseArbiterTest' --stacktrace
+          ./gradlew testFullDebugUnitTest --tests '*Fold7AngleAuthorityTest' --stacktrace
+          ./gradlew testFullDebugUnitTest --tests '*Fold7HingeIngressBatchTest' --stacktrace
+
+      - name: Run full Gen4 gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Commit and push validated Gen4 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add app
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+
+          if git diff --cached --name-only | grep -qE '^(\.github/|tools/|payload_gen4/|GEN4-|APPLY_GEN4_)'; then
+            echo "ERROR: support files unexpectedly staged with runtime"
+            exit 1
+          fi
+
+          git commit -m "Move Fold7 panel authority into the Gen4 shell daemon"
+          git push origin HEAD:main
+
+      - name: Prepare Gen4 Alpha1 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          OUT="fold7-gen4-alpha1"
+          mkdir -p "$OUT"
+
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+
+          DEST="$OUT/DuoOpen-ZFold7-4.0.0-alpha1-debug.apk"
+          cp "$APK" "$DEST"
+          sha256sum "$DEST" > "$OUT/APK-SHA256.txt"
+
+          {
+            echo "version=4.0.0-alpha1-zfold7"
+            echo "versionCode=41"
+            echo "commit=$(git rev-parse HEAD)"
+            echo "baseline=44f6d52abbf5de4cad36b0309b4d923d70f83d78"
+            echo "target=Samsung Galaxy Z Fold7"
+            echo "architecture=daemon-owned-panel-authority"
+            echo "ordering=shellSession+serviceEpoch+intentSequence"
+            echo "startupRecovery=actual-topology+bounded-normalization"
+            echo "coverPrepare=physical-first+fresh-route+hidden-readiness"
+            echo "release=logical-power-reset+bounded-reconcile"
+            echo "hingeAuthority=Gen3-preserved"
+            echo "hingeThresholds=Gen3-preserved"
+            echo "diagnosticUploadConfigured=$([[ -n "${DUO_DIAGNOSTIC_UPLOAD_URL:-}" ]] && echo true || echo false)"
+            echo
+            sha256sum "$DEST"
+          } > "$OUT/BUILD-INFO.txt"
+
+          cat "$OUT/BUILD-INFO.txt"
+
+      - name: Upload Gen4 Alpha1 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-4.0.0-alpha1
+          path: |
+            fold7-gen4-alpha1/DuoOpen-ZFold7-4.0.0-alpha1-debug.apk
+            fold7-gen4-alpha1/APK-SHA256.txt
+            fold7-gen4-alpha1/BUILD-INFO.txt
+          if-no-files-found: error
+          retention-days: 30

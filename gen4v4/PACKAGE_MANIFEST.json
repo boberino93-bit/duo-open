@@ -1,0 +1,20 @@
+{
+  "package": "DUO_OPEN_GEN4_ALPHA1_PANEL_AUTHORITY_V4",
+  "target": "Samsung Galaxy Z Fold7",
+  "baseline_main": "44f6d52abbf5de4cad36b0309b4d923d70f83d78",
+  "baseline_runtime": "3.0.0-alpha3-zfold7",
+  "target_runtime": "4.0.0-alpha1-zfold7",
+  "target_version_code": 41,
+  "production_authority": "primary-agent-gated-github-actions",
+  "architecture": "daemon-owned-panel-authority",
+  "trigger": "APPLY_GEN4_ALPHA1_NOW.txt uploaded last",
+  "preserves": [
+    "Gen3 ordered hinge authority",
+    "Gen3 controller thresholds",
+    "Gen3 frozen-frame shader path",
+    "Gen3 early opening wake",
+    "Gen3 close-cycle and visual callback fencing"
+  ],
+  "revision": 4,
+  "revision_note": "Patcher postcondition correction: require the Gen4 route-retry declaration exactly once instead of asserting a brittle total usage count. Runtime architecture is unchanged from V3."
+}
