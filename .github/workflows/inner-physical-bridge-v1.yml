@@ -10,6 +10,7 @@ on:
       - "tools/apply_inner_physical_bridge_v1_fixups.py"
       - "tools/apply_inner_physical_bridge_v1_protocol_compat.py"
       - "tools/prepare_inner_physical_bridge_v1_transformer.py"
+      - "tools/apply_inner_physical_bridge_v1_service_fixups.py"
       - "tools/apply_inner_wake_probe_v1.py"
       - "app/src/full/java/com/duoopen/overlay/Fold7OpeningWakeAttemptGate.kt"
   workflow_dispatch:
@@ -68,6 +69,9 @@ jobs:
           python3 tools/apply_inner_physical_bridge_v1.py --self-test
           python3 tools/apply_inner_physical_bridge_v1.py --repo . --check
           python3 tools/apply_inner_physical_bridge_v1.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo .
           python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase post
           python3 tools/apply_inner_physical_bridge_v1_fixups.py --self-test
           python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo . --check
