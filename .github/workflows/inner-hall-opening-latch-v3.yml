@@ -1,0 +1,143 @@
+name: Inner Hall Opening Latch V3
+
+on:
+  push:
+    branches:
+      - fix/inner-hall-opening-latch-v3-20261003
+    paths:
+      - ".github/workflows/inner-hall-opening-latch-v3.yml"
+      - "tools/apply_inner_hall_opening_latch_v3.py"
+      - "app/src/test/java/com/duoopen/overlay/Fold7HallOpeningLatchV3Test.kt"
+      - "tools/apply_inner_physical_bridge_v2.py"
+      - "tools/apply_inner_physical_bridge_v1.py"
+      - "tools/apply_inner_physical_bridge_v1_fixups.py"
+      - "tools/apply_inner_physical_bridge_v1_protocol_compat.py"
+      - "tools/prepare_inner_physical_bridge_v1_transformer.py"
+      - "tools/apply_inner_physical_bridge_v1_service_fixups.py"
+      - "tools/apply_inner_wake_probe_v1.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inner-hall-opening-latch-v3-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct deployed Beta2 runtime
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+
+      - name: Reapply validated optimization cycles A B C
+        run: |
+          set -euo pipefail
+          python3 tools/apply_runtime_optimization_cycle_a.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_b.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_c.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo .
+
+      - name: Reapply wake probe and physical bridge V1
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_wake_probe_v1.py --self-test
+          python3 tools/apply_inner_wake_probe_v1.py --repo . --check
+          python3 tools/apply_inner_wake_probe_v1.py --repo .
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --self-test
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo . --check
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase pre
+          python3 tools/apply_inner_physical_bridge_v1.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase post
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo .
+
+      - name: Reapply native-stack handoff V2
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_physical_bridge_v2.py --self-test
+          python3 tools/apply_inner_physical_bridge_v2.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v2.py --repo .
+
+      - name: Apply Hall opening latch V3
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_hall_opening_latch_v3.py --self-test
+          python3 tools/apply_inner_hall_opening_latch_v3.py --repo . --check
+          python3 tools/apply_inner_hall_opening_latch_v3.py --repo .
+          git diff --check
+          grep -F 'private var earlyOpeningLatched = false' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'earlyOpeningLatched || angle >= INNER_WAKE_MIN_DEG' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'fun onEarlyClosingEdge(' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'lid-switch-closed' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+
+      - name: Capture candidate diff and metadata
+        run: |
+          set -euo pipefail
+          mkdir -p inner-hall-opening-latch-v3
+          git diff -- app > inner-hall-opening-latch-v3/APPLIED-ANDROID-SOURCE.diff
+          git diff --stat -- app > inner-hall-opening-latch-v3/APPLIED-ANDROID-SOURCE.stat
+          sha256sum inner-hall-opening-latch-v3/APPLIED-ANDROID-SOURCE.diff > inner-hall-opening-latch-v3/APPLIED-ANDROID-SOURCE-SHA256.txt
+          {
+            echo "sourceHead=${GITHUB_SHA}"
+            echo "runtime=Beta2 + opt A/B/C + wake-probe-v1 + physical-bridge-v1 + handoff-v2 + hall-opening-latch-v3"
+            echo "fieldRootCause=accepted Hall opening was cancelled by stale Samsung native-cover topology at 0deg"
+            echo "fix=accepted early opening remains latched across stale native-cover topology"
+            echo "closeCancellation=authoritative SW_LID closed edge"
+            echo "physicalWake=UNCHANGED"
+            echo "bridgePresentation=UNCHANGED_FROM_V2"
+            echo "renderAngleMathChanges=NONE"
+            echo "closingThresholdChanges=NONE"
+            echo "mainBranchChanges=NONE"
+            echo "physicalFold7Validation=REQUIRED"
+          } > inner-hall-opening-latch-v3/BUILD-INFO.txt
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Full regression tests and APK build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package APK and hashes
+        run: |
+          set -euo pipefail
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" inner-hall-opening-latch-v3/DuoOpen-ZFold7-5.1.0-beta2-optABC-inner-physical-bridge-v2-hall-latch-v3-debug.apk
+          sha256sum inner-hall-opening-latch-v3/DuoOpen-ZFold7-5.1.0-beta2-optABC-inner-physical-bridge-v2-hall-latch-v3-debug.apk > inner-hall-opening-latch-v3/APK-SHA256.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-Inner-Hall-Opening-Latch-V3
+          path: inner-hall-opening-latch-v3/
+          if-no-files-found: error
+          retention-days: 30
