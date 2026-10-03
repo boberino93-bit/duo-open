@@ -31,24 +31,22 @@ def transform_shell(text: str) -> str:
 
     init {
 ''',
-        f'''    private val logicalLayoutTruthLock = Any()
+        '''    private val logicalLayoutTruthLock = Any()
     private var lastLogicalLayoutTruthOpeningAttempt = -1L
 
-    // {MARKER}: broad one-shot forensic sweep. It is deliberately gated per
-    // semantic opening and runs only after the existing early wake/route probes,
-    // S1B SurfaceFlinger truth, and S1E layout truth have already completed.
-    // Therefore it cannot change whether the immediate INNER route probe succeeds.
+    // STABILIZATION_S1G_FORENSIC_SUPERSET_V1: broad one-shot forensic sweep.
+    // It runs only after the existing early wake/route/SF/layout decisions.
     private val forensicTruthLock = Any()
     private var lastForensicTruthOpeningAttempt = -1L
 
-    init {{
+    init {
 ''',
         "S1G forensic gate",
     )
 
-    helper = f'''    // {MARKER}: diagnostic-only cross-layer snapshot. Commands are
-    // intentionally read-only and individually failure-tolerant. Each excerpt is
-    // capped so one unexpectedly verbose Samsung service cannot overflow Binder.
+    helper = r'''    // __MARKER__: diagnostic-only cross-layer snapshot. Commands are
+    // read-only and individually failure-tolerant. Excerpts are capped so one
+    // unexpectedly verbose Samsung service cannot overflow Binder.
     private data class ForensicTruth(
         val probed: Boolean,
         val probeStartMs: Long,
@@ -75,69 +73,100 @@ def transform_shell(text: str) -> str:
 
     private fun compactForensic(value: String, cap: Int): String =
         value.lineSequence()
-            .map {{ it.trim() }}
-            .filter {{ it.isNotBlank() }}
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
             .joinToString(" | ")
             .take(cap)
 
     private fun probeForensicTruth(
         openingAttempt: Long,
         wakeStartedMs: Long,
-    ): ForensicTruth {{
-        if (openingAttempt < 0L) {{
+    ): ForensicTruth {
+        if (openingAttempt < 0L) {
             return ForensicTruth(
-                false, -1L, -1L, null,
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null,
-                "opening attempt unavailable",
+                probed = false,
+                probeStartMs = -1L,
+                probeMs = -1L,
+                probeTimings = null,
+                stateBefore = null,
+                stateMid = null,
+                stateAfter = null,
+                deviceStateService = null,
+                displayFramework = null,
+                windowDisplays = null,
+                windowPolicy = null,
+                activityTasks = null,
+                powerManager = null,
+                inputViewports = null,
+                surfaceFlingerCore = null,
+                kernelDisplay = null,
+                deviceStateConfig = null,
+                overlayFoldConfig = null,
+                serviceDiscovery = null,
+                buildIdentity = null,
+                error = "opening attempt unavailable",
             )
-        }}
+        }
 
-        synchronized(forensicTruthLock) {{
-            if (lastForensicTruthOpeningAttempt == openingAttempt) {{
+        synchronized(forensicTruthLock) {
+            if (lastForensicTruthOpeningAttempt == openingAttempt) {
                 return ForensicTruth(
-                    false, -1L, -1L, null,
-                    null, null, null, null, null, null, null, null, null, null,
-                    null, null, null, null, null, null,
-                    null,
+                    probed = false,
+                    probeStartMs = -1L,
+                    probeMs = -1L,
+                    probeTimings = null,
+                    stateBefore = null,
+                    stateMid = null,
+                    stateAfter = null,
+                    deviceStateService = null,
+                    displayFramework = null,
+                    windowDisplays = null,
+                    windowPolicy = null,
+                    activityTasks = null,
+                    powerManager = null,
+                    inputViewports = null,
+                    surfaceFlingerCore = null,
+                    kernelDisplay = null,
+                    deviceStateConfig = null,
+                    overlayFoldConfig = null,
+                    serviceDiscovery = null,
+                    buildIdentity = null,
+                    error = null,
                 )
-            }}
+            }
             lastForensicTruthOpeningAttempt = openingAttempt
-        }}
+        }
 
         val probeStarted = SystemClock.elapsedRealtime()
         val probeStartMs = probeStarted - wakeStartedMs
         val timings = mutableListOf<String>()
 
-        fun snap(label: String, command: String, cap: Int): String {{
+        fun snap(label: String, command: String, cap: Int): String {
             val started = SystemClock.elapsedRealtime()
-            val value = runCatching {{
+            val value = runCatching {
                 compactForensic(runProbe(command), cap)
-            }}.getOrElse {{ error ->
-                "probe-error=${{error.javaClass.simpleName}}:${{error.message}}"
-            }}
-            timings += "$label=${{SystemClock.elapsedRealtime() - started}}ms"
+            }.getOrElse { error ->
+                "probe-error=${error.javaClass.simpleName}:${error.message}"
+            }
+            timings += "$label=${SystemClock.elapsedRealtime() - started}ms"
             return value
-        }}
+        }
 
-        return runCatching {{
+        return runCatching {
             val stateBefore = snap(
                 "state-before",
                 "cmd device_state state 2>/dev/null",
                 1500,
             )
 
-            // DeviceStateManager's dump distinguishes base, pending, committed,
-            // and override state. This catches policy latency and stale overrides.
+            // Distinguish provider/base, pending, committed and override state.
             val deviceStateService = snap(
                 "device-state-service",
                 "dumpsys device_state 2>/dev/null | head -n 260",
                 9000,
             )
 
-            // One targeted DisplayManager snapshot includes LogicalDisplayMapper,
-            // registered layouts, physical/logical identity, and display-power
-            // controller readiness without retaining giant brightness splines.
+            // Mapper/layout + physical/logical identity + display power readiness.
             val displayFramework = snap(
                 "display-framework",
                 "dumpsys display 2>/dev/null | " +
@@ -145,10 +174,10 @@ def transform_shell(text: str) -> str:
                     "mPendingDeviceState=|mDeviceStateToBeAppliedAfterBoot=|" +
                     "DeviceStateToLayoutMap:|Registered Layouts:|state\\(-?[0-9]+\\):|" +
                     "Logical Displays:|^[[:space:]]*Display [0-9]+:|mIsEnabled=|" +
-                    "mPrimaryDisplayDevice=|DisplayDeviceInfo\\{|uniqueId=|address \\{|" +
+                    "mPrimaryDisplayDevice=|DisplayDeviceInfo|uniqueId=|address|" +
                     "DisplayPowerController|mDisplayReadyLocked=|mPendingRequestLocked=|" +
                     "mPendingRequestChangedLocked=|mPendingUpdatePowerStateLocked=|" +
-                    "mPowerRequest=|mDisplayEnabled=|mIsEnabled=|mIsInTransition=|" +
+                    "mPowerRequest=|mDisplayEnabled=|mIsInTransition=|" +
                     "mScreenState=|mState=|mCommittedState=|mBrightnessState=' | head -n 320",
                 14000,
             )
@@ -159,9 +188,7 @@ def transform_shell(text: str) -> str:
                 1500,
             )
 
-            // WM answers a different question from DisplayManager: whether the
-            // display/configuration is ready for windows and whether a transition,
-            // freeze, or config wait is blocking visible content.
+            // Window readiness/configuration/transition state.
             val windowDisplays = snap(
                 "window-displays",
                 "dumpsys window displays 2>/dev/null | " +
@@ -172,8 +199,7 @@ def transform_shell(text: str) -> str:
                 10000,
             )
 
-            // Policy-level screen-on blockers can leave a powered/logical display
-            // black even after routing is correct.
+            // Screen-on/keyguard policy blockers.
             val windowPolicy = snap(
                 "window-policy",
                 "dumpsys window policy 2>/dev/null | " +
@@ -183,12 +209,11 @@ def transform_shell(text: str) -> str:
                 8000,
             )
 
-            // Determine whether Launcher/SystemUI/tasks have actually migrated to
-            // the INNER/default logical display when the panel becomes available.
+            // App/launcher task migration and resumed activity per display.
             val activityTasks = snap(
                 "activity-tasks",
                 "dumpsys activity activities 2>/dev/null | " +
-                    "grep -E -i 'Display #[0-9]+|RootTask|Task\\{|mResumedActivity|" +
+                    "grep -E -i 'Display #[0-9]+|RootTask|Task|mResumedActivity|" +
                     "topResumedActivity|mLastPausedActivity|realActivity=|" +
                     "homeActivity|launcher|systemui' | head -n 260",
                 10000,
@@ -204,8 +229,7 @@ def transform_shell(text: str) -> str:
                 8500,
             )
 
-            // Input viewports provide an independent physical<->logical routing
-            // signal and catch cases where display routing changes without input.
+            // Independent physical/logical display routing from InputManager.
             val inputViewports = snap(
                 "input-viewports",
                 "dumpsys input 2>/dev/null | " +
@@ -214,8 +238,7 @@ def transform_shell(text: str) -> str:
                 7500,
             )
 
-            // S1B's --hwclayers parser could not identify Samsung's active display.
-            // Ask the main SF dump for active-display/layer-stack clues as a fallback.
+            // Fallback for Samsung builds where --hwclayers did not label active.
             val surfaceFlingerCore = snap(
                 "surfaceflinger-core",
                 "dumpsys SurfaceFlinger 2>/dev/null | " +
@@ -224,19 +247,18 @@ def transform_shell(text: str) -> str:
                 8500,
             )
 
-            // Optional kernel/HWC cross-check. Missing nodes or permission errors are
-            // expected and are retained as evidence rather than treated as failure.
+            // Best-effort kernel/HWC cross-check.
             val kernelDisplay = snap(
                 "kernel-display",
                 "sh -c 'for p in /sys/class/drm/*/status /sys/class/drm/*/enabled " +
                     "/sys/class/graphics/fb*/blank /sys/class/backlight/*/actual_brightness " +
-                    "/sys/class/backlight/*/brightness; do if [ -r \"\\$p\" ]; then " +
-                    "printf \"%s=\" \"\\$p\"; cat \"\\$p\"; fi; done' 2>/dev/null",
+                    "/sys/class/backlight/*/brightness; do if [ -r \"\$p\" ]; then " +
+                    "printf \"%s=\" \"\$p\"; cat \"\$p\"; fi; done' 2>/dev/null",
                 6000,
             )
 
-            // Vendor/data device-state configuration may expose the exact predicates
-            // or thresholds Samsung uses to leave TENT and enter HALF_OPENED.
+            // Try all standard DeviceState configuration locations. If Fold7 uses
+            // XML predicates, this can expose the exact angle/sensor conditions.
             val deviceStateConfig = snap(
                 "device-state-config",
                 "sh -c 'for p in " +
@@ -244,26 +266,23 @@ def transform_shell(text: str) -> str:
                     "/vendor/etc/devicestate/device_state_configuration.xml " +
                     "/product/etc/devicestate/device_state_configuration.xml " +
                     "/system_ext/etc/devicestate/device_state_configuration.xml; do " +
-                    "if [ -r \"\\$p\" ]; then echo FILE=\"\\$p\"; cat \"\\$p\"; fi; done' 2>/dev/null",
+                    "if [ -r \"\$p\" ]; then echo FILE=\"\$p\"; cat \"\$p\"; fi; done' 2>/dev/null",
                 12000,
             )
 
-            // Resource overlays control which states Android treats as folded,
-            // half-folded, open, concurrent, wake-up, and sleep states. Lookup is
-            // best-effort because some Samsung builds hide array resources here.
+            // Overlay arrays define Android's semantic treatment of fold states.
             val overlayFoldConfig = snap(
                 "overlay-fold-config",
                 "sh -c 'for r in config_foldedDeviceStates config_halfFoldedDeviceStates " +
                     "config_openDeviceStates config_concurrentDisplayDeviceStates " +
                     "config_deviceStatesOnWhichToWakeUp config_deviceStatesOnWhichToSleep; do " +
-                    "echo RESOURCE=\\$r; cmd overlay lookup android android:array/\\$r 2>/dev/null || true; done; " +
+                    "echo RESOURCE=\$r; cmd overlay lookup android android:array/\$r 2>/dev/null || true; done; " +
                     "echo RESOURCE=config_windowManagerPauseRotationWhenUnfolding; " +
                     "cmd overlay lookup android android:bool/config_windowManagerPauseRotationWhenUnfolding 2>/dev/null || true'",
                 7000,
             )
 
-            // Discover Samsung-specific fold/display services now so a later phase
-            // does not require another APK merely to learn their service names.
+            // Discover Samsung-specific services for the next investigation phase.
             val serviceDiscovery = snap(
                 "service-discovery",
                 "dumpsys -l 2>/dev/null | " +
@@ -273,10 +292,10 @@ def transform_shell(text: str) -> str:
 
             val buildIdentity = snap(
                 "build-identity",
-                "sh -c 'echo fingerprint=$(getprop ro.build.fingerprint); " +
-                    "echo incremental=$(getprop ro.build.version.incremental); " +
-                    "echo security_patch=$(getprop ro.build.version.security_patch); " +
-                    "echo oneui=$(getprop ro.build.version.oneui)'",
+                "sh -c 'echo fingerprint; getprop ro.build.fingerprint; " +
+                    "echo incremental; getprop ro.build.version.incremental; " +
+                    "echo security_patch; getprop ro.build.version.security_patch; " +
+                    "echo oneui; getprop ro.build.version.oneui'",
                 3500,
             )
 
@@ -310,20 +329,34 @@ def transform_shell(text: str) -> str:
                 buildIdentity = buildIdentity,
                 error = null,
             )
-        }}.getOrElse {{ error ->
+        }.getOrElse { error ->
             ForensicTruth(
-                true,
-                probeStartMs,
-                SystemClock.elapsedRealtime() - probeStarted,
-                timings.joinToString(","),
-                null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null,
-                "${{error.javaClass.simpleName}}: ${{error.message}}",
+                probed = true,
+                probeStartMs = probeStartMs,
+                probeMs = SystemClock.elapsedRealtime() - probeStarted,
+                probeTimings = timings.joinToString(","),
+                stateBefore = null,
+                stateMid = null,
+                stateAfter = null,
+                deviceStateService = null,
+                displayFramework = null,
+                windowDisplays = null,
+                windowPolicy = null,
+                activityTasks = null,
+                powerManager = null,
+                inputViewports = null,
+                surfaceFlingerCore = null,
+                kernelDisplay = null,
+                deviceStateConfig = null,
+                overlayFoldConfig = null,
+                serviceDiscovery = null,
+                buildIdentity = null,
+                error = "${error.javaClass.simpleName}: ${error.message}",
             )
-        }}
-    }}
+        }
+    }
 
-'''
+'''.replace("__MARKER__", MARKER)
 
     text = replace_once(
         text,
@@ -356,8 +389,7 @@ def transform_shell(text: str) -> str:
                 wakeStartedMs = t0,
             )
 
-        // S1G deliberately starts only after all pre-existing early wake, route,
-        // SurfaceFlinger, and LogicalDisplayMapper decisions have already run.
+        // S1G begins only after all pre-existing wake/route/SF/layout decisions.
         val forensicTruth =
             probeForensicTruth(
                 openingAttempt = openingAttempt,
@@ -445,7 +477,7 @@ def transform_coord(text: str) -> str:
 
 
 def validate(shell: str, coord: str) -> None:
-    shell_needles = (
+    for needle in (
         MARKER,
         "probeForensicTruth",
         'runProbe("cmd device_state state 2>/dev/null")',
@@ -462,38 +494,34 @@ def validate(shell: str, coord: str) -> None:
         "config_concurrentDisplayDeviceStates",
         '"dumpsys -l 2>/dev/null | " +',
         'putString("forensicDisplayFramework", forensicTruth.displayFramework)',
-        'putString("forensicStateConfig", forensicTruth.deviceStateConfig)' if False else 'putString("forensicDeviceStateConfig", forensicTruth.deviceStateConfig)',
+        'putString("forensicDeviceStateConfig", forensicTruth.deviceStateConfig)',
         "STABILIZATION_S1F_LAYOUT_MAP_TRUTH_V1",
         "probeSurfaceFlingerPowerTruth",
         "tx.setAlpha(layer, 0.0f)",
         "tx.setLayer(layer, Int.MIN_VALUE + 64)",
-    )
-    for needle in shell_needles:
+    ):
         if needle not in shell:
             raise RuntimeError(f"missing S1G shell invariant: {needle}")
 
-    forbidden = (
+    for forbidden in (
         "STABILIZATION_S1C_ACTIVE_TRANSFER_V1",
         "STABILIZATION_S1D_REAL_INNER_EDGE_V1",
         'cmd device_state state 4',
         'cmd device_state state 5',
         'cmd device_state state reset',
         'cmd device_state base-state',
-        'setDisplayPowerMode(token, 0)',
-    )
-    for needle in forbidden:
-        if needle in shell:
-            raise RuntimeError(f"S1G unexpectedly contains behavior mutation: {needle}")
+    ):
+        if forbidden in shell:
+            raise RuntimeError(f"S1G unexpectedly contains behavior mutation: {forbidden}")
 
-    coord_needles = (
+    for needle in (
         "STABILIZATION_S1G_COORD_TELEMETRY",
         "forensicProbed=",
         "forensicStateBefore=",
         "forensicDisplay=",
         "forensicWindowDisplays=",
         "forensicStateConfig=",
-    )
-    for needle in coord_needles:
+    ):
         if needle not in coord:
             raise RuntimeError(f"missing S1G coordinator invariant: {needle}")
 
