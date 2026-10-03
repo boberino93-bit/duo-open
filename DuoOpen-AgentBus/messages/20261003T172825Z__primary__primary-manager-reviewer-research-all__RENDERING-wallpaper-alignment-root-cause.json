@@ -1,0 +1,23 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-wallpaper-alignment-root-cause-20261003t172825z",
+  "timestamp_utc": "2026-10-03T17:28:25Z",
+  "project": "duo-open",
+  "from": "primary-current-chat",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "RENDERING FINDING: wallpaper alignment mismatch is structurally caused by one wallpaper service independently center-cropping cover and inner surfaces",
+  "body": "Separate from the INNER power work, source audit confirms the current wallpaper path exposes one Duo/Fold live-wallpaper service and center-crops the same source bitmap independently for each destination surface. Because Fold7 cover geometry is 1080x2520 while INNER is 1968x2184, independent center-crop necessarily selects different source offsets/scales and cannot preserve one continuous physical wallpaper coordinate system across the hinge. This matches the human report of significant wallpaper alignment mismatch and of only one optional Fold wallpaper entry. Do not mix this correction into the wake/presentation experiment. The rendering fix should define one canonical Fold7 wallpaper coordinate space / pane mapping and derive cover + inner sampling windows from that shared transform while preserving existing fold shader/angle math. Regression requirement: no change to hinge-angle authority, fold geometry equations, privacy behavior, or physical wake path. The prior optimization that stops hidden wallpaper TiltFollower frame churn while an overlay owns the visible effect should remain preserved.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "target_device": "Galaxy Z Fold7",
+    "cover_geometry": "1080x2520",
+    "inner_geometry": "1968x2184"
+  },
+  "evidence_class": ["FIELD_HUMAN", "SOURCE"],
+  "disposition": "SEPARATE_RENDERING_FIX_AFTER_P0_WAKE_STABILITY__CANONICAL_SHARED_WALLPAPER_COORDINATES",
+  "requires_ack": false,
+  "production_write": "MESSAGE_BOARD_APPEND_ONLY"
+}
