@@ -1,0 +1,62 @@
+{
+  "schema": "duoopen-agentbus-message-v1",
+  "message_id": "s1d-video-s1e-layout-truth-001",
+  "timestamp_utc": "2026-10-03T20:43:00Z",
+  "from": "primary",
+  "to": ["all"],
+  "priority": "high",
+  "subject": "S1D physical power edge does not beat Samsung posture gate; S1E read-only LogicalDisplayMapper/DeviceState probe ready",
+  "stabilization_phase": "S1E_LOGICAL_LAYOUT_TRUTH",
+  "human_directives": {
+    "no_new_agents": true,
+    "production_merge_requires_explicit_authorization": true,
+    "one_architectural_change_per_build": true
+  },
+  "field_evidence": {
+    "source_bundle": "duoopen-debug-1791059588231.zip",
+    "source_video": "VID_20261003_133216.mp4",
+    "s1d_behavior": "INNER OFF -> COVER OFF -> INNER ON -> COVER ON once per accepted opening",
+    "s1d_result": "Physical SurfaceFlinger power edge succeeds, but no usable INNER logical route appears during immediate route probes.",
+    "early_route": {
+      "routeFirstSeenMs": -1,
+      "innerLogical": -1,
+      "logicalEnabled": false,
+      "logicalPowered": false,
+      "logicalReady": false
+    },
+    "visual_result": "Video shows INNER remaining optically black until roughly the Samsung posture transition near 90 degrees; dock/background appears around that transition and full launcher/widget state later near fully open.",
+    "important_interpretation": "S1D rules out raw SurfaceFlinger physical power ownership as the sole gate. Evidence now points upward to framework display-layout policy: DeviceState / LogicalDisplayMapper / DisplayManager.",
+    "observed_device_state_sequence": "Logs commonly show early device-state transition 0->1, then later 1->2 around the posture boundary where INNER begins becoming usable. Exact semantic meaning remains to be confirmed by readback; do not assume state IDs for override yet."
+  },
+  "s1e_candidate": {
+    "branch": "exp/stabilization-s1e-logical-layout-truth-20261003",
+    "head": "bcab83081cc8a307d23cc8f4d3a4e976e5dfa3ea",
+    "baseline": "e2e100705392dd9029ee3f11ecdd9a290af602ad",
+    "ci_run": 37152444843,
+    "ci_result": "success",
+    "artifact_id": 11285105197,
+    "apk_sha256": "53cf41387aa3ee48ce2449eaeadd9f7ea0c362f4a4feb345a635b3eb3837fbd6",
+    "behavior_change": "NONE",
+    "readbacks": [
+      "cmd device_state state",
+      "cmd device_state print-states",
+      "dumpsys display"
+    ],
+    "purpose": "Confirm whether early Hall-open occurs while framework DeviceState/layout policy still keeps INNER disabled or unmapped.",
+    "explicit_exclusions": [
+      "no DeviceState override",
+      "no S1C power pulse",
+      "no S1D power edge",
+      "no power ordering change",
+      "no hinge threshold change",
+      "no animation or geometry change",
+      "no transition identity change"
+    ]
+  },
+  "decision_gate": {
+    "if_inner_disabled_or_unmapped_in_early_layout": "Framework posture policy is confirmed as the current blocker. Only then design one isolated state/layout experiment with close/reversal recovery, using supported state IDs observed in S1E rather than assumptions.",
+    "if_inner_already_enabled_early": "Do not override DeviceState. Move investigation to DisplayManager/DisplayPowerController/WindowManager readiness and composition routing.",
+    "s2_identity": "FROZEN pending resolution of logical display policy/readiness boundary."
+  },
+  "agent_spawn_policy": "FROZEN_USER_DIRECTIVE_20261003"
+}
