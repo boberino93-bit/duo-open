@@ -19,15 +19,16 @@ def transform(text: str) -> str:
     if MARKER in text:
         return text
 
-    # The bridge transformer intentionally uses raw Python strings. Collapse
-    # its doubled backslash to Kotlin's single '\$' interpolation escape.
+    # The bridge transformer intentionally uses a raw Python string. It emits
+    # two backslashes before Kotlin '$'. Collapse that to Kotlin's single '\$'
+    # interpolation escape before compilation.
     text = text.replace(
-        r'"Landroid/view/SurfaceControl\\$Builder;"',
-        r'"Landroid/view/SurfaceControl\$Builder;"',
+        '"Landroid/view/SurfaceControl\\\\$Builder;"',
+        '"Landroid/view/SurfaceControl\\$Builder;"',
     )
     text = text.replace(
-        r'"Landroid/view/SurfaceControl\\$Transaction;"',
-        r'"Landroid/view/SurfaceControl\$Transaction;"',
+        '"Landroid/view/SurfaceControl\\\\$Transaction;"',
+        '"Landroid/view/SurfaceControl\\$Transaction;"',
     )
 
     old = '''            val layer = innerPhysicalBridge
@@ -93,22 +94,29 @@ def apply(repo: Path, check: bool) -> None:
     after = transform(before)
     if 'invoke(tx, token, 0)' not in after:
         raise RuntimeError("native stack restore missing")
+    if 'SurfaceControl\\$Builder;' not in after:
+        raise RuntimeError("Kotlin-safe Builder descriptor missing")
+    if 'SurfaceControl\\$Transaction;' not in after:
+        raise RuntimeError("Kotlin-safe Transaction descriptor missing")
     if not check:
         path.write_text(after, encoding="utf-8")
 
 
 def self_test() -> None:
-    sample = r'''"Landroid/view/SurfaceControl\\$Builder;"
-"Landroid/view/SurfaceControl\\$Transaction;"'''
-    fixed = sample.replace(
-        r'"Landroid/view/SurfaceControl\\$Builder;"',
-        r'"Landroid/view/SurfaceControl\$Builder;"',
-    ).replace(
-        r'"Landroid/view/SurfaceControl\\$Transaction;"',
-        r'"Landroid/view/SurfaceControl\$Transaction;"',
+    sample = (
+        '"Landroid/view/SurfaceControl\\\\$Builder;"\n'
+        '"Landroid/view/SurfaceControl\\\\$Transaction;"'
     )
-    assert r'SurfaceControl\$Builder' in fixed
-    assert r'SurfaceControl\$Transaction' in fixed
+    fixed = sample.replace(
+        '"Landroid/view/SurfaceControl\\\\$Builder;"',
+        '"Landroid/view/SurfaceControl\\$Builder;"',
+    ).replace(
+        '"Landroid/view/SurfaceControl\\\\$Transaction;"',
+        '"Landroid/view/SurfaceControl\\$Transaction;"',
+    )
+    assert 'SurfaceControl\\$Builder' in fixed
+    assert 'SurfaceControl\\$Transaction' in fixed
+    assert 'SurfaceControl\\\\$Builder' not in fixed
     print("inner physical bridge v1 fixups: PASS")
 
 
