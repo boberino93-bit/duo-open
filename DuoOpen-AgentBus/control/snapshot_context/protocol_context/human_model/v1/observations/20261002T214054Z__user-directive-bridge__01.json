@@ -1,0 +1,16 @@
+{
+  "schema": "duoopen-human-input-observation/v1",
+  "id": "obs-20261002t214054z-01",
+  "timestamp_utc": "2026-10-02T21:40:54Z",
+  "agent": "user-directive-bridge",
+  "request_type": "enhancement",
+  "normalized_intent": "Record project-specific question/mannerism/input patterns and build a model of likely future user questions; make initiation packages load the model automatically.",
+  "communication_signals": [
+    "self_replication",
+    "predictive_followup_model",
+    "action_first"
+  ],
+  "raw_excerpt": "actively record my mannerisms and questions and input so you can start creating a model of questions you think I might ask",
+  "sensitive_content_removed": false,
+  "actual_next_request_archetype": "Grant standing autonomy for communication-model improvements."
+}

@@ -1,0 +1,64 @@
+{
+  "schema": "duoopen-self-replication-manifest/v1",
+  "created_utc": "2026-10-02T21:40:54Z",
+  "standing_user_authorization": true,
+  "scope": "internal agent communication models",
+  "required_files": [
+    {
+      "path": "COMMUNICATION_MODEL_AUTONOMY_V1.md",
+      "sha256": "5939a6847bd3dcb180a840e360d87d90b2e44a3bc1a4c020e1366a2d212aa6d8",
+      "bytes": 3393
+    },
+    {
+      "path": "HUMAN_INTERACTION_ANTICIPATION_PROTOCOL_V1.md",
+      "sha256": "24e4bb6f5e98fdaff599b73877aee48db54708b29f5a84c1321e954df196691f",
+      "bytes": 3846
+    },
+    {
+      "path": "DEPLOYMENT_AGENTBUS_SNAPSHOT_CONTRACT_V1.md",
+      "sha256": "6381e2619b0be0fd7bdb9201f0557e2532ce55b052c2bf8f518bbc8758f57c75",
+      "bytes": 3279
+    },
+    {
+      "path": "AGENTBUS_MESSAGE_PERSISTENCE_CONTRACT_V2.md",
+      "sha256": "8ba6d4db1582e29af26b01714198ad5deac11ef7e993715b0a0a93c9837e98c7",
+      "bytes": 2280
+    },
+    {
+      "path": "AGENT_DISCOVERY_V7.json",
+      "sha256": "e5bce5c6ef24453712cee5ec1311b3856cdc91e66b8c6528d47d89d30062e732",
+      "bytes": 8184
+    },
+    {
+      "path": "BOOTSTRAP_V7.md",
+      "sha256": "c7f357736c988e08d0e1b8699a4498949a8420ef72867fb0f0c41c2776d72764",
+      "bytes": 6289
+    },
+    {
+      "path": "DUO_OPEN_AGENT_GENERATION_TEMPLATE_V11_USER_MODEL.txt",
+      "sha256": "38222db2ec0d91a20c0678810f6d34867394618bade2222a4fb5b06307b5ec30",
+      "bytes": 19250
+    },
+    {
+      "path": "human_model/v1/HUMAN_INPUT_OBSERVATION_SCHEMA_V1.json",
+      "sha256": "6f66bbacf1385072942fdfdc9f7e4a7ae4667b19c91c0a8df1e6c6117d42b436",
+      "bytes": 1208
+    },
+    {
+      "path": "human_model/v1/snapshots/20261002T214054Z__interaction-model.json",
+      "sha256": "c5c6ca87f3485f8f7d506a809f8b35eca26efdd373eb2728b26c93e60aa199ed",
+      "bytes": 4469
+    },
+    {
+      "path": "communication_models/v1/extensions/COMM_MODEL_AUTONOMY_HUMAN_ANTICIPATION_V1.json",
+      "sha256": "3de0ce13b4791b40056a239fe398d0283cea37fc65f94a45183ec7609044e321",
+      "bytes": 822
+    },
+    {
+      "path": "DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/SNAPSHOT_MANIFEST.json",
+      "sha256": "dd82b571529f67725b4c814eb6bec8789ad80e70cff351d14008e14b33b05f36",
+      "bytes": 11846
+    }
+  ],
+  "inheritance_rule": "Every future Primary/Manager/Research initiation/successor package copies and verifies these required files and loads the latest human interaction model snapshot."
+}

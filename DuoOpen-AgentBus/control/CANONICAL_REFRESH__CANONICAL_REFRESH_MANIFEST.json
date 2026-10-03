@@ -1,0 +1,18 @@
+{
+  "schema": "duoopen-canonical-agent-refresh/v1",
+  "role": "PRIMARY",
+  "output_package": "DUO_OPEN_PRIMARY_AGENT_V7_POST_APK_ARTIFACTORY_NG.zip",
+  "base_package": "DUO_OPEN_PRIMARY_AGENT_V6_COMM_MODEL.zip",
+  "base_package_sha256": "47d8301f0d8d48a6dd15bb2123a5cbb305b96347914be7f60f5891e32cb9838c",
+  "source_commit": "28842ae4d1c4f907257b24a73012bf5015702f81",
+  "ci_run": "37083926151",
+  "ci_conclusion": "success",
+  "app_version": "5.1.0-beta2-zfold7",
+  "apk_sha256": "03d9877e134a6cc2b1d1bbe24a0bc3ceba959b67981ad523b2adb593f2036199",
+  "service_pack_sha256": "898e3b40e40b79510711a2f9a93f89c074012573fe5a8a32f84b567d9ec2025e",
+  "physical_validation": "NOT_RUN",
+  "main_subject": "Artifactory NG / persistent AgentBus architecture",
+  "agentbus_snapshot_count": 593,
+  "agentbus_snapshot_cutoff_utc": "2026-10-03T02:25:01Z",
+  "reg3_reference_role_packages": "REFERENCE_ONLY_SUPERSEDED_AS_CANONICAL"
+}

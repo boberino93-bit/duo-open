@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-canonical-role-registry/v1",
+  "generated_utc": "2026-10-03T02:25:01Z",
+  "source_commit": "28842ae4d1c4f907257b24a73012bf5015702f81",
+  "snapshot_cutoff_utc": "2026-10-03T02:25:01Z",
+  "roles": {
+    "PRIMARY": {
+      "filename": "DUO_OPEN_PRIMARY_AGENT_V7_POST_APK_ARTIFACTORY_NG.zip",
+      "sha256": "d9f7210cf9987298cfce264f5d6263dcfcc69eb7915c59786309d93919da3665",
+      "bytes": 1264881,
+      "base_filename": "DUO_OPEN_PRIMARY_AGENT_V6_COMM_MODEL.zip",
+      "base_sha256": "47d8301f0d8d48a6dd15bb2123a5cbb305b96347914be7f60f5891e32cb9838c"
+    },
+    "MANAGER_REVIEWER": {
+      "filename": "DUO_OPEN_GEN7_MANAGER_REVIEWER_AGENT_V5_POST_APK_ARTIFACTORY_NG.zip",
+      "sha256": "7ebd115920dbafab351302588194a92d88b9db6650f807b061e35b18317241be",
+      "bytes": 1264907,
+      "base_filename": "DUO_OPEN_GEN7_MANAGER_REVIEWER_AGENT_V4_COMM_MODEL.zip",
+      "base_sha256": "6042a9703a4835ef13a51a8ee31aabef1bffc998756d1fa595fea0081441ffc3"
+    },
+    "RESEARCH": {
+      "filename": "DUO_OPEN_GEN7_RESEARCH_AGENT_V5_POST_APK_ARTIFACTORY_NG.zip",
+      "sha256": "53994d8e7d293a12a6c34a55b365066f72aaba7ec069ed482a3a9922923fe678",
+      "bytes": 1264887,
+      "base_filename": "DUO_OPEN_GEN7_RESEARCH_AGENT_V4_COMM_MODEL.zip",
+      "base_sha256": "f174b3e9e9b1b8ef9606e0a8c20a84bf948560575546cafb2fec4fe2645f6c71"
+    }
+  }
+}

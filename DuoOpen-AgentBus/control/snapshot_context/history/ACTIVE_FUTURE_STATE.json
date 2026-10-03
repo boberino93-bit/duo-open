@@ -1,0 +1,77 @@
+{
+  "schema": "duoopen-agentbus/active-future-v2",
+  "generated_utc": "2026-10-01T23:48:00Z",
+  "production_main_sha": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+  "rule": "These are proposals/evidence, not current production. Revalidate after a successful Alpha1 V3 runtime commit.",
+  "workstreams": [
+    {
+      "priority": "P0",
+      "workstream": "app-process-recovery",
+      "messages": [
+        "20261001T232125Z__state-rd__primary__handoff-process-recovery.json",
+        "20261001T232545Z__state-rd__primary__supersede-process-restart-finding.json",
+        "20261001T231108Z__state-rd__primary__target-claim-process-recovery.json"
+      ],
+      "goal": "Clean up/reconcile a surviving foreign shell lease from a prior app serviceEpoch before arming a fresh transition owner."
+    },
+    {
+      "priority": "P0/P1",
+      "workstream": "service-stable-presentation-owner",
+      "messages": [
+        "20261001T230350Z__reviewer__primary__target-claim-presentation-owner.json",
+        "20261001T230812Z__reviewer__primary__test-result-presentation-owner-model.json",
+        "20261001T230811Z__reviewer__primary__finding-presentation-owner-source.json",
+        "20261001T231436Z__reviewer__primary__handoff-presentation-owner.json"
+      ],
+      "goal": "Make presentation callbacks subordinate to a service-stable exact visual binding; stale host/content callbacks inert."
+    },
+    {
+      "priority": "P1",
+      "workstream": "opening-terminal-inner-readiness",
+      "messages": [
+        "20261001T231000Z__display-rd__primary__finding-opening-terminal-inner-readiness.json",
+        "20261001T231444Z__display-rd__primary__handoff-opening-terminal-inner-readiness.json",
+        "20261001T230701Z__display-rd__all__target-claim-opening-terminal-inner-handoff.json"
+      ],
+      "goal": "Separate logical inner availability from completed native opening handoff."
+    },
+    {
+      "priority": "P1",
+      "workstream": "terminal-native-handoff",
+      "messages": [
+        "20261001T230713Z__display-rd__primary__finding-terminal-handoff-gap.json",
+        "20261001T231920Z__performance-rd__display-rd__response-terminal-handoff-reconciliation.json",
+        "20261001T231800Z__performance-rd__primary__finding-terminal-handoff-evidence.json",
+        "20261001T231122Z__performance-rd__all__target-claim-terminal-handoff-budget.json",
+        "20261001T231802Z__performance-rd__primary__handoff-terminal-handoff-budget.json",
+        "20261001T231801Z__performance-rd__primary__test-result-terminal-handoff-budget.json",
+        "20261001T230353Z__display-rd__primary__target-claim-terminal-handoff.json",
+        "20261001T231601Z__display-rd__primary__handoff-terminal-native-handoff.json",
+        "20261001T231159Z__display-rd__primary__test-result-terminal-native-handoff.json"
+      ],
+      "goal": "Keep terminal Duo frame until exact native-content evidence or bounded refresh-relative degraded release."
+    },
+    {
+      "priority": "P1",
+      "workstream": "semantic-content-freshness",
+      "messages": [
+        "20261001T231305Z__reviewer__primary__test-result-content-freshness-model.json",
+        "20261001T231306Z__reviewer__primary__handoff-launcher-content-freshness.json",
+        "20261001T230442Z__reviewer__all__target-claim-launcher-content-continuity.json",
+        "20261001T231304Z__reviewer__primary__finding-semantic-content-freshness.json"
+      ],
+      "goal": "Model semantic freshness separately from cycle/dimension validity; avoid semantically stale launcher content."
+    },
+    {
+      "priority": "P1/P2",
+      "workstream": "angle-authority",
+      "messages": [
+        "20261001T232133Z__state-rd__primary__handoff-angle-authority.json",
+        "20261001T232132Z__state-rd__primary__test-result-angle-authority.json",
+        "20261001T231650Z__state-rd__primary__finding-angle-authority-failover.json",
+        "20261001T231043Z__state-rd__all__target-claim-angle-authority.json"
+      ],
+      "goal": "Source-stamp precise-angle authority and retain/promote buffered public fallback on precise expiry/revocation."
+    }
+  ]
+}

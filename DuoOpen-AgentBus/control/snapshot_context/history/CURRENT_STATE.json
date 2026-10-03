@@ -1,0 +1,33 @@
+{
+  "schema": "duoopen-agentbus/current-state-v2",
+  "generated_utc": "2026-10-01T23:48:00Z",
+  "repo": "boberino93-bit/duo-open",
+  "main_sha": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+  "runtime": {
+    "versionCode": 37,
+    "versionName": "2.0.2-zfold7-gen2-field1",
+    "architecture": "Gen2/V9 field runtime"
+  },
+  "gen3": {
+    "production_runtime_committed": false,
+    "latest_failed_workflow": {
+      "run_id": 36941681407,
+      "name": "Apply Duo Open Gen3 Alpha1 Integrated",
+      "conclusion": "failure"
+    },
+    "failure": "V1 packaging duplicated DuoApp pickImage and ControlSheet Hinge sensor end markers; no app/** commit or APK occurred.",
+    "authoritative_deploy_candidate": "DUO_OPEN_GEN3_ALPHA1_V3_SUCCESSOR_HISTORY.zip",
+    "workflow_to_install": ".github/workflows/apply-gen3-alpha1-integrated-v3.yml",
+    "target_runtime": {
+      "versionCode": 38,
+      "versionName": "3.0.0-alpha1-zfold7"
+    }
+  },
+  "first_successor_action": [
+    "Fetch current main and verify this snapshot is still current.",
+    "If Gen3 Alpha1 V3 has not already run successfully, deploy this package at repository root.",
+    "Inspect V3 focused tests and full testFullDebugUnitTest/assembleFullDebug.",
+    "Verify resulting app/** commit and APK before treating Gen3 as CURRENT_PRODUCTION.",
+    "Only then rebase ACTIVE_FUTURE_STATE R&D."
+  ]
+}
