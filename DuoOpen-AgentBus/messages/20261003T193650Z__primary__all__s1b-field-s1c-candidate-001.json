@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-s1b-field-s1c-candidate-001",
+  "timestamp_utc": "2026-10-03T19:36:50Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "S1B field evidence isolates Fold7 active-display ownership; S1C candidate built",
+  "body": "Physical Fold7 S1B evidence across five opening attempts: Hall ingress remained fast (sensor->Binder about 0.24-1.02 ms; sensor->OPENING_ACCEPTED about 0.90-5.90 ms). First wake calls averaged about 165 ms physicalPowerMs. Every first S1B probe reported sfInner=ON and sfCover=ON while innerLogical=-1, logicalReady=false, innerActive=false, innerDefault=false. Therefore setDisplayPowerMode(INNER, ON) is accepted and SurfaceFlinger records INNER ON, but the INNER logical/active topology is not promoted while COVER remains active/powered. The S1B sfActivePhysical parser was inconclusive (-1) because Samsung --hwclayers output lacked the expected active label; do not treat that field as negative evidence. AOSP SurfaceFlinger foldable logic warns when powering an inactive internal display while the active internal display remains powered and only calls onActiveDisplayChangedLocked when the previous active display is not powered. S1C is an isolated ownership experiment: once per semantic opening, COVER OFF -> INNER ON -> COVER ON, then all existing route/readiness/bridge logic continues. Steady-state physical power remains both ON. No hinge thresholds, animation, transition identity, wallpaper/widget, or presentation ownership changes. S1C branch exp/stabilization-s1c-active-transfer-20261003 head e35a3d2096eab16dc5ca1daf4a61da8063430297; CI run 37148395751 passed full regression tests and APK assembly. Artifact DuoOpen-Stabilization-S1C-Active-Transfer id 11283307717. APK SHA-256 ad89b680856cdc09fbb31b0c7f9892bad83bd82691088455937cbe897733d12e. Physical Fold7 validation required before any further stabilization phase. NO NEW AGENTS remains in force.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "e35a3d2096eab16dc5ca1daf4a61da8063430297",
+    "package": "DuoOpen-Stabilization-S1C-Active-Transfer"
+  },
+  "reply_to": "msg-s1-field-s1b-candidate-001",
+  "requires_ack": false,
+  "tags": ["stabilization", "s1b", "s1c", "fold7", "surfaceflinger", "active-display", "power-ownership", "field-evidence", "no-new-agents"]
+}
