@@ -52,6 +52,30 @@ def transform_service(text: str) -> str:
 
     text = replace_once(
         text,
+        '''                    if (closed) {
+                        scope.launch(Dispatchers.IO) {
+                            ShizukuBridge
+                                .forceReleaseInnerPhysicalBridge(
+                                    "lid-closed"
+                                )
+                        }
+                    } else {
+''',
+        '''                    if (closed) {
+                        Fold7DisplayStatusStore.reset("lid-switch-closed")
+                        scope.launch(Dispatchers.IO) {
+                            ShizukuBridge
+                                .forceReleaseInnerPhysicalBridge(
+                                    "lid-closed"
+                                )
+                        }
+                    } else {
+''',
+        "closed lid status reset",
+    )
+
+    text = replace_once(
+        text,
         '''        instance = null
 ''',
         '''        instance = null
@@ -318,7 +342,7 @@ def apply(repo: Path, check: bool) -> None:
         outputs[path] = fn(path.read_text(encoding="utf-8"))
 
     required = {
-        SERVICE: ("Fold7DisplayStatusStore.update", "FOLD7_DISPLAY_STATUS_V3"),
+        SERVICE: ("Fold7DisplayStatusStore.update", "Fold7DisplayStatusStore.reset(\"lid-switch-closed\")", "FOLD7_DISPLAY_STATUS_V3"),
         COORDINATOR: ("Fold7DisplayStatus.Bridge.HANDOFF_ARMED", "physicalBridgeActive"),
         DUO_APP: ("Fold7DisplayStatusStore.status", "displayStatus = fold7DisplayStatus"),
         HOME: ("displayStatus.summary", "displayStatus.detail"),
