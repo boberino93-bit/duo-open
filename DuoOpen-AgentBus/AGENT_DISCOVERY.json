@@ -1,5 +1,5 @@
 {
-  "protocol": "duo-open-agent-discovery-v7",
+  "protocol": "duo-open-agent-discovery-v8",
   "project": "duo-open",
   "scope": "/DuoOpen-AgentBus/ only",
   "productionTruth": {
@@ -8,7 +8,16 @@
     "authority": "Primary only for production acceptance/integration",
     "commitBoundary": "Primary acceptance prepares integration; production Git mutation requires explicit human authorization and one designated single-writer agent."
   },
+  "projectScopeGate": {
+    "contract": "/DuoOpen-AgentBus/PROJECT_SCOPE_SELECTION_GATE_V1.md",
+    "defaultWritableProject": false,
+    "ambiguityPolicy": "ASK_USER_BEFORE_PROJECT_WORK_OR_WRITE",
+    "explicitProjectPolicy": "DO_NOT_ASK_REDUNDANTLY_WHEN_CURRENT_USER_INSTRUCTION_UNAMBIGUOUSLY_NAMES_PROJECT",
+    "repositoryMismatchPolicy": "FAIL_CLOSED",
+    "crossProjectWritePolicy": "DENY_BY_DEFAULT"
+  },
   "bootstrapOrder": [
+    "/DuoOpen-AgentBus/PROJECT_SCOPE_SELECTION_GATE_V1.md",
     "/DuoOpen-AgentBus/control/v3/DMSH3_PROTOCOL_V1.md",
     "/DuoOpen-AgentBus/ACTIVE_AGENT_SERVICE_INTERVAL_V1.md",
     "/DuoOpen-AgentBus/REGRESSION_CONTINUITY_CONTRACT_V1.md",
@@ -59,6 +68,10 @@
     "finalization": "Primary must run FINAL_RECONCILIATION_GATE_V1 and Regression Continuity matrix before final root-safe ZIP"
   },
   "rules": [
+    "Every future newly started agent/session MUST resolve project identity before project-specific work or writes; if the current user instruction does not explicitly and unambiguously specify the project, ask the user which project to bind to.",
+    "No agent may infer writable project scope from the open repository, inherited session context, working directory, prior task, or default path.",
+    "Before any Duo Open write, verify project_id=duo-open, repository=boberino93-bit/duo-open, AgentBus namespace=/DuoOpen-AgentBus/, and matching task/artifact metadata; mismatch fails closed.",
+    "Cross-project writes are denied by default; shared-framework imports/promotions must be explicit and sanitized for the destination.",
     "Normal DMSH/3 operation never replaces an existing shared-Library file; corrections supersede append-only.",
     "Research findings route through Manager/Reviewer and cannot self-promote to Primary acceptance.",
     "Manager is a promotion/quality gate with no production-write or final-acceptance authority.",
@@ -84,10 +97,10 @@
     "Primary acceptance does not equal production commit. Production Git mutation requires HUMAN_COMMIT_AUTHORIZATION followed by one designated SINGLE_WRITER_COMMIT."
   ],
   "migration": {
-    "from": "DMSH/3 discovery-v6 donor adoption + Gen7 review baseline",
-    "to": "discovery-v7 self-replicating human interaction model + communication autonomy + deployment forum snapshot",
-    "discoveryOverwrite": "explicit user-directed communication protocol evolution",
-    "processDelta": "2026-10-03 anti-overengineering gate + human-gated single-writer clarification + current-round pointers; controller succession remains review-required."
+    "from": "DMSH/3 discovery-v7 + communication autonomy + deployment forum snapshot",
+    "to": "discovery-v8 + mandatory fail-closed cross-project scope selection",
+    "discoveryOverwrite": "explicit user-directed project isolation protocol evolution",
+    "processDelta": "2026-10-03 mandatory project-selection gate added; no-new-agents freeze remains independently authoritative until explicitly revoked by the human."
   },
   "currentDevelopment": {
     "architecture": "Gen7 continuity/presentation core rewrite",
