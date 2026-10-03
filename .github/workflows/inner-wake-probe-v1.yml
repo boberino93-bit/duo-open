@@ -1,0 +1,104 @@
+name: Inner Wake Probe V1
+
+on:
+  push:
+    branches:
+      - fix/inner-wake-attempt-lifetime-20261003
+    paths:
+      - ".github/workflows/inner-wake-probe-v1.yml"
+      - "tools/apply_inner_wake_probe_v1.py"
+      - "app/src/full/java/com/duoopen/overlay/Fold7OpeningWakeAttemptGate.kt"
+      - "app/src/test/java/com/duoopen/overlay/Fold7OpeningWakeAttemptGateTest.kt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inner-wake-probe-v1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct deployed Beta2 runtime
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+
+      - name: Reapply validated optimization cycles A B C
+        run: |
+          set -euo pipefail
+          python3 tools/apply_runtime_optimization_cycle_a.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_b.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_c.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo .
+
+      - name: Apply exact-attempt wake probe
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_wake_probe_v1.py --self-test
+          python3 tools/apply_inner_wake_probe_v1.py --repo . --check
+          python3 tools/apply_inner_wake_probe_v1.py --repo .
+          git diff --check
+          grep -F 'INNER_WAKE_PROBE_V1' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'routeFirstSeenMs' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+
+      - name: Capture candidate diff and metadata
+        run: |
+          set -euo pipefail
+          mkdir -p inner-wake-probe-v1
+          git diff -- app > inner-wake-probe-v1/APPLIED-ANDROID-SOURCE.diff
+          git diff --stat -- app > inner-wake-probe-v1/APPLIED-ANDROID-SOURCE.stat
+          sha256sum inner-wake-probe-v1/APPLIED-ANDROID-SOURCE.diff > inner-wake-probe-v1/APPLIED-ANDROID-SOURCE-SHA256.txt
+          {
+            echo "sourceHead=${GITHUB_SHA}"
+            echo "runtime=Beta2 + runtime optimization cycles A/B/C + inner-wake-probe-v1"
+            echo "openingIdentity=(serviceEpoch,openingAttemptSequence)"
+            echo "wakeCommitMilestone=WAKE_COMMITTED"
+            echo "telemetry=physicalPower,logicalRouteDiscovery,logicalEnable,logicalPower,appTopology"
+            echo "renderAngleMathChanges=NONE"
+            echo "closingBehaviorChanges=NONE"
+            echo "wallpaperAlignmentFix=NOT_INCLUDED"
+            echo "physicalFold7Validation=REQUIRED"
+          } > inner-wake-probe-v1/BUILD-INFO.txt
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Full regression tests and APK build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package APK and hashes
+        run: |
+          set -euo pipefail
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" inner-wake-probe-v1/DuoOpen-ZFold7-5.1.0-beta2-optABC-inner-wake-probe-v1-debug.apk
+          sha256sum inner-wake-probe-v1/DuoOpen-ZFold7-5.1.0-beta2-optABC-inner-wake-probe-v1-debug.apk > inner-wake-probe-v1/APK-SHA256.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-Inner-Wake-Probe-V1
+          path: inner-wake-probe-v1/
+          if-no-files-found: error
+          retention-days: 30
