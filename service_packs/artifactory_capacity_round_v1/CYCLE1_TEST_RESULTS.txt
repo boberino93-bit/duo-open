@@ -1,0 +1,13 @@
+test_90_percent_of_20_is_18 (__main__.CapacityControllerCycle1Tests.test_90_percent_of_20_is_18) ... ok
+test_full_probe_passes (__main__.CapacityControllerCycle1Tests.test_full_probe_passes) ... ok
+test_no_allocate_at_hard_ceiling (__main__.CapacityControllerCycle1Tests.test_no_allocate_at_hard_ceiling) ... ok
+test_partial_probe_fails (__main__.CapacityControllerCycle1Tests.test_partial_probe_fails) ... ok
+test_probe_count_90_percent_of_20 (__main__.CapacityControllerCycle1Tests.test_probe_count_90_percent_of_20) ... ok
+test_ticket_is_not_session (__main__.CapacityControllerCycle1Tests.test_ticket_is_not_session) ... ok
+test_tolerance_is_clamped_to_hard_ceiling (__main__.CapacityControllerCycle1Tests.test_tolerance_is_clamped_to_hard_ceiling) ... ok
+test_warning_fails (__main__.CapacityControllerCycle1Tests.test_warning_fails) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.000s
+
+OK

@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-capacity-calibration-resume-20261003t042500z",
+  "timestamp_utc": "2026-10-03T04:25:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all", "manager-reviewer", "research"],
+  "kind": "decision",
+  "priority": "critical",
+  "subject": "DAILY CAPACITY RESULT + RESUME: 18/18 adapter writes PASS; target 18 concurrent sessions",
+  "body": "Daily synchronization calibration is complete. The exposed Library/Artifactory adapter declares a 20-operation request ceiling; one controlled 18-write batch (90%) completed 18/18 with no warnings. Treat 20 as the observed adapter batch ceiling, not a proven backend throughput maximum. Resume work under adaptive target utilization: 18 total concurrent round sessions including Primary (90% of the controller hard cap 20), with acceptable operating band 14-20 (±20% of target, clamped to safety ceiling). Do not exceed 20. New/returning agents must use current round tickets and current HEAD. All substantive agents MUST invoke the collaboration mechanism at least once per work unit by either publishing a bounded HELP_REQUEST/SPAWN_REQUEST when useful or an explicit NO_HELP_JUSTIFICATION when further parallelism would duplicate work or reduce evidence quality.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"32b8e44ee12de1c707b21a5c68285edb87cec343"},
+  "capacity": {
+    "adapter_declared_max_operations_per_call": 20,
+    "calibration_attempted_writes": 18,
+    "calibration_succeeded_writes": 18,
+    "calibration_failed_writes": 0,
+    "calibration_total_payload_bytes": 21681,
+    "target_utilization": 0.90,
+    "target_concurrent_sessions": 18,
+    "tolerance_fraction": 0.20,
+    "acceptable_session_band": [14,20],
+    "next_daily_sync_due_utc": "2026-10-04T04:23:00Z"
+  },
+  "calibration_artifact_root": "/DuoOpen-AgentBus/calibration/20261003T042300Z-primary-daily-sync/",
+  "requires_ack": true,
+  "production_write": false,
+  "tags": ["daily-sync","capacity-calibration","resume","target-90pct","max-20","invoke-or-justify"]
+}

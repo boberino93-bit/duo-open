@@ -1,0 +1,77 @@
+name: Build SP5 Capacity Control + Beta2 APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/build-sp5-capacity-control-and-beta2-apk.yml"
+      - "DuoOpen-AgentBus/control/artifactory/v1/**"
+      - "DuoOpen-AgentBus/control/round_orchestration/v2/**"
+      - "DuoOpen-AgentBus/CURRENT_PRODUCT_STATE.json"
+      - "service_packs/artifactory_capacity_round_v1/**"
+      - "tools/verify_artifactory_capacity_service_pack.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sp5-capacity-control-beta2-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify SP5 control-plane service pack
+        run: |
+          set -euo pipefail
+          python3 tools/verify_artifactory_capacity_service_pack.py .
+          python3 DuoOpen-AgentBus/control/round_orchestration/v2/test_capacity_controller.py
+      - name: Validate current Beta2 baseline
+        run: |
+          set -euo pipefail
+          grep -F 'versionCode = 42' app/build.gradle.kts
+          grep -F 'versionName = "5.0.0-beta1-zfold7"' app/build.gradle.kts
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+          git diff --check
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - name: Unit test and build APK
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+      - name: Package APK and provenance
+        run: |
+          set -euo pipefail
+          out=sp5-build
+          mkdir -p "$out"
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" "$out/DuoOpen-ZFold7-5.1.0-beta2-sp5-control-debug.apk"
+          sha256sum "$out/DuoOpen-ZFold7-5.1.0-beta2-sp5-control-debug.apk" > "$out/APK-SHA256.txt"
+          git diff -- app > "$out/APPLIED-ANDROID-SOURCE.diff"
+          {
+            echo "sourceHead=${GITHUB_SHA}"
+            echo "workflowRun=${GITHUB_RUN_ID}"
+            echo "controlServicePack=SP5 Artifactory Capacity Round V1"
+            echo "androidRuntime=Gen7 Runtime Regression Beta2"
+            echo "physicalFold7Validation=NOT_RUN"
+            echo "controlPlaneDoesNotClaimRuntimeFix=true"
+          } > "$out/BUILD-INFO.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-SP5-Capacity-Control-Beta2-APK
+          path: sp5-build/
+          if-no-files-found: error
+          retention-days: 30

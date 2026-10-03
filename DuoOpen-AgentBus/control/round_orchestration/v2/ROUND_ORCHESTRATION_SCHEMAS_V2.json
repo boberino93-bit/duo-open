@@ -1,0 +1,33 @@
+{
+  "schema": "duoopen-round-orchestration-schemas/v2",
+  "max_concurrent_sessions": 20,
+  "target_utilization": 0.90,
+  "target_concurrent_sessions": 18,
+  "target_tolerance": 0.20,
+  "target_band_clamped": [14, 20],
+  "event_types": {
+    "ROUND_OPEN": {"required": ["round_id","created_utc","created_by","objective","source_head","max_concurrent_sessions","primary_session_id","role_budget","context_refs","status"]},
+    "SPAWN_REQUEST": {"required": ["request_id","round_id","requested_by","requested_helpers","roles_or_skills","bounded_scope","blocking_or_advisory","continue_original_assignment"]},
+    "SPAWN_TICKET": {"required": ["ticket_id","round_id","role","assignment","requested_by","parent_session_id","priority","context_refs","created_utc","expires_utc","claim_policy","return_policy"]},
+    "SESSION_STARTED": {"required": ["round_id","ticket_id","session_id","agent_instance_id","role","slot_id","started_utc","source_head"]},
+    "SESSION_RELEASED": {"required": ["round_id","ticket_id","session_id","slot_id","released_utc","handoff_refs","reason"]},
+    "STOP_WORK": {"required": ["round_id","issued_utc","issued_by","reason","safe_checkpoint_policy"]},
+    "CAPACITY_CALIBRATION": {"required": ["round_id","calibrated_utc","adapter_declared_operation_ceiling","target_utilization","attempted","succeeded","warnings","exact_path_matches","readback_hash_matches","status","backend_physical_ceiling"]},
+    "RESUME_WORK": {"required": ["round_id","resumed_utc","resumed_by","target_sessions","target_band","spawn_adapter_state","calibration_ref"]},
+    "COLLABORATION_INVOCATION": {"required": ["round_id","agent_instance_id","work_unit_id","kind","created_utc"]},
+    "ROUND_CLOSE": {"required": ["round_id","closed_utc","closed_by","reconciliation_refs","unresolved","status"]}
+  },
+  "collaboration_invocation_kinds": ["HELP_REQUEST","SPAWN_REQUEST","NO_HELP_JUSTIFICATION"],
+  "spawn_capability_states": ["SUPPORTED_NATIVE","SUPPORTED_HOST_AUTOMATION","MANUAL_FALLBACK","UNAVAILABLE"],
+  "invariants": [
+    "active SESSION_STARTED count <= 20",
+    "target utilization never authorizes duplicate work",
+    "SPAWN_TICKET does not imply SESSION_STARTED",
+    "write-batch capacity is not chat-session capacity",
+    "adapter ceiling is not backend physical ceiling",
+    "publication ACK requires exact requested path and readback hash",
+    "Library pathname creation is not Primary singleton CAS",
+    "material handoff remains fail-closed",
+    "physical Fold7 claims require field evidence"
+  ]
+}

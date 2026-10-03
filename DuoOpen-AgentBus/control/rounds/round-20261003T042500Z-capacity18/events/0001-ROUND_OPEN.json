@@ -1,0 +1,24 @@
+{
+  "schema":"duoopen-round-event/v1",
+  "event":"ROUND_OPEN",
+  "round_id":"round-20261003T042500Z-capacity18",
+  "created_utc":"2026-10-03T04:25:00Z",
+  "created_by":"primary",
+  "objective":"Next Duo Open research round: preserve INNER-display/first-open P0 as center of gravity while hardening Artifactory scaling, daily capacity calibration, canonical recovery and the next root-drop service pack.",
+  "source_head":"32b8e44ee12de1c707b21a5c68285edb87cec343",
+  "max_concurrent_sessions":20,
+  "target_concurrent_sessions":18,
+  "target_utilization":0.90,
+  "tolerance_fraction":0.20,
+  "primary_session_id":"primary-current-chat-20261003T0423Z",
+  "role_budget":{"PRIMARY":1,"MANAGER_REVIEWER":1,"RESEARCH":16},
+  "spawn_adapter_state":"MANUAL_FALLBACK",
+  "invoke_policy":"MUST_INVOKE_OR_JUSTIFY",
+  "context_refs":[
+    "/DuoOpen-AgentBus/ROUND_ENTRY.md",
+    "/DuoOpen-AgentBus/control/round_orchestration/v1/ROUND_ORCHESTRATION_CONTROLLER_V1.md",
+    "/DuoOpen-AgentBus/messages/20261003T042500Z__primary__all__CAPACITY-CALIBRATION-RESUME.json",
+    "repo:boberino93-bit/duo-open@32b8e44ee12de1c707b21a5c68285edb87cec343"
+  ],
+  "status":"OPEN"
+}

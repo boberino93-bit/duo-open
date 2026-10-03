@@ -1,0 +1,33 @@
+{
+  "schema": "duoopen-current-product-state/v1",
+  "observed_utc": "2026-10-03T04:30:00Z",
+  "repository": "boberino93-bit/duo-open",
+  "current_main_observed": "32b8e44ee12de1c707b21a5c68285edb87cec343",
+  "current_main_parent": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+  "android_source_change_parent_to_current": false,
+  "last_successful_apk_ci": {
+    "workflow": "Build Gen7 Runtime Regression Beta2",
+    "run_id": 37091317521,
+    "head": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "conclusion": "success",
+    "app_version": "5.1.0-beta2-zfold7",
+    "known_apk_sha256": "03d9877e134a6cc2b1d1bbe24a0bc3ceba959b67981ad523b2adb593f2036199"
+  },
+  "physical_fold7_validation": "BLOCKED/PENDING",
+  "p0": [
+    "INNER panel stays dark until roughly 50-60 degrees on observed field behavior",
+    "first opening attempt can crash/recover while later cycles are smoother",
+    "need first-open causal trace and first-useful-pixel evidence before runtime promotion"
+  ],
+  "control_plane": {
+    "round_orchestration": "v2 in this service pack",
+    "target_sessions": 18,
+    "hard_ceiling": 20,
+    "spawn_adapter_state": "MANUAL_FALLBACK",
+    "primary_singleton_cas": "BLOCKED_UNPROVEN"
+  },
+  "notes": [
+    "This service pack changes control/research infrastructure only; it does not claim an Android runtime fix.",
+    "A new APK CI run at the current/app-equivalent source is still required after GitHub write access or a user push triggers the included workflow."
+  ]
+}

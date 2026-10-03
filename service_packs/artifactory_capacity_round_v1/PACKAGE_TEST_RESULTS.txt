@@ -1,0 +1,37 @@
+DUO OPEN SP5 ARTIFACTORY CAPACITY ROUND V1 — FINAL LOCAL TEST RESULTS
+
+Observed GitHub main: 32b8e44ee12de1c707b21a5c68285edb87cec343
+Android source changes in this pack: NONE
+
+LIVE CALIBRATION
+- declared adapter operation ceiling: 20
+- 90% probe: 18 writes in one batch
+- upload success: 18/18
+- upload warnings: 0
+- exact requested paths: 18/18
+- raw readback SHA-256 matches: 18/18
+- payload bytes: 21,681
+- backend physical ceiling: UNPROVEN
+
+CYCLE 1
+- initial dynamic-loader test harness failed under Python 3.13; harness fixed without changing policy
+- deterministic policy suite after fix: 8/8 PASS
+
+HARDENING
+- separated write-batch capacity from chat-session concurrency and backend throughput
+- added useful-parallelism guard to prevent busywork
+- added STOP_WORK safe-checkpoint barrier semantics
+- added exact-path + readback-hash publication ACK
+- retained Primary singleton CAS block
+- changed all-agent scaling rule to MUST_INVOKE_OR_JUSTIFY
+
+CYCLE 2
+- deterministic/adversarial tests: 16/16 PASS
+- randomized session reducer: 50,000 operations PASS; never exceeded hard ceiling 20
+- workflow YAML parse: PASS
+- root-drop contains no Android source: PASS
+- package checksum verifier: PASS
+
+PHYSICAL FOLD7
+- NOT RUN by this control-plane service pack
+- current INNER-display / first-open crash P0 remains open

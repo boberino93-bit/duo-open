@@ -1,0 +1,24 @@
+{
+  "schema": "duoopen-round-ticket/v1",
+  "event": "SPAWN_TICKET",
+  "ticket_id": "capacity18-11-p0-refresh-wake-interaction",
+  "round_id": "round-20261003T042500Z-capacity18",
+  "role": "RESEARCH",
+  "assignment": "Reconcile conditional 120Hz/seamless refresh leases with early-wake and presentation readiness so refresh experimentation cannot destabilize the P0 wake path.",
+  "requested_by": "primary",
+  "parent_session_id": "primary-current-chat-20261003T0423Z",
+  "priority": "critical",
+  "context_refs": [
+    "/DuoOpen-AgentBus/ROUND_ENTRY.md",
+    "/DuoOpen-AgentBus/messages/20261003T042500Z__primary__all__CAPACITY-CALIBRATION-RESUME.json",
+    "repo:boberino93-bit/duo-open@32b8e44ee12de1c707b21a5c68285edb87cec343"
+  ],
+  "created_utc": "2026-10-03T04:25:00Z",
+  "expires_utc": "2026-10-04T04:23:00Z",
+  "claim_policy": "FIRST_VALID_CLAIM",
+  "return_policy": "publish durable evidence/handoff then RELEASE; helpers return to original lane",
+  "spawn_adapter_state": "MANUAL_FALLBACK",
+  "delegated_spawn_budget": 1,
+  "invoke_policy": "MUST_INVOKE_OR_JUSTIFY",
+  "status": "OPEN"
+}
