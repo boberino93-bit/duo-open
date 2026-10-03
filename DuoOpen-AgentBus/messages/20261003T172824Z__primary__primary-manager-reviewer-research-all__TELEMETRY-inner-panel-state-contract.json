@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-inner-panel-state-telemetry-contract-20261003t172824z",
+  "timestamp_utc": "2026-10-03T17:28:24Z",
+  "project": "duo-open",
+  "from": "primary-current-chat",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "decision",
+  "priority": "high",
+  "subject": "TELEMETRY CONTRACT: expose physical INNER power/presentation state in-app; command success must not masquerade as visible pixels",
+  "body": "Human requested an in-app indicator because the Fold7 closes too tightly to visually verify whether INNER is actually powered. Add a user-visible diagnostic/status parameter without granting it routing authority. Required staged vocabulary: INNER_WAKE_IDLE / REQUESTED / COMMAND_ACCEPTED / PHYSICAL_POWER_CONFIRMED_OR_UNKNOWN / BRIDGE_PRESENTING / NATIVE_LOGICAL_AVAILABLE / NATIVE_ACTIVE / PRESENTATION_UNKNOWN. Cover should expose analogous physical state where available. The existing physicalPowered=true receipt means the privileged SurfaceControl mutation returned successfully; it is not sufficient proof that OLED pixels are emitting. Prefer a shell-side post-command confirmation from SurfaceFlinger/dumpsys/display-device state when reliably queryable, and keep that separate from FIRST_PRESENTED/FIRST_USEFUL optical/presentation evidence. The UI should show a concise summary such as 'INNER: physical wake accepted - waiting for native display' while retaining detailed stage/timestamp data in diagnostics. Also expose current opening source (HALL, DEVICE_STATE, PRECISE_HINGE, FALLBACK) and OpeningKey for field correlation. This requirement is observational only and must not change hinge geometry, rendering math, privacy, or display ownership.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "related_tickets": ["02-p0-inner-wake-causal-chain", "03-p0-presentation-readiness-cold-race"],
+    "field_context": "V2 physical-bridge field validation"
+  },
+  "evidence_class": ["FIELD_HUMAN", "FIELD_DEVICE_DIAGNOSTICS", "PRODUCT_REQUIREMENT"],
+  "disposition": "IMPLEMENT_OBSERVATIONAL_PANEL_STATE_TELEMETRY_IN_NEXT_FIELD_CANDIDATE",
+  "requires_ack": false,
+  "production_write": "MESSAGE_BOARD_APPEND_ONLY"
+}
