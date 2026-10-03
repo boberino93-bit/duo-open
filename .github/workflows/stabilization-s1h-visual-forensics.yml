@@ -1,0 +1,196 @@
+name: Stabilization S1H Visual Forensics
+
+on:
+  push:
+    branches:
+      - exp/stabilization-s1h-visual-forensics-20261003
+    paths:
+      - ".github/workflows/stabilization-s1h-visual-forensics.yml"
+      - "tools/**"
+      - "app/src/full/java/com/duoopen/debug/VisualForensics.kt"
+      - "app/src/main/java/com/duoopen/debug/DebugBundleExporter.kt"
+      - "DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md"
+      - "DuoOpen-AgentBus/messages/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stabilization-s1h-visual-forensics-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct deployed Beta2 runtime
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+
+      - name: Reapply validated optimization cycles A B C
+        run: |
+          set -euo pipefail
+          python3 tools/apply_runtime_optimization_cycle_a.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_b.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_c.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo .
+
+      - name: Reapply validated exact-attempt wake probe
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_wake_probe_v1.py --self-test
+          python3 tools/apply_inner_wake_probe_v1.py --repo . --check
+          python3 tools/apply_inner_wake_probe_v1.py --repo .
+
+      - name: Reapply physical bridge V1 and V2 handoff
+        run: |
+          set -euo pipefail
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --self-test
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo . --check
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase pre
+          python3 tools/apply_inner_physical_bridge_v1.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase post
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v2.py --self-test
+          python3 tools/apply_inner_physical_bridge_v2.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v2.py --repo .
+
+      - name: Reapply display status, Hall latch, and V4 bridge
+        run: |
+          set -euo pipefail
+          python3 tools/apply_fold7_display_status_v3.py --self-test
+          python3 tools/apply_fold7_display_status_v3.py --repo . --check
+          python3 tools/apply_fold7_display_status_v3.py --repo .
+          python3 tools/apply_hall_open_latch_v3.py --self-test
+          python3 tools/apply_hall_open_latch_v3.py --repo . --check
+          python3 tools/apply_hall_open_latch_v3.py --repo .
+          python3 tools/apply_inner_physical_bridge_v4.py --self-test
+          python3 tools/apply_inner_physical_bridge_v4.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v4.py --repo .
+
+      - name: Reapply S1 through S1F diagnostics
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --self-test
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo . --check
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo .
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo .
+          python3 tools/apply_stabilization_s1e_logical_layout_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1e_logical_layout_truth.py --repo .
+          python3 tools/apply_stabilization_s1f_layout_map_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1f_layout_map_truth.py --repo .
+
+      - name: Reapply S1G forensic diagnostic superset
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1g_forensic_superset.py --repo . --check
+          python3 tools/apply_stabilization_s1g_forensic_superset.py --repo .
+
+      - name: Apply S1H visual forensics only
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1h_visual_forensics.py --self-test
+          python3 tools/apply_stabilization_s1h_visual_forensics.py --repo . --check
+          python3 tools/apply_stabilization_s1h_visual_forensics.py --repo .
+          git diff --check
+
+          grep -F 'STABILIZATION_S1H_VISUAL_FORENSICS_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'CAPTURE_PHYSICAL_FORENSIC = 19' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+          grep -F 'fun captureForensics(' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+          grep -F 'fun capturePhysicalForensics(' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+          grep -F '"/system/bin/screencap"' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'device_policy_capture' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'secure_windows' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'VisualForensics.beginOpeningBurst(' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'WORK_PROFILE_SCREEN_CAPTURE_POLICY_BLOCKED' app/src/full/java/com/duoopen/debug/VisualForensics.kt
+          grep -F 'ROUTE_ABSENT_NOT_CAPTURE_FAILURE' app/src/full/java/com/duoopen/debug/VisualForensics.kt
+          grep -F 'visualForensicSessions' app/src/main/java/com/duoopen/debug/DebugBundleExporter.kt
+
+          ! grep -F 'STABILIZATION_S1C_ACTIVE_TRANSFER_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          ! grep -F 'STABILIZATION_S1D_REAL_INNER_EDGE_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          ! grep -F 'cmd device_state state 4' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          ! grep -F 'cmd device_state state 5' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+
+      - name: Capture S1H candidate diff and deployment metadata
+        run: |
+          set -euo pipefail
+          OUT=stabilization-s1h-visual-forensics
+          mkdir -p "$OUT/DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT"
+          git diff -- app > "$OUT/APPLIED-ANDROID-SOURCE.diff"
+          git diff --stat -- app > "$OUT/APPLIED-ANDROID-SOURCE.stat"
+          sha256sum "$OUT/APPLIED-ANDROID-SOURCE.diff" > "$OUT/APPLIED-ANDROID-SOURCE-SHA256.txt"
+          cp -a DuoOpen-AgentBus/. "$OUT/DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/"
+          {
+            echo "sourceHead=${GITHUB_SHA}"
+            echo "baselineS1GHead=4ebe9de9a48bd2a56d56d226a95d7448aaf92c38"
+            echo "runtime=V4 + S1/S1B/S1E/S1F/S1G diagnostics + S1H visual forensic screenshot burst"
+            echo "stabilizationPhase=S1H_VISUAL_FORENSICS"
+            echo "behaviorChange=NONE"
+            echo "visualSamplesMs=0,500,1200,2500"
+            echo "logicalCapture=IWindowManager capture with Duo Open exclusion layers where a logical route exists"
+            echo "physicalCapture=AOSP screencap -d physical-display-id through Binder-passed file descriptor"
+            echo "captureLimitations=logical-route dependency; 400ms hidden-capture timeout; FLAG_SECURE/protected content; device/work-profile policy; inactive-panel/low-information ambiguity"
+            echo "failureClassification=route absent vs backend timeout/error vs secure/protected content vs device policy vs managed-work-profile policy vs captured low-information vs usable frame"
+            echo "secureLogicalPixelsPersisted=NO"
+            echo "deviceStateOverrideChanges=NONE"
+            echo "powerOrderingChanges=NONE"
+            echo "renderAngleMathChanges=NONE"
+            echo "transitionIdentityChanges=NONE"
+            echo "presentationOwnershipChanges=NONE"
+            echo "agentSpawnPolicy=FROZEN_USER_DIRECTIVE_20261003"
+            echo "agentSpawnPolicyContract=DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md"
+            echo "agentBusSnapshot=DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT"
+            echo "physicalFold7Validation=REQUIRED"
+          } > "$OUT/BUILD-INFO.txt"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Full regression tests and APK build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package APK and hashes
+        run: |
+          set -euo pipefail
+          OUT=stabilization-s1h-visual-forensics
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" "$OUT/DuoOpen-ZFold7-5.1.0-beta2-v4-stabilization-s1h-visual-forensics-debug.apk"
+          sha256sum "$OUT/DuoOpen-ZFold7-5.1.0-beta2-v4-stabilization-s1h-visual-forensics-debug.apk" > "$OUT/APK-SHA256.txt"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-Stabilization-S1H-Visual-Forensics
+          path: stabilization-s1h-visual-forensics/
+          if-no-files-found: error
+          retention-days: 30
