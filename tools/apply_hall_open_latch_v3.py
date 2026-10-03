@@ -53,9 +53,37 @@ def transform_controller(text: str) -> str:
         "latch physical opening",
     )
 
-    anchor = "        return decision(\n            listOf(\n                Action.WakeInner(\n                    generation\n                )\n            )\n        )\n    }\n\n    fun onPrewarmResult(\n"
-    replacement = "        return decision(\n            listOf(\n                Action.WakeInner(\n                    generation\n                )\n            )\n        )\n    }\n\n    /** Explicit physical-close terminal for a Hall-latched opening. */\n    fun onPhysicalClosedEdge(\n        nowMs: Long,\n        topology: Topology,\n    ): Decision {\n        physicalOpeningLatched = false\n        lastSampleMs = nowMs\n\n        if (state in OPENING_STATES && topology.nativeCover) {\n            direction = Direction.STEADY\n            val angle = lastAngle.takeIf { it.isFinite() } ?: 0f\n            transition(\n                to = State.NATIVE_COVER,\n                angle = angle,\n                reason = \"lid-closed-authoritative\",\n                topology = topology,\n            )\n            activePrewarmGeneration = -1L\n            resetIntent()\n        }\n\n        return decision()\n    }\n\n    fun onPrewarmResult(\n"
-    text = replace_once(text, anchor, replacement, "physical closed edge method")
+    close_method = '''    /** Explicit physical-close terminal for a Hall-latched opening. */
+    fun onPhysicalClosedEdge(
+        nowMs: Long,
+        topology: Topology,
+    ): Decision {
+        physicalOpeningLatched = false
+        lastSampleMs = nowMs
+
+        if (state in OPENING_STATES && topology.nativeCover) {
+            direction = Direction.STEADY
+            val angle = lastAngle.takeIf { it.isFinite() } ?: 0f
+            transition(
+                to = State.NATIVE_COVER,
+                angle = angle,
+                reason = "lid-closed-authoritative",
+                topology = topology,
+            )
+            activePrewarmGeneration = -1L
+            resetIntent()
+        }
+
+        return decision()
+    }
+
+'''
+    text = replace_once(
+        text,
+        "    fun onPrewarmResult(\n",
+        close_method + "    fun onPrewarmResult(\n",
+        "physical closed edge method",
+    )
 
     text = replace_once(
         text,
