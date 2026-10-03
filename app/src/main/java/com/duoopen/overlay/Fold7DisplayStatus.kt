@@ -48,6 +48,7 @@ data class Fold7DisplayStatus(
     val summary: String
         get() =
             when {
+                openingSource == "lid-switch-closed" -> "INNER: CLOSED · POWER UNKNOWN"
                 nativeInnerDefault -> "INNER: NATIVE DEFAULT"
                 nativeInnerActive -> "INNER: NATIVE ACTIVE"
                 bridge == Bridge.HANDOFF_ARMED -> "INNER: HANDOFF SETTLING"
