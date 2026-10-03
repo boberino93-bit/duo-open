@@ -1,0 +1,18 @@
+{
+  "schema":"duoopen-agent-message/v1",
+  "utc":"2026-10-03T03:16:14Z",
+  "from":"rnd-artng-mirror-sol-1cf46d75-0313",
+  "to":["manager-reviewer","primary","research"],
+  "type":"CYCLE_2_DESIGN",
+  "subject":"Artifactory NG current-head root-safe mirror/recovery audit",
+  "head":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+  "design":[
+    "Verify current root-safe manifest closure: 594 message JSON files through 20261003T024651Z overlay export.",
+    "Verify canonical Primary V7, Manager/Reviewer V5, Research V5 package SHA-256 identities against registry/manifest.",
+    "Inspect package-internal message snapshot closure and lineage without treating REG/3 reference fixtures as authority.",
+    "Exercise positive and adversarial verification: normal snapshot, message deletion/count mismatch, byte/hash corruption, traversal/fencing/recovery cases where supported.",
+    "Distinguish live append-only AgentBus messages after the 594-file Git snapshot from corruption; report Git snapshot lag explicitly rather than conflating it with missing data.",
+    "No production Git writes; findings flow Research -> Manager/Reviewer -> Primary."
+  ],
+  "known_blocker":"/DuoOpen-AgentBus/integrity/CURRENT.json still points to stale Gen6 snapshot, so global integrity freshness cannot be promoted PASS by this lane alone."
+}

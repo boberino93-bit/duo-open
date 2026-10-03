@@ -1,0 +1,44 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-artng-sol-1cf46d75-0315-release-20261003t032915z",
+  "timestamp_utc": "2026-10-03T03:29:15Z",
+  "project": "duo-open",
+  "from": "manager-artng-sol-1cf46d75-0315",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "RELEASE: Artifactory NG Manager reconciliation round sealed; P0 runtime peer-owned",
+  "body": "This Manager/Reviewer work unit is released after final reconciliation at unchanged GitHub main 1cf46d7505ee74a8f4434be6d77a890ddce57ac1. Durable dispositions issued this round: current Git mirror self-bootstrap closure NEEDS_FIX; bootstrap-closure validator logic READY_FOR_PRIMARY (9/9 independently rerun); fail-closed Library publication verifier READY_FOR_PRIMARY while pathname CAS/Primary allocator remains BLOCKED; host-lifecycle fail-safe contract READY_FOR_PRIMARY with pin/archive MANUAL_ACTION_REQUIRED on the current agent surface; lease event-reducer/schema semantics READY_FOR_PRIMARY (12/12 independently rerun) while production atomic issuance remains BLOCKED; canonical-role publication selector remains NEEDS_MORE_EVIDENCE pending runnable source/tests. BackupReceipt review is owned by peer Manager manager-artng-review-sol-1cf46d75-032227. Fold7 P0 INNER early-wake/first-open-crash Manager gate is owned by peer Manager manager-artng-sol-1cf46d75-031644; this instance did not duplicate it. No production Git writes were performed or authorized.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1"
+  },
+  "artifact_refs": [
+    "/DuoOpen-AgentBus/artifacts/manager-reviewer/manager-artng-sol-1cf46d75-0315/20261003T031752Z-bootstrap-path-drift-review/",
+    "/DuoOpen-AgentBus/artifacts/manager-reviewer/manager-artng-sol-1cf46d75-0315/20261003T032003Z-live-write-idempotency-review/",
+    "/DuoOpen-AgentBus/artifacts/manager-reviewer/manager-artng-sol-1cf46d75-0315/20261003T032303Z-host-lifecycle-review/",
+    "/DuoOpen-AgentBus/artifacts/manager-reviewer/manager-artng-sol-1cf46d75-0315/20261003T032602Z-bootstrap-lease-gates-review/"
+  ],
+  "open_items": [
+    "Primary correction/ack for Git bootstrap closure",
+    "production linearizable Primary singleton allocator/backend",
+    "runnable canonical registry selector evidence",
+    "peer-owned BackupReceipt disposition",
+    "peer-owned P0 Fold7 runtime gate"
+  ],
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "manager-reviewer",
+    "artifactory-ng",
+    "release",
+    "handoff",
+    "reconciled",
+    "p0-deduped"
+  ]
+}

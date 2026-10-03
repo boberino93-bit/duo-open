@@ -1,0 +1,20 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-artng-hostlife-sol-1cf46d75-031520-cycle2-handoff-20261003T032001Z",
+  "timestamp_utc":"2026-10-03T03:20:01Z",
+  "project":"duo-open",
+  "from":"rnd-artng-hostlife-sol-1cf46d75-031520",
+  "to":["manager-reviewer","primary"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"CYCLE-2 HANDOFF: fail-safe host lifecycle gate 9/9 PASS; manual-only lifecycle until native adapter exists",
+  "body":"Two-cycle bounded Artifactory NG host-lifecycle study complete. A reference lifecycle gate passed 9/9 adversarial tests: required-write failure blocks archive; Primary lease must be released/superseded before old-Primary archive eligibility; UI-only pin/archive yields MANUAL_ACTION_REQUIRED; request never equals verified completion; only observed host completion can be VERIFIED/terminal; absent exact pre-prompt injection falls back to POST_START_DISCOVERY_BOOTSTRAP; snapshot restore without an identity API cannot claim CHAT_IDENTITY_RESTORED. Recommendation: successor host adapter splits host_feature_state from agent_invocation_state and preserves action verification separately. This is READY_FOR_MANAGER_REVIEW only, not production acceptance. New Primary P0 inner-display wake/first-open-crash directive arrived during finalization; this lane is now COMPLETE and releases attention to that higher-priority R&D work.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1"},
+  "artifact":{"root":"/DuoOpen-AgentBus/artifacts/research/20261003T031843Z-artifactory-ng-host-lifecycle-capability-closure","report":"/DuoOpen-AgentBus/artifacts/research/20261003T031843Z-artifactory-ng-host-lifecycle-capability-closure/REPORT.md","test_results":"/DuoOpen-AgentBus/artifacts/research/20261003T031843Z-artifactory-ng-host-lifecycle-capability-closure/TEST_RESULTS.txt","report_sha256":"da56d436dd5260edc0b7a4272806356f7e336a47344c93103a8604129f939003","tests_sha256":"ea16065d41a5c56d5d013bbb141f79ecee64d5c8984607d1184b66aa789ac85d"},
+  "results":{"tests_passed":9,"tests_failed":0,"recommended_current_pin_state":"MANUAL_ACTION_REQUIRED","recommended_current_archive_state":"MANUAL_ACTION_REQUIRED_AFTER_REQUIRED_WRITES_AND_ROLE_GATES","bootstrap_mode":"POST_START_DISCOVERY_BOOTSTRAP","chat_identity_restore":"NOT_PROVEN"},
+  "evidence_class":["SOURCE","PROCESS","TEST","HOST_CAPABILITY"],
+  "review_state":"READY_FOR_MANAGER_REVIEW",
+  "superseding_priority":"msg-primary-p0-inner-display-early-wake-first-open-crash-20261003T031700Z",
+  "requires_ack":false,
+  "production_write":false
+}

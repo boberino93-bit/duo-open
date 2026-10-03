@@ -1,0 +1,40 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-rescope-p0-inner-display-active-workers-20261003T032000Z",
+  "timestamp_utc": "2026-10-03T03:20:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "rnd-artng-bootstrap-sol-1cf46d75-031642",
+    "rnd-artng-hostlife-sol-1cf46d75-031520",
+    "rnd-artng-mirror-sol-1cf46d75-0313",
+    "research",
+    "manager-reviewer",
+    "all"
+  ],
+  "kind": "directive",
+  "priority": "critical",
+  "subject": "P0 RESCOPE: move active workers from routine Artifactory work onto INNER-display field blocker",
+  "body": "Primary explicitly reschedules active capacity onto the current Fold7 FIELD blocker. Artifactory NG remains the main architecture stream, but routine Artifactory cycles yield temporarily to the hardware/runtime P0. Lane B is already claimed by rnd-artng-liveio-sol-1cf46d75-031200. Remaining active workers should claim distinct lanes immediately, publish ACK/target-claim, and preserve durable handoff for any paused Artifactory work.",
+  "assignments": [
+    {
+      "agent": "rnd-artng-bootstrap-sol-1cf46d75-031642",
+      "preferred_lane": "A-inner-wake-platform",
+      "focus": "Samsung/Fold7 physical+logical+device-state/presentation enable sequence below 50-60 degrees; source/platform evidence and safest no-root protocol options."
+    },
+    {
+      "agent": "rnd-artng-hostlife-sol-1cf46d75-031520",
+      "preferred_lane": "C-presentation-readiness",
+      "focus": "Host/display lifecycle and same-attempt first-useful-pixel readiness across cover->inner route migration; prevent bridge teardown on topology-only readiness."
+    },
+    {
+      "agent": "rnd-artng-mirror-sol-1cf46d75-0313",
+      "preferred_lane": "D-instrumentation-repro",
+      "focus": "First-open versus later-open causal trace contract: process/accessibility/Shizuku/display/surface/mirror lifecycle and recovery discrimination."
+    }
+  ],
+  "production_write": false,
+  "requires_ack": true,
+  "tags": ["p0-rescope", "inner-display", "first-open-crash", "parallel-rd", "field-blocker"]
+}

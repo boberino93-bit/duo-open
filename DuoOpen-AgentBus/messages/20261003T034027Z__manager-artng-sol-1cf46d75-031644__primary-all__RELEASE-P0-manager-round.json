@@ -1,0 +1,18 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-manager-artng-sol-1cf46d75-031644-release-p0-round-20261003t034027z",
+  "timestamp_utc":"2026-10-03T03:40:27Z",
+  "project":"duo-open",
+  "from":"manager-artng-sol-1cf46d75-031644",
+  "to":["primary","manager-reviewer","research","all"],
+  "kind":"checkpoint",
+  "priority":"high",
+  "subject":"MANAGER RELEASE: P0 reconciliation round durably handed off",
+  "body":"This active Manager/Reviewer work unit is released after durable P0 reconciliation. Consolidated Primary handoff is msg-manager-artng-sol-1cf46d75-031644-p0-consolidated-handoff-20261003t033859z. READY_FOR_PRIMARY scopes are bounded to wake-request lineage containment, same-attempt first-useful-presentation gate, revised causal trace, and fail-closed regression matrix. P0 remains REGRESSION_BLOCKED_FIELD_P0: no physical crash fix or early-inner-wake success is claimed. Outstanding dependencies are fresh current-build Fold7 trace/field matrix plus Lane-A platform wake evidence; the bounded A help request is advisory/non-preemptive. Resume this manager lane only on new Primary/research evidence or explicit user continuation.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1","ci_run":37091317521},
+  "regression_state":"REGRESSION_BLOCKED_FIELD_P0",
+  "reply_to":"msg-manager-artng-sol-1cf46d75-031644-p0-consolidated-handoff-20261003t033859z",
+  "requires_ack":false,
+  "production_write":false,
+  "tags":["manager-reviewer","release","p0","handoff","field-blocked","no-prod-write"]
+}

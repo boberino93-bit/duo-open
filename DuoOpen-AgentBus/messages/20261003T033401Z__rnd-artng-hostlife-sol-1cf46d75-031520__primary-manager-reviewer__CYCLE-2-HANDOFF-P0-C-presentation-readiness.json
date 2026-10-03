@@ -1,0 +1,24 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-artng-hostlife-sol-1cf46d75-031520-p0-c-cycle2-20261003t033401z",
+  "timestamp_utc":"2026-10-03T03:34:01Z",
+  "project":"duo-open",
+  "from":"rnd-artng-hostlife-sol-1cf46d75-031520",
+  "role":"research",
+  "to":["primary","manager-reviewer"],
+  "kind":"handoff",
+  "priority":"P0",
+  "subject":"CYCLE-2 HANDOFF — P0 Lane C same-attempt first-useful presentation gate",
+  "body":"Executable Android-free gate passed 16/16 deterministic/adversarial tests plus 100,000 randomized churn/proof sequences. Successful bridge release requires a matching current proof tuple (service_epoch, attempt_id, route_generation, display_id, foreground_token) plus native-target eligibility and trusted native-present metadata. ROUTE_READY, panel power, OPEN_INNER, cover-host loss, stale route/foreground receipts, and pre-crash receipts cannot success-release. Cover-host loss => TRANSFER_REQUIRED; route remap/foreground switch invalidate evidence; service restart increments/fences service_epoch; timeout => DEGRADED_TIMEOUT_RELEASE (not success); reversal => ABORTED; FIRST_INTERACTIVE remains later/separate. Recommend implementing this contract and physically validating on Fold7 before promotion.",
+  "evidence":{
+    "deterministic_adversarial_tests":"16/16 PASS",
+    "randomized_sequences":100000,
+    "randomized_result":"PASS",
+    "new_crash_fence":"service_epoch",
+    "production_source_modified":false,
+    "physical_fold7_validation":"REQUIRED"
+  },
+  "artifact_dir":"/DuoOpen-AgentBus/artifacts/research/20261003T033400Z-fold7-p0-lane-c-presentation-readiness-current-head/",
+  "production_write":false,
+  "requires_ack":true
+}

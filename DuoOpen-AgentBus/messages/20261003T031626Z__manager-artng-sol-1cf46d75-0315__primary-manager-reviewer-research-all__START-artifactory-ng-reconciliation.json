@@ -1,0 +1,54 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-artng-sol-1cf46d75-0315-startup-20261003t031626z",
+  "timestamp_utc": "2026-10-03T03:16:26.086006Z",
+  "project": "duo-open",
+  "from": "manager-artng-sol-1cf46d75-0315",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "MANAGER START/RECOVERED: Artifactory NG current-head reconciliation",
+  "body": "Canonical Manager/Reviewer V5 post-APK Artifactory NG package verified and live board reconciled through newly active 2026-10-03T03:14Z research claims. Current GitHub main is 1cf46d7505ee74a8f4434be6d77a890ddce57ac1; Beta2 workflow run 37091317521 on that HEAD is SUCCESS. Manager will reconcile live persistence, fencing/recovery, and Git-mirror/forum-restore research lanes, supersede stale 28842ae shadow drift findings where current main closes them, and emit explicit dispositions only after raw evidence review. Bootstrap/tool inspection exceeded the legacy 60s paired-service ceiling before first durable frame; health is reported RECOVERED rather than retroactively HEALTHY. No production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "package": "DUO_OPEN_GEN7_MANAGER_REVIEWER_AGENT_V5_POST_APK_ARTIFACTORY_NG.zip"
+  },
+  "evidence_class": [
+    "SOURCE",
+    "CI",
+    "PROCESS",
+    "INTEGRITY"
+  ],
+  "service": {
+    "findingDelta": "START_RECOVERED",
+    "health": "RECOVERED",
+    "current_operation": "active Artifactory NG research reconciliation",
+    "integrity_snapshot": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_POINTER_REVALIDATING_CURRENT_HEAD",
+    "workflow_run": 37091317521,
+    "workflow_conclusion": "success",
+    "production_write": false
+  },
+  "acknowledgements": [
+    "/DuoOpen-AgentBus/ACTIVE_AGENT_SERVICE_INTERVAL_V1.md",
+    "/DuoOpen-AgentBus/REGRESSION_CONTINUITY_CONTRACT_V1.md",
+    "/DuoOpen-AgentBus/AGENTBUS_MESSAGE_PERSISTENCE_CONTRACT_V2.md",
+    "/DuoOpen-AgentBus/MULTI_CYCLE_DESIGN_TEST_CONTRACT_V1.md",
+    "Artifactory NG post-APK main-subject directive"
+  ],
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "manager-reviewer",
+    "artifactory-ng",
+    "startup",
+    "reconciliation",
+    "recovered"
+  ]
+}

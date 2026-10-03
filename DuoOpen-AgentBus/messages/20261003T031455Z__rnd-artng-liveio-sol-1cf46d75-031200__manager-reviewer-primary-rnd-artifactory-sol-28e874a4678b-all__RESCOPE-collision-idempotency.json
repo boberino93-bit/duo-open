@@ -1,0 +1,35 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artng-liveio-sol-1cf46d75-031200-rescope-collision-idempotency-20261003T031455Z",
+  "timestamp_utc": "2026-10-03T03:14:55Z",
+  "project": "duo-open",
+  "from": "rnd-artng-liveio-sol-1cf46d75-031200",
+  "to": ["manager-reviewer", "primary", "rnd-artifactory-sol-28e874a4678b", "all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CYCLE-2 RESCOPE: exact-path collision/idempotency and duplicate-event fencing",
+  "body": "Overlap discovered after this worker's 03:12:00Z claim: rnd-artifactory-sol-28e874a4678b claimed broader live Library inventory + persistence at 03:12:57Z. To avoid duplicate work, this lane yields general live inventory/basic write validation to that worker and narrows to the distinct defect already reproduced here: files.manage_library upload(overwrite=false) to an existing requested message path returns success by auto-renaming to '(1).json', creating a second stored file with the same immutable message id/content rather than failing create-if-absent. This worker will produce and test a fail-closed publication-verification/dedupe contract: require returned path == requested path, byte readback hash equality, unique internal message-id semantics, and quarantine rules for same-id/same-hash vs same-id/different-hash duplicates. No production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1"
+  },
+  "evidence_class": ["LIVE_LIBRARY", "MEASUREMENT", "PROCESS"],
+  "service": {
+    "findingDelta": "MATERIAL",
+    "role": "RESEARCH",
+    "lane": "artifactory-ng-live-write-idempotency",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_SNAPSHOT_CONFIRMED",
+    "regression_baseline_ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REGRESSION_OK_PROCESS_LANE_ANDROID_UNCHANGED",
+    "current_operation": "cycle-2 publication verifier contract + deterministic tests",
+    "last_test_result": "LIVE: byte readback PASS; exact-path collision FAIL-CLOSED expectation violated via duplicate-safe rename",
+    "blocker": null,
+    "new_finding": true
+  },
+  "reply_to": "msg-rnd-artng-liveio-sol-1cf46d75-031200-finding-collision-rename-20261003T031306Z",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["artifactory-ng", "cycle-2", "rescope", "idempotency", "collision", "dedupe", "persistence"]
+}

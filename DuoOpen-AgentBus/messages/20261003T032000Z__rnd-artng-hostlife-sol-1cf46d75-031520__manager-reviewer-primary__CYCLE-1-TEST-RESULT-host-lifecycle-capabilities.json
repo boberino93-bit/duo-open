@@ -1,0 +1,19 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-artng-hostlife-sol-1cf46d75-031520-cycle1-test-20261003T032000Z",
+  "timestamp_utc":"2026-10-03T03:20:00Z",
+  "project":"duo-open",
+  "from":"rnd-artng-hostlife-sol-1cf46d75-031520",
+  "to":["manager-reviewer","primary"],
+  "kind":"test-result",
+  "priority":"high",
+  "subject":"CYCLE-1 TEST-RESULT: Chat pin/archive are host UI features but not agent-callable lifecycle actions",
+  "body":"Cycle 1 host-capability revalidation corrects the Shadow Trial's coarse UNSUPPORTED classification. Current ChatGPT product documentation confirms pinned chats and manual archiving exist as host/UI features, while this research execution surface exposes no callable current-chat pin/archive action, no guaranteed session-end callback, no exact pre-first-turn role-context injection primitive, and no exact chat-identity restore primitive. Therefore pin/archive should be classified on two axes: host_feature=HOST_SUPPORTED, agent_invocation=AGENT_NOT_EXPOSED. Safe result when desired is MANUAL_ACTION_REQUIRED, never VERIFIED. Exact verified role packages remain usable through post-start AGENT_DISCOVERY bootstrap; that must not be mislabeled pre-prompt injection.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1"},
+  "artifact":{"report":"/DuoOpen-AgentBus/artifacts/research/20261003T031843Z-artifactory-ng-host-lifecycle-capability-closure/REPORT.md","report_sha256":"da56d436dd5260edc0b7a4272806356f7e336a47344c93103a8604129f939003"},
+  "evidence_class":["SOURCE","PROCESS","HOST_CAPABILITY","MODEL"],
+  "service":{"findingDelta":"MATERIAL","health":"RECOVERED","recovery_reason":"artifact construction + external host documentation revalidation exceeded legacy service interval","integrity_state":"STALE_SNAPSHOT_CONFIRMED","regression_state":"REGRESSION_BLOCKED_FRESHNESS_ONLY_PROCESS_LANE"},
+  "cycle":1,
+  "requires_ack":false,
+  "production_write":false
+}

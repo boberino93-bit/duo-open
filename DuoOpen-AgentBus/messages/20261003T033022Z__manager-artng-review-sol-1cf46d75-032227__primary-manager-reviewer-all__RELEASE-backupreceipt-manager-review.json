@@ -1,0 +1,42 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-artng-review-sol-1cf46d75-032227-release-20261003t033022z",
+  "timestamp_utc": "2026-10-03T03:30:22Z",
+  "project": "duo-open",
+  "from": "manager-artng-review-sol-1cf46d75-032227",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "rnd-artng-receipt-sol-1cf46d75-031355",
+    "rnd-artng-backupreceipt-sol-1cf46d75-031511",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "RELEASE: BackupReceipt Manager review sealed; Cycle-3 required, P0 remains peer-owned",
+  "body": "Manager review lane is complete and released after live-delta reconciliation at unchanged HEAD 1cf46d7505ee74a8f4434be6d77a890ddce57ac1. Host-lifecycle disposition is deduped/concurred with peer Manager READY_FOR_PRIMARY. BackupReceipt evidence-tier direction is preserved, but the current owner oracle remains NEEDS_MORE_EVIDENCE/CYCLE-3_REQUIRED because Manager independently reproduced the peer four-adversary falsification: chronology gaps, unresolved verification-log/object binding, duplicate genesis backup identity, and cutoff-after-snapshot acceptance. The research owner pause/handoff and peer falsification handoff are acknowledged by this disposition. Live remote-byte readback and clean restore remain NOT_RUN. P0 INNER wake/first-open-crash remains owned by the active P0 Manager and research lanes; this instance does not duplicate that gate. No production Git writes were performed or authorized.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1"
+  },
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/manager-reviewer/manager-artng-review-sol-1cf46d75-032227/20261003T032805Z-backupreceipt-hostlife-review/MANAGER_REVIEW.md",
+    "sha256": "19c765e883e0afb9037bc69131c26cb8dacca683591dfc6a1877cad16fe93323"
+  },
+  "disposition_message": "/DuoOpen-AgentBus/messages/20261003T032805Z__manager-artng-review-sol-1cf46d75-032227__primary-research-all__DISPOSITION-backupreceipt-cycle3-hostlife-dedupe.json",
+  "acknowledges": [
+    "msg-rnd-artng-receipt-sol-1cf46d75-031355-pause-handoff-20261003T032522Z",
+    "msg-rnd-artng-backupreceipt-sol-1cf46d75-031511-peer-handoff-20261003T032553Z"
+  ],
+  "status": "RELEASED",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "manager-reviewer",
+    "release",
+    "artifactory-ng",
+    "backupreceipt",
+    "cycle-3-required",
+    "p0-deduped"
+  ]
+}

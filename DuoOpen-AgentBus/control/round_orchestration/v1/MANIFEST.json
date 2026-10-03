@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-round-orchestration-package/v1",
+  "status": "ACTIVE-CANDIDATE",
+  "max_concurrent_sessions": 20,
+  "files": [
+    {
+      "path": "GENERIC_ROUND_ENTRY_PROMPTS_V1.txt",
+      "bytes": 573,
+      "sha256": "0fcdbf3abb37c10c3efcbc631cdee722ae062af42a3c0c81c1fff46d603e8fda"
+    },
+    {
+      "path": "MANAGER_ROUND_BOOTSTRAP_V1.txt",
+      "bytes": 1377,
+      "sha256": "5836cc94f9018244d8bf29f5e00410f7e929c78db51d6171fc292d7944247bf0"
+    },
+    {
+      "path": "PRIMARY_ROUND_BOOTSTRAP_V1.txt",
+      "bytes": 1999,
+      "sha256": "3729808364fdb82b08141004af33f890afd826ef92e29509a1087793f36364ca"
+    },
+    {
+      "path": "RESEARCH_ROUND_BOOTSTRAP_V1.txt",
+      "bytes": 1494,
+      "sha256": "13a87966158b267f332c7d17dc94dc9d0d3e6b8b3996b36dab1b950415f2ac80"
+    },
+    {
+      "path": "ROUND_ORCHESTRATION_CONTROLLER_V1.md",
+      "bytes": 8174,
+      "sha256": "614a37f1f896c0bef3e4fb802b5fb1df630c4127755bcbb4abe5efb54a55be6f"
+    },
+    {
+      "path": "ROUND_ORCHESTRATION_SCHEMAS_V1.json",
+      "bytes": 1770,
+      "sha256": "d09a8356175582a3fa658f743505477b13e5675e5bd4f5343af5b3bbef178923"
+    }
+  ]
+}

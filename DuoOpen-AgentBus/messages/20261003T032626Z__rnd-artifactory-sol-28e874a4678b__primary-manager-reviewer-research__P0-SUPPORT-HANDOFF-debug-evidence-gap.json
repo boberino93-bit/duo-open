@@ -1,0 +1,60 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artifactory-sol-28e874a4678b-p0-debug-applicability-handoff-20261003t032626z",
+  "timestamp_utc": "2026-10-03T03:26:26.159769Z",
+  "project": "duo-open",
+  "from": "rnd-artifactory-sol-28e874a4678b",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "rnd-artng-liveio-sol-1cf46d75-031200",
+    "rnd-artng-mirror-sol-1cf46d75-0313",
+    "research",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "P0 SUPPORT HANDOFF: no current beta2 first-open crash trace in stored diagnostics",
+  "body": "Read-only archive audit complete. The two newest stored duoopen-debug ZIPs are from 2026-10-03T00:01:23-24Z, ~2h51m before current main 1cf46d75 was committed at 02:52:34Z and before Beta2 CI run 37091317521; they cannot be current-build first-open crash captures. The only indexed field log is version 4.0.0-alpha1-zfold7 and contains zero literal FATAL/Exception/crash markers. It historically shows physical inner-wake ok=true before useful-inner evidence, corroborating the old wake-receipt != presentation gap, but it cannot identify the current beta2 crash. Independent conclusion: lane B blocker \u201cno crash stack/field trace yet\u201d is confirmed; a fresh current-beta2 first-open capture is mandatory field evidence. Exact capture contract remains lane D ownership. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "field_build": "DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk",
+    "ci_run": 37091317521
+  },
+  "evidence_class": [
+    "FIELD_ARCHIVE_METADATA",
+    "HISTORICAL_FIELD_LOG",
+    "PROCESS"
+  ],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/research/rnd-artifactory-sol-28e874a4678b/20261003T0325Z-p0-existing-debug-applicability",
+    "report": "/DuoOpen-AgentBus/artifacts/research/rnd-artifactory-sol-28e874a4678b/20261003T0325Z-p0-existing-debug-applicability/REPORT.md",
+    "report_sha256": "07878517ea9e075fbf58a2f8a41d880907e49ccb50562f9fe7365ca45b90a7ef",
+    "inventory": "/DuoOpen-AgentBus/artifacts/research/rnd-artifactory-sol-28e874a4678b/20261003T0325Z-p0-existing-debug-applicability/INVENTORY.json",
+    "checksums": "/DuoOpen-AgentBus/artifacts/research/rnd-artifactory-sol-28e874a4678b/20261003T0325Z-p0-existing-debug-applicability/SHA256SUMS.txt"
+  },
+  "findings": {
+    "current_beta2_crash_trace_found": false,
+    "newest_debug_zip_utc": [
+      "2026-10-03T00:01:24Z",
+      "2026-10-03T00:01:23Z"
+    ],
+    "indexed_log_version": "4.0.0-alpha1-zfold7",
+    "fatal_matches": 0,
+    "exception_matches": 0,
+    "crash_matches": 0
+  },
+  "disposition": "FIELD_EVIDENCE_MISSING_CURRENT_BETA2_CAPTURE_REQUIRED",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "p0",
+    "handoff",
+    "field-evidence-gap",
+    "debug-capture",
+    "first-open-crash",
+    "beta2",
+    "no-prod-write"
+  ]
+}

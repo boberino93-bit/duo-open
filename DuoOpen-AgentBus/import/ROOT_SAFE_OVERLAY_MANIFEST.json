@@ -1,80 +1,75 @@
 {
-  "schema": "duoopen-root-safe-overlay/v1",
-  "package": "DUO_OPEN_GEN7_CANONICAL_AGENTBUS_ROOT_SAFE_OVERLAY_SP4_2_20261003",
+  "schema": "duoopen-root-safe-overlay/v2",
+  "package": "DUO_OPEN_GEN7_CANONICAL_AGENTBUS_ROUND_ORCHESTRATION_ROOT_SAFE_OVERLAY_SP4_2_20261003",
   "root_safe": true,
   "copy_destination": "repository root",
   "repository": "boberino93-bit/duo-open",
-  "expected_base_commit": "28842ae4d1c4f907257b24a73012bf5015702f81",
-  "base_ci_run": 37083926151,
+  "expected_base_commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+  "app_source_baseline": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+  "base_ci_run": 37091317521,
   "base_ci_conclusion": "success",
   "target_app_version": "5.1.0-beta2-zfold7",
   "target_version_code": 43,
-  "physical_fold7_validation": "NOT_RUN",
+  "physical_fold7_validation": "P0_OPEN_NOT_SOLVED",
+  "github_direct_push": {
+    "attempted": true,
+    "result": "BLOCKED",
+    "error": "403 Resource not accessible by integration",
+    "note": "No GitHub write is claimed. Extract/commit this overlay to publish the complete mirror."
+  },
   "contents": {
     "agentbus_root": "DuoOpen-AgentBus/",
     "message_forum": {
       "path": "DuoOpen-AgentBus/messages/",
-      "json_file_count": 594,
-      "complete_through": "2026-10-03T02:46:51Z",
-      "latest_message": "20261003T024651Z__primary__all__root-safe-overlay-export.json"
+      "file_count": 699,
+      "json_file_count": 698,
+      "complete_through": "2026-10-03T04:05:00Z",
+      "latest_message": "20261003T040500Z__primary__all__canonical-round-orchestration-refresh-complete.json"
     },
-    "canonical_registry": "DuoOpen-AgentBus/templates/CANONICAL_ROLE_PACKAGE_REGISTRY_20261003.json",
+    "round_orchestration": {
+      "version": "v1",
+      "entry": "DuoOpen-AgentBus/ROUND_ENTRY.md",
+      "join": "DuoOpen-AgentBus/JOIN_ROUND.md",
+      "controller": "DuoOpen-AgentBus/control/round_orchestration/v1/ROUND_ORCHESTRATION_CONTROLLER_V1.md",
+      "max_concurrent_sessions": 20,
+      "spawn_adapter_state": "MANUAL_FALLBACK"
+    },
+    "canonical_registry": "DuoOpen-AgentBus/templates/CANONICAL_ROLE_PACKAGE_REGISTRY_20261003_ROUND_ORCHESTRATION.json",
+    "canonical_registry_sha256": "0b1df43f241f9297106b82def93a3d7b846e15804802674db37651777fbbce14",
     "canonical_roles": {
       "PRIMARY": {
-        "path": "DuoOpen-AgentBus/templates/DUO_OPEN_PRIMARY_AGENT_V7_POST_APK_ARTIFACTORY_NG.zip",
-        "sha256": "d9f7210cf9987298cfce264f5d6263dcfcc69eb7915c59786309d93919da3665",
-        "bytes": 1264881
+        "path": "DuoOpen-AgentBus/templates/DUO_OPEN_PRIMARY_AGENT_V8_ROUND_ORCHESTRATION.zip",
+        "sha256": "f26e5cf9385146206b924bd2308b4ad305e479ba554cc7c18aac1566ec4165a3",
+        "bytes": 1479418
       },
       "MANAGER_REVIEWER": {
-        "path": "DuoOpen-AgentBus/templates/DUO_OPEN_GEN7_MANAGER_REVIEWER_AGENT_V5_POST_APK_ARTIFACTORY_NG.zip",
-        "sha256": "7ebd115920dbafab351302588194a92d88b9db6650f807b061e35b18317241be",
-        "bytes": 1264907
+        "path": "DuoOpen-AgentBus/templates/DUO_OPEN_GEN7_MANAGER_REVIEWER_AGENT_V6_ROUND_ORCHESTRATION.zip",
+        "sha256": "4e435094fa64be2575ad54452d0923f0327f67ebe85d0bf728646b614dd1035f",
+        "bytes": 1479116
       },
       "RESEARCH": {
-        "path": "DuoOpen-AgentBus/templates/DUO_OPEN_GEN7_RESEARCH_AGENT_V5_POST_APK_ARTIFACTORY_NG.zip",
-        "sha256": "53994d8e7d293a12a6c34a55b365066f72aaba7ec069ed482a3a9922923fe678",
-        "bytes": 1264887
+        "path": "DuoOpen-AgentBus/templates/DUO_OPEN_GEN7_RESEARCH_AGENT_V6_ROUND_ORCHESTRATION.zip",
+        "sha256": "de185dc630d4ee6865111abeaf7554c72af85451ac1287418d228ae156a55978",
+        "bytes": 1479125
       }
     },
     "cumulative_runtime_hotfix": "SP4.2 (includes SP4 + SP4.1 + SP4.2 corrections)",
     "workflow": ".github/workflows/build-gen7-runtime-regression-beta2.yml",
-    "workflow_trigger_marker": "service_packs/gen7_runtime_regression_beta2/AGENTBUS_OVERLAY_REVALIDATION_20261003.md",
     "hotfix_lineage_evidence": [
       "DuoOpen-AgentBus/evidence/hotfix_lineage/DUO_OPEN_GEN7_ROOT_DROP_SP4_RUNTIME_REGRESSION_BETA2.zip",
       "DuoOpen-AgentBus/evidence/hotfix_lineage/DUO_OPEN_GEN7_ROOT_DROP_SP4_1_RUNTIME_REGRESSION_BETA2_SCOPE_HOTFIX_ROOT_SAFE.zip",
       "DuoOpen-AgentBus/evidence/DUO_OPEN_GEN7_ROOT_DROP_SP4_2_RUNTIME_REGRESSION_BETA2_TEST_ALIGNMENT_ROOT_SAFE.zip"
     ]
   },
+  "current_field_priority": {
+    "subject": "INNER display early enablement + first-open crash",
+    "observed": "inner remains dark until about 50-60 degrees; first open crashes/recovery; later opens smooth after system established",
+    "status": "P0_UNRESOLVED"
+  },
   "root_overlay_policy": {
     "does_not_include_generic_root_readme": true,
     "preserves_existing_repository_README.md": true,
-    "allowed_top_level_entries": [
-      ".github",
-      "APPLY_AFTER_COPY.ps1",
-      "APPLY_AFTER_COPY.py",
-      "APPLY_AFTER_COPY.sh",
-      "DuoOpen-AgentBus",
-      "README_ROOT_DROP.md",
-      "ROOT_DROP_MANIFEST.json",
-      "SHA256SUMS.txt",
-      "SP4_2_HOTFIX_NOTES.md",
-      "service_packs",
-      "tools"
-    ],
-    "intended_overwrites": "existing SP4/SP4.1/SP4.2 service-pack/workflow files only; bytes are retained from the successful SP4.2 package except for the new watched-path revalidation marker",
     "runtime_source_files_directly_rewritten": false,
-    "note": "Beta2 transformed Android sources are generated in CI workspace by the existing patcher; this overlay does not commit transformed app source into main."
-  },
-  "workflow_trigger": {
-    "on_commit_to_main": true,
-    "reason": "new marker is under service_packs/gen7_runtime_regression_beta2/**, a watched workflow path",
-    "expected_workflow": "Build Gen7 Runtime Regression Beta2"
-  },
-  "manifest_count_correction": {
-    "prior_export_reported": 594,
-    "prior_export_actual_message_json": 593,
-    "cause": "manifest counting defect",
-    "missing_message_detected": false,
-    "new_overlay_message_json_count": 594
+    "note": "Beta2 transformed Android sources remain generated in CI workspace by the existing patcher. This overlay adds current AgentBus/forum/orchestration/canonical role packages while preserving cumulative SP4.2 repository-path files."
   }
 }

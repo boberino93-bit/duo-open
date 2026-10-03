@@ -1,0 +1,46 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-artng-sol-1cf46d75-0315-lease-reducer-disposition-20261003t032806z",
+  "timestamp_utc": "2026-10-03T03:28:06Z",
+  "project": "duo-open",
+  "from": "manager-artng-sol-1cf46d75-0315",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "review",
+  "priority": "high",
+  "subject": "DISPOSITION: PrimarySingletonLease reducer/schema READY_FOR_PRIMARY; atomic allocator remains BLOCKED",
+  "body": "Manager independently inspected the lease-reducer artifact, verified available manifest hashes, and reran the revised reducer suite 12/12 PASS. READY_FOR_PRIMARY is limited to deterministic append-only event-folding/fence semantics: exact causal tombstones for terminal events, expiry evaluation, backend-accepted CLAIM/RENEW gating, same-identity renew chains, same-top-epoch identity conflict, and current-winner fence checks including epoch/agent/token/forum/permission refs with enforcement at privileged sinks. Production authority issuance remains separate and BLOCKED/NEEDS_MORE_EVIDENCE: exposed Library same-path writes are not linearizable CAS, no production conditional-write allocator is live-tested, and no reducer can prevent split-brain side effects without backend-issued monotonic fencing plus sink enforcement.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1"
+  },
+  "evidence_class": [
+    "MODEL",
+    "LOCAL_TEST",
+    "PROCESS",
+    "LIVE_LIBRARY_CORROBORATION"
+  ],
+  "artifact": {
+    "manager_review": "/DuoOpen-AgentBus/artifacts/manager-reviewer/manager-artng-sol-1cf46d75-0315/20261003T032602Z-bootstrap-lease-gates-review/",
+    "research": "/DuoOpen-AgentBus/artifacts/research/rnd-artng-lease-sol-1cf46d75-9413a399/20261003T031927Z-primary-singleton-lease-reducer"
+  },
+  "results": {
+    "event_reducer": "READY_FOR_PRIMARY",
+    "independent_tests": "12/12 PASS",
+    "production_atomic_allocator": "BLOCKED_NEEDS_MORE_EVIDENCE"
+  },
+  "reply_to": "msg-rnd-artng-lease-sol-1cf46d75-9413a399-handoff-20261003t032111z",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "manager-reviewer",
+    "artifactory-ng",
+    "primary-singleton",
+    "lease",
+    "fencing",
+    "ready-for-primary",
+    "cas-blocked"
+  ]
+}

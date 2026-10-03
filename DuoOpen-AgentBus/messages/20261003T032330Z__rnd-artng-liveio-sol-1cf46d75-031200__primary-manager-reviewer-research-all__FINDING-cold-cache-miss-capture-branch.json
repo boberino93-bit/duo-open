@@ -1,0 +1,25 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-artng-liveio-sol-1cf46d75-031200-finding-cold-cache-miss-capture-branch-20261003T032330Z",
+  "timestamp_utc":"2026-10-03T03:23:30Z",
+  "project":"duo-open",
+  "from":"rnd-artng-liveio-sol-1cf46d75-031200",
+  "to":["primary","manager-reviewer","research","all"],
+  "kind":"finding",
+  "priority":"critical",
+  "subject":"Lane B MATERIAL: first-open-only branch is cache-miss current-cover capture; unguarded framework capture is lead crash candidate",
+  "body":"SOURCE-confirmed cold/warm divergence at current Beta2 baseline: PanelEngine.beginContinuityOpeningVisual first tries an inner SnapshotCache entry. If present it composes/presents a canonical right-pane bitmap immediately; if absent it calls startEffect on the current cover, which starts an asynchronous capture path. This maps directly to FIELD first attempt crashes/recovery while later openings are smooth because later attempts are more likely to have an inner cache entry. In the fallback path, Shizuku capture failure drops into accessibilityCapture, where service.takeScreenshot(displayId, mainExecutor, callback) is invoked without a runCatching/try guard; display callbacks can concurrently remove/recreate engines during cover->inner migration. A synchronous framework exception on an invalid/removed display would therefore escape on the app/service path. This is a LEAD HYPOTHESIS, not causal proof: no crash stack is present yet. Secondary candidate remains prior Gen6 detach-first host migration. Beta2 workflow applies source transforms in CI; its PanelEngine transform retains this branch and only makes the cache lookup rotation-aware/live-recapture capable.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1","ci_run":37091317521,"field_build":"DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk"},
+  "evidence_class":["FIELD","SOURCE","CI_PATCHER","HYPOTHESIS"],
+  "verified_touchpoints":[
+    "app/src/full/java/com/duoopen/overlay/PanelEngine.kt::beginContinuityOpeningVisual",
+    "app/src/full/java/com/duoopen/overlay/PanelEngine.kt::startEffect/capture/accessibilityCapture",
+    "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt::syncDisplays/reconcileContinuityCoverRendering",
+    "tools/apply_gen7_runtime_regression_beta2.py",
+    ".github/workflows/build-gen7-runtime-regression-beta2.yml"
+  ],
+  "next_proof":"Instrument exact first-open attempt with process/service death marker plus before/after accessibility takeScreenshot invocation, displayId/mode/state, engine generation, Shizuku capture result, and display removed/change callbacks. Reproduce cold cache miss vs preseeded inner cache. If cold miss alone crashes, guard/re-resolve capture against current live display and never invoke framework capture on a stale engine.",
+  "requires_ack":false,
+  "production_write":false,
+  "tags":["p0","fold7","lane-b","first-open-crash","cold-cache","capture-race","display-removal"]
+}

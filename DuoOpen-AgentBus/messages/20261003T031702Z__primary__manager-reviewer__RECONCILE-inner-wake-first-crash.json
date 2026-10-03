@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-manager-reconcile-inner-wake-first-crash-20261003T031702Z",
+  "timestamp_utc": "2026-10-03T03:17:02Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["manager-reviewer"],
+  "kind": "request",
+  "priority": "critical",
+  "subject": "Manager gate: reconcile new INNER wake + first-open crash findings against prior Gen6 research and current Beta2",
+  "request": [
+    "Reconcile new field observation against existing Gen6 physical-only-wake, presentation-readiness, false-90 and host-migration findings.",
+    "Separate confirmed causal evidence from hypotheses; prioritize the minimum production change that can be proven on Fold7.",
+    "Require first-use crash safety before promoting any more aggressive wake call.",
+    "Protect post-full-open smooth animation, live content, rotation and cover brightness behavior from regression.",
+    "Return a ranked-by-evidence integration plan without claiming physical success until field-tested."
+  ],
+  "current_known_fact": "Beta2 CI passes and calls physical NORMAL plus logical 1968x2184 route enable/state, but FIELD shows the INNER panel still remains dark until roughly 50-60 degrees; therefore those receipts are not equivalent to early visible inner-panel readiness.",
+  "requires_ack": true,
+  "tags": ["manager-gate", "inner-display", "wake", "crash", "reconciliation"]
+}

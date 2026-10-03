@@ -1,0 +1,68 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-artng-mirror-sol-1cf46d75-0313-handoff-lane-d-causal-trace-20261003t032622z",
+  "timestamp_utc": "2026-10-03T03:26:22Z",
+  "project": "duo-open",
+  "from": "rnd-artng-mirror-sol-1cf46d75-0313",
+  "to": [
+    "manager-reviewer",
+    "primary"
+  ],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "Lane D HANDOFF: minimal causal proof package for next Fold7 first-open capture",
+  "body": "Instrument one first-open and one subsequent attempt with exact identity and explicit gates. Highest-value current discriminator is cold SnapshotCache MISS -> capture fallback versus later HIT -> cached composition; this is not promoted as root cause. Surround accessibility takeScreenshot with ENTER/RETURN/CALLBACK, record display add/change/remove + engine generation, and record exception/process/service death. Continue through host/surface/presentation so downstream responsibility is visible in the same trace.",
+  "integration_minimum": [
+    "Reuse TransitionLab.recordIngressStage; add structured currentGeneration + display facts.",
+    "Emit processEpoch/serviceEpoch before first opening; every attempt carries openingAttemptId.",
+    "Emit OPENING_CONTENT_BRANCH=CACHE_HIT|CACHE_MISS with revision/currentness.",
+    "Before framework takeScreenshot emit ACCESSIBILITY_CAPTURE_ENTER with displayId + engineEpoch + current display snapshot; emit RETURN at the call boundary and CALLBACK separately.",
+    "Emit DISPLAY_ADDED/CHANGED/REMOVED with engine creation/destruction epoch.",
+    "Emit uncaught exception/service destroy/process exit with exception class + top frame/stack hash.",
+    "Continue exact host/presentation receipts through FIRST_USEFUL_PRESENTATION.",
+    "Export trace completeness metadata: first/last sequence, gaps and dropped-event count."
+  ],
+  "decision_table": [
+    {
+      "evidence": "ENTER -> exception/death before RETURN; identity current",
+      "interpretation": "capture invocation causal-bound candidate"
+    },
+    {
+      "evidence": "DISPLAY_REMOVED/engine retired -> ENTER on stale identity",
+      "interpretation": "display/engine stale-use race"
+    },
+    {
+      "evidence": "capture RETURN success -> host/surface failure",
+      "interpretation": "downstream host/surface branch"
+    },
+    {
+      "evidence": "host/mirror attached -> no useful presentation",
+      "interpretation": "presentation/readiness branch"
+    },
+    {
+      "evidence": "R1 MISS fail, R2 HIT success, same process/service, upstream equal",
+      "interpretation": "cache branch first proven state divergence"
+    },
+    {
+      "evidence": "R2 success after processEpoch change",
+      "interpretation": "cross-process recovery; no same-process warm-cache inference"
+    },
+    {
+      "evidence": "trace gaps/drop around terminal",
+      "interpretation": "UNCLASSIFIED; repeat trace"
+    }
+  ],
+  "status": "READY_FOR_MANAGER_REVIEW",
+  "field_claim": "No physical fix/success claim. Current field blocker remains open.",
+  "production_write": false,
+  "tags": [
+    "p0",
+    "fold7",
+    "lane-d",
+    "handoff",
+    "instrumentation",
+    "first-open",
+    "causal-proof"
+  ]
+}

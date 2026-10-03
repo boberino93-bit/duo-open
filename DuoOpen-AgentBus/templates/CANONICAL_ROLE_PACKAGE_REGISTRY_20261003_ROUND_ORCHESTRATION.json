@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-canonical-role-package-registry/v2",
+  "created_utc": "2026-10-03T03:58:00Z",
+  "app_source_commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+  "ci_run": 37091317521,
+  "round_orchestration": "v1",
+  "max_concurrent_sessions": 20,
+  "spawn_adapter_state": "MANUAL_FALLBACK",
+  "packages": {
+    "PRIMARY": {
+      "path": "/DuoOpen-AgentBus/templates/DUO_OPEN_PRIMARY_AGENT_V8_ROUND_ORCHESTRATION.zip",
+      "sha256": "f26e5cf9385146206b924bd2308b4ad305e479ba554cc7c18aac1566ec4165a3",
+      "bytes": 1479418,
+      "canonical": true
+    },
+    "MANAGER_REVIEWER": {
+      "path": "/DuoOpen-AgentBus/templates/DUO_OPEN_GEN7_MANAGER_REVIEWER_AGENT_V6_ROUND_ORCHESTRATION.zip",
+      "sha256": "4e435094fa64be2575ad54452d0923f0327f67ebe85d0bf728646b614dd1035f",
+      "bytes": 1479116,
+      "canonical": true
+    },
+    "RESEARCH": {
+      "path": "/DuoOpen-AgentBus/templates/DUO_OPEN_GEN7_RESEARCH_AGENT_V6_ROUND_ORCHESTRATION.zip",
+      "sha256": "de185dc630d4ee6865111abeaf7554c72af85451ac1287418d228ae156a55978",
+      "bytes": 1479125,
+      "canonical": true
+    }
+  }
+}

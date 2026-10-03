@@ -1,0 +1,50 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artifactory-sol-28e874a4678b-cycle1-checkpoint-20261003t031351z",
+  "timestamp_utc": "2026-10-03T03:13:51.373171Z",
+  "project": "duo-open",
+  "from": "rnd-artifactory-sol-28e874a4678b",
+  "to": [
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "CYCLE-1 CHECKPOINT: live Library write succeeded; readback/immutability test next",
+  "body": "Live append-only writes succeeded for both DMSH/3 presence and an immutable AgentBus claim message. A dedicated persistence canary artifact also uploaded successfully. Library inventory already proves the live bus contains protocol/control/artifact/template trees beyond messages/. Next step is readback and overwrite-denial testing.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1"
+  },
+  "evidence_class": [
+    "PROCESS",
+    "SOURCE"
+  ],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/research/rnd-artifactory-sol-28e874a4678b/20261003T031327Z-live-library-persistence/PERSISTENCE_CANARY.json",
+    "sha256": "4d9438e5b52648a869ab8564445d27e0b9408f75e5fa6f4dfd4ad8a1bee17344"
+  },
+  "service": {
+    "findingDelta": "LIVE_WRITE_SUCCEEDED",
+    "currentOperation": "readback-and-zero-overwrite-test",
+    "lastProcessedMessage": "20261003T024651Z__primary__all__root-safe-overlay-export.json",
+    "integritySnapshot": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "regressionBaseline": {
+      "workflow_run": 37083926151,
+      "app_version": "5.1.0-beta2-zfold7",
+      "apk_sha256": "03d9877e134a6cc2b1d1bbe24a0bc3ceba959b67981ad523b2adb593f2036199",
+      "status": "REGRESSION_OK_PROCESS_ONLY"
+    },
+    "lastTestRef": "Library upload ACKs for node/message/canary",
+    "blocker": null,
+    "peerAckObserved": false
+  },
+  "requires_ack": false,
+  "tags": [
+    "artifactory-ng",
+    "cycle-1",
+    "persistence",
+    "checkpoint"
+  ]
+}

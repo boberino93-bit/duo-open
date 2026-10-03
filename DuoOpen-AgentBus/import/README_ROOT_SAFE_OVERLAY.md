@@ -1,31 +1,35 @@
-# Duo Open canonical AgentBus + SP4.2 root-safe overlay
+# Duo Open AgentBus Round Orchestration + SP4.2 root-safe overlay
 
-This archive is intended to be **extracted directly into the root** of `boberino93-bit/duo-open` at current main `28842ae4d1c4f907257b24a73012bf5015702f81`. Allow overwrite of existing SP4/SP4.1/SP4.2 files.
+Extract this archive **directly into the repository root** of `boberino93-bit/duo-open`. It is based on current main/application baseline `1cf46d7505ee74a8f4434be6d77a890ddce57ac1`.
 
-It is deliberately root-safe:
+## What is included
 
-- the complete AgentBus is under `DuoOpen-AgentBus/`;
-- no generic root `README.md` is included, so the repository README is not replaced;
-- the cumulative SP4.2 workflow/patcher/service-pack files are included at their repository paths;
-- a new harmless watched-path marker forces a fresh Beta2 workflow run after the overlay commit;
-- no transformed Android `app/` source is directly written by this archive. The existing CI patcher performs that transformation in the workflow workspace.
+- Full current `DuoOpen-AgentBus/` mirror carried forward from the previous canonical overlay plus all live deltas through the canonical round-orchestration refresh.
+- Complete message-forum backup: **699 files** (**698 JSON + 1 historical Markdown handoff**).
+- Latest forum record: `20261003T040500Z__primary__all__canonical-round-orchestration-refresh-complete.json`.
+- Canonical role packages:
+  - Primary V8 `DUO_OPEN_PRIMARY_AGENT_V8_ROUND_ORCHESTRATION.zip`
+  - Manager/Reviewer V6 `DUO_OPEN_GEN7_MANAGER_REVIEWER_AGENT_V6_ROUND_ORCHESTRATION.zip`
+  - Research V6 `DUO_OPEN_GEN7_RESEARCH_AGENT_V6_ROUND_ORCHESTRATION.zip`
+- Round Orchestration V1 controller, schemas, stable `ROUND_ENTRY.md` / `JOIN_ROUND.md`, role bootstrap prompts, and non-preemptive help policy.
+- Hard orchestration ceiling: **20 concurrent sessions**, including Primary.
+- Physical chat-spawn adapter state: **MANUAL_FALLBACK** until a native/host adapter is actually validated.
+- Existing cumulative SP4.2 workflow, service-pack, patcher and hotfix lineage.
 
-## Snapshot
+## Current engineering priority
 
-- AgentBus message JSON files: **594**
-- Latest persisted message: `20261003T024651Z__primary__all__root-safe-overlay-export.json`
-- Canonical Primary: `DUO_OPEN_PRIMARY_AGENT_V7_POST_APK_ARTIFACTORY_NG.zip`
-- Canonical Manager/Reviewer: `DUO_OPEN_GEN7_MANAGER_REVIEWER_AGENT_V5_POST_APK_ARTIFACTORY_NG.zip`
-- Canonical Research: `DUO_OPEN_GEN7_RESEARCH_AGENT_V5_POST_APK_ARTIFACTORY_NG.zip`
-- Runtime hotfix lineage: SP4 → SP4.1 → SP4.2, with SP4.2 cumulative and the earlier package archives preserved as evidence.
-- Successful reference CI run: `37083926151` on `28842ae4d1c4f907257b24a73012bf5015702f81`.
-- Physical Fold7 validation remains **NOT_RUN**.
+The INNER-screen issue remains P0. Field evidence is that the inner panel stays dark until roughly 50-60 degrees, the first opening animation crashes/recoveries, and later animations become smooth once the inner display/system is established. This package does **not** claim that physical problem is solved.
+
+## GitHub write status
+
+A direct GitHub push was attempted from the connected integration and returned `403 Resource not accessible by integration`. No GitHub write is claimed. This archive is therefore the complete root-safe publication vehicle: extract it, review, then commit the resulting changes to `main`.
 
 ## Apply
 
-1. Extract this ZIP into the repository root.
-2. Allow overwrite of existing files.
-3. Commit the resulting changes to `main`.
-4. The new `service_packs/gen7_runtime_regression_beta2/AGENTBUS_OVERLAY_REVALIDATION_20261003.md` file is under a watched path and should trigger `Build Gen7 Runtime Regression Beta2`.
+1. Extract into repository root.
+2. Allow overwrite of existing AgentBus/SP4.2 paths.
+3. Your existing root `README.md` is not included or replaced.
+4. Run `python DuoOpen-AgentBus/import/VERIFY_ROOT_SAFE_OVERLAY.py .`.
+5. Commit/push the resulting changes.
 
-Run `python DuoOpen-AgentBus/import/VERIFY_ROOT_SAFE_OVERLAY.py .` from the repository root if you want an offline package-integrity check before committing.
+The archive preserves old canonical role ZIPs for lineage but the new registry marks V8/V6/V6 as canonical.

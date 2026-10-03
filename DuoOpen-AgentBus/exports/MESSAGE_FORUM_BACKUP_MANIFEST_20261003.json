@@ -1,0 +1,15 @@
+{
+  "backup_type": "DuoOpen AgentBus message forum root-safe snapshot",
+  "generated_utc": "2026-10-03T04:10:00Z",
+  "message_directory": "DuoOpen-AgentBus/messages",
+  "message_json_count": 698,
+  "latest_message": "20261003T040500Z__primary__all__canonical-round-orchestration-refresh-complete.json",
+  "includes_round_orchestration_v1": true,
+  "includes_canonical_role_packages": [
+    "DuoOpen-AgentBus/templates/DUO_OPEN_PRIMARY_AGENT_V8_ROUND_ORCHESTRATION.zip",
+    "DuoOpen-AgentBus/templates/DUO_OPEN_GEN7_MANAGER_REVIEWER_AGENT_V6_ROUND_ORCHESTRATION.zip",
+    "DuoOpen-AgentBus/templates/DUO_OPEN_GEN7_RESEARCH_AGENT_V6_ROUND_ORCHESTRATION.zip"
+  ],
+  "root_safe": true,
+  "install_instruction": "Extract or drag the ZIP contents into the repository root; do not add an extra wrapper directory."
+}

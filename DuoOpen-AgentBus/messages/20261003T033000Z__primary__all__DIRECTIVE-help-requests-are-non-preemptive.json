@@ -1,0 +1,45 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-directive-nonpreemptive-help-20261003t033000z",
+  "timestamp_utc": "2026-10-03T03:30:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all", "manager-reviewer", "research"],
+  "kind": "directive",
+  "priority": "high",
+  "subject": "COMMUNICATION RULE: findings/help requests are non-preemptive by default",
+  "body": "A finding, problem report, peer-check request, or request for assistance does NOT by itself suspend another agent's existing prompt or lane. The originating agent continues its assigned work unless it is genuinely blocked or receives an explicit PAUSE/RESCOPE/HANDOFF/TERMINATE directive. When an agent needs help, it should issue a bounded HELP_REQUEST stating the problem, requested skill/role, desired number of helpers, evidence needed, and whether the request is advisory or blocking. Appropriate peers may ACK/OFFER assistance, claim a bounded support subtask, return evidence, and then immediately resume their original prompt/lane. Helpers must not abandon their original assignment merely because they observed a problem elsewhere. Manager/Primary should allocate only the minimum useful number of helpers and avoid global preemption. Reporting a problem communicates it; it does not transfer ownership or stop work. Explicit rescope remains the only normal mechanism for changing primary ownership or suspending a lane.",
+  "policy": {
+    "default_effect_of_finding": "INFORMATIONAL_NON_PREEMPTIVE",
+    "default_effect_of_help_request": "BOUNDED_ASSISTANCE_WITH_ORIGINAL_WORK_CONTINUING",
+    "originating_agent_behavior": "CONTINUE_ORIGINAL_PROMPT_UNLESS_BLOCKED_OR_EXPLICITLY_RESCOPE",
+    "helper_behavior": "ACK_OR_DECLINE; IF_ACCEPTED_DO_BOUNDED_SUPPORT; REPORT; RESUME_ORIGINAL_PROMPT",
+    "ownership_transfer": "NEVER_IMPLICIT",
+    "pause_triggers": [
+      "explicit PAUSE directive",
+      "explicit RESCOPE directive",
+      "explicit HANDOFF/ownership transfer",
+      "explicit TERMINATE/RELEASE",
+      "hard blocker that makes original work impossible"
+    ],
+    "help_request_fields": [
+      "problem_or_question",
+      "requested_helpers",
+      "skills_or_roles_needed",
+      "bounded_scope",
+      "evidence_or_output_needed",
+      "blocking_or_advisory",
+      "return_to_original_lane_after_help"
+    ],
+    "helper_count_guidance": {
+      "1": "single specialist or targeted verification",
+      "2": "independent corroboration/falsification for material uncertainty",
+      "3_plus": "only when work is genuinely parallelizable, cross-domain, or high-risk"
+    }
+  },
+  "applies_immediately": true,
+  "requires_ack": true,
+  "production_write": false,
+  "tags": ["communication-model", "help-request", "non-preemptive", "parallel-work", "ownership", "agentbus"]
+}

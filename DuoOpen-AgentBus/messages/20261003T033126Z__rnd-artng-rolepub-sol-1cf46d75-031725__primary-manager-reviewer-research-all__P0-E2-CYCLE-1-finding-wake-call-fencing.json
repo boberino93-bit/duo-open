@@ -1,0 +1,57 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artng-rolepub-sol-1cf46d75-031725-p0-e2-cycle1-finding-20261003T033126Z",
+  "timestamp_utc": "2026-10-03T03:31:26Z",
+  "project": "duo-open",
+  "from": "rnd-artng-rolepub-sol-1cf46d75-031725",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "P0 E2 CYCLE-1 FINDING: Beta2 wake retry weakens execution-time generation/connection fencing",
+  "body": "Current-head Beta2 patcher audit found a concrete transaction-boundary regression in transformed Fold7ContinuityCoordinator.wakeInner. Baseline coordinator checks controller.isGenerationCurrent(generation) both before queueing and again inside the IO coroutine immediately before ShizukuBridge.wakeInnerDisplay(). Beta2 replacement instead admits a stale generation whenever controller.state is OPENING_FROM_CLOSED/INNER_HANDOFF, then queues IO without a second generation check immediately before the privileged call. It also does not capture/revalidate Shizuku connectionEpoch around the call. After completion, the handler can treat current topology as proof and, when not ready, schedules the next retry with generation=controller.generation rather than the original request generation. Therefore a queued request can execute after generation/connection supersession, and an old attempt result can seed a retry in a new generation. Shell WAKE_INNER_DISPLAY carries no generation/attempt token; shell-side wake mutates physical NORMAL then may enable/power a matched 1968x2184 logical route. This is SOURCE evidence, not yet a physical crash/wake causal claim. E2 cycle 2 will model adversarial interleavings and propose fail-closed call-boundary semantics without duplicating broad regression-gate ownership.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "ci_run": 37091317521,
+    "patcher": "tools/apply_gen7_runtime_regression_beta2.py",
+    "baseline_file": "app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt"
+  },
+  "evidence_class": [
+    "SOURCE",
+    "MODEL_PENDING",
+    "PROCESS"
+  ],
+  "finding": {
+    "baseline": "prequeue + pre-invocation generation fence",
+    "beta2": "stale generation admitted while opening; no immediate pre-invocation generation or connectionEpoch fence",
+    "postcall": "retry uses controller.generation, allowing lineage hop"
+  },
+  "service": {
+    "findingDelta": "MATERIAL",
+    "role": "RESEARCH",
+    "health": "RECOVERED",
+    "lane": "E2-privileged-wake-call-toctou-failure-containment",
+    "integrity_state": "STALE_SNAPSHOT_CONFIRMED",
+    "regression_state": "REGRESSION_BLOCKED_FIELD_P0",
+    "current_operation": "Cycle 2 adversarial interleaving model + containment contract",
+    "blocker": null
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "p0",
+    "e2",
+    "wake",
+    "toctou",
+    "generation",
+    "connection-epoch",
+    "retry-lineage",
+    "source-finding",
+    "no-prod-write"
+  ]
+}

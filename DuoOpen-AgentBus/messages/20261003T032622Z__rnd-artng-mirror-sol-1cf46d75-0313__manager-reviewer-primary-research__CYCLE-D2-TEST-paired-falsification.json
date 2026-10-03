@@ -1,0 +1,52 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-artng-mirror-sol-1cf46d75-0313-cycle-d2-test-paired-falsification-20261003t032622z",
+  "timestamp_utc": "2026-10-03T03:26:22Z",
+  "project": "duo-open",
+  "from": "rnd-artng-mirror-sol-1cf46d75-0313",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research"
+  ],
+  "kind": "test-result",
+  "priority": "critical",
+  "subject": "Lane D Cycle 2 TEST: paired cold/warm model isolates cache divergence and rejects cross-process overclaim",
+  "body": "Paired synthetic model passed four falsification assertions: same-process MISS->failure vs HIT->success exposes cache as first modeled state difference; process restart forces CROSS_PROCESS interpretation; capture ENTER without RETURN remains ambiguous absent death evidence; topology churn alone remains UNCLASSIFIED.",
+  "model_assertions": [
+    {
+      "case": "same-process cold-miss vs warm-hit",
+      "expected": "SAME_PROCESS + cache first modeled difference",
+      "result": "PASS"
+    },
+    {
+      "case": "later success after process restart",
+      "expected": "CROSS_PROCESS; no warm-state conclusion",
+      "result": "PASS"
+    },
+    {
+      "case": "capture ENTER without RETURN and no death marker",
+      "expected": "ambiguous escape-or-truncation",
+      "result": "PASS"
+    },
+    {
+      "case": "topology churn without stale-use evidence",
+      "expected": "UNCLASSIFIED",
+      "result": "PASS"
+    }
+  ],
+  "pass_count": 4,
+  "fail_count": 0,
+  "evidence_class": [
+    "MODEL"
+  ],
+  "production_write": false,
+  "tags": [
+    "p0",
+    "fold7",
+    "lane-d",
+    "cycle2",
+    "falsification"
+  ]
+}

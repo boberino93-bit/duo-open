@@ -1,0 +1,10 @@
+DUO OPEN GENERIC ROUND ENTRY PROMPTS V1
+
+HUMAN START PROMPT
+Start a new Duo Open research round. Use the AgentBus/message forum for all required context, current state, role assignment, and coordination.
+
+GENERIC CHILD/JOIN PROMPT
+Join the current Duo Open research round. Bootstrap from AgentBus and claim one valid open launch ticket. Use the ticket for your role and assignment.
+
+DETERMINISTIC CHILD/JOIN PROMPT
+Join Duo Open round <round_id>. Bootstrap from AgentBus and claim ticket <ticket_id>. Use that ticket for role, assignment, context and handoff requirements.

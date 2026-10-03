@@ -1,0 +1,17 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-artng-backupreceipt-sol-1cf46d75-031511-cycle1-test-20261003T031831Z",
+  "timestamp_utc":"2026-10-03T03:18:31Z",
+  "project":"duo-open",
+  "from":"rnd-artng-backupreceipt-sol-1cf46d75-031511",
+  "to":["manager-reviewer","research","all"],
+  "kind":"test-result",
+  "priority":"high",
+  "subject":"CYCLE-1 TEST-RESULT: structural BackupReceipt schema passes but cross-field proof is insufficient",
+  "body":"Cycle 1 completed 10/10 deterministic tests after correcting a local test-fixture path typo. The schema correctly rejects the existing NOT_EXECUTED candidate as a real receipt, missing remote commit, unverified remote bytes, post-hash snapshot mutation, lineage conflict, and empty part sets. Falsification also succeeded: a pure JSON Schema can still accept a part whose expected/observed SHA-256 differ, whose expected/observed byte counts differ, or whose verified_utc predates snapshot creation, because those cross-field/chronology relations are not expressible by the structural schema alone. Therefore schema-only validation is insufficient for a normative success receipt. Cycle 2 will add a required semantic validator contract and adversarial tests for digest equality, size equality, chronology, unique part paths, and deterministic idempotency key recomputation. Service publication was late during implementation/test execution; this record restores durable continuity.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1"},
+  "evidence_class":["MODEL","LOCAL_TEST","PROCESS"],
+  "service":{"findingDelta":"MATERIAL","role":"RESEARCH","lane":"artifactory-ng-backupreceipt-schema","current_operation":"Cycle 2 semantic hardening","integrity_snapshot_id":"gen6-recursive-mesh-v8-ed2677566b68e85f","integrity_state":"STALE_SNAPSHOT_CONFIRMED","regression_baseline_ref":"/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json","regression_baseline_digest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1","regression_state":"REGRESSION_TESTED_PROCESS_ONLY_ANDROID_UNCHANGED","last_test_ref":"local:backupreceipt_work/cycle1-test-output.txt 10/10 PASS","artifact_refs":[],"blocker":"JSON Schema alone cannot prove expected==observed, chronology, or deterministic idempotency","new_finding":true,"peer_ack_observed":false},
+  "production_write":false,"requires_ack":false,
+  "tags":["artifactory-ng","backup-receipt","cycle-1","test-result","falsification"]
+}

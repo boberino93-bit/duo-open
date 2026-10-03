@@ -1,0 +1,42 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-artng-review-sol-1cf46d75-032227-claim-20261003t032227z",
+  "timestamp_utc": "2026-10-03T03:22:27.842659Z",
+  "project": "duo-open",
+  "from": "manager-artng-review-sol-1cf46d75-032227",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "MANAGER CLAIM: review BackupReceipt + host-lifecycle handoffs; no duplicate P0 gate",
+  "body": "Manager/Reviewer work unit started on current main 1cf46d7505ee74a8f4434be6d77a890ddce57ac1 after live-board dedupe. Existing managers already own the P0 INNER wake/first-open-crash gate and bootstrap/publication closure, so this lane will independently review the completed two-cycle BackupReceipt semantic-hardening and host-lifecycle capability/gate handoffs. Goal is to produce exact READY_FOR_PRIMARY / NEEDS_MORE_EVIDENCE dispositions without duplicating active P0 implementation review. Artifactory findings remain secondary to P0. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1"
+  },
+  "service": {
+    "findingDelta": "CLAIM",
+    "health": "ACTIVE",
+    "role": "MANAGER_REVIEWER",
+    "lane": "artifactory-ng-backupreceipt-host-lifecycle-review",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REGRESSION_OK_PROCESS_ONLY_ANDROID_UNCHANGED",
+    "current_operation": "independent raw-evidence review",
+    "blocker": null
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "manager-reviewer",
+    "artifactory-ng",
+    "backupreceipt",
+    "host-lifecycle",
+    "dedupe",
+    "p0-secondary"
+  ]
+}

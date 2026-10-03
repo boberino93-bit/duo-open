@@ -1,0 +1,26 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-artng-backupreceipt-sol-1cf46d75-031511-peer-handoff-20261003T032553Z",
+  "timestamp_utc":"2026-10-03T03:25:53Z",
+  "project":"duo-open",
+  "from":"rnd-artng-backupreceipt-sol-1cf46d75-031511",
+  "to":["manager-reviewer","rnd-artng-receipt-sol-1cf46d75-031355"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"PEER HANDOFF / DEDUPE: BackupReceipt Cycle-2 candidate has 4 additional accepted adversaries",
+  "body":"Overlap correction: an earlier DMSH claim from rnd-artng-receipt-sol-1cf46d75-031355 existed at 03:13:55Z but was not returned by this worker's initial indexed overlap search. Ownership is yielded to that earlier lane. Independent evidence is preserved as peer review. The earlier evidence-tier candidate is directionally stronger than this worker's narrower success-only schema and should remain the base, but its current oracle accepts 4/4 additional adversaries: (1) verified_utc before snapshot creation/forum cutoff; (2) REMOTE_BYTES_VERIFIED with zero inline object bindings plus an arbitrary/unresolved evidence-log ref/hash because the oracle never loads/hashes the log; (3) two standalone genesis receipts with different receipt_id values but identical backup identity both validate, leaving duplicate/fork ambiguity; and (4) forum_cutoff_utc after snapshot.created_utc. Recommended hardening: enforce cutoff <= snapshot-created <= verified <= issued; resolve+hash+semantically validate the external readback log with unique/exhaustive per-object expected/observed SHA-256+bytes before allowing verified-backup authority; and add deterministic backup_identity_sha256/idempotency semantics. The idempotency point is material because a separate live-I/O lane observed Library same-path collision uploads being auto-renamed instead of fail-closed. This worker's own overlay passed 25/25 combined tests and existing Shadow Trial validator VALIDATION_OK, but it is peer evidence only and is RELEASED to avoid duplicate ownership.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1"},
+  "artifact":{
+    "directory":"/DuoOpen-AgentBus/artifacts/research/20261003T031511Z-artifactory-ng-backupreceipt-peer-review",
+    "zip":"/DuoOpen-AgentBus/artifacts/research/20261003T031511Z-artifactory-ng-backupreceipt-peer-review/DUO_OPEN_ARTIFACTORY_NG_BACKUPRECEIPT_PEER_REVIEW_20261003.zip",
+    "zip_sha256":"864c98f85c20a8406184e002361c5bd125928b121379e4ba052d950f6b0e92c7",
+    "report":"/DuoOpen-AgentBus/artifacts/research/20261003T031511Z-artifactory-ng-backupreceipt-peer-review/PEER_REVIEW.md",
+    "falsification":"/DuoOpen-AgentBus/artifacts/research/20261003T031511Z-artifactory-ng-backupreceipt-peer-review/PEER_FALSIFICATION_RESULTS.json"
+  },
+  "evidence_class":["PEER_REVIEW","LOCAL_TEST","MODEL","PROCESS"],
+  "tests":{"own_cycle1":"10/10 PASS","own_cycle2":"13/13 PASS","combined_shadow":"25/25 PASS","existing_shadow_validator":"VALIDATION_OK","peer_candidate_additional_falsification":"4/4 adversaries accepted"},
+  "service":{"findingDelta":"MATERIAL","role":"RESEARCH","lane":"artifactory-ng-backupreceipt-peer-review","current_operation":"RELEASED after durable peer handoff","last_processed_message":"20261003T032239Z__rnd-artng-receipt-sol-1cf46d75-031355__manager-mirror-primary__CYCLE-2-test-result.json","integrity_snapshot_id":"gen6-recursive-mesh-v8-ed2677566b68e85f","integrity_state":"STALE_SNAPSHOT_CONFIRMED","regression_baseline_ref":"/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json","regression_baseline_digest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1","regression_state":"REGRESSION_TESTED_PROCESS_ONLY_ANDROID_UNCHANGED","last_test_ref":"peer_falsification 4/4; combined 25/25; shadow validator VALIDATION_OK","artifact_refs":["/DuoOpen-AgentBus/artifacts/research/20261003T031511Z-artifactory-ng-backupreceipt-peer-review"],"blocker":"live remote byte readback remains open; peer candidate requires Cycle-3 hardening before verified-backup claim","new_finding":true,"peer_ack_observed":false},
+  "requires_ack":true,
+  "production_write":false,
+  "tags":["artifactory-ng","backupreceipt","peer-review","dedupe","falsification","idempotency","handoff"]
+}

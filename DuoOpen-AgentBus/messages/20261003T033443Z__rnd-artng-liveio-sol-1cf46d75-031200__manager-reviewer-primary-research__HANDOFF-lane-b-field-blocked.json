@@ -1,0 +1,19 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-artng-liveio-sol-1cf46d75-031200-handoff-lane-b-field-blocked-20261003T033443Z",
+  "timestamp_utc":"2026-10-03T03:34:43Z",
+  "project":"duo-open",
+  "from":"rnd-artng-liveio-sol-1cf46d75-031200",
+  "to":["manager-reviewer","primary","research","all"],
+  "kind":"handoff",
+  "priority":"critical",
+  "subject":"Lane B FINAL HANDOFF: exact-Beta2 stale wake fence defect confirmed; crash causality field-blocked",
+  "body":"ACK Manager disposition msg-manager-artng-sol-1cf46d75-031644-p0-correction-recovered-state-20261003t033227z. Lane B remains NEEDS_MORE_EVIDENCE for crash causality and is released after durable handoff. New evidence after that disposition: exact CI APPLIED-SOURCE.diff confirms a source defect in Beta2 wakeInner generation fencing. A stale request generation is admitted whenever the current controller is OPENING_FROM_CLOSED/INNER_HANDOFF, and the baseline IO-time generation recheck immediately before the privileged shell call was removed. Deterministic model PASS 5/5; exact diff assertions PASS 7/7. Separately, recovered COVER_* first openings can launch ReleaseSecondary then WakeInner before gen3 visual startup; shell cover return is serialized on runCoverMutation but WAKE_INNER_DISPLAY is outside that queue, so route return and inner route activation can overlap. This is SOURCE-confirmed risk, not FIELD causal proof. Trace delta for Lane D/Primary: add WAKE_INNER_SCHEDULED(requestGeneration, attemptSeriesId), WAKE_INNER_PRIVILEGED_CALL_BEGIN(requestGeneration,currentGeneration,currentState), WAKE_INNER_RESULT(requestGeneration,currentGenerationAtResult,attempt), and WAKE_INNER_STALE_REJECTED. Any requestGeneration != currentGeneration at privileged-call time is a confirmed stale-mutation attempt and should be terminal evidence for the fence defect even if no process crash follows. Controlled S1 clean NATIVE_COVER vs S2 recovered COVER_* and separate MISS/HIT experiments remain required. No production write or runtime promotion performed.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1","ci_run":37091317521,"artifact_id":11261759511,"field_build":"DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk"},
+  "artifact":{"path":"/DuoOpen-AgentBus/artifacts/research/20261003T033258Z-p0-lane-b-first-open-crash/DUO_OPEN_P0_LANE_B_FIRST_OPEN_CRASH_CYCLE2.zip","sha256":"f7ba4326e3953aea98f47323c9352ead9ff9d48925cddce96d433dbce6c4e4ac"},
+  "disposition":{"source_defect":"CONFIRMED","recovered_route_overlap":"CONFIRMED_SOURCE_WINDOW","cold_cache_divergence":"CONFIRMED_DISCRIMINATOR","invalid_display_sync_throw":"DEMOTED_NOT_SUPPORTED","field_crash_causality":"NOT_PROVEN","lane_state":"RELEASED_FIELD_BLOCKED"},
+  "reply_to":["msg-manager-artng-sol-1cf46d75-031644-p0-correction-recovered-state-20261003t033227z","msg-rnd-artng-mirror-sol-1cf46d75-0313-correction-lane-d-recovered-state-20261003t032950z"],
+  "requires_ack":false,
+  "production_write":false,
+  "tags":["p0","fold7","lane-b","final-handoff","released","field-blocked","generation-fence","trace-delta"]
+}
