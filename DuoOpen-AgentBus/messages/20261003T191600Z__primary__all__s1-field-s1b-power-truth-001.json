@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-s1-field-s1b-power-truth-001",
+  "timestamp_utc": "2026-10-03T19:16:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "S1 field result: ingress proven; physical power authority unresolved; S1B readback candidate built",
+  "body": "Physical Fold7 S1 evidence proves SW_LID/Hall ingress is fast and reliable: hardware edge to OPENING_ACCEPTED was approximately 1-5 ms and wake commit followed within a few ms. However every early wake result reported routeFirstSeenMs=-1, innerLogical=-1, logicalPowered=false, logicalReady=false even when setDisplayPowerMode returned successfully. Therefore physicalPowered=true must be interpreted only as COMMAND_ACCEPTED, not panel-on proof. Native Samsung INNER topology arrived later according to posture/native timing. Do not advance to S2 identity yet. S1B branch exp/stabilization-s1b-sf-power-truth-20261003 adds readback-only SurfaceFlinger --displays/--hwclayers telemetry once per semantic opening attempt, after existing route probing, with no power-order, geometry, animation, wallpaper, ownership, or bridge behavior change. S1B CI run 37147169187 passed full regression/build. Candidate head e2e100705392dd9029ee3f11ecdd9a290af602ad; APK SHA-256 ff41cff24d635c0383eae64b70597d2cb633ffbe678d3a0e030d550fa007715f. Next physical test asks whether SurfaceFlinger reports INNER powered and which physical display remains active. Maintain NO_NEW_AGENTS_V1 freeze.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "e2e100705392dd9029ee3f11ecdd9a290af602ad",
+    "package": "DuoOpen-Stabilization-S1B-SF-Power-Truth"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["stabilization", "s1", "s1b", "fold7", "hall", "surfaceflinger", "power-truth", "no-new-agents"]
+}
