@@ -6,7 +6,7 @@ package com.duoopen.overlay
  * Controller generation is intentionally not the identity here: ordinary
  * OPENING_FROM_CLOSED -> INNER_HANDOFF advances generation and must not retire
  * the accepted opening. A new semantic opening gets a new sequence. True
- * terminal/cancel states revoke the active key.
+ * cancellation/closing/lifecycle events revoke the active key.
  */
 internal class Fold7OpeningWakeAttemptGate(
     private val serviceEpoch: Long,
@@ -38,12 +38,13 @@ internal class Fold7OpeningWakeAttemptGate(
                         )
                 }
 
-                to in TERMINAL_OR_CANCEL_STATES -> {
+                to in CANCEL_STATES -> {
                     active = null
                 }
 
-                // INNER_HANDOFF is ordinary forward opening progress. Keep the
-                // same semantic opening identity even though generation moved.
+                // INNER_HANDOFF and OPEN_INNER are ordinary forward opening
+                // progress. Completion is explicit once the wake/readiness
+                // path proves the same attempt is satisfied.
                 else -> Unit
             }
             active
@@ -59,6 +60,16 @@ internal class Fold7OpeningWakeAttemptGate(
             active == key
         }
 
+    fun complete(key: Key): Boolean =
+        synchronized(lock) {
+            if (active != key) {
+                false
+            } else {
+                active = null
+                true
+            }
+        }
+
     fun invalidate() {
         synchronized(lock) {
             active = null
@@ -66,10 +77,9 @@ internal class Fold7OpeningWakeAttemptGate(
     }
 
     private companion object {
-        val TERMINAL_OR_CANCEL_STATES =
+        val CANCEL_STATES =
             setOf(
                 Fold7ContinuityController.State.NATIVE_COVER,
-                Fold7ContinuityController.State.OPEN_INNER,
                 Fold7ContinuityController.State.CLOSING_INTENT,
                 Fold7ContinuityController.State.COVER_PREWARMING,
                 Fold7ContinuityController.State.COVER_READY_HIDDEN,
