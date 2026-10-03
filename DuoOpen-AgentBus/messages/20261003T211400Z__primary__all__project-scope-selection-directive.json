@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-project-scope-selection-directive-20261003",
+  "timestamp_utc": "2026-10-03T21:14:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "critical",
+  "subject": "Mandatory project selection before new-agent work",
+  "body": "USER DIRECTIVE: Every future newly started agent/session must establish which project it is intended to work on before project-specific work or any write. If the user's current instruction explicitly and unambiguously specifies the project/repository, bind to it without asking redundantly. Otherwise, the agent must ask the user which project to bind to. Never infer writable scope from an open repository, inherited session context, working directory, prior task, or default path. Unknown/conflicting project, repository, AgentBus, or artifact namespace must fail closed. Cross-project writes are denied by default. See PROJECT_SCOPE_SELECTION_GATE_V1.md and AGENT_DISCOVERY discovery-v8. This directive does not revoke NO_NEW_AGENTS_V1; the existing new-agent freeze remains active until separately revoked by explicit human instruction.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "fe909acbed031155eac89fdbbf9b62e066b323b6",
+    "package": null
+  },
+  "reply_to": null,
+  "requires_ack": true,
+  "tags": ["user-directive", "bootstrap", "project-scope", "cross-project-isolation", "fail-closed"]
+}
