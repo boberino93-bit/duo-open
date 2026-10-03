@@ -1082,12 +1082,26 @@ def transform_cover_visual_host(text: str) -> str:
 
 
 def transform_gen3_visual(text: str) -> str:
-    if "innerCaptureExclusions: () -> List<android.view.SurfaceControl>" not in text:
+    # Beta2 live-content capture runs coroutines from the visual host. The
+    # coordinator must receive the service-owned CoroutineScope explicitly;
+    # creating an independent scope here would outlive accessibility teardown.
+    if "private val scope: kotlinx.coroutines.CoroutineScope" not in text:
         text = replace_once(
             text,
             """    private val currentHingeAngle: () -> Float,
-) {""",
+""",
             """    private val currentHingeAngle: () -> Float,
+    private val scope: kotlinx.coroutines.CoroutineScope,
+""",
+            "gen3 coroutine scope dependency",
+        )
+
+    if "innerCaptureExclusions: () -> List<android.view.SurfaceControl>" not in text:
+        text = replace_once(
+            text,
+            """    private val scope: kotlinx.coroutines.CoroutineScope,
+) {""",
+            """    private val scope: kotlinx.coroutines.CoroutineScope,
     private val innerCaptureExclusions: () -> List<android.view.SurfaceControl>,
 ) {""",
             "gen3 exclusion provider",
@@ -1779,6 +1793,7 @@ def transform_overlay_service(text: str) -> str:
             """                currentHingeAngle = {
                     hinge.lastAngle
                 },
+                scope = scope,
                 innerCaptureExclusions = {
                     engines.values
                         .firstOrNull {
@@ -2028,6 +2043,11 @@ def validate_postconditions(repo: Path) -> None:
             "gen3-live-content",
             "innerCaptureExclusions",
         ],
+        "app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt": [
+            "private val scope: kotlinx.coroutines.CoroutineScope",
+            "scope =\n                    scope",
+            "innerCaptureExclusions",
+        ],
         "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt": [
             "coverPresentationPolicy",
             "setCoverPresentationV1",
@@ -2113,6 +2133,25 @@ def self_test() -> None:
     out = transform_virtual_hinge(vh)
     assert "AWAIT_PRECISE" in out
     assert "Mode.AWAIT_PRECISE" in out
+
+    gen3 = """internal class Fold7Gen3VisualCoordinator(
+    private val currentHingeAngle: () -> Float,
+) {
+    private fun ensureRenderer() {
+        val created =
+            Fold7CoverVisualHost(
+                service =
+                    service,
+                display =
+                    display,
+            )
+    }
+}
+"""
+    gen3_out = transform_gen3_visual(gen3)
+    assert "private val scope: kotlinx.coroutines.CoroutineScope" in gen3_out
+    assert "private val innerCaptureExclusions: () -> List<android.view.SurfaceControl>" in gen3_out
+    assert "scope =\n                    scope" in gen3_out
 
     sc = '''    private fun setPhysicalPowerNormal(\n        physicalId: Long,\n    ): Pair<Boolean, String?> {\n        if (physicalId < 0L) {\n            return false to "physical display id unavailable"\n        }\n\n        return runCatching {\n            org.lsposed.hiddenapibypass.HiddenApiBypass\n                .addHiddenApiExemptions(\n                    "Landroid/view/SurfaceControl;"\n                )\n\n            val token =\n                SurfaceControl::class.java\n                    .getDeclaredMethod(\n                        "getPhysicalDisplayToken",\n                        java.lang.Long.TYPE,\n                    )\n                    .invoke(null, physicalId) as? IBinder\n                    ?: throw IllegalStateException(\n                        "no SurfaceControl token for physical display $physicalId"\n                    )\n\n            SurfaceControl::class.java\n                .getDeclaredMethod(\n                    "setDisplayPowerMode",\n                    IBinder::class.java,\n                    Integer.TYPE,\n                )\n                .invoke(null, token, 2)\n\n            true to null\n        }.getOrElse { error ->\n            false to\n                "${error.javaClass.simpleName}: ${error.message}"\n        }\n    }'''
     assert "setPhysicalBrightness" in transform_shell_service(

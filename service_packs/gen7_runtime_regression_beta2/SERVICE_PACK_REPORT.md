@@ -58,3 +58,11 @@ UI animation.
 
 The included GitHub workflow performs the first Android compile/unit/build gate
 and emits the APK, SHA-256, build information and exact applied source diff.
+
+
+## SP4.1 compiler hotfix
+
+- CI run `37082713549` exposed `Fold7Gen3VisualCoordinator.kt:465:21 Unresolved reference 'scope'`.
+- Root cause: the Beta2 transformer added `scope = scope` to the `Fold7CoverVisualHost` call but did not add a `CoroutineScope` dependency to `Fold7Gen3VisualCoordinator` or pass the service-owned scope from `FoldOverlayService`.
+- Fix: inject `private val scope: kotlinx.coroutines.CoroutineScope`, pass `scope = scope` from the service, and validate both with transform-level self-test and generated-source postconditions.
+- This hotfix does not alter the intended runtime behavior; it repairs dependency wiring required for compilation.

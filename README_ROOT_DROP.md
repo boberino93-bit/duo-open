@@ -1,4 +1,4 @@
-# Duo Open Gen7 SP4 — Runtime Regression Beta2
+# Duo Open Gen7 SP4.1 — Runtime Regression Beta2 Scope Wiring Hotfix
 
 Target baseline: `main` app source from commit `41c6f20c817226b233eb4cbfb402e879c5e3e3ea`
 
@@ -7,10 +7,17 @@ Target test build:
 - versionCode `43`
 - versionName `5.1.0-beta2-zfold7`
 
+## SP4.1 compiler hotfix
+
+The first Beta2 CI run reached Kotlin compilation and exposed one integration error:
+`Fold7Gen3VisualCoordinator` passed `scope` into the new live-content host without owning a scope.
+SP4.1 wires the existing accessibility-service `CoroutineScope` into the coordinator and adds a regression self-test/postcondition for that dependency. No independent coroutine lifetime is introduced.
+
 ## Deployment
 
 This archive is root-safe. Extract/copy its contents directly into the root of
-`boberino93-bit/duo-open` and commit them to `main`.
+`boberino93-bit/duo-open`, allowing it to overwrite the SP4 files already there,
+and commit the changed files to `main`.
 
 The new workflow `.github/workflows/build-gen7-runtime-regression-beta2.yml`
 will trigger from that commit. It reapplies the already-validated

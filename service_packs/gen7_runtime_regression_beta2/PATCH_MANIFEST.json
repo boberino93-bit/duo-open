@@ -22,5 +22,8 @@
     "angle-driven cover power and brightness"
   ],
   "physical_validation": "NOT_RUN",
-  "android_gradle_validation": "DELEGATED_TO_GITHUB_ACTIONS"
+  "android_gradle_validation": "DELEGATED_TO_GITHUB_ACTIONS",
+  "hotfix_revision": "SP4.1",
+  "hotfix_reason": "CI compile failure: Fold7Gen3VisualCoordinator unresolved reference scope",
+  "hotfix_ci_run": 37082713549
 }
