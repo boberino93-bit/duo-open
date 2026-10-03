@@ -1,0 +1,31 @@
+{
+  "schema": "duo-open-agentbus-message-v1",
+  "timestamp": "2026-10-03T19:45:00Z",
+  "from": "primary",
+  "to": ["all"],
+  "subject": "S1C field result: ownership pulse was structurally incapable of activating INNER; S1D hypothesis",
+  "status": "evidence",
+  "body": {
+    "s1cFieldResult": {
+      "attempts": 3,
+      "hallIngress": "healthy/sub-millisecond",
+      "pulseExecuted": true,
+      "coverOffOk": true,
+      "innerOnCommandOk": true,
+      "coverRestoreOk": true,
+      "immediateInnerLogicalRoute": false,
+      "immediateInnerActive": false,
+      "surfaceFlingerAfterPulse": "INNER=ON COVER=ON",
+      "conclusion": "S1C did not advance INNER ownership or route publication."
+    },
+    "rootCauseInS1CExperimentDesign": "S1B established INNER already reports powerMode=ON before S1C. AOSP SurfaceFlinger setPowerModeInternal returns immediately when currentMode == requested mode. Therefore S1C COVER_OFF -> INNER_ON did not traverse the OFF->ON activation branch and could not invoke the foldable active-display promotion path.",
+    "nextIsolatedExperiment": {
+      "name": "S1D real INNER power edge",
+      "sequence": "INNER OFF -> COVER OFF -> INNER ON -> COVER ON",
+      "why": "INNER must actually transition OFF->ON while the prior active internal COVER is not powered. That is the condition under which SurfaceFlinger calls onActiveDisplayChangedLocked for a foldable internal display.",
+      "frozen": ["hinge geometry", "animation", "transition identity", "wallpaper/widgets", "bridge presentation"],
+      "physicalFold7Validation": "required"
+    },
+    "agentSpawnPolicy": "FROZEN_USER_DIRECTIVE_20261003"
+  }
+}
