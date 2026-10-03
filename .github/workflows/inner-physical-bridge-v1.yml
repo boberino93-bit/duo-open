@@ -1,0 +1,123 @@
+name: Inner Physical Bridge V1
+
+on:
+  push:
+    branches:
+      - exp/inner-physical-bridge-v1-20261003
+    paths:
+      - ".github/workflows/inner-physical-bridge-v1.yml"
+      - "tools/apply_inner_physical_bridge_v1.py"
+      - "tools/apply_inner_physical_bridge_v1_fixups.py"
+      - "tools/apply_inner_wake_probe_v1.py"
+      - "app/src/full/java/com/duoopen/overlay/Fold7OpeningWakeAttemptGate.kt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inner-physical-bridge-v1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct deployed Beta2 runtime
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+
+      - name: Reapply validated optimization cycles A B C
+        run: |
+          set -euo pipefail
+          python3 tools/apply_runtime_optimization_cycle_a.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_b.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_c.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo .
+
+      - name: Reapply validated exact-attempt wake probe
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_wake_probe_v1.py --self-test
+          python3 tools/apply_inner_wake_probe_v1.py --repo . --check
+          python3 tools/apply_inner_wake_probe_v1.py --repo .
+
+      - name: Apply physical bridge experiment
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_physical_bridge_v1.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo .
+          git diff --check
+          grep -F 'START_LID_EVENTS' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+          grep -F 'SW_LID' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'DuoInnerPhysicalBridge' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'setDisplayLayerStack' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'lid-switch-open' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+
+      - name: Capture candidate diff and metadata
+        run: |
+          set -euo pipefail
+          mkdir -p inner-physical-bridge-v1
+          git diff -- app > inner-physical-bridge-v1/APPLIED-ANDROID-SOURCE.diff
+          git diff --stat -- app > inner-physical-bridge-v1/APPLIED-ANDROID-SOURCE.stat
+          sha256sum inner-physical-bridge-v1/APPLIED-ANDROID-SOURCE.diff > inner-physical-bridge-v1/APPLIED-ANDROID-SOURCE-SHA256.txt
+          {
+            echo "sourceHead=${GITHUB_SHA}"
+            echo "runtime=Beta2 + runtime optimization cycles A/B/C + inner-wake-probe-v1 + inner-physical-bridge-v1"
+            echo "openingIdentity=(serviceEpoch,openingAttemptSequence)"
+            echo "earlyOpeningTriggerCandidate=Linux SW_LID/Hall release via Shizuku shell getevent"
+            echo "earlyTriggerAuthority=BINARY_OPENING_EDGE_ONLY_NOT_HINGE_GEOMETRY"
+            echo "physicalWake=SurfaceControl physical token POWER_MODE_NORMAL"
+            echo "directBridge=privacy-safe cyan SurfaceControl color layer on temporary physical layer stack"
+            echo "capturedUserPixels=NONE"
+            echo "bridgeRelease=inner topology ready, continuity release/destroy, privilege loss, lid closed"
+            echo "nativeInnerLayerStackRestore=0 on bridge release"
+            echo "renderAngleMathChanges=NONE"
+            echo "closingThresholdChanges=NONE"
+            echo "wallpaperAlignmentFix=NOT_INCLUDED"
+            echo "physicalFold7Validation=REQUIRED"
+          } > inner-physical-bridge-v1/BUILD-INFO.txt
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Full regression tests and APK build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package APK and hashes
+        run: |
+          set -euo pipefail
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" inner-physical-bridge-v1/DuoOpen-ZFold7-5.1.0-beta2-optABC-inner-physical-bridge-v1-debug.apk
+          sha256sum inner-physical-bridge-v1/DuoOpen-ZFold7-5.1.0-beta2-optABC-inner-physical-bridge-v1-debug.apk > inner-physical-bridge-v1/APK-SHA256.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-Inner-Physical-Bridge-V1
+          path: inner-physical-bridge-v1/
+          if-no-files-found: error
+          retention-days: 30
