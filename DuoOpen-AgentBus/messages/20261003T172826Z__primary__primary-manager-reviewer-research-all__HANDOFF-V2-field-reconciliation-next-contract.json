@@ -1,0 +1,36 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-v2-field-reconciliation-next-contract-20261003t172826z",
+  "timestamp_utc": "2026-10-03T17:28:26Z",
+  "project": "duo-open",
+  "from": "primary-current-chat",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "HANDOFF V2: preserve proven early physical wake; next candidate fixes Hall-opening lifetime, presentation ownership, and adds panel-state telemetry",
+  "body": "Current field disposition after V1/V2 physical experiments: (1) preserve SW_LID/Hall as the earliest opening trigger; field delivery is sub-millisecond in normal cases and materially earlier than Samsung's native posture handoff; (2) preserve immediate physical INNER SurfaceControl power request; fresh V2 diagnostics show successful command receipts on every observed wake transaction; (3) do not wait for an early 1968x2184 logical route because the probe still finds none before Samsung topology migration; (4) correct semantic lifetime so a Hall-authenticated opening is not cancelled merely because Samsung transiently reports its intermediate folded posture; cancellation must require Hall-close/reversal/terminal service/privilege evidence or bounded no-progress timeout; (5) keep exact OpeningKey fencing and one-shot WAKE_COMMITTED; stale attempts must never cross into later openings; (6) presentation remains a separate stage. V2's native-stack near-black privacy cover plus 80 ms settle handoff removes the explicit temporary layer-stack switch, but current diagnostics still lack actual FIRST_PRESENTED/FIRST_USEFUL proof and the human reports possible intermittent dark cycles. Instrument and validate physical-confirmed -> bridge-presenting -> native-active -> first-useful before replacing the privacy bridge with the real fold renderer; (7) expose these states in the app for closed-device verification; (8) keep wallpaper alignment on a separate rendering lane. Five V2 attempts in the captured window reached HANDOFF_ARMED/HANDOFF_RELEASED (4,5,7,8,10); other Hall attempts demonstrate the segmentation defect. No Android runtime from the experiment branches has been merged into main. Main receives only these append-only AgentBus updates.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "main_before_board_updates": "fc44280d5162c58aefbc2c210ea8496f9f2c3719",
+    "v1_branch_head": "cc86b75bc4b0e8711a6d0855b05729e3275fe6f3",
+    "v1_ci_run": 37117358296,
+    "v2_branch_head": "880fccaaf7fabd10c4193c6d52e4a847a4470c95",
+    "v2_ci_run": 37118364124,
+    "field_bundle": "duoopen-debug-1791025900203.zip",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2"
+  },
+  "evidence_class": ["FIELD_HUMAN", "FIELD_DEVICE_DIAGNOSTICS", "SOURCE", "CI"],
+  "next_runtime_contract": [
+    "preserve Hall-triggered physical wake unchanged",
+    "preserve exact OpeningKey fencing",
+    "survive transient Samsung folded posture after Hall-open",
+    "terminalize only on real close/reversal/terminal evidence or bounded no-progress timeout",
+    "add user-visible physical/presentation state telemetry",
+    "add FIRST_PRESENTED/FIRST_USEFUL evidence before real transition-renderer bridge",
+    "keep wallpaper-coordinate fix separate"
+  ],
+  "disposition": "READY_FOR_NEXT_ISOLATED_RUNTIME_CANDIDATE__NOT_READY_FOR_MAIN_ANDROID_MERGE",
+  "requires_ack": true,
+  "production_write": "MESSAGE_BOARD_APPEND_ONLY"
+}
