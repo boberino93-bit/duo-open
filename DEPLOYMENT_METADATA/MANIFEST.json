@@ -1,0 +1,83 @@
+{
+  "schema": "duoopen-deployment-delta-manifest/v1",
+  "createdUtc": "2026-10-03T08:09:00Z",
+  "baselineHead": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+  "fileCount": 15,
+  "files": [
+    {
+      "path": "DEPLOYMENT_METADATA/BASELINE.json",
+      "bytes": 514,
+      "sha256": "7a449962a64fba540ee72a10e5edafd25b265e2bd1aaee588ba1f1184d1c36a6"
+    },
+    {
+      "path": "DEPLOYMENT_METADATA/PRIMARY_REVIEW_RESEARCH_SUMMARY.md",
+      "bytes": 5259,
+      "sha256": "155bab3203ec5ea6138b5a5564c6221b9002a686bc6e8ef111c780836e1abc7a"
+    },
+    {
+      "path": "DuoOpen-AgentBus/ACTIVE_AGENT_SERVICE_INTERVAL_V1.md",
+      "bytes": 4912,
+      "sha256": "574eee6967ec136bace3a90e87b1916270b03e182d980b7a1a164eaf9bcad828"
+    },
+    {
+      "path": "DuoOpen-AgentBus/AGENT_DISCOVERY.json",
+      "bytes": 9710,
+      "sha256": "8c9cc214d1ba8fb1c6250771c93c238ca78e5343dc3c90c927f8e885c812df01"
+    },
+    {
+      "path": "DuoOpen-AgentBus/ANTI_OVERENGINEERING_GATE_V1.md",
+      "bytes": 8863,
+      "sha256": "6cc8ccf7f053d8372a70a1aedad220fce02d51cb69890864993d504bfcc3a4a0"
+    },
+    {
+      "path": "DuoOpen-AgentBus/BOOTSTRAP.md",
+      "bytes": 8165,
+      "sha256": "9b445d4447ea715d1029f5e0a9151184db627fe4445d5f4c852399e91a846f26"
+    },
+    {
+      "path": "DuoOpen-AgentBus/artifacts/reviewer/20261003T075424Z-duo-fold-live-gap-audit-v2/DUO_FOLD_LIVE_CURRENT_GAP_AUDIT_V2.md",
+      "bytes": 10457,
+      "sha256": "a338129716fc82bba54733d96e1cc9bfd3545905a27b3bc4216556b5836ee579"
+    },
+    {
+      "path": "DuoOpen-AgentBus/artifacts/reviewer/20261003T075424Z-duo-fold-live-gap-audit-v2/DUO_FOLD_LIVE_CURRENT_GAP_AUDIT_V2_LIVE_RECONCILIATION.md",
+      "bytes": 3368,
+      "sha256": "e96ebe2d456621cc5081f4a9a91ab2992e1256ed67786c9b13a9ae3e6927be00"
+    },
+    {
+      "path": "DuoOpen-AgentBus/control/CONTROLLER_SUCCESSION_MINIMAL_V1.md",
+      "bytes": 4640,
+      "sha256": "318f1876d3a21b0b1f82581e25b7e0b66fed0ce493b27b91b4437570cc1bef2b"
+    },
+    {
+      "path": "DuoOpen-AgentBus/control/v3/DMSH3_PROTOCOL_V1.md",
+      "bytes": 1813,
+      "sha256": "875957955f1719d2701c49c410e0f32f2e0cfb395e955f210c33a220f42f01b7"
+    },
+    {
+      "path": "DuoOpen-AgentBus/messages/20261003T075424Z__reviewer__all__anti-overengineering-gate.json",
+      "bytes": 1340,
+      "sha256": "5e3804c84abe957e0b94d1adc7a5b491f4781158ba55f9cfb3d7324e85101a36"
+    },
+    {
+      "path": "DuoOpen-AgentBus/messages/20261003T075425Z__reviewer__primary__controller-succession-review.json",
+      "bytes": 1256,
+      "sha256": "14bdfdd3c375abbc3fab25c5e9ce6c393cacd66965a7a5a6f13e1feb522007d5"
+    },
+    {
+      "path": "DuoOpen-AgentBus/messages/20261003T075426Z__reviewer__all__duo-fold-live-gap-audit-v2.json",
+      "bytes": 1717,
+      "sha256": "fa05c0a2faaa68ed7f860b94619964e8f0ee56378e94e652ce52afe531e0e5ab"
+    },
+    {
+      "path": "DuoOpen-AgentBus/messages/20261003T075900Z__reviewer__all__donor-audit-live-reconciliation.json",
+      "bytes": 1881,
+      "sha256": "ef0000c713241d1dc332d43162abf775c6d387344a332a0c8b639a6b3a498d38"
+    },
+    {
+      "path": "START_HERE.md",
+      "bytes": 2004,
+      "sha256": "153b5290f9cc29b7341315579f4c54d1b7d73692da18f631bdecace0fe68821c"
+    }
+  ]
+}

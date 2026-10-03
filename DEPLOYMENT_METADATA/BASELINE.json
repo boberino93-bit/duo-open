@@ -1,0 +1,14 @@
+{
+  "schema": "duoopen-human-deploy-delta/v1",
+  "createdUtc": "2026-10-03T08:09:00Z",
+  "project": "duo-open",
+  "baselineHead": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+  "targetBranch": "main",
+  "productionWritePerformed": false,
+  "packageClass": "PROCESS_DELTA_ROOT_SAFE",
+  "humanCommitAuthorizationRequired": true,
+  "knownUnresolved": [
+    "integrity/CURRENT.json Git-mirror closure and refreshed current integrity snapshot",
+    "Android runtime P0 implementation/CI/physical Fold7 validation"
+  ]
+}

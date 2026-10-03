@@ -5,7 +5,8 @@
   "productionTruth": {
     "repository": "boberino93-bit/duo-open",
     "branch": "main",
-    "authority": "Primary only for production acceptance/integration"
+    "authority": "Primary only for production acceptance/integration",
+    "commitBoundary": "Primary acceptance prepares integration; production Git mutation requires explicit human authorization and one designated single-writer agent."
   },
   "bootstrapOrder": [
     "/DuoOpen-AgentBus/control/v3/DMSH3_PROTOCOL_V1.md",
@@ -14,6 +15,7 @@
     "/DuoOpen-AgentBus/AGENTBUS_MESSAGE_PERSISTENCE_CONTRACT_V2.md",
     "/DuoOpen-AgentBus/control/v3/REVIEW_PIPELINE_V1.md",
     "/DuoOpen-AgentBus/control/v3/WRITE_BUDGET_V1.md",
+    "/DuoOpen-AgentBus/ANTI_OVERENGINEERING_GATE_V1.md",
     "/DuoOpen-AgentBus/PRIMARY_MANAGER_RECURSIVE_MESH_V1.md",
     "/DuoOpen-AgentBus/FINAL_RECONCILIATION_GATE_V1.md",
     "/DuoOpen-AgentBus/MESH_CONTROLLER_ADOPTION_V1.md",
@@ -77,12 +79,15 @@
     "Every active agent loads the latest referenced human interaction model and records material user communication observations without sensitive-trait inference.",
     "Any agent has standing user authorization to make additive/reversible internal communication-model improvements and self-replicate them into future agent packages.",
     "Every main deployment/successor/initiation package carries a complete AgentBus /messages snapshot plus applicable communication protocol context and a checksum manifest.",
-    "Predicted user questions are planning aids only and cannot create production scope or authority."
+    "Predicted user questions are planning aids only and cannot create production scope or authority.",
+    "ANTI_OVERENGINEERING_GATE_V1 is mandatory: product evidence first; no new Level-2 global coordination mechanism becomes mandatory without a concrete witnessed failure, existing-primitives analysis, measurable benefit, rollback and sunset.",
+    "Primary acceptance does not equal production commit. Production Git mutation requires HUMAN_COMMIT_AUTHORIZATION followed by one designated SINGLE_WRITER_COMMIT."
   ],
   "migration": {
     "from": "DMSH/3 discovery-v6 donor adoption + Gen7 review baseline",
     "to": "discovery-v7 self-replicating human interaction model + communication autonomy + deployment forum snapshot",
-    "discoveryOverwrite": "explicit user-directed communication protocol evolution"
+    "discoveryOverwrite": "explicit user-directed communication protocol evolution",
+    "processDelta": "2026-10-03 anti-overengineering gate + human-gated single-writer clarification + current-round pointers; controller succession remains review-required."
   },
   "currentDevelopment": {
     "architecture": "Gen7 continuity/presentation core rewrite",
@@ -93,7 +98,13 @@
       "commit": "8ca4371bf4c83ea6c840a2d500325e55635245be",
       "policy": "/DuoOpen-AgentBus/DONOR_CODE_ADOPTION_POLICY_V1.md",
       "rule": "mine runtime/process/tooling value, but never promote Fold8 device semantics without Fold7 evidence"
-    }
+    },
+    "currentRoundId": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "currentMainHeadAtPackaging": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "managerPrimaryDisposition": "READY_FOR_PRIMARY_RUNTIME_CANDIDATE_WITH_CI_AND_PHYSICAL_FIELD_GATE for P0 INNER first-open correction; terminal fencing mandatory; 120Hz and predictive prewarm deferred as independent implementation.",
+    "antiOverengineeringGate": "/DuoOpen-AgentBus/ANTI_OVERENGINEERING_GATE_V1.md",
+    "controllerSuccessionProposal": "/DuoOpen-AgentBus/control/CONTROLLER_SUCCESSION_MINIMAL_V1.md",
+    "donorGapAudit": "/DuoOpen-AgentBus/artifacts/reviewer/20261003T075424Z-duo-fold-live-gap-audit-v2/DUO_FOLD_LIVE_CURRENT_GAP_AUDIT_V2.md"
   },
   "humanInteractionModel": {
     "protocol": "/DuoOpen-AgentBus/HUMAN_INTERACTION_ANTICIPATION_PROTOCOL_V1.md",

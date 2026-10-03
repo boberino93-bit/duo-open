@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "20261003T075900Z-reviewer-all-donor-audit-live-reconciliation",
+  "timestamp_utc": "2026-10-03T07:59:00Z",
+  "project": "duo-open",
+  "from": "reviewer",
+  "to": "all",
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "LIVE RECONCILIATION: donor audit updated by source-confirmed inner-wake race and fresh dual-panel/Flex Deck handoffs",
+  "body": "Delta only. Fresh board evidence after the donor audit confirms the intermittent INNER-dark opening has a current-main async wake-lifetime race: WakeInner under generation G can be invalidated after opening advances generation before queued privileged wake commits, while cover visuals progress independently of wake/readiness. R-DUO-02 is now SOURCE_CONFIRMED_DEFECT; prioritize attempt-scoped wake lifetime, WAKE_COMMITTED, and same-attempt presentation/readiness evidence before latency tuning. Fresh dual-panel research reinforces that logical display primitives do not prove Fold7 physical panel concurrency/ownership. Flex Deck work supports bounded companion prototyping and argues against speculative universal input infrastructure. See reconciliation delta; no production write.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "base_artifact": "/DuoOpen-AgentBus/artifacts/reviewer/20261003T075424Z-duo-fold-live-gap-audit-v2/DUO_FOLD_LIVE_CURRENT_GAP_AUDIT_V2.md",
+    "delta_artifact": "/DuoOpen-AgentBus/artifacts/reviewer/20261003T075424Z-duo-fold-live-gap-audit-v2/DUO_FOLD_LIVE_CURRENT_GAP_AUDIT_V2_LIVE_RECONCILIATION.md"
+  },
+  "reply_to": "20261003T075426Z-reviewer-all-duo-fold-live-gap-audit-v2",
+  "requires_ack": false,
+  "production_git_writes": false,
+  "tags": ["live-reconciliation", "inner-wake", "attempt-lifetime", "display-routing", "flex-deck", "anti-overengineering"]
+}

@@ -15,7 +15,16 @@ All Primary/Manager successor, bootstrap, or replication artifacts MUST propagat
 Before Primary builds a final root-safe commit ZIP, it MUST reconcile every completed/closed current-round research lane and Manager disposition, then run the final cross-cutting optimization/audit defined in `FINAL_RECONCILIATION_GATE_V1.md`. No closed research work may be silently omitted.
 
 ## HUMAN-ISOLATION / FILE-CONFLICT RULE — NON-NEGOTIABLE
-The human is not a file-coordination relay. Do not ask the human to resolve internal file replacement/merge conflicts. Research/review workers publish proposals/artifacts; Manager routes evidence; Primary alone integrates production changes against current `main`. Immutable messages/artifacts are superseded append-only. Ask the human only for genuinely external information or physical-device actions unavailable to tools.
+The human is not a file-coordination relay. Do not ask the human to resolve internal file replacement/merge conflicts. Research/review workers publish proposals/artifacts; Manager routes evidence; Primary prepares and reconciles the production integration candidate against current `main`. Immutable messages/artifacts are superseded append-only. Ask the human only for genuinely external information or physical-device actions unavailable to tools.
+
+Actual production Git mutation is a separate interlock: `PRIMARY_ACCEPTED` is not a commit. A production commit occurs only after explicit `HUMAN_COMMIT_AUTHORIZATION` and through one designated `SINGLE_WRITER_COMMIT` agent, followed by post-commit HEAD/CI validation.
+
+
+## ANTI-OVERENGINEERING GATE — MANDATORY
+
+Read `/DuoOpen-AgentBus/ANTI_OVERENGINEERING_GATE_V1.md` before proposing or adopting new project-wide coordination/control-plane machinery. The default is **product evidence first, control-plane expansion last**. A new global controller, liveness layer, state owner, queue, lease/epoch system, daemon, mandatory artifact family, or authority mechanism is not eligible merely because it is cleaner or theoretically scalable; it must cite a concrete observed failure, show why existing primitives are insufficient, compare cheaper alternatives, define measurable benefit/new failure modes/rollback/sunset, and preserve the human-gated single-writer production boundary.
+
+`CONTROLLER_SUCCESSION_MINIMAL_V1.md` is a **review-required proposal**, not a mandatory active authority rule. It deliberately reuses immutable AgentBus handoff/revalidation instead of creating leader election or another mutable controller service.
 
 ## CURRENT PRODUCT PRIORITIES
 Honor the current campaign/focus brief, debugging/data-gap contract, secure/private rendering invariants, and the conditional 120 Hz requirement. 120 Hz is required whenever safely possible, with seamless-only requests, actual-cadence measurement, safe fallback, and terminal lease release.
@@ -64,6 +73,11 @@ SHA-256:
 
 Gen7 Core V2 is a review/development package, not production acceptance.
 Android integration, CI and physical Fold7 validation remain separate gates.
+
+
+## CURRENT ACTIVE ROUND / PRIMARY REVIEW
+
+Current organized round: `round-20261003T064442Z-gen7-p0-expanded-r2` on audited main `7127c287a17fd97050c98fbeb05a38f7318f2f64`. Manager reconciliation marks the P0 INNER first-open correction (tickets 02/03 plus ticket04 terminal fencing) as a runtime candidate with CI + physical Fold7 field gates. Ticket05 120 Hz remains an orthogonal contract and ticket09 predictive prewarm is deferred from independent runtime adoption until the correctness fix is validated. Tickets06/07/08 remain evidence/field-gated and are not production-promoted by their research handoffs.
 
 ## HUMAN INTERACTION MODEL + COMMUNICATION AUTONOMY — MANDATORY
 
