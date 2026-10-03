@@ -87,6 +87,10 @@ def transform_controller(text: str) -> str:
         "early closing edge method",
     )
 
+    # Release the binary latch only on evidence that truly supersedes it:
+    # native INNER has appeared, or measured motion has reversed toward closed.
+    # This keeps Samsung's stale native-cover/0deg intermediate posture from
+    # cancelling the opening while avoiding branch-shape-specific patching.
     text = replace_once(
         text,
         '''        val openingAwayFromNativeCover =
@@ -94,56 +98,22 @@ def transform_controller(text: str) -> str:
                 angle >= INNER_WAKE_MIN_DEG &&
                 direction != Direction.CLOSING
 ''',
-        '''        val openingAwayFromNativeCover =
+        '''        if (
+            earlyOpeningLatched &&
+            (
+                topology.nativeInner ||
+                    (state in OPENING_STATES && direction == Direction.CLOSING)
+            )
+        ) {
+            earlyOpeningLatched = false
+        }
+
+        val openingAwayFromNativeCover =
             state in OPENING_STATES &&
                 (earlyOpeningLatched || angle >= INNER_WAKE_MIN_DEG) &&
                 direction != Direction.CLOSING
 ''',
         "native cover opening protection",
-    )
-
-    text = replace_once(
-        text,
-        '''            activePrewarmGeneration = -1L
-            resetIntent()
-
-            return decision(actions)
-        }
-
-        // Stable fully-open endpoint.
-''',
-        '''            earlyOpeningLatched = false
-            activePrewarmGeneration = -1L
-            resetIntent()
-
-            return decision(actions)
-        }
-
-        // Stable fully-open endpoint.
-''',
-        "clear latch on native-cover authority",
-    )
-
-    text = replace_once(
-        text,
-        '''            activePrewarmGeneration = -1L
-            resetIntent()
-
-            return decision(actions)
-        }
-
-        when (state) {
-''',
-        '''            earlyOpeningLatched = false
-            activePrewarmGeneration = -1L
-            resetIntent()
-
-            return decision(actions)
-        }
-
-        when (state) {
-''',
-        "clear latch at open-inner",
     )
 
     return text
@@ -207,7 +177,7 @@ def transform_service(text: str) -> str:
 '''
     new = '''                    if (closed) {
                         // INNER_HALL_OPENING_LATCH_V3: only a real Hall close,
-                        // actual reversal, or later native takeover may cancel
+                        // actual reversal, or native INNER takeover may cancel
                         // the accepted Hall opening.
                         continuity.onEarlyClosingEdge(
                             "lid-switch-closed"
@@ -258,6 +228,7 @@ def apply(repo: Path, check: bool) -> None:
         CONTROLLER: [
             "private var earlyOpeningLatched = false",
             "earlyOpeningLatched || angle >= INNER_WAKE_MIN_DEG",
+            "topology.nativeInner ||",
             "fun onEarlyClosingEdge(",
             'reason = "lid-closed-authoritative"',
         ],
@@ -288,23 +259,10 @@ def self_test() -> None:
             state in OPENING_STATES &&
                 angle >= INNER_WAKE_MIN_DEG &&
                 direction != Direction.CLOSING
-            activePrewarmGeneration = -1L
-            resetIntent()
-
-            return decision(actions)
-        }
-
-        // Stable fully-open endpoint.
-            activePrewarmGeneration = -1L
-            resetIntent()
-
-            return decision(actions)
-        }
-
-        when (state) {
 """
     out = transform_controller(source)
     assert "earlyOpeningLatched || angle >= INNER_WAKE_MIN_DEG" in out
+    assert "topology.nativeInner ||" in out
     assert "fun onEarlyClosingEdge(" in out
     print("inner Hall opening latch v3 model: PASS")
 
