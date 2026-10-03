@@ -14,6 +14,7 @@ on:
       - "tools/apply_inner_physical_bridge_v1_service_fixups.py"
       - "tools/apply_inner_physical_bridge_v2.py"
       - "tools/apply_fold7_display_status_v3.py"
+      - "tools/apply_hall_open_latch_v3.py"
       - "tools/apply_inner_wake_probe_v1.py"
       - "app/src/main/java/com/duoopen/overlay/Fold7DisplayStatus.kt"
       - "app/src/full/java/com/duoopen/overlay/Fold7OpeningWakeAttemptGate.kt"
@@ -84,17 +85,21 @@ jobs:
           python3 tools/apply_inner_physical_bridge_v2.py --repo . --check
           python3 tools/apply_inner_physical_bridge_v2.py --repo .
 
-      - name: Apply product-visible display status V3
+      - name: Apply product-visible display status and Hall latch V3
         run: |
           set -euo pipefail
           python3 tools/apply_fold7_display_status_v3.py --self-test
           python3 tools/apply_fold7_display_status_v3.py --repo . --check
           python3 tools/apply_fold7_display_status_v3.py --repo .
+          python3 tools/apply_hall_open_latch_v3.py --self-test
+          python3 tools/apply_hall_open_latch_v3.py --repo . --check
+          python3 tools/apply_hall_open_latch_v3.py --repo .
           git diff --check
           grep -F 'Fold7DisplayStatusStore.status' app/src/main/java/com/duoopen/ui/DuoApp.kt
           grep -F 'displayStatus.summary' app/src/main/java/com/duoopen/ui/HomePreview.kt
           grep -F 'Fold7DisplayStatus.Bridge.HANDOFF_ARMED' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
-          grep -F 'lid-switch-open' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'physicalOpeningLatched || angle >= INNER_WAKE_MIN_DEG' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'continuity.onPhysicalClosedEdge("lid-switch-closed")' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
 
       - name: Capture candidate diff and metadata
         run: |
@@ -105,8 +110,10 @@ jobs:
           sha256sum inner-physical-bridge-v3/APPLIED-ANDROID-SOURCE.diff > inner-physical-bridge-v3/APPLIED-ANDROID-SOURCE-SHA256.txt
           {
             echo "sourceHead=${GITHUB_SHA}"
-            echo "runtime=Beta2 + runtime optimization A/B/C + wake probe + physical bridge V1/V2 + display status V3"
+            echo "runtime=Beta2 + runtime optimization A/B/C + wake probe + physical bridge V1/V2 + display status V3 + Hall-open latch V3"
             echo "workingHallWake=PRESERVED"
+            echo "hallOpenLatch=SW_LID open survives stale native-cover topology at 0deg"
+            echo "hallCloseTerminal=explicit SW_LID close clears opening latch"
             echo "displayStatus=product-visible structured Fold7 pipeline StateFlow"
             echo "physicalPowerSemantics=COMMAND_ACCEPTED is not mislabeled as optical proof"
             echo "bridgeStatus=PRESENTING/HANDOFF_ARMED/RELEASED"
