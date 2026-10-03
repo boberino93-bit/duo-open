@@ -116,9 +116,9 @@ jobs:
       - name: Apply S1I correlated diagnostic timeline
         run: |
           set -euo pipefail
-          python3 tools/apply_stabilization_s1i_correlated_forensics_v2.py --self-test
-          python3 tools/apply_stabilization_s1i_correlated_forensics_v2.py --repo . --check
-          python3 tools/apply_stabilization_s1i_correlated_forensics_v2.py --repo .
+          python3 tools/apply_stabilization_s1i_correlated_forensics_v3.py --self-test
+          python3 tools/apply_stabilization_s1i_correlated_forensics_v3.py --repo . --check
+          python3 tools/apply_stabilization_s1i_correlated_forensics_v3.py --repo .
           git diff --check
 
           grep -F 'STABILIZATION_S1I_CORRELATED_FORENSICS_V1' app/src/full/java/com/duoopen/debug/VisualForensics.kt
