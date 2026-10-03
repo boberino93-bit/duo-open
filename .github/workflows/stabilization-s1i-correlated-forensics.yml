@@ -1,0 +1,196 @@
+name: Stabilization S1I Correlated Forensics
+
+on:
+  push:
+    branches:
+      - exp/stabilization-s1i-correlated-forensics-20261003
+    paths:
+      - ".github/workflows/stabilization-s1i-correlated-forensics.yml"
+      - "tools/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stabilization-s1i-correlated-forensics-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct deployed Beta2 runtime
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+
+      - name: Reapply validated optimization cycles A B C
+        run: |
+          set -euo pipefail
+          python3 tools/apply_runtime_optimization_cycle_a.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_b.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_c.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo .
+
+      - name: Reapply validated exact-attempt wake probe
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_wake_probe_v1.py --self-test
+          python3 tools/apply_inner_wake_probe_v1.py --repo . --check
+          python3 tools/apply_inner_wake_probe_v1.py --repo .
+
+      - name: Reapply physical bridge V1 and V2 handoff
+        run: |
+          set -euo pipefail
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --self-test
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo . --check
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase pre
+          python3 tools/apply_inner_physical_bridge_v1.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase post
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v2.py --self-test
+          python3 tools/apply_inner_physical_bridge_v2.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v2.py --repo .
+
+      - name: Reapply display status, Hall latch, and V4 bridge
+        run: |
+          set -euo pipefail
+          python3 tools/apply_fold7_display_status_v3.py --self-test
+          python3 tools/apply_fold7_display_status_v3.py --repo . --check
+          python3 tools/apply_fold7_display_status_v3.py --repo .
+          python3 tools/apply_hall_open_latch_v3.py --self-test
+          python3 tools/apply_hall_open_latch_v3.py --repo . --check
+          python3 tools/apply_hall_open_latch_v3.py --repo .
+          python3 tools/apply_inner_physical_bridge_v4.py --self-test
+          python3 tools/apply_inner_physical_bridge_v4.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v4.py --repo .
+
+      - name: Reapply S1 through S1F diagnostics
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --self-test
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo . --check
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo .
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo .
+          python3 tools/apply_stabilization_s1e_logical_layout_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1e_logical_layout_truth.py --repo .
+          python3 tools/apply_stabilization_s1f_layout_map_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1f_layout_map_truth.py --repo .
+
+      - name: Reapply S1G forensic diagnostic superset
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1g_forensic_superset.py --repo . --check
+          python3 tools/apply_stabilization_s1g_forensic_superset.py --repo .
+
+      - name: Reapply S1H visual forensics
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1h_visual_forensics.py --self-test
+          python3 tools/apply_stabilization_s1h_visual_forensics.py --repo . --check
+          python3 tools/apply_stabilization_s1h_visual_forensics.py --repo .
+
+      - name: Apply S1I correlated diagnostic timeline
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1i_correlated_forensics_v2.py --self-test
+          python3 tools/apply_stabilization_s1i_correlated_forensics_v2.py --repo . --check
+          python3 tools/apply_stabilization_s1i_correlated_forensics_v2.py --repo .
+          git diff --check
+
+          grep -F 'STABILIZATION_S1I_CORRELATED_FORENSICS_V1' app/src/full/java/com/duoopen/debug/VisualForensics.kt
+          grep -F 'RENDER_TIMELINE_PROBE = 20' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+          grep -F 'private fun renderTimelineProbe()' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'fun renderTimelineProbe()' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+          grep -F 'captureStartedElapsedMs' app/src/full/java/com/duoopen/debug/VisualForensics.kt
+          grep -F 'captureFinishedElapsedMs' app/src/full/java/com/duoopen/debug/VisualForensics.kt
+          grep -F 'backendCaptureMs' app/src/full/java/com/duoopen/debug/VisualForensics.kt
+          grep -F 'sourceWidth' app/src/full/java/com/duoopen/debug/VisualForensics.kt
+          grep -F 'correlated-context.txt' app/src/full/java/com/duoopen/debug/VisualForensics.kt
+          grep -F 'visual-forensics-sample' app/src/full/java/com/duoopen/debug/VisualForensics.kt
+
+          ! grep -F 'STABILIZATION_S1C_ACTIVE_TRANSFER_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          ! grep -F 'STABILIZATION_S1D_REAL_INNER_EDGE_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          ! grep -F 'cmd device_state state 4' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          ! grep -F 'cmd device_state state 5' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+
+      - name: Capture S1I test-artifact metadata
+        run: |
+          set -euo pipefail
+          OUT=stabilization-s1i-correlated-forensics
+          mkdir -p "$OUT"
+          git diff -- app > "$OUT/APPLIED-ANDROID-SOURCE.diff"
+          git diff --stat -- app > "$OUT/APPLIED-ANDROID-SOURCE.stat"
+          sha256sum "$OUT/APPLIED-ANDROID-SOURCE.diff" > "$OUT/APPLIED-ANDROID-SOURCE-SHA256.txt"
+          {
+            echo "sourceHead=${GITHUB_SHA}"
+            echo "baselineS1HHead=9d9861cd1be4b5488bc801fdd6cae74aa48d7311"
+            echo "artifactClass=PHYSICAL_FOLD7_DIAGNOSTIC_TEST_BUILD_NOT_DEPLOYMENT_PACKAGE"
+            echo "stabilizationPhase=S1I_CORRELATED_FORENSICS"
+            echo "behaviorChange=NONE"
+            echo "visualSamplesMs=0,500,1200,2500"
+            echo "perCaptureWallTiming=YES"
+            echo "backendCaptureTiming=YES"
+            echo "sourceDimensions=YES"
+            echo "sampleCorrelatedRenderProbe=YES"
+            echo "renderProbeFields=deviceState,displayFramework,windowDisplays,activityTasks,wallpaper,surfaceLayers"
+            echo "probeTimingExported=YES"
+            echo "manifestCorrelationFields=captureStartedElapsedMs,captureFinishedElapsedMs,wallCaptureMs,backendCaptureMs,sourceWidth,sourceHeight"
+            echo "deviceStateOverrideChanges=NONE"
+            echo "powerOrderingChanges=NONE"
+            echo "renderAngleMathChanges=NONE"
+            echo "transitionIdentityChanges=NONE"
+            echo "presentationOwnershipChanges=NONE"
+            echo "physicalFold7Validation=REQUIRED"
+          } > "$OUT/BUILD-INFO.txt"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Full regression tests and APK build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package diagnostic APK and hashes
+        run: |
+          set -euo pipefail
+          OUT=stabilization-s1i-correlated-forensics
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" "$OUT/DuoOpen-ZFold7-5.1.0-beta2-v4-stabilization-s1i-correlated-forensics-debug.apk"
+          sha256sum "$OUT/DuoOpen-ZFold7-5.1.0-beta2-v4-stabilization-s1i-correlated-forensics-debug.apk" > "$OUT/APK-SHA256.txt"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-Stabilization-S1I-Correlated-Forensics
+          path: stabilization-s1i-correlated-forensics/
+          if-no-files-found: error
+          retention-days: 30
