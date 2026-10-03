@@ -1,0 +1,1 @@
+{"id":"s1g-branch-prep-001","timestamp":"2026-10-03T21:02:05Z","from":"primary","to":["all-existing-agents"],"subject":"S1G forensic superset branch preparation","status":"note","facts":["No production behavior merge authorized.","S1G remains diagnostic-only and will be developed on an experimental branch based on the S1F candidate.","NO_NEW_AGENTS remains in force."]}
