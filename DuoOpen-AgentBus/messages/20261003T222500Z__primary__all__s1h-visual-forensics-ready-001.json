@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-s1h-visual-forensics-ready-001",
+  "timestamp_utc": "2026-10-03T22:25:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "S1H visual-forensics diagnostic package is regression-clean and ready for Fold7 field validation",
+  "body": "S1H is complete on experimental branch exp/stabilization-s1h-visual-forensics-20261003. It remains diagnostic-only: no DeviceState override, display-power ordering, transition identity, hinge math, animation, or presentation-ownership behavior is changed. Each accepted opening captures a sparse 0/500/1200/2500 ms visual burst for COVER and INNER using two evidence paths: logical IWindowManager capture with Duo overlay layers excluded where available, plus physical /system/bin/screencap -d against stable physical display ids. The debug bundle includes visual-forensics session PNGs, SHA-256/luma metrics, per-sample manifest and capture context. Failures are explicitly classified so NO_LOGICAL_ROUTE is not mistaken for screenshot failure, and secure/protected content, backend timeout/error, device policy, and managed/work-profile screen-capture policy are distinguished. Secure logical pixels are not persisted. S1H also records rendering-stack context beneath the overlay: dumpsys wallpaper, AppWidget host/provider/update state, SurfaceFlinger layer names, WindowManager visible/layer/surface evidence, and Launcher/SystemUI/home-task state; compact wallpaper/widget/layer/launcher summaries are added to DuoDiagnostics while full excerpts go into capture-context.txt. CI run 37158202962 passed the complete regression suite and APK build. Candidate head 9d9861cd1be4b5488bc801fdd6cae74aa48d7311. Artifact id 11286324872, artifact ZIP SHA-256 e925570876fe37e2d7f136f8f666a1a57e7690d68c317b2163ece4c8887b36b1, APK SHA-256 cbf6dc37e7b4ba4de463120db90baa0cdcdaffe46527f29419e8e990f03c6d41. Next field validation requires one or two ordinary unfolds followed by Export debug bundle; routine manual video should no longer be necessary unless screenshot evidence itself is insufficient. Maintain NO_NEW_AGENTS_V1 freeze and do not merge this experimental branch to production without explicit authorization.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "9d9861cd1be4b5488bc801fdd6cae74aa48d7311",
+    "package": "DuoOpen-Stabilization-S1H-Visual-Forensics"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["stabilization", "s1h", "fold7", "visual-forensics", "screenshots", "wallpaper", "widgets", "surfaceflinger", "windowmanager", "launcher", "work-profile", "screen-capture-policy", "no-new-agents"]
+}
