@@ -13,13 +13,17 @@ import java.util.zip.ZipOutputStream
 /**
  * User-visible export of local diagnostic evidence.
  *
- * No screen pixels, notification contents, messages, passwords or keystrokes
- * are added here. This packages the diagnostic files Duo Open already records.
+ * S1H builds deliberately include the recent visual-forensics screenshot
+ * sessions requested for Fold7 field diagnosis. Secure logical frames are not
+ * persisted by VisualForensics; physical screencap output remains subject to
+ * Android/enterprise screenshot policy and is packaged exactly as produced by
+ * the platform together with capture-policy context and per-frame manifests.
  */
 object DebugBundleExporter {
     data class Result(
         val file: File,
         val transitionSessions: Int,
+        val visualForensicSessions: Int,
     )
 
     fun create(
@@ -75,6 +79,17 @@ object DebugBundleExporter {
                     it.lastModified()
                 }
 
+        val visualSessions =
+            File(
+                app.filesDir,
+                "visual-forensics",
+            ).listFiles()
+                .orEmpty()
+                .filter { it.isDirectory }
+                .sortedByDescending { it.lastModified() }
+                .take(MAX_VISUAL_FORENSIC_SESSIONS)
+                .sortedBy { it.lastModified() }
+
         ZipOutputStream(
             output.outputStream()
                 .buffered()
@@ -101,6 +116,15 @@ object DebugBundleExporter {
                         )
                         appendLine(
                             "transitionSessions=${sessions.size}"
+                        )
+                        appendLine(
+                            "visualForensicSessions=${visualSessions.size}"
+                        )
+                        appendLine(
+                            "visualForensics=ENABLED_IN_S1H_EXPERIMENTAL_BUILD"
+                        )
+                        appendLine(
+                            "visualForensicsNote=Recent timestamped panel screenshots, raw capture outcomes, and screen-capture policy context are included when available."
                         )
                     },
             )
@@ -134,12 +158,21 @@ object DebugBundleExporter {
                         "transition-lab/${session.name}",
                 )
             }
+
+            visualSessions.forEach { session ->
+                zip.putDirectory(
+                    directory = session,
+                    prefix = "visual-forensics/${session.name}",
+                )
+            }
         }
 
         return Result(
             file = output,
             transitionSessions =
                 sessions.size,
+            visualForensicSessions =
+                visualSessions.size,
         )
     }
 
@@ -204,6 +237,24 @@ object DebugBundleExporter {
             }
     }
 
+    private fun ZipOutputStream.putDirectory(
+        directory: File,
+        prefix: String,
+    ) {
+        directory.walkTopDown()
+            .filter { it.isFile && it.length() > 0L }
+            .sortedBy { it.relativeTo(directory).invariantSeparatorsPath }
+            .forEach { source ->
+                val relative =
+                    source.relativeTo(directory)
+                        .invariantSeparatorsPath
+                putFileIfPresent(
+                    source = source,
+                    name = "$prefix/$relative",
+                )
+            }
+    }
+
     private fun ZipOutputStream.putText(
         name: String,
         text: String,
@@ -247,6 +298,9 @@ object DebugBundleExporter {
 
     private const val MAX_TRANSITION_SESSIONS =
         8
+
+    private const val MAX_VISUAL_FORENSIC_SESSIONS =
+        5
 
     private const val EXPORT_RETENTION_MS =
         7L * 24L * 60L * 60L * 1_000L
