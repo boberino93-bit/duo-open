@@ -31,6 +31,29 @@ def transform(text: str) -> str:
         '"Landroid/view/SurfaceControl\\$Transaction;"',
     )
 
+    # show()/remove() exist on the hidden Transaction surface at runtime but
+    # are absent from the public compile SDK used by CI. Keep the experiment
+    # compile-safe by invoking both through the same reflection boundary as the
+    # other hidden physical-display methods.
+    text = replace_once(
+        text,
+        '''                tx.setLayer(layer, Int.MAX_VALUE - 64)
+                tx.show(layer)
+
+                txClass.getDeclaredMethod(
+''',
+        '''                tx.setLayer(layer, Int.MAX_VALUE - 64)
+                txClass.getDeclaredMethod(
+                    "show",
+                    SurfaceControl::class.java,
+                ).apply { isAccessible = true }
+                    .invoke(tx, layer)
+
+                txClass.getDeclaredMethod(
+''',
+        "reflect hidden Transaction.show",
+    )
+
     old = '''            val layer = innerPhysicalBridge
             if (layer != null) {
                 runCatching {
@@ -65,7 +88,13 @@ def transform(text: str) -> str:
                                 .invoke(tx, token, 0)
                         }
                     }
-                    tx.remove(layer)
+                    tx.javaClass
+                        .getDeclaredMethod(
+                            "remove",
+                            SurfaceControl::class.java,
+                        )
+                        .apply { isAccessible = true }
+                        .invoke(tx, layer)
                     tx.apply()
                 }
                 runCatching { layer.release() }
@@ -94,6 +123,12 @@ def apply(repo: Path, check: bool) -> None:
     after = transform(before)
     if 'invoke(tx, token, 0)' not in after:
         raise RuntimeError("native stack restore missing")
+    if '"show",\n                    SurfaceControl::class.java' not in after:
+        raise RuntimeError("reflected Transaction.show missing")
+    if '"remove",\n                            SurfaceControl::class.java' not in after:
+        raise RuntimeError("reflected Transaction.remove missing")
+    if 'tx.show(layer)' in after or 'tx.remove(layer)' in after:
+        raise RuntimeError("direct hidden Transaction show/remove call remains")
     if 'SurfaceControl\\$Builder;' not in after:
         raise RuntimeError("Kotlin-safe Builder descriptor missing")
     if 'SurfaceControl\\$Transaction;' not in after:
