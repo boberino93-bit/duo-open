@@ -1,0 +1,7 @@
+{
+  "schema": "duoopen-browser-actuation-command/v1",
+  "command_id": "example-command-1",
+  "issued_by": "primary",
+  "max_managed_child_tabs": 19,
+  "entries": []
+}

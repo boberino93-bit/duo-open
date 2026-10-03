@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8"><title>Duo Open Chat Spawn Actuator</title>
+<style>body{font:14px system-ui;max-width:760px;margin:32px auto;padding:0 16px}label{display:block;margin:16px 0}input[type=text]{width:100%;padding:8px}button{padding:8px 14px}#status{margin-left:8px}</style>
+<h1>Duo Open Chat Spawn Actuator</h1>
+<p>Configure once. Prefer the exact Duo Screen ChatGPT Project URL so spawned agents inherit the same Project context. The controller never treats an opened tab as SESSION_STARTED.</p>
+<label><input id="enabled" type="checkbox"> Enable autonomous reconciliation</label>
+<label>Desired-state index URL<input id="controlUrl" type="text"></label>
+<label>Duo Screen project URL (or https://chatgpt.com/ fallback)<input id="projectUrl" type="text"></label>
+<button id="save">Save</button><span id="status"></span>
+<script src="options.js"></script>

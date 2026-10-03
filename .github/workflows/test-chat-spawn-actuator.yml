@@ -1,0 +1,39 @@
+name: Test Chat Spawn Actuator
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/test-chat-spawn-actuator.yml"
+      - "DuoOpen-AgentBus/control/chat_actuation/v1/**"
+      - "DuoOpen-AgentBus/control/round_orchestration/v2/SPAWNER_ADAPTER_CONTRACT_V2.md"
+      - "DuoOpen-AgentBus/templates/CHAT_SPAWN_BOOTSTRAP_V1.txt"
+      - "tools/chat_spawn_actuator/**"
+      - "service_packs/chat_spawn_actuator_v1/**"
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.13"}
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - name: Policy tests
+        working-directory: tools/chat_spawn_actuator
+        run: |
+          python -m unittest -v test_actuation_policy.py
+          python verify_actuation_index.py ../../DuoOpen-AgentBus/control/chat_actuation/v1/ACTUATION_INDEX.json
+      - name: Extension syntax
+        run: |
+          node --check tools/chat_spawn_actuator/chrome_extension/background.js
+          node --check tools/chat_spawn_actuator/chrome_extension/content.js
+          node --check tools/chat_spawn_actuator/chrome_extension/options.js
+          node --check tools/chat_spawn_actuator/chrome_extension/popup.js
+          python -m json.tool tools/chat_spawn_actuator/chrome_extension/manifest.json >/dev/null
+          python -m json.tool DuoOpen-AgentBus/control/chat_actuation/v1/ACTUATION_INDEX_SCHEMA_V1.json >/dev/null
+      - name: No Android runtime changes in service pack
+        run: |
+          ! find service_packs/chat_spawn_actuator_v1 DuoOpen-AgentBus/control/chat_actuation/v1 tools/chat_spawn_actuator -path '*/app/*' -print -quit | grep .

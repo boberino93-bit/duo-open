@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Duo Open Chat Spawn Actuator",
+  "version": "1.0.0",
+  "description": "Reconciles Duo Open spawn desired state into ChatGPT browser tabs. SESSION_STARTED remains child-authoritative.",
+  "permissions": ["alarms", "storage", "tabs"],
+  "host_permissions": [
+    "https://raw.githubusercontent.com/*",
+    "https://chatgpt.com/*"
+  ],
+  "background": {"service_worker": "background.js"},
+  "action": {"default_popup": "popup.html"},
+  "content_scripts": [{
+    "matches": ["https://chatgpt.com/*"],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+  }],
+  "options_page": "options.html"
+}

@@ -1,0 +1,9 @@
+{
+  "schema": "duoopen-chat-actuation-index/v1",
+  "project": "duo-open",
+  "source_repo": "boberino93-bit/duo-open",
+  "source_branch": "main",
+  "generation": 1,
+  "max_managed_child_tabs": 19,
+  "entries": []
+}

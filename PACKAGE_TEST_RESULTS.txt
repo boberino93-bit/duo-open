@@ -1,0 +1,53 @@
+DUO OPEN CHAT SPAWN ACTUATOR V1.1 — LOCAL TEST RESULTS
+
+Observed production baseline when authored:
+- boberino93-bit/duo-open@9a5e5cbf36aa9c721f238ba974b44d2a13578b07
+- Android runtime changes: NONE
+
+CAPABILITY DESIGN
+- Native supported sibling-ChatGPT-chat creation API exposed to this chat: NOT FOUND / NOT CLAIMED
+- Preferred actuator channel: one explicitly armed Primary ChatGPT conversation -> strict DOM machine command -> local Chrome/Chromium MV3 extension
+- Durable/recovery channel: bounded raw GitHub desired-state index (currently repo-write scope blocked by 403)
+- Child-active truth: AgentBus child-authored SESSION_STARTED only
+- Host observations such as HOST_TAB_OPENED, PROMPT_SUBMITTED, or /c/ URL: NON-AUTHORITATIVE
+
+POLICY / ADVERSARIAL TESTS
+- Python deterministic/adversarial suite: 16/16 PASS
+- Reject >19 managed child tabs: PASS
+- Reject duplicate ticket IDs: PASS
+- Reject arbitrary remote prompt field: PASS
+- Reject arbitrary remote URL field: PASS
+- Reject PRIMARY as child role: PASS
+- Reject non-positive generation: PASS
+- Reject identifier newline/prompt injection: PASS
+- Pin repo/project/schema identity: PASS
+- Pin durable source branch to main: PASS
+- Deterministic local bootstrap prompt includes SESSION_STARTED gate: PASS
+- DOM command encode/decode round trip: PASS
+- DOM command rejects non-primary issued_by: PASS
+- DOM command rejects free-form fields: PASS
+
+HOST SECURITY MODEL
+- User explicitly arms one exact Primary conversation from extension popup.
+- Background accepts DOM commands only when sender conversation URL equals armed Primary URL.
+- Child/Manager/Research conversations cannot actuate siblings merely by emitting the same marker.
+- Command entries are bounded metadata only; bootstrap prompt is locally constructed.
+- Project/control URLs are constrained to chatgpt.com and boberino93-bit/duo-open respectively.
+
+STATIC / CLEAN-ROOM TESTS
+- ACTUATION_INDEX verifier: PASS
+- background.js node --check: PASS
+- content.js node --check: PASS
+- options.js node --check: PASS
+- popup.js node --check: PASS
+- extension manifest JSON: PASS
+- actuation schema JSON: PASS
+- no app/ Android runtime path in service pack: PASS
+- package SHA256SUMS clean-room verification: PASS
+
+KNOWN LIVE GATES
+- Chrome/Chromium extension has not been installed on the user's host by this execution environment.
+- Exact Duo Screen ChatGPT Project URL must be configured once in extension options for strongest project-context inheritance.
+- Live ChatGPT DOM/composer actuation remains NOT RUN and must be validated against the user's current UI.
+- Promotion from MANUAL_FALLBACK to LOCAL_BROWSER_ACTUATOR requires one autonomous launch where the child validates its ticket and writes its own SESSION_STARTED.
+- GitHub write 403 no longer blocks active-session DOM actuation; it only blocks the durable/recovery control feed.
