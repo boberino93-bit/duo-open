@@ -8,6 +8,8 @@ TARGET = Path("tools/apply_inner_physical_bridge_v1.py")
 MARKER = "BETA2_DEVICE_STATE_CALLBACK_PRESERVED"
 START = "    pattern = r'''            \\) \\{\n"
 END = "    text = replace_once(\n        text,\n        '''                    continuity.onPrivilegedReady()\n"
+STOP_START = "    text = replace_once(\n        text,\n        '''                } else {\n                    setEarlyOpeningVisualLatched(\n"
+STOP_END = "    text = replace_once(\n        text,\n        '''        deviceStateObserver\n            ?.stop()\n"
 
 
 def transform(text: str) -> str:
@@ -19,12 +21,26 @@ def transform(text: str) -> str:
     end = text.find(END, start)
     if end < 0:
         raise RuntimeError("legacy DeviceState extraction block end not found")
-    return (
+    text = (
         text[:start]
         + f"    # {MARKER}: Beta2's proven DeviceState fallback stays untouched;\n"
           "    # the new SW_LID path calls handleEarlyOpeningEdge independently.\n\n"
         + text[end:]
     )
+
+    stop_start = text.find(STOP_START)
+    if stop_start < 0:
+        raise RuntimeError("obsolete Shizuku-unavailable rewrite start not found")
+    stop_end = text.find(STOP_END, stop_start)
+    if stop_end < 0:
+        raise RuntimeError("obsolete Shizuku-unavailable rewrite end not found")
+    text = (
+        text[:stop_start]
+        + "    # Beta2 Shizuku-unavailable shape is preserved; a separate runtime\n"
+          "    # fixup resets the lid-reader flag at the collector boundary.\n\n"
+        + text[stop_end:]
+    )
+    return text
 
 
 def apply(repo: Path, check: bool) -> None:
@@ -37,22 +53,23 @@ def apply(repo: Path, check: bool) -> None:
         raise RuntimeError("preparation marker missing")
     if "device state callback extraction" in after:
         raise RuntimeError("obsolete DeviceState extraction still present")
+    if "stop lid when unavailable" in after:
+        raise RuntimeError("obsolete unavailable-state extraction still present")
     if not check:
         path.write_text(after, encoding="utf-8")
 
 
 def self_test() -> None:
     sample = (
-        "before\n"
-        + START
-        + "old callback matcher\n"
-        + END
-        + "after\n"
+        "before\n" + START + "old callback matcher\n" + END
+        + "middle\n" + STOP_START + "old unavailable rewrite\n" + STOP_END + "after\n"
     )
     out = transform(sample)
     assert MARKER in out
     assert "old callback matcher" not in out
+    assert "old unavailable rewrite" not in out
     assert END in out
+    assert STOP_END in out
     print("inner physical bridge transformer preparation: PASS")
 
 
