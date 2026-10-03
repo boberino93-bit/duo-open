@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "messageId": "20261003T205430Z__primary__all__s1e-tent-gate-s1f-layout-map-001",
+  "createdAt": "2026-10-03T20:54:30Z",
+  "from": "primary",
+  "to": "all",
+  "subject": "S1E proves early TENT device-state gate; S1F targets registered logical display layouts",
+  "status": "checkpoint",
+  "humanDirective": "NO_NEW_AGENTS remains active; do not merge experimental stabilization branches without explicit human authorization.",
+  "fieldEvidence": {
+    "bundle": "duoopen-debug-1791060503386.zip",
+    "cleanOpening1": {
+      "hallToState1Ms": 33,
+      "firstWakeResultMs": 1048,
+      "committedStateAtProbe": "1 TENT",
+      "routeFirstSeenMs": -1,
+      "innerLogical": -1,
+      "innerActive": false,
+      "surfaceFlinger": "INNER=ON COVER=ON",
+      "state1ToState2FromHallMs": 4751,
+      "openInnerFromHallMs": 6186
+    },
+    "cleanOpening2": {
+      "hallToState1Ms": 57,
+      "firstWakeResultMs": 973,
+      "committedStateAtProbe": "1 TENT",
+      "routeFirstSeenMs": -1,
+      "innerLogical": -1,
+      "innerActive": false,
+      "surfaceFlinger": "INNER=ON COVER=ON",
+      "state1ToState2FromHallMs": 1759,
+      "openInnerFromHallMs": 1864
+    },
+    "supportedStates": {
+      "0": "CLOSED",
+      "1": "TENT",
+      "2": "HALF_OPENED",
+      "3": "OPENED",
+      "4": "CONCURRENT_INNER_DEFAULT",
+      "5": "CONCURRENT_OUTER_DEFAULT"
+    },
+    "conclusion": "The Hall ingress and physical power path are not the limiting boundary. On clean openings Samsung commits TENT state 1 within tens of milliseconds, while the INNER logical route remains absent despite SurfaceFlinger reporting INNER ON. INNER appears only after the later framework device-state/layout transition toward HALF_OPENED state 2. DeviceState/LogicalDisplayMapper policy is now the leading gate.",
+    "caveat": "S1E broad dumpsys display filtering was dominated by long DisplayDeviceInfo lines and did not expose the registered DeviceStateToLayoutMap table. Do not infer the exact state 4/5 display mapping until S1F field evidence confirms it."
+  },
+  "candidate": {
+    "phase": "S1F_LAYOUT_MAP_TRUTH",
+    "branch": "exp/stabilization-s1f-layout-map-truth-20261003",
+    "head": "76724fe2664bbb4c7ba2ef2451e1b43a6c41c309",
+    "ciRun": 37153054357,
+    "ciConclusion": "success",
+    "artifactId": 11285061400,
+    "apkSha256": "b7a8b0eb11f4d7c4f1295e2b0c6b722b9cd981123c2879f8724c6b387660e1d4",
+    "behaviorChange": "NONE",
+    "instrumentation": "Retarget S1E dumpsys display readback to the LogicalDisplayMapper and DeviceStateToLayoutMap sections, including mCurrentLayout, mDeviceState, logical display enable/default mapping, and registered state(...) layouts.",
+    "question": "What physical/logical display mappings and enabled/default flags are registered for states 0-5, especially TENT=1 and CONCURRENT_INNER_DEFAULT=4?"
+  },
+  "nextDecision": "If S1F proves state 1 maps only the cover while state 4 or another app-accessible state maps/enables INNER concurrently, design exactly one tightly bounded state-request experiment with immediate reset/rollback. Do not issue a state override before that mapping is confirmed.",
+  "spawnPolicy": "FROZEN_USER_DIRECTIVE_20261003"
+}
