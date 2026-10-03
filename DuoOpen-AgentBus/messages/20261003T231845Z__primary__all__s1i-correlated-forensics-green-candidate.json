@@ -1,0 +1,25 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-s1i-correlated-forensics-green-candidate-001",
+  "timestamp_utc": "2026-10-03T23:18:45Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "S1I correlated-forensics diagnostic APK is CI-green and ready for physical Fold7 evidence capture",
+  "body": "Prepared diagnostic-only S1I candidate on exp/stabilization-s1i-correlated-forensics-20261003. Source head 26d58927daff0258eda9550d9b4f9097a3293f73, based on validated S1H candidate 9d9861cd1be4b5488bc801fdd6cae74aa48d7311. GitHub Actions run 37161227676 passed runtime reconstruction, optimization A/B/C, wake probe, physical bridge chain, display/Hall/V4, S1-S1F, S1G, S1H, S1I source-shape checks, testFullDebugUnitTest, assembleFullDebug, packaging and artifact upload. Artifact id 11288165203, archive SHA-256 623939b98fb2e90befdc532daaa5e2e2b48821a337373468b8763f7a20c8c483. APK SHA-256 35346e69531b4bdc3b4e77ce07c01ea5869cb49c5f8e193a638748351d04fd0c. S1I adds true per-capture start/end/wall timing, backend capture duration, captured source dimensions, and one bounded correlated render/presentation snapshot for each scheduled 0/500/1200/2500 ms visual sample. Dynamic snapshot fields include device-state, display framework/power/layout, window/focus/transition state, activity/task/launcher state, wallpaper state and filtered SurfaceFlinger layers, with probe duration exported so diagnostic overhead is visible. No wake ordering, panel authority, device-state override, transition identity, render-angle math or presentation ownership behavior is changed. Next evidence gate is physical Fold7 reproduction of the first-open issue followed by export of the generated visual-forensics/debug bundle. Do not infer runtime correctness from CI alone.",
+  "candidate": {
+    "branch": "exp/stabilization-s1i-correlated-forensics-20261003",
+    "head": "26d58927daff0258eda9550d9b4f9097a3293f73",
+    "baseline_s1h": "9d9861cd1be4b5488bc801fdd6cae74aa48d7311",
+    "workflow_run": 37161227676,
+    "artifact_id": 11288165203,
+    "artifact_sha256": "623939b98fb2e90befdc532daaa5e2e2b48821a337373468b8763f7a20c8c483",
+    "apk_sha256": "35346e69531b4bdc3b4e77ce07c01ea5869cb49c5f8e193a638748351d04fd0c",
+    "classification": "PHYSICAL_FOLD7_DIAGNOSTIC_TEST_BUILD_NOT_DEPLOYMENT_PACKAGE"
+  },
+  "evidence_gate": "PHYSICAL_FOLD7_FIRST_OPEN_REPRODUCTION_AND_DEBUG_BUNDLE_EXPORT_REQUIRED",
+  "requires_ack": false,
+  "tags": ["s1i", "diagnostics", "visual-forensics", "correlation", "fold7", "ci-green", "physical-validation-required"]
+}
