@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://duoopen.local/agentbus/v2/schemas/idempotency-ledger-entry.schema.json",
+  "title": "Idempotency Ledger Entry V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "key", "semantic_digest", "first_event_id", "first_seen_at_utc", "retention_class"],
+  "properties": {
+    "schema": {"const": "duoopen-agentbus/idempotency-ledger-entry-v1"},
+    "key": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "semantic_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "first_event_id": {"type": "string", "minLength": 1, "maxLength": 512},
+    "first_seen_at_utc": {"type": "string", "format": "date-time"},
+    "retention_class": {"const": "dedupe"}
+  }
+}

@@ -1,0 +1,1493 @@
+diff --git a/AGENTBUS_IMPORT/protocol/v2/PROTOCOL.lock.json b/AGENTBUS_IMPORT/protocol/v2/PROTOCOL.lock.json
+new file mode 100644
+index 0000000..fda9ea8
+--- /dev/null
++++ b/AGENTBUS_IMPORT/protocol/v2/PROTOCOL.lock.json
+@@ -0,0 +1,77 @@
++{
++  "schema": "duoopen-agentbus/protocol-lock-v1",
++  "protocol": "duoopen-agentbus-storage-hardening-v2",
++  "version": "2.0.0-draft.1",
++  "status": "DRAFT_NOT_ACTIVATED",
++  "canonicalization": "DUO-CJSON-1",
++  "base_repository": "boberino93-bit/duo-open",
++  "base_branch": "main",
++  "base_commit": "a95cc839244159e100b50ef8f2ef1622adc14b33",
++  "activation": {
++    "wired_into_discovery": false,
++    "wired_into_bootstrap": false,
++    "production_commit_boundary_touched": false
++  },
++  "artifacts": [
++    {
++      "path": "README.md",
++      "sha256": "sha256:f7c5b6c413918526b972af21af576f402f17d1ae0884eb3c9b5fd3523fbd24ad",
++      "required": true
++    },
++    {
++      "path": "fsm/ingest-lifecycle.fsm.json",
++      "sha256": "sha256:ad92574165a3d1f392f269f50d279081a6c1782c5b453c76989c0ecd3d1ace01",
++      "required": true
++    },
++    {
++      "path": "indexes/materialized-index.catalog.json",
++      "sha256": "sha256:49ce72310de627b66ce9d3adf8ee29f19c2b2534a16bbfc514a4c5baef198dff",
++      "required": true
++    },
++    {
++      "path": "retention/retention-policy.json",
++      "sha256": "sha256:a19f6ab8ec76a34f3c2cd126496470c9d2516ecd8dbb00f2432c6778054da16c",
++      "required": true
++    },
++    {
++      "path": "schemas/fsm-definition.schema.json",
++      "sha256": "sha256:9c1605694daac67f84df11cc1da40959d8733c95466a3738b84fbaa8f321b001",
++      "required": true
++    },
++    {
++      "path": "schemas/fsm-instance.schema.json",
++      "sha256": "sha256:31df0c0e0277e6df81fc2904ae47973c664358928c8a5fc99f2575eff3840214",
++      "required": true
++    },
++    {
++      "path": "schemas/idempotency-ledger-entry.schema.json",
++      "sha256": "sha256:71cb85013bd7c981bf87c95df85e5382e8b9c16094a6aa594e0391b393b73c6d",
++      "required": true
++    },
++    {
++      "path": "schemas/materialized-index.schema.json",
++      "sha256": "sha256:fe2a8b2b961852eb1df86c9305735180005867bc10f83a58f55a108308a37fe2",
++      "required": true
++    },
++    {
++      "path": "schemas/persisted-event.schema.json",
++      "sha256": "sha256:3e6585c621404be4e1bbc07f8013f089977566cbaebf59b35d0238103c3a2292",
++      "required": true
++    },
++    {
++      "path": "schemas/snapshot-manifest.schema.json",
++      "sha256": "sha256:5cf9029a120b7619e9b1abb936c2f229d47ecbb06d498b14fa2b67e3947ef30f",
++      "required": true
++    },
++    {
++      "path": "tests/test_agentbus_protocol.py",
++      "sha256": "sha256:ec7e287c9cf7f671843b519fbc17ba8d5090904441a53fca6ac5454336a2babe",
++      "required": true
++    },
++    {
++      "path": "tools/agentbus_protocol.py",
++      "sha256": "sha256:4f145c7a8140d251702479b35ee7de3bbe8b79c51d447e9b1efd6a67ebdfadfb",
++      "required": true
++    }
++  ]
++}
+diff --git a/AGENTBUS_IMPORT/protocol/v2/README.md b/AGENTBUS_IMPORT/protocol/v2/README.md
+new file mode 100644
+index 0000000..82d5054
+--- /dev/null
++++ b/AGENTBUS_IMPORT/protocol/v2/README.md
+@@ -0,0 +1,66 @@
++# Duo Open AgentBus Protocol Hardening V2 — Draft, Not Activated
++
++This package implements the storage/protocol hardening work that is intentionally separable from production authority, agent identity, branch protection, commit permissions, and human approval gates.
++
++It is **not wired into `AGENT_DISCOVERY.json`, bootstrap order, `main`, or any production acceptance path**. It is designed to be reviewed and applied on a non-production branch only after a human-controlled branch boundary exists.
++
++## Scope implemented here
++
++- deterministic FSM definition and instance schemas;
++- idempotency keys and a durable deduplication ledger;
++- causal ordering with stream sequence numbers, Lamport clocks, explicit parents, and observed stream frontiers;
++- deterministic materialized-index definitions and rebuild logic;
++- snapshot manifests and source-frontier capture;
++- retention tiers for canonical, derived, ephemeral, and dedupe data;
++- a protocol lockfile that pins exact SHA-256 digests of every protocol artifact;
++- a dependency-free Python reference implementation and tests.
++
++## Compatibility model
++
++The persisted-event envelope treats the existing immutable AgentBus message as opaque payload. Existing fields such as `schema`, `from`, `to`, `kind`, `subject`, and `body` remain inside `payload` and are not reinterpreted here.
++
++A V2 persisted event has five invariants:
++
++1. **Stable retry identity.** `idempotency.key` is derived from the semantic operation, not from retry time or transport details.
++2. **Conflict detection.** Reusing an idempotency key with a different semantic digest is an error, never an overwrite.
++3. **Causal application.** An event is materialized only when its stream predecessor and every explicit parent are present or covered by a trusted snapshot frontier.
++4. **Derived state is rebuildable.** Materialized indexes are deterministic projections of canonical events plus a pinned protocol lock.
++5. **Snapshots are anchored.** Every snapshot records the exact event frontier, protocol lock digest, prior snapshot digest, and content digests for included sections.
++
++## Canonical hashing
++
++The reference tooling uses `DUO-CJSON-1`:
++
++- UTF-8 JSON;
++- object keys sorted lexicographically;
++- separators are `,` and `:` with no insignificant whitespace;
++- only `null`, booleans, integers, strings, arrays, and objects are accepted for hashed semantic material;
++- floating-point numbers are rejected from hashed semantic material to avoid cross-runtime representation drift.
++
++Digest form is `sha256:<64 lowercase hex characters>`.
++
++## Causal model
++
++Each event carries:
++
++- `stream.id` and contiguous `stream.seq`;
++- `causality.lamport`;
++- zero or more explicit parent event IDs;
++- an `observed` map of stream IDs to the highest sequence observed when the event was created.
++
++The apply rule is conservative: missing parents or a stream gap make the event pending. Pending events become eligible when their dependencies arrive. Concurrent events are allowed across independent streams, but a single stream remains contiguous and deterministic.
++
++## Retention model
++
++Retention does not silently destroy canonical history. Canonical events move from hot to warm to cold storage but remain retained unless a human-approved policy later supersedes this draft. Derived indexes are rebuildable and may be rotated aggressively. Ephemeral service/checkpoint data may compact to digests. Idempotency evidence keeps a digest-level tombstone indefinitely so an old retry cannot resurrect as a new operation after payload compaction.
++
++## Validation
++
++Run from this directory:
++
++```bash
++python -m unittest discover -s tests -v
++python tools/agentbus_protocol.py verify-lock PROTOCOL.lock.json
++```
++
++The reference implementation is intentionally standard-library-only.
+diff --git a/AGENTBUS_IMPORT/protocol/v2/fsm/ingest-lifecycle.fsm.json b/AGENTBUS_IMPORT/protocol/v2/fsm/ingest-lifecycle.fsm.json
+new file mode 100644
+index 0000000..bb0ac8d
+--- /dev/null
++++ b/AGENTBUS_IMPORT/protocol/v2/fsm/ingest-lifecycle.fsm.json
+@@ -0,0 +1,35 @@
++{
++  "schema": "duoopen-agentbus/fsm-definition-v1",
++  "fsm_id": "agentbus-ingest-lifecycle",
++  "version": "1.0.0-draft.1",
++  "initial_state": "RECEIVED",
++  "states": [
++    "RECEIVED",
++    "IDEMPOTENCY_VALIDATED",
++    "CAUSAL_PENDING",
++    "CAUSAL_READY",
++    "DURABLE",
++    "INDEXED",
++    "SNAPSHOT_ELIGIBLE",
++    "REPLAY_NOOP",
++    "QUARANTINED"
++  ],
++  "terminal_states": ["SNAPSHOT_ELIGIBLE", "REPLAY_NOOP", "QUARANTINED"],
++  "transitions": [
++    {"id": "received-idempotency-ok", "from": "RECEIVED", "on": "IDEMPOTENCY_ACCEPTED", "to": "IDEMPOTENCY_VALIDATED"},
++    {"id": "received-replay", "from": "RECEIVED", "on": "IDEMPOTENCY_REPLAY", "to": "REPLAY_NOOP"},
++    {"id": "received-idempotency-conflict", "from": "RECEIVED", "on": "IDEMPOTENCY_CONFLICT", "to": "QUARANTINED"},
++    {"id": "idempotency-causal-ready", "from": "IDEMPOTENCY_VALIDATED", "on": "CAUSAL_READY", "to": "CAUSAL_READY"},
++    {"id": "idempotency-causal-gap", "from": "IDEMPOTENCY_VALIDATED", "on": "CAUSAL_GAP", "to": "CAUSAL_PENDING"},
++    {"id": "pending-ready", "from": "CAUSAL_PENDING", "on": "CAUSAL_DEPENDENCIES_SATISFIED", "to": "CAUSAL_READY"},
++    {"id": "causal-durable", "from": "CAUSAL_READY", "on": "APPEND_DURABLE", "to": "DURABLE"},
++    {"id": "durable-indexed", "from": "DURABLE", "on": "MATERIALIZE_INDEXES", "to": "INDEXED"},
++    {"id": "indexed-snapshot-eligible", "from": "INDEXED", "on": "SNAPSHOT_MARK", "to": "SNAPSHOT_ELIGIBLE"},
++    {"id": "received-invalid", "from": "RECEIVED", "on": "VALIDATION_FAILURE", "to": "QUARANTINED"},
++    {"id": "idempotency-invalid", "from": "IDEMPOTENCY_VALIDATED", "on": "VALIDATION_FAILURE", "to": "QUARANTINED"},
++    {"id": "pending-invalid", "from": "CAUSAL_PENDING", "on": "VALIDATION_FAILURE", "to": "QUARANTINED"},
++    {"id": "ready-invalid", "from": "CAUSAL_READY", "on": "VALIDATION_FAILURE", "to": "QUARANTINED"},
++    {"id": "durable-invalid", "from": "DURABLE", "on": "VALIDATION_FAILURE", "to": "QUARANTINED"},
++    {"id": "indexed-invalid", "from": "INDEXED", "on": "VALIDATION_FAILURE", "to": "QUARANTINED"}
++  ]
++}
+diff --git a/AGENTBUS_IMPORT/protocol/v2/indexes/materialized-index.catalog.json b/AGENTBUS_IMPORT/protocol/v2/indexes/materialized-index.catalog.json
+new file mode 100644
+index 0000000..6ab5762
+--- /dev/null
++++ b/AGENTBUS_IMPORT/protocol/v2/indexes/materialized-index.catalog.json
+@@ -0,0 +1,84 @@
++{
++  "schema": "duoopen-agentbus/materialized-index-catalog-v1",
++  "version": 1,
++  "indexes": [
++    {
++      "schema": "duoopen-agentbus/materialized-index-v1",
++      "index_id": "event-by-id",
++      "version": 1,
++      "source": "persisted-events",
++      "key_paths": ["event_id"],
++      "value_paths": ["stream.id", "stream.seq", "event_kind", "entity_key"],
++      "reducer": "unique",
++      "rebuildable": true,
++      "retention_class": "derived"
++    },
++    {
++      "schema": "duoopen-agentbus/materialized-index-v1",
++      "index_id": "idempotency-by-key",
++      "version": 1,
++      "source": "persisted-events",
++      "key_paths": ["idempotency.key"],
++      "value_paths": ["idempotency.semantic_digest", "event_id"],
++      "reducer": "unique",
++      "rebuildable": true,
++      "retention_class": "derived"
++    },
++    {
++      "schema": "duoopen-agentbus/materialized-index-v1",
++      "index_id": "events-by-stream",
++      "version": 1,
++      "source": "persisted-events",
++      "key_paths": ["stream.id"],
++      "value_paths": ["stream.seq", "event_id", "event_kind"],
++      "reducer": "append",
++      "rebuildable": true,
++      "retention_class": "derived"
++    },
++    {
++      "schema": "duoopen-agentbus/materialized-index-v1",
++      "index_id": "stream-frontier",
++      "version": 1,
++      "source": "persisted-events",
++      "key_paths": ["stream.id"],
++      "value_paths": ["stream.seq"],
++      "reducer": "max",
++      "rebuildable": true,
++      "retention_class": "derived"
++    },
++    {
++      "schema": "duoopen-agentbus/materialized-index-v1",
++      "index_id": "events-by-entity",
++      "version": 1,
++      "source": "persisted-events",
++      "key_paths": ["entity_key"],
++      "value_paths": ["event_id", "event_kind", "stream.id", "stream.seq"],
++      "reducer": "append",
++      "rebuildable": true,
++      "retention_class": "derived"
++    },
++    {
++      "schema": "duoopen-agentbus/materialized-index-v1",
++      "index_id": "events-by-kind",
++      "version": 1,
++      "source": "persisted-events",
++      "key_paths": ["event_kind"],
++      "value_paths": ["event_id", "entity_key", "stream.id", "stream.seq"],
++      "reducer": "append",
++      "rebuildable": true,
++      "retention_class": "derived"
++    },
++    {
++      "schema": "duoopen-agentbus/materialized-index-v1",
++      "index_id": "causal-waiting-by-parent",
++      "version": 1,
++      "source": "persisted-events",
++      "key_paths": ["causality.parents"],
++      "value_paths": ["event_id", "stream.id", "stream.seq"],
++      "explode_array_key": true,
++      "reducer": "append",
++      "rebuildable": true,
++      "retention_class": "derived"
++    }
++  ]
++}
+diff --git a/AGENTBUS_IMPORT/protocol/v2/retention/retention-policy.json b/AGENTBUS_IMPORT/protocol/v2/retention/retention-policy.json
+new file mode 100644
+index 0000000..223f38c
+--- /dev/null
++++ b/AGENTBUS_IMPORT/protocol/v2/retention/retention-policy.json
+@@ -0,0 +1,58 @@
++{
++  "schema": "duoopen-agentbus/retention-policy-v1",
++  "version": 1,
++  "tiers": {
++    "hot": {
++      "description": "Immediately queryable canonical records and active derived indexes."
++    },
++    "warm": {
++      "description": "Compressed but directly recoverable records and snapshots."
++    },
++    "cold": {
++      "description": "Content-addressed archival records and periodic snapshots."
++    },
++    "digest": {
++      "description": "Digest/tombstone evidence retained after payload compaction."
++    }
++  },
++  "classes": {
++    "canonical": {
++      "hot_days": 14,
++      "warm_days": 180,
++      "cold_retention": "indefinite",
++      "automatic_delete": false,
++      "notes": "Canonical persisted events are never silently deleted by this draft policy."
++    },
++    "derived": {
++      "hot_days": 14,
++      "warm_days": 90,
++      "cold_retention": "latest_3_verified_snapshots",
++      "automatic_delete": true,
++      "rebuildable": true,
++      "notes": "Materialized indexes may be rebuilt from canonical events and the pinned protocol lock."
++    },
++    "ephemeral": {
++      "hot_days": 7,
++      "warm_days": 30,
++      "cold_days": 90,
++      "after_cold": "digest",
++      "automatic_delete": true,
++      "notes": "High-frequency liveness/service telemetry may compact to integrity evidence."
++    },
++    "dedupe": {
++      "hot_days": 90,
++      "warm_days": 365,
++      "cold_retention": "indefinite_digest",
++      "automatic_delete": false,
++      "notes": "Idempotency key + semantic digest tombstones persist so old retries cannot become new operations after compaction."
++    }
++  },
++  "snapshot_policy": {
++    "event_count_interval": 10000,
++    "maximum_hours_between_snapshots": 24,
++    "retain_verified_snapshots": 3,
++    "require_previous_snapshot_digest": true,
++    "require_protocol_lock_digest": true,
++    "require_source_frontier": true
++  }
++}
+diff --git a/AGENTBUS_IMPORT/protocol/v2/schemas/fsm-definition.schema.json b/AGENTBUS_IMPORT/protocol/v2/schemas/fsm-definition.schema.json
+new file mode 100644
+index 0000000..ce89985
+--- /dev/null
++++ b/AGENTBUS_IMPORT/protocol/v2/schemas/fsm-definition.schema.json
+@@ -0,0 +1,59 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "https://duoopen.local/agentbus/v2/schemas/fsm-definition.schema.json",
++  "title": "Deterministic FSM Definition V1",
++  "type": "object",
++  "additionalProperties": false,
++  "required": [
++    "schema",
++    "fsm_id",
++    "version",
++    "initial_state",
++    "states",
++    "terminal_states",
++    "transitions"
++  ],
++  "properties": {
++    "schema": {"const": "duoopen-agentbus/fsm-definition-v1"},
++    "fsm_id": {"type": "string", "minLength": 1, "maxLength": 256},
++    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"},
++    "initial_state": {"type": "string", "minLength": 1, "maxLength": 128},
++    "states": {
++      "type": "array",
++      "minItems": 1,
++      "uniqueItems": true,
++      "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"}
++    },
++    "terminal_states": {
++      "type": "array",
++      "uniqueItems": true,
++      "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"}
++    },
++    "transitions": {
++      "type": "array",
++      "items": {
++        "type": "object",
++        "additionalProperties": false,
++        "required": ["id", "from", "on", "to"],
++        "properties": {
++          "id": {"type": "string", "minLength": 1, "maxLength": 256},
++          "from": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
++          "on": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
++          "to": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
++          "when": {
++            "type": "array",
++            "items": {
++              "type": "object",
++              "additionalProperties": false,
++              "required": ["path", "equals"],
++              "properties": {
++                "path": {"type": "string", "minLength": 1, "maxLength": 512},
++                "equals": {"type": ["string", "integer", "boolean", "null"]}
++              }
++            }
++          }
++        }
++      }
++    }
++  }
++}
+diff --git a/AGENTBUS_IMPORT/protocol/v2/schemas/fsm-instance.schema.json b/AGENTBUS_IMPORT/protocol/v2/schemas/fsm-instance.schema.json
+new file mode 100644
+index 0000000..5e1373f
+--- /dev/null
++++ b/AGENTBUS_IMPORT/protocol/v2/schemas/fsm-instance.schema.json
+@@ -0,0 +1,31 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "https://duoopen.local/agentbus/v2/schemas/fsm-instance.schema.json",
++  "title": "Deterministic FSM Instance V1",
++  "type": "object",
++  "additionalProperties": false,
++  "required": [
++    "schema",
++    "instance_id",
++    "fsm_id",
++    "fsm_version",
++    "entity_key",
++    "state",
++    "revision",
++    "updated_at_utc",
++    "history_digest"
++  ],
++  "properties": {
++    "schema": {"const": "duoopen-agentbus/fsm-instance-v1"},
++    "instance_id": {"type": "string", "minLength": 1, "maxLength": 512},
++    "fsm_id": {"type": "string", "minLength": 1, "maxLength": 256},
++    "fsm_version": {"type": "string", "minLength": 1, "maxLength": 64},
++    "entity_key": {"type": "string", "minLength": 1, "maxLength": 512},
++    "state": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
++    "revision": {"type": "integer", "minimum": 0},
++    "last_event_id": {"type": ["string", "null"], "maxLength": 512},
++    "last_transition_id": {"type": ["string", "null"], "maxLength": 256},
++    "updated_at_utc": {"type": "string", "format": "date-time"},
++    "history_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
++  }
++}
+diff --git a/AGENTBUS_IMPORT/protocol/v2/schemas/idempotency-ledger-entry.schema.json b/AGENTBUS_IMPORT/protocol/v2/schemas/idempotency-ledger-entry.schema.json
+new file mode 100644
+index 0000000..0e2346e
+--- /dev/null
++++ b/AGENTBUS_IMPORT/protocol/v2/schemas/idempotency-ledger-entry.schema.json
+@@ -0,0 +1,16 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "https://duoopen.local/agentbus/v2/schemas/idempotency-ledger-entry.schema.json",
++  "title": "Idempotency Ledger Entry V1",
++  "type": "object",
++  "additionalProperties": false,
++  "required": ["schema", "key", "semantic_digest", "first_event_id", "first_seen_at_utc", "retention_class"],
++  "properties": {
++    "schema": {"const": "duoopen-agentbus/idempotency-ledger-entry-v1"},
++    "key": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
++    "semantic_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
++    "first_event_id": {"type": "string", "minLength": 1, "maxLength": 512},
++    "first_seen_at_utc": {"type": "string", "format": "date-time"},
++    "retention_class": {"const": "dedupe"}
++  }
++}
+diff --git a/AGENTBUS_IMPORT/protocol/v2/schemas/materialized-index.schema.json b/AGENTBUS_IMPORT/protocol/v2/schemas/materialized-index.schema.json
+new file mode 100644
+index 0000000..d7ca76a
+--- /dev/null
++++ b/AGENTBUS_IMPORT/protocol/v2/schemas/materialized-index.schema.json
+@@ -0,0 +1,42 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "https://duoopen.local/agentbus/v2/schemas/materialized-index.schema.json",
++  "title": "Materialized Index Specification V1",
++  "type": "object",
++  "additionalProperties": false,
++  "required": [
++    "schema",
++    "index_id",
++    "version",
++    "source",
++    "key_paths",
++    "value_paths",
++    "reducer",
++    "rebuildable",
++    "retention_class"
++  ],
++  "properties": {
++    "schema": {"const": "duoopen-agentbus/materialized-index-v1"},
++    "index_id": {"type": "string", "minLength": 1, "maxLength": 256},
++    "version": {"type": "integer", "minimum": 1},
++    "source": {"const": "persisted-events"},
++    "filter": {
++      "type": "object",
++      "propertyNames": {"minLength": 1, "maxLength": 512},
++      "additionalProperties": {"type": ["string", "integer", "boolean", "null"]}
++    },
++    "key_paths": {
++      "type": "array",
++      "minItems": 1,
++      "items": {"type": "string", "minLength": 1, "maxLength": 512}
++    },
++    "value_paths": {
++      "type": "array",
++      "items": {"type": "string", "minLength": 1, "maxLength": 512}
++    },
++    "explode_array_key": {"type": "boolean"},
++    "reducer": {"type": "string", "enum": ["unique", "append", "latest", "max"]},
++    "rebuildable": {"const": true},
++    "retention_class": {"const": "derived"}
++  }
++}
+diff --git a/AGENTBUS_IMPORT/protocol/v2/schemas/persisted-event.schema.json b/AGENTBUS_IMPORT/protocol/v2/schemas/persisted-event.schema.json
+new file mode 100644
+index 0000000..e0bb36e
+--- /dev/null
++++ b/AGENTBUS_IMPORT/protocol/v2/schemas/persisted-event.schema.json
+@@ -0,0 +1,146 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "https://duoopen.local/agentbus/v2/schemas/persisted-event.schema.json",
++  "title": "Duo Open AgentBus Persisted Event V2",
++  "type": "object",
++  "additionalProperties": false,
++  "required": [
++    "schema",
++    "event_id",
++    "event_kind",
++    "entity_key",
++    "recorded_at_utc",
++    "stream",
++    "idempotency",
++    "causality",
++    "payload"
++  ],
++  "properties": {
++    "schema": {
++      "const": "duoopen-agentbus/persisted-event-v2"
++    },
++    "event_id": {
++      "type": "string",
++      "minLength": 1,
++      "maxLength": 512,
++      "pattern": "^[A-Za-z0-9._:/@+-]+$"
++    },
++    "event_kind": {
++      "type": "string",
++      "minLength": 1,
++      "maxLength": 128,
++      "pattern": "^[A-Z][A-Z0-9_]*$"
++    },
++    "entity_key": {
++      "type": "string",
++      "minLength": 1,
++      "maxLength": 512
++    },
++    "recorded_at_utc": {
++      "type": "string",
++      "format": "date-time"
++    },
++    "stream": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": [
++        "id",
++        "seq"
++      ],
++      "properties": {
++        "id": {
++          "type": "string",
++          "minLength": 1,
++          "maxLength": 512
++        },
++        "seq": {
++          "type": "integer",
++          "minimum": 1
++        }
++      }
++    },
++    "idempotency": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": [
++        "key",
++        "semantic_digest",
++        "scope"
++      ],
++      "properties": {
++        "key": {
++          "$ref": "#/$defs/sha256Digest"
++        },
++        "semantic_digest": {
++          "$ref": "#/$defs/sha256Digest"
++        },
++        "scope": {
++          "type": "string",
++          "minLength": 1,
++          "maxLength": 512
++        }
++      }
++    },
++    "causality": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": [
++        "lamport",
++        "parents",
++        "observed"
++      ],
++      "properties": {
++        "lamport": {
++          "type": "integer",
++          "minimum": 1
++        },
++        "parents": {
++          "type": "array",
++          "uniqueItems": true,
++          "items": {
++            "type": "string",
++            "minLength": 1,
++            "maxLength": 512
++          }
++        },
++        "observed": {
++          "type": "object",
++          "propertyNames": {
++            "minLength": 1,
++            "maxLength": 512
++          },
++          "additionalProperties": {
++            "type": "integer",
++            "minimum": 0
++          }
++        }
++      }
++    },
++    "payload": {
++      "description": "Opaque immutable application payload. Existing AgentBus V1 messages may be stored unchanged here.",
++      "type": [
++        "object",
++        "array",
++        "string",
++        "integer",
++        "boolean",
++        "null"
++      ]
++    },
++    "retention_class": {
++      "type": "string",
++      "enum": [
++        "canonical",
++        "derived",
++        "ephemeral",
++        "dedupe"
++      ]
++    }
++  },
++  "$defs": {
++    "sha256Digest": {
++      "type": "string",
++      "pattern": "^sha256:[0-9a-f]{64}$"
++    }
++  }
++}
+diff --git a/AGENTBUS_IMPORT/protocol/v2/schemas/snapshot-manifest.schema.json b/AGENTBUS_IMPORT/protocol/v2/schemas/snapshot-manifest.schema.json
+new file mode 100644
+index 0000000..b9fd376
+--- /dev/null
++++ b/AGENTBUS_IMPORT/protocol/v2/schemas/snapshot-manifest.schema.json
+@@ -0,0 +1,54 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "https://duoopen.local/agentbus/v2/schemas/snapshot-manifest.schema.json",
++  "title": "AgentBus Snapshot Manifest V1",
++  "type": "object",
++  "additionalProperties": false,
++  "required": [
++    "schema",
++    "snapshot_id",
++    "created_at_utc",
++    "protocol_lock_digest",
++    "source_frontier",
++    "event_count",
++    "sections",
++    "previous_snapshot_digest",
++    "snapshot_digest"
++  ],
++  "properties": {
++    "schema": {"const": "duoopen-agentbus/snapshot-manifest-v1"},
++    "snapshot_id": {"type": "string", "minLength": 1, "maxLength": 512},
++    "created_at_utc": {"type": "string", "format": "date-time"},
++    "protocol_lock_digest": {"$ref": "#/$defs/digest"},
++    "source_frontier": {
++      "type": "object",
++      "propertyNames": {"minLength": 1, "maxLength": 512},
++      "additionalProperties": {"type": "integer", "minimum": 0}
++    },
++    "event_count": {"type": "integer", "minimum": 0},
++    "sections": {
++      "type": "array",
++      "items": {
++        "type": "object",
++        "additionalProperties": false,
++        "required": ["name", "digest", "retention_class"],
++        "properties": {
++          "name": {"type": "string", "minLength": 1, "maxLength": 256},
++          "digest": {"$ref": "#/$defs/digest"},
++          "retention_class": {"type": "string", "enum": ["canonical", "derived", "ephemeral", "dedupe"]},
++          "record_count": {"type": "integer", "minimum": 0}
++        }
++      }
++    },
++    "previous_snapshot_digest": {
++      "oneOf": [
++        {"$ref": "#/$defs/digest"},
++        {"type": "null"}
++      ]
++    },
++    "snapshot_digest": {"$ref": "#/$defs/digest"}
++  },
++  "$defs": {
++    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
++  }
++}
+diff --git a/AGENTBUS_IMPORT/protocol/v2/tests/test_agentbus_protocol.py b/AGENTBUS_IMPORT/protocol/v2/tests/test_agentbus_protocol.py
+new file mode 100644
+index 0000000..c05c064
+--- /dev/null
++++ b/AGENTBUS_IMPORT/protocol/v2/tests/test_agentbus_protocol.py
+@@ -0,0 +1,137 @@
++import copy
++import importlib.util
++import json
++import sys
++import unittest
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parents[1]
++MODULE_PATH = ROOT / "tools" / "agentbus_protocol.py"
++spec = importlib.util.spec_from_file_location("agentbus_protocol", MODULE_PATH)
++ap = importlib.util.module_from_spec(spec)
++sys.modules[spec.name] = ap
++assert spec.loader is not None
++spec.loader.exec_module(ap)
++
++
++class ProtocolTests(unittest.TestCase):
++    def event(self, *, event_id, seq, lamport, payload, parents=(), stream="s1", scope=None):
++        return ap.make_event(
++            event_id=event_id,
++            event_kind="MESSAGE_APPENDED",
++            entity_key=f"message:{payload['id']}",
++            stream_id=stream,
++            stream_seq=seq,
++            lamport=lamport,
++            scope=scope or f"append:{payload['id']}",
++            payload=payload,
++            parents=list(parents),
++            observed={stream: seq - 1},
++            recorded_at_utc="2026-10-03T00:00:00Z",
++        )
++
++    def test_canonical_hash_rejects_float(self):
++        with self.assertRaises(ap.ProtocolError):
++            ap.digest_value({"x": 1.2})
++
++    def test_idempotency_replay_is_noop(self):
++        event = self.event(event_id="e1", seq=1, lamport=1, payload={"id": "m1", "body": "x"})
++        store = ap.CausalStore()
++        self.assertEqual(store.offer(event), "applied")
++
++        retry = copy.deepcopy(event)
++        retry["event_id"] = "e1-retry"
++        retry["causality"]["lamport"] = 2
++        retry["stream"]["seq"] = 2
++        retry["causality"]["observed"]["s1"] = 1
++        ap.validate_event(retry)
++        self.assertEqual(store.offer(retry), "replay")
++        self.assertEqual(store.frontier["s1"], 1)
++
++    def test_idempotency_key_cannot_be_reused_for_different_semantics(self):
++        event = self.event(event_id="e1", seq=1, lamport=1, payload={"id": "m1", "body": "x"})
++        ledger = ap.IdempotencyLedger()
++        self.assertEqual(ledger.check_or_record(event), "accepted")
++
++        altered = copy.deepcopy(event)
++        altered["event_id"] = "e2"
++        altered["payload"]["body"] = "different"
++        altered["idempotency"]["semantic_digest"] = ap.semantic_digest(altered)
++        # Preserve the old key deliberately to simulate an illegal conflicting retry.
++        with self.assertRaises(ap.ProtocolError):
++            ap.validate_event(altered)
++
++    def test_causal_gap_waits_then_drains(self):
++        e1 = self.event(event_id="e1", seq=1, lamport=1, payload={"id": "m1"})
++        e2 = self.event(
++            event_id="e2",
++            seq=2,
++            lamport=2,
++            payload={"id": "m2"},
++            parents=("e1",),
++        )
++        store = ap.CausalStore()
++        self.assertEqual(store.offer(e2), "pending")
++        self.assertEqual(store.offer(e1), "applied")
++        self.assertEqual(store.applied_order, ["e1", "e2"])
++        self.assertEqual(store.frontier["s1"], 2)
++        self.assertFalse(store.pending)
++
++    def test_parent_lamport_must_precede_child(self):
++        e1 = self.event(event_id="e1", seq=1, lamport=5, payload={"id": "m1"})
++        e2 = self.event(event_id="e2", seq=2, lamport=5, payload={"id": "m2"}, parents=("e1",))
++        store = ap.CausalStore()
++        self.assertEqual(store.offer(e1), "applied")
++        with self.assertRaises(ap.CausalConflict):
++            store.offer(e2)
++
++    def test_materialized_indexes_are_deterministic(self):
++        e1 = self.event(event_id="e1", seq=1, lamport=1, payload={"id": "m1"})
++        e2 = self.event(event_id="e2", seq=2, lamport=2, payload={"id": "m2"}, parents=("e1",))
++        catalog = json.loads((ROOT / "indexes" / "materialized-index.catalog.json").read_text())
++        a = ap.build_index_catalog([e1, e2], catalog)
++        b = ap.build_index_catalog([e2, e1], catalog)
++        self.assertEqual(a, b)
++        frontier_values = list(a["stream-frontier"].values())
++        self.assertEqual(frontier_values, [2])
++
++    def test_fsm_is_deterministic(self):
++        definition = json.loads((ROOT / "fsm" / "ingest-lifecycle.fsm.json").read_text())
++        engine = ap.FsmEngine(definition)
++        state = engine.initial_state
++        state, _ = engine.transition(state, "IDEMPOTENCY_ACCEPTED")
++        self.assertEqual(state, "IDEMPOTENCY_VALIDATED")
++        state, _ = engine.transition(state, "CAUSAL_READY")
++        self.assertEqual(state, "CAUSAL_READY")
++        state, _ = engine.transition(state, "APPEND_DURABLE")
++        self.assertEqual(state, "DURABLE")
++        state, _ = engine.transition(state, "MATERIALIZE_INDEXES")
++        self.assertEqual(state, "INDEXED")
++        state, _ = engine.transition(state, "SNAPSHOT_MARK")
++        self.assertEqual(state, "SNAPSHOT_ELIGIBLE")
++
++    def test_snapshot_records_frontier_and_lock(self):
++        e1 = self.event(event_id="e1", seq=1, lamport=1, payload={"id": "m1"})
++        store = ap.CausalStore()
++        store.offer(e1)
++        catalog = json.loads((ROOT / "indexes" / "materialized-index.catalog.json").read_text())
++        indexes = ap.build_index_catalog(store.canonical_events(), catalog)
++        manifest = ap.build_snapshot_manifest(
++            snapshot_id="snap-1",
++            created_at_utc="2026-10-03T00:01:00Z",
++            protocol_lock_digest="sha256:" + "1" * 64,
++            events=store.canonical_events(),
++            index_catalog_materialization=indexes,
++            dedupe_entries=store.ledger.export(),
++            previous_snapshot_digest=None,
++        )
++        self.assertEqual(manifest["source_frontier"], {"s1": 1})
++        self.assertTrue(ap.DIGEST_RE.match(manifest["snapshot_digest"]))
++
++    def test_lock_verifies(self):
++        verified = ap.verify_lock(ROOT / "PROTOCOL.lock.json")
++        self.assertGreaterEqual(len(verified), 8)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/AGENTBUS_IMPORT/protocol/v2/tools/agentbus_protocol.py b/AGENTBUS_IMPORT/protocol/v2/tools/agentbus_protocol.py
+new file mode 100755
+index 0000000..4541e90
+--- /dev/null
++++ b/AGENTBUS_IMPORT/protocol/v2/tools/agentbus_protocol.py
+@@ -0,0 +1,610 @@
++#!/usr/bin/env python3
++"""Reference implementation for Duo Open AgentBus protocol-hardening V2 draft.
++
++No external dependencies. This module does not perform GitHub writes, authority
++checks, identity resolution, or production integration.
++"""
++
++from __future__ import annotations
++
++import argparse
++import copy
++import hashlib
++import json
++import re
++from dataclasses import dataclass
++from datetime import datetime, timezone
++from pathlib import Path
++from typing import Any, Dict, Iterable, List, Mapping, MutableMapping, Optional, Sequence, Tuple
++
++DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
++
++
++class ProtocolError(ValueError):
++    pass
++
++
++class IdempotencyConflict(ProtocolError):
++    pass
++
++
++class CausalConflict(ProtocolError):
++    pass
++
++
++def _assert_hashable_json(value: Any, path: str = "$") -> None:
++    if value is None or isinstance(value, (str, bool, int)):
++        return
++    if isinstance(value, float):
++        raise ProtocolError(f"DUO-CJSON-1 rejects floating point at {path}")
++    if isinstance(value, list):
++        for i, item in enumerate(value):
++            _assert_hashable_json(item, f"{path}[{i}]")
++        return
++    if isinstance(value, dict):
++        for key, item in value.items():
++            if not isinstance(key, str):
++                raise ProtocolError(f"DUO-CJSON-1 requires string object keys at {path}")
++            _assert_hashable_json(item, f"{path}.{key}")
++        return
++    raise ProtocolError(f"DUO-CJSON-1 rejects {type(value).__name__} at {path}")
++
++
++def canonical_json_bytes(value: Any) -> bytes:
++    _assert_hashable_json(value)
++    return json.dumps(
++        value,
++        ensure_ascii=False,
++        sort_keys=True,
++        separators=(",", ":"),
++        allow_nan=False,
++    ).encode("utf-8")
++
++
++def digest_value(value: Any) -> str:
++    return "sha256:" + hashlib.sha256(canonical_json_bytes(value)).hexdigest()
++
++
++def digest_file(path: Path) -> str:
++    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
++
++
++def semantic_material(event: Mapping[str, Any]) -> Dict[str, Any]:
++    return {
++        "event_kind": event["event_kind"],
++        "entity_key": event["entity_key"],
++        "payload": event["payload"],
++    }
++
++
++def semantic_digest(event: Mapping[str, Any]) -> str:
++    return digest_value(semantic_material(event))
++
++
++def expected_idempotency_key(event: Mapping[str, Any]) -> str:
++    scope = event.get("idempotency", {}).get("scope")
++    if not isinstance(scope, str) or not scope:
++        raise ProtocolError("idempotency.scope is required and must be non-empty")
++    sem = semantic_digest(event)
++    return digest_value({"scope": scope, "semantic_digest": sem})
++
++
++def _parse_utc(value: str) -> datetime:
++    if not isinstance(value, str) or not value.endswith("Z"):
++        raise ProtocolError("recorded_at_utc must use UTC Z notation")
++    try:
++        dt = datetime.fromisoformat(value[:-1] + "+00:00")
++    except ValueError as exc:
++        raise ProtocolError(f"invalid UTC timestamp: {value}") from exc
++    if dt.tzinfo is None or dt.utcoffset() != timezone.utc.utcoffset(dt):
++        raise ProtocolError("timestamp must be UTC")
++    return dt
++
++
++def validate_event(event: Mapping[str, Any]) -> None:
++    required = {
++        "schema",
++        "event_id",
++        "event_kind",
++        "entity_key",
++        "recorded_at_utc",
++        "stream",
++        "idempotency",
++        "causality",
++        "payload",
++    }
++    missing = sorted(required - set(event))
++    if missing:
++        raise ProtocolError(f"event missing required fields: {missing}")
++    if event["schema"] != "duoopen-agentbus/persisted-event-v2":
++        raise ProtocolError("unexpected event schema")
++    if not isinstance(event["event_id"], str) or not event["event_id"]:
++        raise ProtocolError("event_id must be non-empty")
++    if not isinstance(event["event_kind"], str) or not re.match(r"^[A-Z][A-Z0-9_]*$", event["event_kind"]):
++        raise ProtocolError("event_kind must be upper snake case")
++    if not isinstance(event["entity_key"], str) or not event["entity_key"]:
++        raise ProtocolError("entity_key must be non-empty")
++    _parse_utc(event["recorded_at_utc"])
++
++    stream = event["stream"]
++    if not isinstance(stream, dict) or not isinstance(stream.get("id"), str) or not stream["id"]:
++        raise ProtocolError("stream.id must be non-empty")
++    if not isinstance(stream.get("seq"), int) or isinstance(stream.get("seq"), bool) or stream["seq"] < 1:
++        raise ProtocolError("stream.seq must be an integer >= 1")
++
++    idem = event["idempotency"]
++    if not isinstance(idem, dict):
++        raise ProtocolError("idempotency must be an object")
++    for field in ("key", "semantic_digest"):
++        if not isinstance(idem.get(field), str) or not DIGEST_RE.match(idem[field]):
++            raise ProtocolError(f"idempotency.{field} must be sha256:<hex>")
++    if not isinstance(idem.get("scope"), str) or not idem["scope"]:
++        raise ProtocolError("idempotency.scope is required")
++    calculated_semantic = semantic_digest(event)
++    if idem["semantic_digest"] != calculated_semantic:
++        raise ProtocolError("idempotency.semantic_digest does not match semantic event content")
++    calculated_key = expected_idempotency_key(event)
++    if idem["key"] != calculated_key:
++        raise ProtocolError("idempotency.key does not match scope + semantic digest")
++
++    causality = event["causality"]
++    if not isinstance(causality, dict):
++        raise ProtocolError("causality must be an object")
++    lamport = causality.get("lamport")
++    if not isinstance(lamport, int) or isinstance(lamport, bool) or lamport < 1:
++        raise ProtocolError("causality.lamport must be an integer >= 1")
++    parents = causality.get("parents")
++    if not isinstance(parents, list) or any(not isinstance(p, str) or not p for p in parents):
++        raise ProtocolError("causality.parents must be a list of event ids")
++    if len(parents) != len(set(parents)):
++        raise ProtocolError("causality.parents must be unique")
++    if event["event_id"] in parents:
++        raise ProtocolError("event cannot be its own causal parent")
++    observed = causality.get("observed")
++    if not isinstance(observed, dict):
++        raise ProtocolError("causality.observed must be an object")
++    for stream_id, seq in observed.items():
++        if not isinstance(stream_id, str) or not stream_id:
++            raise ProtocolError("observed stream ids must be non-empty strings")
++        if not isinstance(seq, int) or isinstance(seq, bool) or seq < 0:
++            raise ProtocolError("observed stream positions must be integers >= 0")
++    own_observed = observed.get(stream["id"], 0)
++    if own_observed > stream["seq"] - 1:
++        raise ProtocolError("event cannot claim to have observed a future position in its own stream")
++
++
++def make_event(
++    *,
++    event_id: str,
++    event_kind: str,
++    entity_key: str,
++    stream_id: str,
++    stream_seq: int,
++    lamport: int,
++    scope: str,
++    payload: Any,
++    parents: Optional[Sequence[str]] = None,
++    observed: Optional[Mapping[str, int]] = None,
++    recorded_at_utc: str = "2026-10-03T00:00:00Z",
++    retention_class: str = "canonical",
++) -> Dict[str, Any]:
++    event: Dict[str, Any] = {
++        "schema": "duoopen-agentbus/persisted-event-v2",
++        "event_id": event_id,
++        "event_kind": event_kind,
++        "entity_key": entity_key,
++        "recorded_at_utc": recorded_at_utc,
++        "stream": {"id": stream_id, "seq": stream_seq},
++        "idempotency": {"key": "", "semantic_digest": "", "scope": scope},
++        "causality": {
++            "lamport": lamport,
++            "parents": list(parents or []),
++            "observed": dict(observed or {}),
++        },
++        "payload": payload,
++        "retention_class": retention_class,
++    }
++    event["idempotency"]["semantic_digest"] = semantic_digest(event)
++    event["idempotency"]["key"] = expected_idempotency_key(event)
++    validate_event(event)
++    return event
++
++
++@dataclass(frozen=True)
++class LedgerEntry:
++    key: str
++    semantic_digest: str
++    first_event_id: str
++    first_seen_at_utc: str
++
++
++class IdempotencyLedger:
++    def __init__(self) -> None:
++        self._entries: Dict[str, LedgerEntry] = {}
++
++    def check_or_record(self, event: Mapping[str, Any]) -> str:
++        validate_event(event)
++        idem = event["idempotency"]
++        key = idem["key"]
++        sem = idem["semantic_digest"]
++        existing = self._entries.get(key)
++        if existing is None:
++            self._entries[key] = LedgerEntry(
++                key=key,
++                semantic_digest=sem,
++                first_event_id=event["event_id"],
++                first_seen_at_utc=event["recorded_at_utc"],
++            )
++            return "accepted"
++        if existing.semantic_digest != sem:
++            raise IdempotencyConflict(
++                f"idempotency key {key} reused with different semantic digest"
++            )
++        return "replay"
++
++    def export(self) -> List[Dict[str, Any]]:
++        out = []
++        for key in sorted(self._entries):
++            item = self._entries[key]
++            out.append(
++                {
++                    "schema": "duoopen-agentbus/idempotency-ledger-entry-v1",
++                    "key": item.key,
++                    "semantic_digest": item.semantic_digest,
++                    "first_event_id": item.first_event_id,
++                    "first_seen_at_utc": item.first_seen_at_utc,
++                    "retention_class": "dedupe",
++                }
++            )
++        return out
++
++
++def causal_sort_key(event: Mapping[str, Any]) -> Tuple[int, str, int, str]:
++    return (
++        int(event["causality"]["lamport"]),
++        str(event["stream"]["id"]),
++        int(event["stream"]["seq"]),
++        str(event["event_id"]),
++    )
++
++
++class CausalStore:
++    """Conservative causal buffer with contiguous per-stream application."""
++
++    def __init__(
++        self,
++        *,
++        frontier: Optional[Mapping[str, int]] = None,
++        covered_event_ids: Optional[Iterable[str]] = None,
++    ) -> None:
++        self.frontier: Dict[str, int] = dict(frontier or {})
++        self.covered_event_ids = set(covered_event_ids or [])
++        self.ledger = IdempotencyLedger()
++        self.applied: Dict[str, Dict[str, Any]] = {}
++        self.applied_order: List[str] = []
++        self.pending: Dict[str, Dict[str, Any]] = {}
++
++    def _parent_ready(self, parent_id: str) -> bool:
++        return parent_id in self.applied or parent_id in self.covered_event_ids
++
++    def _ready(self, event: Mapping[str, Any]) -> bool:
++        stream = event["stream"]
++        expected_seq = self.frontier.get(stream["id"], 0) + 1
++        if stream["seq"] != expected_seq:
++            return False
++        return all(self._parent_ready(parent) for parent in event["causality"]["parents"])
++
++    def _apply(self, event: Mapping[str, Any]) -> None:
++        event_id = event["event_id"]
++        if event_id in self.applied:
++            return
++        stream = event["stream"]
++        expected_seq = self.frontier.get(stream["id"], 0) + 1
++        if stream["seq"] != expected_seq:
++            raise CausalConflict(
++                f"stream {stream['id']} expected seq {expected_seq}, got {stream['seq']}"
++            )
++        for parent_id in event["causality"]["parents"]:
++            parent = self.applied.get(parent_id)
++            if parent is not None and parent["causality"]["lamport"] >= event["causality"]["lamport"]:
++                raise CausalConflict(
++                    f"parent {parent_id} must have lower Lamport clock than child {event_id}"
++                )
++        frozen = copy.deepcopy(dict(event))
++        self.applied[event_id] = frozen
++        self.applied_order.append(event_id)
++        self.frontier[stream["id"]] = stream["seq"]
++        self.pending.pop(event_id, None)
++
++    def offer(self, event: Mapping[str, Any]) -> str:
++        validate_event(event)
++        event_id = str(event["event_id"])
++        if event_id in self.applied:
++            return "replay"
++        if event_id in self.pending:
++            existing = self.pending[event_id]
++            if digest_value(existing) != digest_value(event):
++                raise CausalConflict(f"event_id {event_id} reused with different content")
++            return "pending"
++
++        idem_result = self.ledger.check_or_record(event)
++        if idem_result == "replay":
++            # A different event id with the same semantic operation is a no-op.
++            return "replay"
++
++        self.pending[event_id] = copy.deepcopy(dict(event))
++        if self._ready(event):
++            self._apply(event)
++            self._drain()
++            return "applied"
++        return "pending"
++
++    def _drain(self) -> None:
++        while True:
++            ready = [event for event in self.pending.values() if self._ready(event)]
++            if not ready:
++                return
++            ready.sort(key=causal_sort_key)
++            for event in ready:
++                if self._ready(event):
++                    self._apply(event)
++
++    def canonical_events(self) -> List[Dict[str, Any]]:
++        return [copy.deepcopy(self.applied[event_id]) for event_id in self.applied_order]
++
++
++
++def get_path(value: Mapping[str, Any], path: str) -> Any:
++    current: Any = value
++    for part in path.split("."):
++        if not isinstance(current, Mapping) or part not in current:
++            raise ProtocolError(f"missing path {path}")
++        current = current[part]
++    return current
++
++
++def project_paths(value: Mapping[str, Any], paths: Sequence[str]) -> Any:
++    if not paths:
++        return value["event_id"]
++    if len(paths) == 1:
++        return get_path(value, paths[0])
++    return {path: get_path(value, path) for path in paths}
++
++
++def _index_keys(event: Mapping[str, Any], spec: Mapping[str, Any]) -> List[str]:
++    key_paths = spec["key_paths"]
++    if spec.get("explode_array_key"):
++        if len(key_paths) != 1:
++            raise ProtocolError("explode_array_key requires exactly one key path")
++        raw = get_path(event, key_paths[0])
++        if not isinstance(raw, list):
++            raise ProtocolError("explode_array_key path must resolve to a list")
++        return [json.dumps(item, ensure_ascii=False, sort_keys=True) for item in raw]
++    raw_parts = [get_path(event, path) for path in key_paths]
++    return [json.dumps(raw_parts, ensure_ascii=False, sort_keys=True, separators=(",", ":"))]
++
++
++def _filter_matches(event: Mapping[str, Any], filter_spec: Mapping[str, Any]) -> bool:
++    for path, expected in filter_spec.items():
++        try:
++            actual = get_path(event, path)
++        except ProtocolError:
++            return False
++        if actual != expected:
++            return False
++    return True
++
++
++def build_materialized_index(
++    events: Sequence[Mapping[str, Any]], spec: Mapping[str, Any]
++) -> Dict[str, Any]:
++    if spec.get("schema") != "duoopen-agentbus/materialized-index-v1":
++        raise ProtocolError("unexpected materialized index schema")
++    reducer = spec["reducer"]
++    if reducer not in {"unique", "append", "latest", "max"}:
++        raise ProtocolError(f"unsupported reducer: {reducer}")
++
++    result: Dict[str, Any] = {}
++    ordered = sorted(events, key=causal_sort_key)
++    for event in ordered:
++        validate_event(event)
++        if not _filter_matches(event, spec.get("filter", {})):
++            continue
++        value = project_paths(event, spec["value_paths"])
++        for key in _index_keys(event, spec):
++            if reducer == "unique":
++                if key in result and result[key] != value:
++                    raise ProtocolError(f"unique index conflict in {spec['index_id']} for key {key}")
++                result[key] = copy.deepcopy(value)
++            elif reducer == "append":
++                result.setdefault(key, []).append(copy.deepcopy(value))
++            elif reducer == "latest":
++                result[key] = copy.deepcopy(value)
++            elif reducer == "max":
++                if not isinstance(value, int) or isinstance(value, bool):
++                    raise ProtocolError("max reducer requires one integer value path")
++                result[key] = max(result.get(key, value), value)
++    return result
++
++
++def build_index_catalog(
++    events: Sequence[Mapping[str, Any]], catalog: Mapping[str, Any]
++) -> Dict[str, Any]:
++    if catalog.get("schema") != "duoopen-agentbus/materialized-index-catalog-v1":
++        raise ProtocolError("unexpected index catalog schema")
++    output: Dict[str, Any] = {}
++    seen: set[str] = set()
++    for spec in catalog.get("indexes", []):
++        index_id = spec.get("index_id")
++        if not isinstance(index_id, str) or not index_id:
++            raise ProtocolError("index_id must be non-empty")
++        if index_id in seen:
++            raise ProtocolError(f"duplicate index_id {index_id}")
++        seen.add(index_id)
++        output[index_id] = build_materialized_index(events, spec)
++    return output
++
++
++class FsmEngine:
++    def __init__(self, definition: Mapping[str, Any]) -> None:
++        self.definition = copy.deepcopy(dict(definition))
++        self._validate_definition()
++        self.transitions: Dict[Tuple[str, str], Mapping[str, Any]] = {}
++        for transition in self.definition["transitions"]:
++            self.transitions[(transition["from"], transition["on"])] = transition
++
++    def _validate_definition(self) -> None:
++        d = self.definition
++        if d.get("schema") != "duoopen-agentbus/fsm-definition-v1":
++            raise ProtocolError("unexpected FSM definition schema")
++        states = d.get("states")
++        if not isinstance(states, list) or not states or len(states) != len(set(states)):
++            raise ProtocolError("FSM states must be a non-empty unique list")
++        state_set = set(states)
++        if d.get("initial_state") not in state_set:
++            raise ProtocolError("FSM initial_state is not declared")
++        for terminal in d.get("terminal_states", []):
++            if terminal not in state_set:
++                raise ProtocolError(f"terminal state {terminal} is not declared")
++        seen: set[Tuple[str, str]] = set()
++        transition_ids: set[str] = set()
++        for transition in d.get("transitions", []):
++            if transition["id"] in transition_ids:
++                raise ProtocolError(f"duplicate transition id {transition['id']}")
++            transition_ids.add(transition["id"])
++            if transition["from"] not in state_set or transition["to"] not in state_set:
++                raise ProtocolError(f"transition {transition['id']} references undeclared state")
++            key = (transition["from"], transition["on"])
++            if key in seen:
++                raise ProtocolError(
++                    f"non-deterministic FSM: multiple transitions from {key[0]} on {key[1]}"
++                )
++            seen.add(key)
++
++    @property
++    def initial_state(self) -> str:
++        return self.definition["initial_state"]
++
++    def transition(self, state: str, event_name: str, context: Optional[Mapping[str, Any]] = None) -> Tuple[str, str]:
++        transition = self.transitions.get((state, event_name))
++        if transition is None:
++            raise ProtocolError(f"no FSM transition from {state} on {event_name}")
++        context = context or {}
++        for predicate in transition.get("when", []):
++            actual = get_path(context, predicate["path"])
++            if actual != predicate["equals"]:
++                raise ProtocolError(
++                    f"FSM guard failed for {transition['id']}: {predicate['path']} != {predicate['equals']!r}"
++                )
++        return transition["to"], transition["id"]
++
++
++
++def build_snapshot_manifest(
++    *,
++    snapshot_id: str,
++    created_at_utc: str,
++    protocol_lock_digest: str,
++    events: Sequence[Mapping[str, Any]],
++    index_catalog_materialization: Mapping[str, Any],
++    dedupe_entries: Sequence[Mapping[str, Any]],
++    previous_snapshot_digest: Optional[str],
++) -> Dict[str, Any]:
++    _parse_utc(created_at_utc)
++    if not DIGEST_RE.match(protocol_lock_digest):
++        raise ProtocolError("protocol_lock_digest must be sha256:<hex>")
++    if previous_snapshot_digest is not None and not DIGEST_RE.match(previous_snapshot_digest):
++        raise ProtocolError("previous_snapshot_digest must be sha256:<hex> or null")
++
++    frontier: Dict[str, int] = {}
++    for event in events:
++        validate_event(event)
++        stream = event["stream"]
++        frontier[stream["id"]] = max(frontier.get(stream["id"], 0), stream["seq"])
++
++    sections = [
++        {
++            "name": "canonical-events",
++            "digest": digest_value(list(events)),
++            "retention_class": "canonical",
++            "record_count": len(events),
++        },
++        {
++            "name": "materialized-indexes",
++            "digest": digest_value(index_catalog_materialization),
++            "retention_class": "derived",
++            "record_count": len(index_catalog_materialization),
++        },
++        {
++            "name": "idempotency-ledger",
++            "digest": digest_value(list(dedupe_entries)),
++            "retention_class": "dedupe",
++            "record_count": len(dedupe_entries),
++        },
++    ]
++    manifest: Dict[str, Any] = {
++        "schema": "duoopen-agentbus/snapshot-manifest-v1",
++        "snapshot_id": snapshot_id,
++        "created_at_utc": created_at_utc,
++        "protocol_lock_digest": protocol_lock_digest,
++        "source_frontier": dict(sorted(frontier.items())),
++        "event_count": len(events),
++        "sections": sections,
++        "previous_snapshot_digest": previous_snapshot_digest,
++        "snapshot_digest": "sha256:" + "0" * 64,
++    }
++    content_for_digest = dict(manifest)
++    content_for_digest.pop("snapshot_digest")
++    manifest["snapshot_digest"] = digest_value(content_for_digest)
++    return manifest
++
++
++def verify_lock(lock_path: Path) -> List[Tuple[str, str]]:
++    lock = json.loads(lock_path.read_text(encoding="utf-8"))
++    if lock.get("schema") != "duoopen-agentbus/protocol-lock-v1":
++        raise ProtocolError("unexpected protocol lock schema")
++    base = lock_path.parent
++    verified: List[Tuple[str, str]] = []
++    seen: set[str] = set()
++    for artifact in lock.get("artifacts", []):
++        rel = artifact.get("path")
++        expected = artifact.get("sha256")
++        if not isinstance(rel, str) or not rel or rel.startswith("/") or ".." in Path(rel).parts:
++            raise ProtocolError(f"unsafe lock path: {rel!r}")
++        if rel in seen:
++            raise ProtocolError(f"duplicate lock path: {rel}")
++        seen.add(rel)
++        if not isinstance(expected, str) or not DIGEST_RE.match(expected):
++            raise ProtocolError(f"invalid lock digest for {rel}")
++        path = base / rel
++        if not path.is_file():
++            raise ProtocolError(f"locked artifact missing: {rel}")
++        actual = digest_file(path)
++        if actual != expected:
++            raise ProtocolError(f"locked artifact digest mismatch for {rel}: expected {expected}, got {actual}")
++        verified.append((rel, actual))
++    if not verified:
++        raise ProtocolError("protocol lock contains no artifacts")
++    return verified
++
++
++def _cmd_verify_lock(args: argparse.Namespace) -> int:
++    verified = verify_lock(Path(args.lockfile).resolve())
++    for path, digest in verified:
++        print(f"OK {digest} {path}")
++    print(f"VERIFIED {len(verified)} artifacts")
++    return 0
++
++
++def main(argv: Optional[Sequence[str]] = None) -> int:
++    parser = argparse.ArgumentParser(description=__doc__)
++    sub = parser.add_subparsers(dest="command", required=True)
++    verify = sub.add_parser("verify-lock", help="verify every artifact pinned by PROTOCOL.lock.json")
++    verify.add_argument("lockfile")
++    verify.set_defaults(func=_cmd_verify_lock)
++    args = parser.parse_args(argv)
++    return args.func(args)
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())

@@ -1,0 +1,77 @@
+{
+  "schema": "duoopen-agentbus/protocol-lock-v1",
+  "protocol": "duoopen-agentbus-storage-hardening-v2",
+  "version": "2.0.0-draft.1",
+  "status": "DRAFT_NOT_ACTIVATED",
+  "canonicalization": "DUO-CJSON-1",
+  "base_repository": "boberino93-bit/duo-open",
+  "base_branch": "main",
+  "base_commit": "a95cc839244159e100b50ef8f2ef1622adc14b33",
+  "activation": {
+    "wired_into_discovery": false,
+    "wired_into_bootstrap": false,
+    "production_commit_boundary_touched": false
+  },
+  "artifacts": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:f7c5b6c413918526b972af21af576f402f17d1ae0884eb3c9b5fd3523fbd24ad",
+      "required": true
+    },
+    {
+      "path": "fsm/ingest-lifecycle.fsm.json",
+      "sha256": "sha256:ad92574165a3d1f392f269f50d279081a6c1782c5b453c76989c0ecd3d1ace01",
+      "required": true
+    },
+    {
+      "path": "indexes/materialized-index.catalog.json",
+      "sha256": "sha256:49ce72310de627b66ce9d3adf8ee29f19c2b2534a16bbfc514a4c5baef198dff",
+      "required": true
+    },
+    {
+      "path": "retention/retention-policy.json",
+      "sha256": "sha256:a19f6ab8ec76a34f3c2cd126496470c9d2516ecd8dbb00f2432c6778054da16c",
+      "required": true
+    },
+    {
+      "path": "schemas/fsm-definition.schema.json",
+      "sha256": "sha256:9c1605694daac67f84df11cc1da40959d8733c95466a3738b84fbaa8f321b001",
+      "required": true
+    },
+    {
+      "path": "schemas/fsm-instance.schema.json",
+      "sha256": "sha256:31df0c0e0277e6df81fc2904ae47973c664358928c8a5fc99f2575eff3840214",
+      "required": true
+    },
+    {
+      "path": "schemas/idempotency-ledger-entry.schema.json",
+      "sha256": "sha256:71cb85013bd7c981bf87c95df85e5382e8b9c16094a6aa594e0391b393b73c6d",
+      "required": true
+    },
+    {
+      "path": "schemas/materialized-index.schema.json",
+      "sha256": "sha256:fe2a8b2b961852eb1df86c9305735180005867bc10f83a58f55a108308a37fe2",
+      "required": true
+    },
+    {
+      "path": "schemas/persisted-event.schema.json",
+      "sha256": "sha256:3e6585c621404be4e1bbc07f8013f089977566cbaebf59b35d0238103c3a2292",
+      "required": true
+    },
+    {
+      "path": "schemas/snapshot-manifest.schema.json",
+      "sha256": "sha256:5cf9029a120b7619e9b1abb936c2f229d47ecbb06d498b14fa2b67e3947ef30f",
+      "required": true
+    },
+    {
+      "path": "tests/test_agentbus_protocol.py",
+      "sha256": "sha256:ec7e287c9cf7f671843b519fbc17ba8d5090904441a53fca6ac5454336a2babe",
+      "required": true
+    },
+    {
+      "path": "tools/agentbus_protocol.py",
+      "sha256": "sha256:4f145c7a8140d251702479b35ee7de3bbe8b79c51d447e9b1efd6a67ebdfadfb",
+      "required": true
+    }
+  ]
+}

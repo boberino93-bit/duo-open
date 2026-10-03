@@ -1,0 +1,27 @@
+Duo Open AgentBus Protocol Hardening V2 — validation report
+Base repository: boberino93-bit/duo-open
+Base main commit: a95cc839244159e100b50ef8f2ef1622adc14b33
+Target path: AGENTBUS_IMPORT/protocol/v2/
+Activation: DRAFT_NOT_ACTIVATED
+Production/commit boundary changes: NONE
+Authority-model changes: NONE
+Agent-identity changes: NONE
+GitHub settings/permissions changes: NONE
+
+Validation performed:
+- Python unit tests: 9/9 PASS
+- Draft 2020-12 schema meta-validation: 6/6 PASS
+- Example persisted event validates against persisted-event schema: PASS
+- Concrete ingest FSM validates against FSM-definition schema: PASS
+- Materialized index catalog entries validate against index schema: 7/7 PASS
+- Example snapshot validates against snapshot-manifest schema: PASS
+- Protocol lock raw-file SHA-256 verification: 12/12 PASS
+
+Protocol lock digest:
+sha256:d567c33043e557ebca021e8c367746165677f7ee58b25e3fe83671cbbd3fdb0a
+
+Connector limitation encountered:
+- Attempted creation of non-main branch agentbus/protocol-hardening-v1.
+- GitHub integration returned 403 Resource not accessible by integration.
+- No fallback write to main was attempted.
+- Repository writes performed by this work unit: NONE.

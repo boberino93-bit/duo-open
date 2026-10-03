@@ -1,0 +1,58 @@
+{
+  "schema": "duoopen-agentbus/retention-policy-v1",
+  "version": 1,
+  "tiers": {
+    "hot": {
+      "description": "Immediately queryable canonical records and active derived indexes."
+    },
+    "warm": {
+      "description": "Compressed but directly recoverable records and snapshots."
+    },
+    "cold": {
+      "description": "Content-addressed archival records and periodic snapshots."
+    },
+    "digest": {
+      "description": "Digest/tombstone evidence retained after payload compaction."
+    }
+  },
+  "classes": {
+    "canonical": {
+      "hot_days": 14,
+      "warm_days": 180,
+      "cold_retention": "indefinite",
+      "automatic_delete": false,
+      "notes": "Canonical persisted events are never silently deleted by this draft policy."
+    },
+    "derived": {
+      "hot_days": 14,
+      "warm_days": 90,
+      "cold_retention": "latest_3_verified_snapshots",
+      "automatic_delete": true,
+      "rebuildable": true,
+      "notes": "Materialized indexes may be rebuilt from canonical events and the pinned protocol lock."
+    },
+    "ephemeral": {
+      "hot_days": 7,
+      "warm_days": 30,
+      "cold_days": 90,
+      "after_cold": "digest",
+      "automatic_delete": true,
+      "notes": "High-frequency liveness/service telemetry may compact to integrity evidence."
+    },
+    "dedupe": {
+      "hot_days": 90,
+      "warm_days": 365,
+      "cold_retention": "indefinite_digest",
+      "automatic_delete": false,
+      "notes": "Idempotency key + semantic digest tombstones persist so old retries cannot become new operations after compaction."
+    }
+  },
+  "snapshot_policy": {
+    "event_count_interval": 10000,
+    "maximum_hours_between_snapshots": 24,
+    "retain_verified_snapshots": 3,
+    "require_previous_snapshot_digest": true,
+    "require_protocol_lock_digest": true,
+    "require_source_frontier": true
+  }
+}

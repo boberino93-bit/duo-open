@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://duoopen.local/agentbus/v2/schemas/persisted-event.schema.json",
+  "title": "Duo Open AgentBus Persisted Event V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "event_id",
+    "event_kind",
+    "entity_key",
+    "recorded_at_utc",
+    "stream",
+    "idempotency",
+    "causality",
+    "payload"
+  ],
+  "properties": {
+    "schema": {
+      "const": "duoopen-agentbus/persisted-event-v2"
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z0-9._:/@+-]+$"
+    },
+    "event_kind": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Z][A-Z0-9_]*$"
+    },
+    "entity_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "recorded_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "stream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "seq"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "idempotency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "semantic_digest",
+        "scope"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/sha256Digest"
+        },
+        "semantic_digest": {
+          "$ref": "#/$defs/sha256Digest"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    },
+    "causality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lamport",
+        "parents",
+        "observed"
+      ],
+      "properties": {
+        "lamport": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "parents": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "observed": {
+          "type": "object",
+          "propertyNames": {
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "payload": {
+      "description": "Opaque immutable application payload. Existing AgentBus V1 messages may be stored unchanged here.",
+      "type": [
+        "object",
+        "array",
+        "string",
+        "integer",
+        "boolean",
+        "null"
+      ]
+    },
+    "retention_class": {
+      "type": "string",
+      "enum": [
+        "canonical",
+        "derived",
+        "ephemeral",
+        "dedupe"
+      ]
+    }
+  },
+  "$defs": {
+    "sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  }
+}

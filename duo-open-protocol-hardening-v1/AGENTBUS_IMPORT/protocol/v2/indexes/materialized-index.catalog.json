@@ -1,0 +1,84 @@
+{
+  "schema": "duoopen-agentbus/materialized-index-catalog-v1",
+  "version": 1,
+  "indexes": [
+    {
+      "schema": "duoopen-agentbus/materialized-index-v1",
+      "index_id": "event-by-id",
+      "version": 1,
+      "source": "persisted-events",
+      "key_paths": ["event_id"],
+      "value_paths": ["stream.id", "stream.seq", "event_kind", "entity_key"],
+      "reducer": "unique",
+      "rebuildable": true,
+      "retention_class": "derived"
+    },
+    {
+      "schema": "duoopen-agentbus/materialized-index-v1",
+      "index_id": "idempotency-by-key",
+      "version": 1,
+      "source": "persisted-events",
+      "key_paths": ["idempotency.key"],
+      "value_paths": ["idempotency.semantic_digest", "event_id"],
+      "reducer": "unique",
+      "rebuildable": true,
+      "retention_class": "derived"
+    },
+    {
+      "schema": "duoopen-agentbus/materialized-index-v1",
+      "index_id": "events-by-stream",
+      "version": 1,
+      "source": "persisted-events",
+      "key_paths": ["stream.id"],
+      "value_paths": ["stream.seq", "event_id", "event_kind"],
+      "reducer": "append",
+      "rebuildable": true,
+      "retention_class": "derived"
+    },
+    {
+      "schema": "duoopen-agentbus/materialized-index-v1",
+      "index_id": "stream-frontier",
+      "version": 1,
+      "source": "persisted-events",
+      "key_paths": ["stream.id"],
+      "value_paths": ["stream.seq"],
+      "reducer": "max",
+      "rebuildable": true,
+      "retention_class": "derived"
+    },
+    {
+      "schema": "duoopen-agentbus/materialized-index-v1",
+      "index_id": "events-by-entity",
+      "version": 1,
+      "source": "persisted-events",
+      "key_paths": ["entity_key"],
+      "value_paths": ["event_id", "event_kind", "stream.id", "stream.seq"],
+      "reducer": "append",
+      "rebuildable": true,
+      "retention_class": "derived"
+    },
+    {
+      "schema": "duoopen-agentbus/materialized-index-v1",
+      "index_id": "events-by-kind",
+      "version": 1,
+      "source": "persisted-events",
+      "key_paths": ["event_kind"],
+      "value_paths": ["event_id", "entity_key", "stream.id", "stream.seq"],
+      "reducer": "append",
+      "rebuildable": true,
+      "retention_class": "derived"
+    },
+    {
+      "schema": "duoopen-agentbus/materialized-index-v1",
+      "index_id": "causal-waiting-by-parent",
+      "version": 1,
+      "source": "persisted-events",
+      "key_paths": ["causality.parents"],
+      "value_paths": ["event_id", "stream.id", "stream.seq"],
+      "explode_array_key": true,
+      "reducer": "append",
+      "rebuildable": true,
+      "retention_class": "derived"
+    }
+  ]
+}

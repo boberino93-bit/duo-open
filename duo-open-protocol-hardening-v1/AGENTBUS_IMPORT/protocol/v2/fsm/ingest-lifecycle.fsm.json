@@ -1,0 +1,35 @@
+{
+  "schema": "duoopen-agentbus/fsm-definition-v1",
+  "fsm_id": "agentbus-ingest-lifecycle",
+  "version": "1.0.0-draft.1",
+  "initial_state": "RECEIVED",
+  "states": [
+    "RECEIVED",
+    "IDEMPOTENCY_VALIDATED",
+    "CAUSAL_PENDING",
+    "CAUSAL_READY",
+    "DURABLE",
+    "INDEXED",
+    "SNAPSHOT_ELIGIBLE",
+    "REPLAY_NOOP",
+    "QUARANTINED"
+  ],
+  "terminal_states": ["SNAPSHOT_ELIGIBLE", "REPLAY_NOOP", "QUARANTINED"],
+  "transitions": [
+    {"id": "received-idempotency-ok", "from": "RECEIVED", "on": "IDEMPOTENCY_ACCEPTED", "to": "IDEMPOTENCY_VALIDATED"},
+    {"id": "received-replay", "from": "RECEIVED", "on": "IDEMPOTENCY_REPLAY", "to": "REPLAY_NOOP"},
+    {"id": "received-idempotency-conflict", "from": "RECEIVED", "on": "IDEMPOTENCY_CONFLICT", "to": "QUARANTINED"},
+    {"id": "idempotency-causal-ready", "from": "IDEMPOTENCY_VALIDATED", "on": "CAUSAL_READY", "to": "CAUSAL_READY"},
+    {"id": "idempotency-causal-gap", "from": "IDEMPOTENCY_VALIDATED", "on": "CAUSAL_GAP", "to": "CAUSAL_PENDING"},
+    {"id": "pending-ready", "from": "CAUSAL_PENDING", "on": "CAUSAL_DEPENDENCIES_SATISFIED", "to": "CAUSAL_READY"},
+    {"id": "causal-durable", "from": "CAUSAL_READY", "on": "APPEND_DURABLE", "to": "DURABLE"},
+    {"id": "durable-indexed", "from": "DURABLE", "on": "MATERIALIZE_INDEXES", "to": "INDEXED"},
+    {"id": "indexed-snapshot-eligible", "from": "INDEXED", "on": "SNAPSHOT_MARK", "to": "SNAPSHOT_ELIGIBLE"},
+    {"id": "received-invalid", "from": "RECEIVED", "on": "VALIDATION_FAILURE", "to": "QUARANTINED"},
+    {"id": "idempotency-invalid", "from": "IDEMPOTENCY_VALIDATED", "on": "VALIDATION_FAILURE", "to": "QUARANTINED"},
+    {"id": "pending-invalid", "from": "CAUSAL_PENDING", "on": "VALIDATION_FAILURE", "to": "QUARANTINED"},
+    {"id": "ready-invalid", "from": "CAUSAL_READY", "on": "VALIDATION_FAILURE", "to": "QUARANTINED"},
+    {"id": "durable-invalid", "from": "DURABLE", "on": "VALIDATION_FAILURE", "to": "QUARANTINED"},
+    {"id": "indexed-invalid", "from": "INDEXED", "on": "VALIDATION_FAILURE", "to": "QUARANTINED"}
+  ]
+}

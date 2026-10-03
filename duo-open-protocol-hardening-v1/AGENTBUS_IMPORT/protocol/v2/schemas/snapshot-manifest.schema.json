@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://duoopen.local/agentbus/v2/schemas/snapshot-manifest.schema.json",
+  "title": "AgentBus Snapshot Manifest V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "snapshot_id",
+    "created_at_utc",
+    "protocol_lock_digest",
+    "source_frontier",
+    "event_count",
+    "sections",
+    "previous_snapshot_digest",
+    "snapshot_digest"
+  ],
+  "properties": {
+    "schema": {"const": "duoopen-agentbus/snapshot-manifest-v1"},
+    "snapshot_id": {"type": "string", "minLength": 1, "maxLength": 512},
+    "created_at_utc": {"type": "string", "format": "date-time"},
+    "protocol_lock_digest": {"$ref": "#/$defs/digest"},
+    "source_frontier": {
+      "type": "object",
+      "propertyNames": {"minLength": 1, "maxLength": 512},
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "event_count": {"type": "integer", "minimum": 0},
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "digest", "retention_class"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1, "maxLength": 256},
+          "digest": {"$ref": "#/$defs/digest"},
+          "retention_class": {"type": "string", "enum": ["canonical", "derived", "ephemeral", "dedupe"]},
+          "record_count": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "previous_snapshot_digest": {
+      "oneOf": [
+        {"$ref": "#/$defs/digest"},
+        {"type": "null"}
+      ]
+    },
+    "snapshot_digest": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+  }
+}

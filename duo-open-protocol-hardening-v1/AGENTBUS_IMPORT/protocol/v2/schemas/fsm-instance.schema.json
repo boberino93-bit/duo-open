@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://duoopen.local/agentbus/v2/schemas/fsm-instance.schema.json",
+  "title": "Deterministic FSM Instance V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "instance_id",
+    "fsm_id",
+    "fsm_version",
+    "entity_key",
+    "state",
+    "revision",
+    "updated_at_utc",
+    "history_digest"
+  ],
+  "properties": {
+    "schema": {"const": "duoopen-agentbus/fsm-instance-v1"},
+    "instance_id": {"type": "string", "minLength": 1, "maxLength": 512},
+    "fsm_id": {"type": "string", "minLength": 1, "maxLength": 256},
+    "fsm_version": {"type": "string", "minLength": 1, "maxLength": 64},
+    "entity_key": {"type": "string", "minLength": 1, "maxLength": 512},
+    "state": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
+    "revision": {"type": "integer", "minimum": 0},
+    "last_event_id": {"type": ["string", "null"], "maxLength": 512},
+    "last_transition_id": {"type": ["string", "null"], "maxLength": 256},
+    "updated_at_utc": {"type": "string", "format": "date-time"},
+    "history_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+  }
+}
