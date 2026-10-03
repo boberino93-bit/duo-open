@@ -1,0 +1,189 @@
+name: Stabilization S1D Real INNER Power Edge
+# S1D tests the exact SurfaceFlinger foldable activation condition:
+# INNER OFF -> COVER OFF -> INNER ON -> COVER ON once per semantic opening.
+
+on:
+  push:
+    branches:
+      - exp/stabilization-s1d-real-inner-edge-20261003
+    paths:
+      - ".github/workflows/stabilization-s1d-real-inner-edge.yml"
+      - "tools/apply_stabilization_s1d_real_inner_power_edge.py"
+      - "tools/apply_stabilization_s1b_sf_power_truth.py"
+      - "tools/apply_stabilization_s1_ingress_telemetry.py"
+      - "tools/apply_inner_physical_bridge_v1.py"
+      - "tools/apply_inner_physical_bridge_v1_fixups.py"
+      - "tools/apply_inner_physical_bridge_v1_protocol_compat.py"
+      - "tools/prepare_inner_physical_bridge_v1_transformer.py"
+      - "tools/apply_inner_physical_bridge_v1_service_fixups.py"
+      - "tools/apply_inner_physical_bridge_v2.py"
+      - "tools/apply_inner_physical_bridge_v4.py"
+      - "tools/apply_fold7_display_status_v3.py"
+      - "tools/apply_hall_open_latch_v3.py"
+      - "tools/apply_inner_wake_probe_v1.py"
+      - "tools/apply_gen7_runtime_regression_beta2.py"
+      - "tools/apply_runtime_optimization_cycle_a.py"
+      - "tools/apply_runtime_optimization_cycle_b.py"
+      - "tools/apply_runtime_optimization_cycle_c.py"
+      - "DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md"
+      - "DuoOpen-AgentBus/messages/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stabilization-s1d-real-inner-edge-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct deployed Beta2 runtime
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+
+      - name: Reapply validated optimization cycles A B C
+        run: |
+          set -euo pipefail
+          python3 tools/apply_runtime_optimization_cycle_a.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_b.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_c.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo .
+
+      - name: Reapply validated exact-attempt wake probe
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_wake_probe_v1.py --self-test
+          python3 tools/apply_inner_wake_probe_v1.py --repo . --check
+          python3 tools/apply_inner_wake_probe_v1.py --repo .
+
+      - name: Reapply physical bridge V1 and V2 handoff
+        run: |
+          set -euo pipefail
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --self-test
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo . --check
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase pre
+          python3 tools/apply_inner_physical_bridge_v1.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase post
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v2.py --self-test
+          python3 tools/apply_inner_physical_bridge_v2.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v2.py --repo .
+
+      - name: Reapply display status and Hall-open latch V3
+        run: |
+          set -euo pipefail
+          python3 tools/apply_fold7_display_status_v3.py --self-test
+          python3 tools/apply_fold7_display_status_v3.py --repo . --check
+          python3 tools/apply_fold7_display_status_v3.py --repo .
+          python3 tools/apply_hall_open_latch_v3.py --self-test
+          python3 tools/apply_hall_open_latch_v3.py --repo . --check
+          python3 tools/apply_hall_open_latch_v3.py --repo .
+
+      - name: Reapply V4 non-occluding bridge correction
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_physical_bridge_v4.py --self-test
+          python3 tools/apply_inner_physical_bridge_v4.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v4.py --repo .
+
+      - name: Reapply S1 and S1B telemetry
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --self-test
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo . --check
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo .
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo .
+
+      - name: Apply S1D real INNER OFF-on edge only
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1d_real_inner_power_edge.py --repo . --check
+          python3 tools/apply_stabilization_s1d_real_inner_power_edge.py --repo .
+          git diff --check
+
+          grep -F 'STABILIZATION_S1D_REAL_INNER_POWER_EDGE_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'innerOffOk' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'coverOffOk' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 's1dTransfer=' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'tx.setAlpha(layer, 0.0f)' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'physicalOpeningLatched || angle >= INNER_WAKE_MIN_DEG' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          ! grep -F 'STABILIZATION_S1C_ACTIVE_TRANSFER_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+
+      - name: Capture S1D candidate diff and deployment metadata
+        run: |
+          set -euo pipefail
+          OUT=stabilization-s1d-real-inner-edge
+          mkdir -p "$OUT/DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT"
+          git diff -- app > "$OUT/APPLIED-ANDROID-SOURCE.diff"
+          git diff --stat -- app > "$OUT/APPLIED-ANDROID-SOURCE.stat"
+          sha256sum "$OUT/APPLIED-ANDROID-SOURCE.diff" > "$OUT/APPLIED-ANDROID-SOURCE-SHA256.txt"
+          cp -a DuoOpen-AgentBus/. "$OUT/DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/"
+          {
+            echo "sourceHead=${GITHUB_SHA}"
+            echo "baselineS1BHead=e2e100705392dd9029ee3f11ecdd9a290af602ad"
+            echo "runtime=V4 + S1 + S1B + S1D real inner power edge"
+            echo "stabilizationPhase=S1D_ACTIVE_DISPLAY_REAL_POWER_EDGE"
+            echo "behaviorChange=INNER_OFF -> COVER_OFF -> INNER_ON -> COVER_ON once per semantic opening"
+            echo "s1cFinding=INNER was already ON so S1C INNER_ON was a SurfaceFlinger no-op and could not invoke foldable activation"
+            echo "s1dQuestion=Does a real INNER OFF->ON edge while COVER is OFF cause early active-display promotion and route publication?"
+            echo "renderAngleMathChanges=NONE"
+            echo "transitionIdentityChanges=NONE"
+            echo "wallpaperWidgetChanges=NONE"
+            echo "bridgePresentationChanges=NONE"
+            echo "agentSpawnPolicy=FROZEN_USER_DIRECTIVE_20261003"
+            echo "physicalFold7Validation=REQUIRED"
+          } > "$OUT/BUILD-INFO.txt"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Full regression tests and APK build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package APK and hashes
+        run: |
+          set -euo pipefail
+          OUT=stabilization-s1d-real-inner-edge
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" "$OUT/DuoOpen-ZFold7-5.1.0-beta2-v4-stabilization-s1d-real-inner-edge-debug.apk"
+          sha256sum "$OUT/DuoOpen-ZFold7-5.1.0-beta2-v4-stabilization-s1d-real-inner-edge-debug.apk" > "$OUT/APK-SHA256.txt"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-Stabilization-S1D-Real-Inner-Edge
+          path: stabilization-s1d-real-inner-edge/
+          if-no-files-found: error
+          retention-days: 30
