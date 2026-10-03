@@ -9,6 +9,7 @@ on:
       - "tools/apply_inner_physical_bridge_v1.py"
       - "tools/apply_inner_physical_bridge_v1_fixups.py"
       - "tools/apply_inner_physical_bridge_v1_protocol_compat.py"
+      - "tools/prepare_inner_physical_bridge_v1_transformer.py"
       - "tools/apply_inner_wake_probe_v1.py"
       - "app/src/full/java/com/duoopen/overlay/Fold7OpeningWakeAttemptGate.kt"
   workflow_dispatch:
@@ -59,6 +60,9 @@ jobs:
       - name: Apply physical bridge experiment
         run: |
           set -euo pipefail
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --self-test
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo . --check
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo .
           python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --self-test
           python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase pre
           python3 tools/apply_inner_physical_bridge_v1.py --self-test
@@ -90,6 +94,7 @@ jobs:
             echo "openingIdentity=(serviceEpoch,openingAttemptSequence)"
             echo "earlyOpeningTriggerCandidate=Linux SW_LID/Hall release via Shizuku shell getevent"
             echo "earlyTriggerAuthority=BINARY_OPENING_EDGE_ONLY_NOT_HINGE_GEOMETRY"
+            echo "deviceStateFallback=PRESERVED_UNCHANGED_FROM_BETA2"
             echo "physicalWake=SurfaceControl physical token POWER_MODE_NORMAL"
             echo "directBridge=privacy-safe cyan SurfaceControl color layer on temporary physical layer stack"
             echo "capturedUserPixels=NONE"
