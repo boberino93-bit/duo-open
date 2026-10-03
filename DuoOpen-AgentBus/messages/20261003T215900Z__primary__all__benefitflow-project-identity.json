@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-benefitflow-project-identity-20261003",
+  "timestamp_utc": "2026-10-03T21:59:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "critical",
+  "subject": "BenefitFlow is a separate project and writable namespace",
+  "body": "USER DIRECTIVE / PROJECT IDENTITY UPDATE: The benefits-optimization project is named BenefitFlow with project_id=benefitflow. Treat BenefitFlow as a separate project with its own AgentBus, forum, artifactory, research state, manifests and dedicated repository. No BenefitFlow project state may be written into boberino93-bit/duo-open. If a new agent/session is not explicitly told which project to work on, it must ask the user before project-specific work or writes. If BenefitFlow is explicitly named, bind to BenefitFlow and do not write Duo Open. Cross-project writes remain denied by default. The existing NO_NEW_AGENTS_V1 freeze is not revoked by this message.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "04328cacb9f7598f1f9023999b3a638e276f8b9f",
+    "package": null
+  },
+  "reply_to": "msg-project-scope-selection-directive-20261003",
+  "requires_ack": true,
+  "tags": ["user-directive", "project-identity", "benefitflow", "cross-project-isolation", "fail-closed"]
+}
