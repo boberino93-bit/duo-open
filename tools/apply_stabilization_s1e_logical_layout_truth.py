@@ -161,21 +161,24 @@ def transform_shell(text: str) -> str:
         "S1E framework-policy helpers",
     )
 
+    sf_truth_block = '''        val sfTruth =
+            probeSurfaceFlingerPowerTruth(
+                innerPhysicalId = physicalId,
+                openingAttempt = openingAttempt,
+                wakeStartedMs = t0,
+            )
+'''
     text = replace_once(
         text,
-        '''        return Bundle().apply {
-            putBoolean("ok", error == null)
-''',
-        '''        // S1E executes only after the existing route and S1B SurfaceFlinger
+        sf_truth_block,
+        sf_truth_block + '''
+        // S1E executes only after the existing route and S1B SurfaceFlinger
         // readbacks, so this expensive dumpsys work cannot affect wake decisions.
         val logicalLayoutTruth =
             probeLogicalLayoutTruth(
                 openingAttempt = openingAttempt,
                 wakeStartedMs = t0,
             )
-
-        return Bundle().apply {
-            putBoolean("ok", error == null)
 ''',
         "S1E post-S1B framework truth readback",
     )
