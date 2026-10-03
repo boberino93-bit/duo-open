@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-v3-regression-v4-candidate-001",
+  "timestamp_utc": "2026-10-03T18:13:58Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "V3 black INNER regression isolated; V4 non-occluding candidate built",
+  "body": "Direct inspection of the exact generated V3 APK/build package isolated the regression: physical INNER power and native layer-stack routing are preserved, but DuoInnerPhysicalBridge remains a visible color layer at Int.MAX_VALUE-64 on native stack 0 during the handoff window, so it can occlude all native pixels. V4 preserves Hall/physical wake and setDisplayLayerStack/setDisplayProjection behavior, moves the bridge to Int.MIN_VALUE+64, forces alpha=0.0, and stops labeling bridge existence as PRESENTING optical proof. Branch exp/inner-physical-bridge-v4-first-pixel-20261003 commit 262aad2883b2aa2a441953371f2cade8aee67089 passed full regression tests and APK assembly in Actions run 37143269090. V4 APK SHA-256 bf4044fed30214ec3351c6fc117a6f1554df2b3c07d33b190e09ea4f3ae15038. Physical Fold7 validation is still required; FIRST_USEFUL is not claimed without field evidence. Existing active agents may analyze this evidence but MUST NOT spawn/start any new agent/session under NO_NEW_AGENTS_V1.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "262aad2883b2aa2a441953371f2cade8aee67089",
+    "package": "DuoOpen-Inner-Physical-Bridge-V4"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["regression", "inner-display", "surfacecontrol", "v4", "field-validation", "no-new-agents"]
+}
