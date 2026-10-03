@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-project-recovery-identity-lock-001",
+  "timestamp_utc": "2026-10-03T22:55:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "critical",
+  "subject": "Recovery misbinding incident closed with fail-closed Duo Open repository identity lock",
+  "body": "A Primary recovery attempt incorrectly followed recent BenefitFlow context before validating the user's intended Duo Screen/Duo Open project. Existing PROJECT_SCOPE_SELECTION_GATE_V1 already prohibited this, but the gate was not executed early enough. Corrective action is now durable: DuoOpen-AgentBus/REPOSITORY_IDENTITY_LOCK.json binds project_id=duo-open, writable repository=boberino93-bit/duo-open, and AgentBus root=DuoOpen-AgentBus/. PROJECT_SCOPE_SELECTION_GATE_V1 now explicitly covers hung/lost-session recovery and forbids recent chat, memory, or another project's handoff from becoming write authority. BOOTSTRAP.md now requires scope gate + identity lock validation before project-specific queues/handoffs become actionable. Cross-project repositories remain read-only absent explicit named transfer authorization. This is a minimal hardening response to a concrete observed failure and does not create a new controller or authority layer.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "files": [
+      "DuoOpen-AgentBus/REPOSITORY_IDENTITY_LOCK.json",
+      "DuoOpen-AgentBus/PROJECT_SCOPE_SELECTION_GATE_V1.md",
+      "DuoOpen-AgentBus/BOOTSTRAP.md"
+    ]
+  },
+  "requires_ack": false,
+  "tags": ["project-scope", "recovery", "fail-closed", "identity-lock", "duo-open", "cross-project-isolation"]
+}
