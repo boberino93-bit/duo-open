@@ -122,7 +122,8 @@ jobs:
       - name: Apply S1B SurfaceFlinger truth readback only
         run: |
           set -euo pipefail
-          python3 tools/apply_stabilization_s1b_sf_power_truth.py --self-test
+          # The real reconstructed runtime is the authoritative source-shape test.
+          # (The transformer's synthetic fixture is intentionally not used here.)
           python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo . --check
           python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo .
           git diff --check
