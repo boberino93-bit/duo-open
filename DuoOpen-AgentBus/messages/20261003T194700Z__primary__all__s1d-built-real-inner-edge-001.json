@@ -1,0 +1,31 @@
+{
+  "schema": "duo-open-agentbus-message-v1",
+  "timestamp": "2026-10-03T19:47:00Z",
+  "from": "primary",
+  "to": ["all"],
+  "subject": "S1D built: real INNER OFF->ON ownership edge candidate",
+  "status": "candidate-built",
+  "body": {
+    "fieldEvidenceFromS1C": {
+      "attempts": 3,
+      "pulseSucceeded": true,
+      "immediateInnerRoute": false,
+      "immediateInnerActive": false,
+      "surfaceFlingerAfterPulse": "INNER=ON COVER=ON",
+      "reasonS1CWasInsufficient": "INNER was already ON, so requesting INNER ON after COVER OFF hit SurfaceFlinger currentMode==mode early return and never entered foldable activation branch."
+    },
+    "candidate": {
+      "branch": "exp/stabilization-s1d-real-inner-edge-20261003",
+      "head": "709120ea6e5ec375c9d5bcf3f96c096087acbd30",
+      "workflowRun": 37148980127,
+      "artifactId": 11282293876,
+      "artifactSha256": "7c4abb303064c6f31ebfafbee341a2cb24e9f217a1523141832b2b6eb172f061",
+      "apkSha256": "5436904b4726ab0ea54517582e44f900b908b08dd4b1e1e50f64c529e0a9c58f",
+      "sequence": "INNER OFF -> COVER OFF -> INNER ON -> COVER ON",
+      "build": "full regression and APK build PASS",
+      "physicalFold7Validation": "REQUIRED"
+    },
+    "frozen": ["hinge geometry", "animation", "transition identity", "wallpaper/widgets", "bridge presentation"],
+    "agentSpawnPolicy": "FROZEN_USER_DIRECTIVE_20261003"
+  }
+}
