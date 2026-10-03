@@ -1,0 +1,169 @@
+name: Inner Physical Bridge V4
+# V4 preserves the V3 Hall/physical wake path while removing the optical occlusion regression.
+
+on:
+  push:
+    branches:
+      - exp/inner-physical-bridge-v4-first-pixel-20261003
+    paths:
+      - ".github/workflows/inner-physical-bridge-v4.yml"
+      - "tools/apply_inner_physical_bridge_v1.py"
+      - "tools/apply_inner_physical_bridge_v1_fixups.py"
+      - "tools/apply_inner_physical_bridge_v1_protocol_compat.py"
+      - "tools/prepare_inner_physical_bridge_v1_transformer.py"
+      - "tools/apply_inner_physical_bridge_v1_service_fixups.py"
+      - "tools/apply_inner_physical_bridge_v2.py"
+      - "tools/apply_inner_physical_bridge_v4.py"
+      - "tools/apply_fold7_display_status_v3.py"
+      - "tools/apply_hall_open_latch_v3.py"
+      - "tools/apply_inner_wake_probe_v1.py"
+      - "app/src/main/java/com/duoopen/overlay/Fold7DisplayStatus.kt"
+      - "app/src/full/java/com/duoopen/overlay/Fold7OpeningWakeAttemptGate.kt"
+      - "DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md"
+      - "DuoOpen-AgentBus/messages/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inner-physical-bridge-v4-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct deployed Beta2 runtime
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+
+      - name: Reapply validated optimization cycles A B C
+        run: |
+          set -euo pipefail
+          python3 tools/apply_runtime_optimization_cycle_a.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_b.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_c.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo .
+
+      - name: Reapply validated exact-attempt wake probe
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_wake_probe_v1.py --self-test
+          python3 tools/apply_inner_wake_probe_v1.py --repo . --check
+          python3 tools/apply_inner_wake_probe_v1.py --repo .
+
+      - name: Reapply physical bridge V1 and V2 handoff
+        run: |
+          set -euo pipefail
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --self-test
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo . --check
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase pre
+          python3 tools/apply_inner_physical_bridge_v1.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase post
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v2.py --self-test
+          python3 tools/apply_inner_physical_bridge_v2.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v2.py --repo .
+
+      - name: Apply product-visible display status and Hall latch V3
+        run: |
+          set -euo pipefail
+          python3 tools/apply_fold7_display_status_v3.py --self-test
+          python3 tools/apply_fold7_display_status_v3.py --repo . --check
+          python3 tools/apply_fold7_display_status_v3.py --repo .
+          python3 tools/apply_hall_open_latch_v3.py --self-test
+          python3 tools/apply_hall_open_latch_v3.py --repo . --check
+          python3 tools/apply_hall_open_latch_v3.py --repo .
+
+      - name: Apply V4 non-occluding bridge correction
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_physical_bridge_v4.py --self-test
+          python3 tools/apply_inner_physical_bridge_v4.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v4.py --repo .
+          git diff --check
+          grep -F 'tx.setAlpha(layer, 0.0f)' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'tx.setLayer(layer, Int.MIN_VALUE + 64)' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          ! grep -F 'tx.setLayer(layer, Int.MAX_VALUE - 64)' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          ! grep -F 'bridgeActive -> Fold7DisplayStatus.Bridge.PRESENTING' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'bridgeActive -> Fold7DisplayStatus.Bridge.HANDOFF_ARMED' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'Fold7DisplayStatusStore.status' app/src/main/java/com/duoopen/ui/DuoApp.kt
+          grep -F 'displayStatus.summary' app/src/main/java/com/duoopen/ui/HomePreview.kt
+          grep -F 'physicalOpeningLatched || angle >= INNER_WAKE_MIN_DEG' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'continuity.onPhysicalClosedEdge("lid-switch-closed")' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+
+      - name: Capture candidate diff and deployment metadata
+        run: |
+          set -euo pipefail
+          mkdir -p inner-physical-bridge-v4/DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT
+          git diff -- app > inner-physical-bridge-v4/APPLIED-ANDROID-SOURCE.diff
+          git diff --stat -- app > inner-physical-bridge-v4/APPLIED-ANDROID-SOURCE.stat
+          sha256sum inner-physical-bridge-v4/APPLIED-ANDROID-SOURCE.diff > inner-physical-bridge-v4/APPLIED-ANDROID-SOURCE-SHA256.txt
+          cp -a DuoOpen-AgentBus/. inner-physical-bridge-v4/DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/
+          {
+            echo "sourceHead=${GITHUB_SHA}"
+            echo "runtime=Beta2 + runtime optimization A/B/C + wake probe + physical bridge V1/V2 + display status V3 + Hall-open latch V3 + non-occluding bridge V4"
+            echo "workingHallWake=PRESERVED"
+            echo "regressionRootCause=V3 bridge color layer stayed visible at Int.MAX_VALUE-64 over native stack 0"
+            echo "v4Correction=bridge layer alpha 0.0 plus bottom-Z while retaining native stack 0 routing/projection"
+            echo "physicalPowerSemantics=COMMAND_ACCEPTED is not optical proof"
+            echo "bridgeStatus=HANDOFF_ARMED/RELEASED; bridge existence is not PRESENTING proof"
+            echo "firstUsefulPixelProof=NOT_CLAIMED_WITHOUT_FIELD_EVIDENCE"
+            echo "agentSpawnPolicy=FROZEN_USER_DIRECTIVE_20261003"
+            echo "agentSpawnPolicyContract=DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md"
+            echo "agentBusSnapshot=DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT"
+            echo "renderAngleMathChanges=NONE"
+            echo "closingThresholdChanges=NONE"
+            echo "physicalFold7Validation=REQUIRED"
+          } > inner-physical-bridge-v4/BUILD-INFO.txt
+          printf '%s\n' 'agentSpawnPolicy=FROZEN_USER_DIRECTIVE_20261003' > inner-physical-bridge-v4/DEPLOYMENT_METADATA/AGENT-SPAWN-POLICY.txt
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Full regression tests and APK build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package APK and hashes
+        run: |
+          set -euo pipefail
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" inner-physical-bridge-v4/DuoOpen-ZFold7-5.1.0-beta2-optABC-inner-physical-bridge-v4-debug.apk
+          sha256sum inner-physical-bridge-v4/DuoOpen-ZFold7-5.1.0-beta2-optABC-inner-physical-bridge-v4-debug.apk > inner-physical-bridge-v4/APK-SHA256.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-Inner-Physical-Bridge-V4
+          path: inner-physical-bridge-v4/
+          if-no-files-found: error
+          retention-days: 30
