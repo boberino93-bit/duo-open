@@ -8,6 +8,7 @@ on:
       - ".github/workflows/inner-physical-bridge-v1.yml"
       - "tools/apply_inner_physical_bridge_v1.py"
       - "tools/apply_inner_physical_bridge_v1_fixups.py"
+      - "tools/apply_inner_physical_bridge_v1_protocol_compat.py"
       - "tools/apply_inner_wake_probe_v1.py"
       - "app/src/full/java/com/duoopen/overlay/Fold7OpeningWakeAttemptGate.kt"
   workflow_dispatch:
@@ -58,14 +59,19 @@ jobs:
       - name: Apply physical bridge experiment
         run: |
           set -euo pipefail
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase pre
           python3 tools/apply_inner_physical_bridge_v1.py --self-test
           python3 tools/apply_inner_physical_bridge_v1.py --repo . --check
           python3 tools/apply_inner_physical_bridge_v1.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase post
           python3 tools/apply_inner_physical_bridge_v1_fixups.py --self-test
           python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo . --check
           python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo .
           git diff --check
-          grep -F 'START_LID_EVENTS' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+          grep -F 'INNER_PHYSICAL_BRIDGE = 19' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+          grep -F 'START_LID_EVENTS = 20' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+          grep -F 'COVER_PRESENTATION_V1 = 22' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
           grep -F 'SW_LID' app/src/full/java/com/duoopen/shell/DuoShellService.kt
           grep -F 'DuoInnerPhysicalBridge' app/src/full/java/com/duoopen/shell/DuoShellService.kt
           grep -F 'setDisplayLayerStack' app/src/full/java/com/duoopen/shell/DuoShellService.kt
@@ -89,6 +95,7 @@ jobs:
             echo "capturedUserPixels=NONE"
             echo "bridgeRelease=inner topology ready, continuity release/destroy, privilege loss, lid closed"
             echo "nativeInnerLayerStackRestore=0 on bridge release"
+            echo "experimentProtocolCodes=bridge19,lidStart20,lidStop21,beta2CoverPresentation22"
             echo "renderAngleMathChanges=NONE"
             echo "closingThresholdChanges=NONE"
             echo "wallpaperAlignmentFix=NOT_INCLUDED"
