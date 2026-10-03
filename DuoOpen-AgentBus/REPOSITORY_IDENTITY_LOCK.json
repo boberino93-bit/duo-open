@@ -1,0 +1,18 @@
+{
+  "schema": "duoopen-agentbus/repository-identity-lock/v1",
+  "project_id": "duo-open",
+  "project_name": "Duo Open / Duo Screen",
+  "writable_repository": "boberino93-bit/duo-open",
+  "agentbus_root": "DuoOpen-AgentBus/",
+  "mode": "FAIL_CLOSED",
+  "rules": [
+    "Before any project-specific write, verify project_id, writable_repository, agentbus_root, and active task scope against this lock.",
+    "Inherited chat context, recent work on another project, neighboring repositories, memory, and prior-agent assumptions cannot override this lock.",
+    "If the user's current instruction clearly names another project, stop Duo Open work and bind only after that project's own scope gate is validated.",
+    "If project identity is ambiguous or conflicting, do not write anywhere; ask the user to select the project.",
+    "Cross-project repositories are read-only unless the user explicitly authorizes a named source-to-destination transfer.",
+    "A handoff or recovery is invalid until the successor reads PROJECT_SCOPE_SELECTION_GATE_V1.md and this lock and confirms the target repository is exactly boberino93-bit/duo-open."
+  ],
+  "failure_trigger": "Observed 2026-10-03 recovery error where recent BenefitFlow context was incorrectly treated as the active project despite Duo Open being the intended project.",
+  "authority": "Explicit user correction and existing PROJECT_SCOPE_SELECTION_GATE_V1 fail-closed policy"
+}
