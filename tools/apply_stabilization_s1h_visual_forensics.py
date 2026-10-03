@@ -23,14 +23,13 @@ def once(text: str, old: str, new: str, label: str) -> str:
 def transform_protocol(text: str) -> str:
     if "CAPTURE_PHYSICAL_FORENSIC" in text:
         return text
+    anchor = "    const val CB_ANGLE = 1\n"
     return once(
         text,
-        "    const val COVER_PANEL_GEN4 = 18\n\n    const val CB_ANGLE = 1\n",
-        "    const val COVER_PANEL_GEN4 = 18\n\n"
+        anchor,
         "    // STABILIZATION_S1H_VISUAL_FORENSICS_V1: read-only physical screenshot evidence.\n"
-        "    const val CAPTURE_PHYSICAL_FORENSIC = 19\n\n"
-        "    const val CB_ANGLE = 1\n",
-        "protocol",
+        "    const val CAPTURE_PHYSICAL_FORENSIC = 19\n\n" + anchor,
+        "protocol callback anchor",
     )
 
 
@@ -58,7 +57,7 @@ def transform_shell(text: str) -> str:
     )
 
     helper = r'''    // STABILIZATION_S1H_VISUAL_FORENSICS_V1: physical-display diagnostic only.
-    // Uses the platform screencap command and therefore preserves Android secure/policy behavior.
+    // Uses platform screencap; Android secure/policy behavior remains authoritative.
     private fun capturePhysicalForensics(physicalDisplayId: Long): Bundle {
         val started = SystemClock.elapsedRealtime()
         if (physicalDisplayId < 0L) return Bundle().apply {
@@ -135,7 +134,6 @@ def transform_bridge(text: str) -> str:
         val bitmap: Bitmap?, val error: String?, val captureMs: Long,
         val sourceWidth: Int, val sourceHeight: Int,
     )
-
     data class PhysicalForensicCaptureOutcome(
         val ok: Boolean, val status: String, val error: String?,
         val captureMs: Long, val sourceBytes: Long, val commandOutput: String?,
@@ -208,19 +206,15 @@ def transform_bridge(text: str) -> str:
         text,
         "    /** Receives angles from the shell-side wallpaper log reader. */\n",
         block + "    /** Receives angles from the shell-side wallpaper log reader. */\n",
-        "bridge capture outcomes",
+        "bridge outcomes",
     )
 
 
 def transform_service(text: str) -> str:
     if "VisualForensics.beginOpeningBurst" in text:
         return text
-    text = once(
-        text,
-        "import com.duoopen.debug.DuoDiagnostics\n",
-        "import com.duoopen.debug.DuoDiagnostics\nimport com.duoopen.debug.VisualForensics\n",
-        "service import",
-    )
+    text = once(text, "import com.duoopen.debug.DuoDiagnostics\n",
+                "import com.duoopen.debug.DuoDiagnostics\nimport com.duoopen.debug.VisualForensics\n", "service import")
     old = '''        if (
             beforeOpeningState !=
                 Fold7ContinuityController.State.OPENING_FROM_CLOSED &&
@@ -233,7 +227,16 @@ def transform_service(text: str) -> str:
             )
         }
 '''
-    new = old[:-2] + '''
+    new = '''        if (
+            beforeOpeningState !=
+                Fold7ContinuityController.State.OPENING_FROM_CLOSED &&
+            continuity.state ==
+                Fold7ContinuityController.State.OPENING_FROM_CLOSED
+        ) {
+            gen3Visual.beginOpening(
+                generation = continuity.generation,
+                reason = reason,
+            )
 
             // STABILIZATION_S1H_VISUAL_FORENSICS_V1: diagnostic-only sparse screenshot burst.
             val forensicExclusions = engines.values.flatMap { engine ->
@@ -297,7 +300,7 @@ def apply(repo: Path, check: bool) -> None:
 
 
 def self_test() -> None:
-    p = "object ShellProtocol {\n    const val COVER_PANEL_GEN4 = 18\n\n    const val CB_ANGLE = 1\n}\n"
+    p = "object ShellProtocol {\n    const val CB_ANGLE = 1\n}\n"
     assert "CAPTURE_PHYSICAL_FORENSIC" in transform_protocol(p)
     b = "object ShizukuBridge {\n    /** Receives angles from the shell-side wallpaper log reader. */\n}\n"
     assert "ForensicCaptureOutcome" in transform_bridge(b)
