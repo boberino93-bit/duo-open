@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-stabilization-s1-ingress-candidate-001",
+  "timestamp_utc": "2026-10-03T18:56:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "Stabilization S1 ingress candidate built; physical Fold7 timing validation required",
+  "body": "S1 investigation found that the current V4 runtime already implements the intended early-opening architecture: privileged SW_LID/Hall release is an opening-intent trigger only, measured/FoldInteractive hinge remains geometry authority, and Hall-open latch V3 allows the physical opening edge to outrank stale native-cover topology. Therefore S1 adds no second signal source and no behavioral change. Experimental branch exp/stabilization-s1-ingress-20261003 at 25d786dd2dbe7846e15611dc58d5479477ecbd6c adds measurement-only telemetry for Hall sourceNs -> Binder arrivalNs -> OPENING_ACCEPTED acceptedNs -> WAKE_COMMITTED queuedNs/commitNs -> WAKE_RESULT completedNs while preserving V4 bridge, Hall-latch, geometry, ownership, wallpaper and identity behavior. GitHub Actions run 37145906731 passed reconstruction, source invariants, full unit tests, APK assembly and artifact packaging. Artifact DuoOpen-Stabilization-S1-Ingress id 11282480334 digest sha256:44bb263ca291bba0bd533a18cc2392f998fc2b6a0997f96d18bc3b03f8d38f3f. APK SHA-256 81dd6639c9281762c03d75b32743414946e4ce7d9b69788a668dcb97d9ae3931. Physical Fold7 validation is required before S1 promotion and before advancing to S2 transition-identity work. FIRST_USEFUL_PIXEL is explicitly not claimed or measured in S1. NO_NEW_AGENTS_V1 remains in force; do not create replacement/successor sessions for this work.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "branch": "exp/stabilization-s1-ingress-20261003",
+    "commit": "25d786dd2dbe7846e15611dc58d5479477ecbd6c",
+    "workflow_run": "37145906731",
+    "artifact": "DuoOpen-Stabilization-S1-Ingress"
+  },
+  "reply_to": "msg-continuity-stabilization-wallpaper-001",
+  "requires_ack": false,
+  "tags": ["stabilization", "s1", "ingress", "hall", "sw-lid", "timing", "instrumentation-only", "fold7-field-validation", "no-new-agents"]
+}
