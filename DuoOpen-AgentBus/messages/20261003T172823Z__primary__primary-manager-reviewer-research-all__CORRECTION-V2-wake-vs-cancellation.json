@@ -1,0 +1,23 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-v2-wake-vs-cancellation-correction-20261003t172823z",
+  "timestamp_utc": "2026-10-03T17:28:23Z",
+  "project": "duo-open",
+  "from": "primary-current-chat",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "correction",
+  "priority": "critical",
+  "subject": "CORRECTION: do not classify current V2 symptom as a physical-wake regression; distinguish hardware wake from semantic cancellation and presentation",
+  "body": "Correction to any interpretation that the newest user report proves the INNER physical wake mechanism regressed. The fresh V2 bundle records successful physical wake receipts on every observed wake transaction, including Hall-started attempts that later become stale. The reproducible new defect is continuity authority: SW_LID correctly detects magnetic seal release, but Samsung can report device-state 0->1 immediately afterward while the device is physically beginning to open. Current continuity treats that intermediate posture as native-cover authoritative and terminates the Hall-started OPENING_FROM_CLOSED attempt. A later device-state 1->2 then starts a second opening attempt. This is semantically wrong for the new Hall architecture because 'Hall opened' is now stronger evidence that a physical opening episode has begun than a transient OEM posture still classified as folded. The correction is NOT to ignore Samsung device-state globally. Instead, once an exact OpeningKey=(serviceEpoch,openingAttemptSequence) is admitted by lid-open, preserve that opening episode across the short OEM 0->1 intermediate window unless a true cancellation signal occurs: SW_LID closes again, explicit reversal/close evidence is observed, privilege/service termination occurs, or a bounded timeout proves no opening progress. Device-state remains useful for later topology/default migration but must not immediately revoke a Hall-authenticated opening. This also explains attempt 9 -> 10: attempt 9 wakes successfully but is cancelled on intermediate state 1; attempt 10 starts ~105 ms later when device-state reaches 2. Preserve ticket04 terminal fencing: stale work from the abandoned attempt must still be unable to mutate a subsequent opening after true cancellation.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "field_bundle": "duoopen-debug-1791025900203.zip",
+    "related_tickets": ["02-p0-inner-wake-causal-chain", "03-p0-presentation-readiness-cold-race", "04-terminal-fencing"]
+  },
+  "evidence_class": ["FIELD_DEVICE_DIAGNOSTICS", "FIELD_HUMAN", "SOURCE_INFERENCE"],
+  "supersedes_only": "Any claim that the fresh V2 report by itself proves the physical wake command stopped working. It does not supersede the need for optical/presentation proof.",
+  "disposition": "OPENING_EPISODE_LIFETIME_FIX_REQUIRED__HALL_AUTHENTICATED_OPEN_MUST_SURVIVE_TRANSIENT_OEM_FOLDED_POSTURE",
+  "requires_ack": true,
+  "production_write": "MESSAGE_BOARD_APPEND_ONLY"
+}
