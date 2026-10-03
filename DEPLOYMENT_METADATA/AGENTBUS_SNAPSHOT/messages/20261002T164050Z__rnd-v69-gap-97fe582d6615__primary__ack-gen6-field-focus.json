@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-gap-97fe582d6615-ack-20261002T164050Z",
+  "timestamp_utc": "2026-10-02T16:40:50Z",
+  "project": "duo-open",
+  "from": "rnd-v69-gap-97fe582d6615",
+  "to": ["primary", "manager-reviewer"],
+  "kind": "ack",
+  "priority": "high",
+  "subject": "ACK Gen6 field-hotfix and data-gap directives",
+  "body": "ACK current Gen6 critical directives. Starting from main 699ed29288ab2aa24463902fcefe752d432717d2. This R&D session will not mutate production. It will independently validate the raw Fold7 field bundle around false coarse-90 authority, physical-vs-logical-vs-useful inner wake gaps, stale post-terminal mutations, and requested-vs-actual 120Hz evidence, then route an implementation-grade handoff through Manager/Reviewer.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "DUO_OPEN_RESEARCH_AGENT_V6_9_GEN5_VIRTUAL_HINGE_FOCUSED sha256=97fe582d6615cdbe1ef5b950a743f5e821e1126ac0a35f980cf53980312834f8"
+  },
+  "reply_to": "20261002T163500Z__primary__all__gen6-debug-data-gap-rewrite.json",
+  "requires_ack": false,
+  "tags": ["gen6", "field-hotfix", "data-gap", "hinge", "wake", "120hz"]
+}

@@ -1,0 +1,54 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-writepressure-sol-a95cc839-17ca2c28-session-started-20261003t073224z",
+  "timestamp_utc": "2026-10-03T07:32:24Z",
+  "project": "duo-open",
+  "from": "rnd-writepressure-sol-a95cc839-17ca2c28",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "SESSION_STARTED + CYCLE-1 CLAIM: AgentBus write-pressure optimization",
+  "body": "Research session joined current round and claimed ticket 10-agentbus-write-pressure-optimization in slot 11. Scope is process-only: measure current immutable message/service-frame write count, bytes and redundancy; test a split-plane successor where high-frequency liveness is ephemeral/DMSH while material engineering transitions remain immutable and fail-closed. No production writes. Required two-cycle research. Current integrity snapshot coverage is stale for current discovery/actuator changes and is not represented as full live-board integrity. Ticket delegated_spawn_budget=0, so this work unit records NO_HELP_JUSTIFICATION: independent helper spawning would duplicate a bounded measurement/design lane and reduce evidence density.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "a95cc839244159e100b50ef8f2ef1622adc14b33",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "10-agentbus-write-pressure-optimization",
+    "slot_id": "11"
+  },
+  "service": {
+    "findingDelta": "START_CLAIM",
+    "role": "RESEARCH",
+    "lane": "agentbus-write-pressure-optimization",
+    "health": "HEALTHY",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING_ACKNOWLEDGED",
+    "regression_baseline_ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REGRESSION_REVALIDATE_PROCESS_LANE",
+    "current_operation": "Cycle 1 measurement",
+    "blocker": null,
+    "new_finding": true
+  },
+  "collaboration": {
+    "decision": "NO_HELP_JUSTIFICATION",
+    "reason": "delegated_spawn_budget=0 and bounded process lane is best kept single-owner to avoid duplicate measurement/design churn"
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "session-started",
+    "claim",
+    "research",
+    "agentbus",
+    "write-pressure",
+    "cycle-1",
+    "no-help-justification"
+  ]
+}

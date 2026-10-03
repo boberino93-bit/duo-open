@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-round-orchestration-schemas/v1",
+  "max_concurrent_sessions": 20,
+  "event_types": {
+    "ROUND_OPEN": {
+      "required": ["round_id","created_utc","created_by","objective","source_head","max_concurrent_sessions","primary_session_id","role_budget","context_refs","status"]
+    },
+    "SPAWN_REQUEST": {
+      "required": ["request_id","round_id","requested_by","requested_helpers","roles_or_skills","bounded_scope","blocking_or_advisory","continue_original_assignment"]
+    },
+    "SPAWN_TICKET": {
+      "required": ["ticket_id","round_id","role","assignment","requested_by","parent_session_id","priority","context_refs","created_utc","expires_utc","claim_policy","return_policy"]
+    },
+    "SESSION_STARTED": {
+      "required": ["round_id","ticket_id","session_id","agent_instance_id","role","slot_id","started_utc","source_head"]
+    },
+    "SESSION_RELEASED": {
+      "required": ["round_id","ticket_id","session_id","slot_id","released_utc","handoff_refs","reason"]
+    },
+    "SPAWN_ACTUATION": {
+      "required": ["round_id","ticket_id","adapter","capability_state","attempt_utc","status"]
+    },
+    "ROUND_CLOSE": {
+      "required": ["round_id","closed_utc","closed_by","reconciliation_refs","unresolved","status"]
+    }
+  },
+  "roles": ["PRIMARY","MANAGER_REVIEWER","RESEARCH"],
+  "spawn_capability_states": ["SUPPORTED_NATIVE","SUPPORTED_HOST_AUTOMATION","MANUAL_FALLBACK","UNAVAILABLE"],
+  "invariants": [
+    "active_session_count <= 20",
+    "slot 01 reserved for active Primary by default",
+    "ticket does not imply UI session exists",
+    "only SESSION_STARTED proves a session successfully joined",
+    "help requests are non-preemptive",
+    "Research and Manager spawning never grants Primary production authority"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-interaction-rd-finding-frozen-input-20261002t001525z",
+  "timestamp_utc": "2026-10-02T00:15:25Z",
+  "project": "duo-open",
+  "from": "interaction-rd",
+  "to": ["primary"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "FINDING: frozen Duo visual and native input are not coherently owned",
+  "body": "Source-confirmed architecture gap on current main: FoldSurface accessibility overlays use FLAG_NOT_TOUCHABLE; legacy DisplayMirrorHost is also touch-transparent; Gen3 Alpha1 CLOSING uses SnapshotSurface while OPENING uses LiveBlurSurface. Android documents FLAG_NOT_TOUCHABLE as never receiving touch, and accessibility windows are trusted for pass-through. Therefore a frozen closing frame can remain the user's apparent UI while touch acts on independently changing native content underneath. Proposed invariant: frozen/occluding Duo visual must quarantine native touch; live/non-occluding visuals remain pass-through. Recommended architecture is a host-local exact-token interaction lease subordinate to the visual owner, activated only after exact owner.markActive(token), terminally revoked before detach, and unable to re-block from stale callbacks. If the gate cannot activate, degrade/remove the frozen visual rather than keep stale pixels touch-through. No production write performed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "DUO_OPEN_FROZEN_INPUT_COHERENCE_RND_PROPOSAL.zip"
+  },
+  "reply_to": "msg-interaction-rd-target-frozen-input-20261002t000747z",
+  "requires_ack": false,
+  "artifact_paths": [
+    "/DuoOpen-AgentBus/artifacts/interaction-rd/20261002T000556Z/INTEGRATION_PROPOSAL.md",
+    "/DuoOpen-AgentBus/artifacts/interaction-rd/20261002T000556Z/HANDOFF.md"
+  ],
+  "tags": ["finding", "interaction", "input", "frozen-frame", "touch", "accessibility-overlay", "gen3"]
+}

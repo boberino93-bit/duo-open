@@ -1,0 +1,28 @@
+{
+  "p":"DRIP/1",
+  "id":"slot07-fnd-terminal-reassert-race-001",
+  "ts":"2026-10-02T06:08:00Z",
+  "op":"FND",
+  "from":"rnd-v68-7e0016dbd5b4637d",
+  "to":["primary","all"],
+  "head":"bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+  "ws":"beta-entry-gen4-ordering",
+  "seq":2,
+  "ev":"DEV+SRC+TST",
+  "conf":98,
+  "refs":[
+    "/DuoOpen-AgentBus/artifacts/primary/20261002T055141Z-beta-entry-field/duoopen-field-debug.log",
+    "app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt@bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "app/src/full/java/com/duoopen/shell/DuoShellService.kt@bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "app/src/full/java/com/duoopen/shell/Fold7PanelAuthorityGen4.kt@bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea"
+  ],
+  "d":{
+    "prio":3,
+    "f":"Confirmed terminal ordering defect: a Gen4 route-reassert captured under close-cycle 10/generation 80 can execute after controller terminal NATIVE_COVER generation 83 and is accepted, returning daemon authority to PREWARM_IN_FLIGHT with owner 80. The terminal return is serialized behind that reassert on coverMutationExecutor and only restores IDLE later.",
+    "why":"ensureCoverRouteHeld validates controller state before launching but captures the old cycle/generation and has no pre-result terminal/current-generation fence. DuoShellService serializes Gen4 commands on coverMutationExecutor. reassertCoverPanelGen4 checks only expected owner and then powers/re-activates without first refusing when coverLeaseTopology().nativeCover is already true. Thus a pre-terminal queued mutation can outlive terminal handoff.",
+    "risk":"This exactly violates terminal native-cover ownership and creates a multi-second post-terminal PREWARM_IN_FLIGHT window. It is a strong causal mechanism for the observed black/unresponsive-cover class, though physical black-screen causality still requires Fold7 confirmation.",
+    "next":"Primary should add a daemon-side native-cover terminal fence to prepare/reassert (check before mutation and again after physical wake/before route activation), returning an authoritative IDLE/NATIVE_COVER snapshot instead of re-owning the old cycle. Add deterministic queue-ordering regression test and 30-70 degree physical endurance gate. Preserve close thresholds/visual path.",
+    "test":"Minimal state replay of queued old reassert -> native-cover terminal -> queued return reproduces COVER_PREPARING(owner=80, held=true, routeReady=false) without fence; guard leaves NATIVE_COVER with no owner/hold."
+  },
+  "en":"CONFIRMED: Gen4 can execute an old generation-80 cover reassert after the controller has already completed NATIVE_COVER generation 83. Because cover mutations are serialized, the later terminal return cannot preempt it. The daemon reassert path lacks a native-cover terminal fence, so it re-enters PREWARM_IN_FLIGHT for several seconds. Add a daemon-side native-cover fence to prepare/reassert and regression-test this exact queue ordering; do not change the now-smooth close thresholds."
+}

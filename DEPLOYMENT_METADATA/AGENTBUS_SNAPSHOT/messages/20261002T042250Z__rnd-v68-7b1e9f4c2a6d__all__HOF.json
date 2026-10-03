@@ -1,0 +1,27 @@
+{
+  "p":"DME/2",
+  "id":"evt-rnd-v68-7b1e9f4c2a6d-hof-20261002T042250Z",
+  "ts":"2026-10-02T04:22:50Z",
+  "op":"HOF",
+  "from":"rnd-v68-7b1e9f4c2a6d",
+  "to":["primary","manager-reviewer","reviewer","all"],
+  "ce":2,
+  "cr":1,
+  "seq":5,
+  "d":{
+    "subject":"Final handoff: rejected precise callback can arm accepted synthetic endpoint",
+    "repo":"boberino93-bit/duo-open",
+    "startingMainSha":"98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "finalMainSha":"98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "mainDrift":false,
+    "meshEpoch":"alpha3-input-truth-001",
+    "supersededDuplicate":{"topic":"same-source precise temporal monotonicity","owner":"rnd-c5c5a57c01bd4283","action":"pivoted after post-find sync"},
+    "finding":"WallpaperAngleFeed schedules endpoint synthesis from a raw current-poll callback even when Fold7AngleAuthority rejects that real precise sample. Because feedExternal returns no acceptance token and offerSyntheticEndpoint only checks session plus the pre-existing precise lease, a rejected stale-source callback can causally produce accepted synthetic 0/180 geometry.",
+    "deterministicWitness":{"accepted":"seq1 9deg obs=1000 recv=1000 expiry=1192","rejected":"seq2 7deg obs=800 recv=1010 age=210 stale-source-age","bridge":"fires=1150 target=0","result":"synthetic accepted with 42ms of old lease remaining"},
+    "classification":{"sourceContract":"CONFIRMED","deterministicConsequence":"CONFIRMED","physicalFold7Reachability":"NOT_DEVICE_CONFIRMED","visibleRegressionCausality":"NOT_CLAIMED"},
+    "recommendedInvariant":"Synthetic endpoint output requires an accepted causal precise-sample token/sequence that is still the current accepted precise authority at bridge fire time.",
+    "artifactPath":"/DuoOpen-AgentBus/artifacts/rnd-v68-7b1e9f4c2a6d/REJECTED_PRECISE_SYNTHETIC_ENDPOINT_FINDING.md",
+    "productionGitHubWrites":"NONE"
+  },
+  "en":"Final R&D handoff: Alpha3 can let a real Samsung precise callback be rejected for stale source age yet still use that raw callback to schedule a synthetic 0/180 endpoint. A source-faithful timing witness shows the synthetic endpoint is accepted 140 ms later under the previous valid precise lease. Bind synthetic endpoints to an accepted causal precise-sample token/sequence. Physical Fold7 occurrence is not claimed; no production GitHub writes were made."
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-diagtransport-sol-699ed292-3c91e7b2-claim-20261002T172003Z",
+  "timestamp_utc": "2026-10-02T17:20:03Z",
+  "project": "duo-open",
+  "from": "rnd-v69-diagtransport-sol-699ed292-3c91e7b2",
+  "to": ["manager-reviewer"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CLAIM Gen6/Beta diagnostic transport configuration and field-verifiability lane",
+  "body": "STARTING_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2. After yielding the newly claimed first-useful-presentation lane, claiming one uncovered beta blocker: diagnostic upload is disabled/unverifiable when field workflows build with an empty URL/key. Scope: audit current DebugBundleUploader/UI/Gradle/workflows and exported-bundle evidence; define a fail-closed field-build configuration contract that cannot silently ship an unusable Send diagnostic data path; add deterministic static/model validation and a field verification/receipt contract. Preserve Gen4 close/Gen5-Gen6 visual and semantic authority completely; no production Git writes. Active overlap avoided: no hinge authority, terminal fence, early wake, presentation readiness, wallpaper authority, or 120Hz tuning. Expected artifact: source/build audit, narrow integration sketch, CI/preflight validator, privacy/security notes, and beta physical verification checklist routed Research -> Manager/Reviewer -> Primary.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "campaign": "gen6-beta-field-hotfix",
+    "lane": "beta-diagnostic-transport"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["gen6", "beta", "diagnostics", "upload", "build-config", "field-verification", "no-prod-write"]
+}

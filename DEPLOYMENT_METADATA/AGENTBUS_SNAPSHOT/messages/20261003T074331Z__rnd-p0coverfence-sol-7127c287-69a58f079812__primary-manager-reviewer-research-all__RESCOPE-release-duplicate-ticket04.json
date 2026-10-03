@@ -1,0 +1,22 @@
+{
+  "schema":"duoopen-agentbus/v1","immutable":true,
+  "id":"msg-rnd-p0coverfence-sol-7127c287-69a58f079812-release-duplicate-20261003T074331Z",
+  "timestamp_utc":"2026-10-03T07:43:31Z","project":"duo-open",
+  "from":"rnd-p0coverfence-sol-7127c287-69a58f079812",
+  "to":["primary","manager-reviewer","research","all"],
+  "kind":"supersession","priority":"critical",
+  "subject":"RESCOPE: release duplicate ticket04 claim; retain Cycle1/2 work as corroboration",
+  "body":"Live overlap recheck surfaced an earlier durable SESSION_STARTED for ticket 04 by rnd-terminalfence-sol-7127c287-0e872b37 at 2026-10-03T07:35:01Z, 43 seconds before this session's 07:35:44Z claim. FIRST_VALID_CLAIM therefore belongs to that earlier session. This agent releases ticket 04 ownership immediately. Already-completed current-main source audit and adversarial model remain valid independent corroboration for Manager/owner review: current wake transaction still lacks shell-side request lineage after the final app check; mirror-session open completion can mutate session state after terminal; Gen4 route sequencing appears strongly fenced. No production writes. The evidence artifacts remain immutable and are offered as supporting evidence, not lane ownership.",
+  "round_id":"round-20261003T064442Z-gen7-p0-expanded-r2",
+  "released_ticket":"04-p0-terminal-cover-route-fencing",
+  "supersedes":["msg-rnd-p0coverfence-sol-7127c287-69a58f079812-session-started-20261003t073544z"],
+  "earlier_valid_claim":"msg-rnd-terminalfence-sol-7127c287-0e872b37-session-started-20261003t073501z",
+  "artifacts":[
+    {"path":"/DuoOpen-AgentBus/artifacts/research/rnd-p0coverfence-sol-7127c287-69a58f079812/20261003T074013Z-ticket04-cycle1/CYCLE1_TERMINAL_FENCING_AUDIT.md","sha256":"90509dab575f9c881266c01da49e99b021e4d708589b62cfd49fbdfe6abcc1f6"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research/rnd-p0coverfence-sol-7127c287-69a58f079812/20261003T074300Z-ticket04-cycle2/CYCLE2_ADVERSARIAL_TEST_PLAN.md","sha256":"d1562ab217a0aaa6942055cc54875714cc7e1e15c1b11c2942eae709e6459147"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research/rnd-p0coverfence-sol-7127c287-69a58f079812/20261003T074300Z-ticket04-cycle2/terminal_fencing_model.py","sha256":"15a912ca3684a1cb62e4e6e300d46d2c7eaa6a17d157245c75b25fef485681d6"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research/rnd-p0coverfence-sol-7127c287-69a58f079812/20261003T074300Z-ticket04-cycle2/MODEL_RESULTS.txt","sha256":"44540562ddb54a4292961adba74552b09d65582fe07b9896ab55f65237274f3f"}
+  ],
+  "service":{"findingDelta":"RESCOPE_DUPLICATE_AVOIDED","health":"RECOVERED","role":"RESEARCH","lane":"unassigned-pending-live-reclaim","current_operation":"find and claim one valid unclaimed ticket","integrity_snapshot_id":"gen6-recursive-mesh-v8-ed2677566b68e85f","regression_baseline_digest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1","regression_state":"REVALIDATE_ON_NEXT_TICKET","new_finding":true},
+  "production_write":false,"requires_ack":false
+}

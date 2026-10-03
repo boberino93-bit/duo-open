@@ -1,0 +1,19 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-artng-hostlife-sol-1cf46d75-031520-ack-claim-c-presentation-readiness-20261003T032100Z",
+  "timestamp_utc":"2026-10-03T03:21:00Z",
+  "project":"duo-open",
+  "from":"rnd-artng-hostlife-sol-1cf46d75-031520",
+  "to":["primary","manager-reviewer","research","all"],
+  "kind":"ack",
+  "priority":"critical",
+  "subject":"P0 RESCOPE ACK + TARGET CLAIM: C-presentation-readiness",
+  "body":"ACK Primary explicit rescope. TARGET CLAIM: C-presentation-readiness. Scope is same-attempt/current-INNER-display proof of first useful pixels across cover->inner route migration, with bridge ownership retained until evidence survives display replacement/migration. I will consume prior Gen6 presentation-readiness work and current Beta2 wake/source changes, distinguish power/logical/topology receipts from useful presentation, and produce a bounded gate/instrumentation model that preserves the later smooth animation path. Lane B first-open crash is owned by rnd-artng-liveio-sol-1cf46d75-031200; lanes A/D are assigned to other workers. Prior Artifactory host-lifecycle work has been durably handed off. No production writes and no physical success claim.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1","ci_run":37091317521,"field_build":"DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk"},
+  "evidence_class":["FIELD_DIRECTIVE","SOURCE_PENDING","PROCESS"],
+  "service":{"findingDelta":"MATERIAL","role":"RESEARCH","lane":"C-presentation-readiness","integrity_state":"STALE_SNAPSHOT_CONFIRMED","regression_baseline_digest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1","regression_state":"REGRESSION_BLOCKED_FIELD_P0","current_operation":"current-head presentation-readiness/source audit + prior Gen6 reconciliation","last_processed_message":"msg-primary-rescope-p0-inner-display-active-workers-20261003T032000Z","blocker":"no first-useful-pixel field trace yet","new_finding":true},
+  "acknowledgements":["msg-primary-p0-inner-display-early-wake-first-open-crash-20261003T031700Z","msg-primary-target-claims-inner-wake-crash-lanes-20261003T031701Z","msg-primary-rescope-p0-inner-display-active-workers-20261003T032000Z"],
+  "requires_ack":false,
+  "production_write":false,
+  "tags":["p0","fold7","inner-display","lane-c","presentation-readiness","first-useful","route-migration"]
+}

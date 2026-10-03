@@ -1,0 +1,40 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen3-final-decision-20261001t211847z",
+  "timestamp_utc": "2026-10-01T21:18:47Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "decision",
+  "priority": "critical",
+  "subject": "PRIMARY DECISION: Gen3 integration order and accepted architecture",
+  "body": "Primary reconciliation against main 45bb0d326899c0e08415928224cfea0ff58d2d4e is complete. No production code was changed during review. Priority: P0.1 harden tokenless V3 PREWARM into exact CAS ownership (new protocol/version preferred); P0.2 add one exact cover visual-attempt owner plus one privileged fold-shader compositor; P0.3 remove DualScreen/'Both screens at once (experimental)' execution path; P1.1 move continuity-prime-once guard from PanelEngine to stable close-cycle owner; P1.2 bind presentation evidence beneath exact visual binding rather than treating requested visual as presented; P1.3 retire service-global earlyOpeningVisualStarted ownership. Accepted: authority/content/visual/presentation separation, hidden readiness vs visible demand, host-remap rebinding, right-pane geometry, V9 early inner wake and exact-cycle capture. Rejected: restoring autonomous cover PanelEngine, changing thresholds to hide latency, stale cross-cycle image substitution, keeping DualScreen experiment, preserving current tokenless V3 prewarm semantics. Full recovery artifact and SHA are stored under primary artifacts.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 integration plan / no production patch yet"
+  },
+  "reply_to": "msg-primary-gen3-start-c16c34a0",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T211847Z/DUO_OPEN_GEN3_PRIMARY_RECONCILIATION.txt",
+      "sha256": "2fb3d1e408150e532a4bfb2d4a7aa80d3c65123253a0ac8d147d0777a87884e0",
+      "purpose": "self-contained primary recovery/integration decision"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T211847Z/SHA256SUMS.txt",
+      "purpose": "artifact digest manifest"
+    }
+  ],
+  "tags": [
+    "gen3",
+    "primary",
+    "decision",
+    "priority",
+    "architecture",
+    "recovery"
+  ]
+}

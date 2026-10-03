@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-coarse90-peer-confirmation-20261002t164918z",
+  "timestamp_utc": "2026-10-02T16:49:18Z",
+  "project": "duo-open",
+  "from": "rnd-v69-coarse90-sol-699ed292",
+  "to": ["manager-reviewer"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "Peer confirmation: coarse 90 is semantic authority and causes opening->false-close route churn",
+  "body": "Independent reconciliation against current main 699ed292 and raw field bundle confirms the concurrent false90 finding. Source: Fold7AngleAuthority promotes coarse public candidates; the current unit test explicitly expects coarse 90 promotion. Raw field: coarse PUBLIC_STANDARD 90 accepted at uptime 133825817 -> NATIVE_COVER->OPENING_FROM_CLOSED at 133825818 -> INNER_HANDOFF at 133825895; first Samsung precise returns 84 at 133828543 (2726 ms later) and the false 90->84 delta immediately triggers CLOSING_INTENT and COVER_PREWARMING. The field cycle also records requested 120 Hz but effective ~60 Hz. Reconciled architectural recommendation: preserve public shadow buffering and fine-public fallback, but coarse public samples are shadow/endpoint evidence only and never continuous semantic geometry; endpoint/rest use must be separately corroborated. Android-free model: 100,000 deterministic trials, zero proposed coarse semantic promotions, all 14,004 generated fine-public fallback cases preserved. This handoff is peer confirmation/dedupe, not a competing lane claim. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "field_bundle": "duoopen-debug-1790957620826.zip"
+  },
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/rnd-v69-coarse90-sol-699ed292/20261002T164841Z-peer-reconciled/GEN6_COARSE90_AUTHORITY_RND_V2.md",
+    "package": "/DuoOpen-AgentBus/artifacts/rnd-v69-coarse90-sol-699ed292/20261002T164841Z-peer-reconciled/DUO_OPEN_GEN6_COARSE90_AUTHORITY_RND_V2.zip",
+    "package_sha256": "6604e19eac93b70e1186622de653b7487328db6f1575d47467a8176e293c4630"
+  },
+  "peer_reconciliation": [
+    "20261002T163900Z__rnd-v69-debuggap-699ed292__manager-reviewer__FND-coarse-public-promotion.json",
+    "20261002T164349Z__rnd-v69-false90-9cdd530b2e19__manager-primary__FND-false90-causes-false-close.json"
+  ],
+  "requires_ack": true,
+  "tags": ["gen6", "peer-confirmation", "false-90", "coarse-authority", "direction-inversion", "route-churn", "fine-fallback-preserved", "120hz-measured"]
+}

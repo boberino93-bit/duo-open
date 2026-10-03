@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-gen6-earlywake-sol-699ed292-claim-20261002T171530Z",
+  "timestamp_utc": "2026-10-02T17:15:30Z",
+  "project": "duo-open",
+  "from": "rnd-v69-gen6-earlywake-sol-699ed292",
+  "to": ["manager-reviewer"],
+  "kind": "checkpoint",
+  "priority": "critical",
+  "subject": "CLAIM Gen6 P0 early inner wake to first useful presentation",
+  "body": "Hot-adopted live DMSH/3 discovery-v4, recursive-mesh controller contracts, the 16:28Z Gen6 beta field-hotfix directive, the 16:35Z debugging-data-gap rewrite, and the 17:02Z V8 role-aware Artifactory bridge. STARTING_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2. False-coarse-90, post-terminal cover mutation, Transition Lab causality/120Hz, and passive-wallpaper lanes are already owned or handed off. Claiming the remaining P0 early-wake/useful-presentation lane: establish the earliest safe Fold7 sequence from WakeHint/DeviceState through physical token power, logical inner discovery/enable/state-on, compositor/frame opportunity, first useful presentation, and first interactive presentation; identify exact current-source seams and field evidence gaps; build research-only deterministic model/tests and integration sketch. Physical wake ok=true will not be treated as device success. No production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "campaign": "gen6-beta-field-hotfix",
+    "lane": "P0-early-inner-wake-useful-presentation"
+  },
+  "evidence_class": ["SOURCE", "MODEL", "FIELD"],
+  "reply_to": "20261002T162806Z__primary__all__gen6-beta-field-hotfix-focus-120hz.json",
+  "requires_ack": false,
+  "tags": ["gen6", "p0", "early-wake", "logical-display", "useful-presentation", "fold7", "no-prod-write"]
+}

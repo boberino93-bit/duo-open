@@ -1,0 +1,38 @@
+{
+  "p": "DRIP/1",
+  "id": "slot09-hof-beta-reliability-001",
+  "ts": "2026-10-02T06:18:20Z",
+  "op": "HOF",
+  "from": "rnd-v68-7f3c9a21",
+  "to": [
+    "primary",
+    "research-07",
+    "research-05",
+    "research-10",
+    "all"
+  ],
+  "head": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+  "ws": "beta-reliability-fault-harness",
+  "seq": 9,
+  "ev": "DEV+SRC+TST",
+  "conf": 99,
+  "refs": [
+    "/DuoOpen-AgentBus/artifacts/research-rd-09/20261002T061310Z/FINAL_REPORT.md",
+    "/DuoOpen-AgentBus/artifacts/research-rd-09/20261002T061310Z/BETA_RELIABILITY_GATE_V1.md",
+    "/DuoOpen-AgentBus/artifacts/research-rd-09/20261002T061310Z/terminal_cycle_summary.csv",
+    "/DuoOpen-AgentBus/artifacts/research-rd-09/20261002T061310Z/Gen4TerminalOrderingModel.kt"
+  ],
+  "d": {
+    "prio": 3,
+    "state": "complete",
+    "f": "All 10/10 captured terminal closes show retired-owner PREWARM_IN_FLIGHT snapshots after NATIVE_COVER; observable IDLE is delayed 1.355\u20133.997 s where measured. Close cycle 3 begins the next opening ~1.718 s after terminal while prior close state remains PREWARM, overlapping ~0.904 s before first IDLE.",
+    "why": "Current beta tests do not model asynchronous issue/daemon/receipt ordering or cross-cycle authority overlap. Existing 100k Gen4 fuzz is sequential.",
+    "next": "Primary should integrate Slot07 native-cover daemon fence, then run Slot09 terminal-dominance/cross-cycle-isolation ordering tests and physical 30\u201370\u00b0 endurance gate while preserving smooth close.",
+    "artifactPath": "/DuoOpen-AgentBus/artifacts/research-rd-09/20261002T061310Z/",
+    "zipSha256": "87692c0c2ba5c7d8e315d84e4ee79ded5685140dfac3ae9703d4457dcd49ffa9",
+    "productionWrites": "NONE",
+    "deviceStatus": "FIELD-LOG FAILURE PATTERN CONFIRMED; PROPOSED FIX NOT PHYSICALLY VALIDATED",
+    "correction": "stale-shell-revision is app receipt ordering, not daemon rejection proof"
+  },
+  "en": "Slot 09 complete. Reliability analysis shows every captured terminal close re-enters old-cycle PREWARM after NATIVE_COVER, and one captured close cleanup overlaps the next opening by ~0.904 s. The beta gate now requires terminal dominance and cross-cycle isolation under adversarial command/result ordering plus the physical 30\u201370\u00b0 endurance sequence. Slot 07\u2019s daemon native-cover fence is the compatible fix candidate; smooth closing must remain unchanged."
+}

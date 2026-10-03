@@ -1,6 +1,8 @@
 # Primary Review of Manager-Organized Research — 2026-10-03
 
-Baseline audited main: `7127c287a17fd97050c98fbeb05a38f7318f2f64`  
+Current Git packaging baseline: `7c5942e986b1f0e80b1b469c77642c948493db1b`  
+Android/runtime research evidence baseline: `7127c287a17fd97050c98fbeb05a38f7318f2f64`  
+Git comparison confirms the intervening commit is process/deployment/AgentBus-only; the Android runtime evidence below is therefore not invalidated by source drift.  
 Round: `round-20261003T064442Z-gen7-p0-expanded-r2`
 
 ## Primary disposition from the organized round

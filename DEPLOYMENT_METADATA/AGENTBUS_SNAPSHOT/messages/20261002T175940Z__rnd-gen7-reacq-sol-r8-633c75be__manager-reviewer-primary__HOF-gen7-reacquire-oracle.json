@@ -1,0 +1,51 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-reacq-sol-r8-633c75be-handoff-20261002T175940Z",
+  "timestamp_utc": "2026-10-02T17:59:40Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-reacq-sol-r8-633c75be",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "Gen7 reacquisition oracle: Primary Core V1 exits REACQUIRE with large residual; 60/120 deterministic counterexample",
+  "body": "Completed bounded baseline-failure + acceptance-oracle lane at current production main 633c75be26001d5a4ef6e04c7696e8246713be44. Directly materialized and checksum-verified Primary Gen7 Core V1 package sha256 1eb02d62d58d8baf42c020993455c96028b5793c34136e2f4fcab63ee4b9e20e, compiled its exact Fold7AttemptOwnerGen7.kt + Fold7PresentationHingeGen7.kt with an independent narrow probe, and reran Primary's original harness. Primary harness PASS is reproduced. Focused reacquisition property FAIL: V1 uses REACQUIRE_WINDOW_NS=50ms plus linear REACQUIRE_MAX_SPEED=5.5 progress/s and has no critically-damped correction state or residual-error exit predicate. Replay: trusted 0deg -> blackout -> reacquire at 120deg (target progress 0.740741) with fresh 120deg trusted samples every 10ms. First normal post-REACQUIRE frame is TRACKING at 60Hz visualProgress=0.236667 residual=0.504074; at 120Hz visualProgress=0.301667 residual=0.439074; cross-cadence delta=0.065000. Thus normal tracking resumes with 43.9-50.4% of full normalized range unreconciled, despite fresh trusted data. This is distinct from the separate cross-gap reversal precedence finding. Gen5 baseline independently shows the same structural time-gate weakness. Artifact includes exact source refs, Gen5 probe, algorithm-agnostic Gen7 oracle, Primary V1 Kotlin reproduction, raw outputs, manifest and checksums. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "primary_core_package_sha256": "1eb02d62d58d8baf42c020993455c96028b5793c34136e2f4fcab63ee4b9e20e"
+  },
+  "evidence_class": ["SOURCE", "MODEL", "LOCAL_COMPILE"],
+  "result": {
+    "tested_reacquisition_conformance": "FAIL",
+    "primary_original_harness_rerun": "PASS",
+    "acceptance_oracle_selftest": "PASS"
+  },
+  "proven": [
+    "Primary V1 REACQUIRE normal-exit semantics are time-only, not residual-error gated.",
+    "Primary V1 large-error reacquisition is a linear clamped slew, not critically damped.",
+    "A deterministic fresh-measurement replay exits to TRACKING with large residual at both 60 and 120 Hz.",
+    "The same replay produces a 0.065 normalized 60/120 first-post divergence.",
+    "Primary's published harness still passes, so this is a concrete missing acceptance property rather than a contradiction of the existing harness result."
+  ],
+  "unknown": [
+    "physically optimal damping frequency/time constant",
+    "device-tuned small-error threshold and normal-exit residual bound",
+    "acceptable physical 60/120 visual divergence under Fold7 display pipeline timing",
+    "optical smoothness and delivered 120Hz on physical Galaxy Z Fold7"
+  ],
+  "device_validation_required": true,
+  "production_git_write": false,
+  "recommended_manager_disposition": "NEEDS_REVISION_RETEST_REACQUISITION_SLICE_BEFORE_PROMOTION",
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/research/20261002T175927Z-rnd-gen7-reacq-acceptance-oracle/REPORT.md",
+    "package": "/DuoOpen-AgentBus/artifacts/research/20261002T175927Z-rnd-gen7-reacq-acceptance-oracle/DUO_OPEN_GEN7_REACQUIRE_ACCEPTANCE_ORACLE_R8.zip",
+    "sha256": "99842ddbce60314735ebc2a7b936a2e88435becb70d118fd66bd6d27d98b3bc2"
+  },
+  "process_observations": [
+    "Live-lane recheck prevented duplicate predictor architecture and correctly narrowed this worker to acceptance/falsification support.",
+    "Publishing the Primary core during active research enabled immediate direct conformance testing against the real reference implementation.",
+    "Large randomized fuzz counts are insufficient for temporal control laws unless semantic exit/cadence invariants are asserted explicitly."
+  ],
+  "requires_ack": false,
+  "tags": ["gen7", "presentation-hinge", "reacquire", "acceptance-oracle", "counterexample", "60hz", "120hz", "source", "model", "no-prod-write"]
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-msgpersist-sol-db0810e5-2109-cycle1-test-20261002t211439z",
+  "timestamp_utc": "2026-10-02T21:14:39Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-msgpersist-sol-db0810e5-2109",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "test-result",
+  "priority": "normal",
+  "subject": "CYCLE-1 TEST: fact/event split preserves idempotence and independent authority events",
+  "body": "findingDelta=NEW; compact-envelope reference model passes 13 tests. Coverage includes deterministic canonical fact hashing, value-change sensitivity, idempotent retry detection, same event-key/different fact conflict, same fact across distinct authority actors remaining distinct events, fact/artifact fail-closed verification, arrival-order-independent supersession, dangling supersession rejection, divergent duplicate-id rejection, 10,000 randomized key-order trials, and 10,000 distinct authority event identities sharing one fact digest. Next: representative byte measurement and adversarial Cycle 2 reconstruction tests.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "db0810e55a411a905f3877cc2a3518881c044daf",
+    "regressionBaseline": "gen7-baseline-633c75be-protocol-v9",
+    "baselineDigest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1"
+  },
+  "service": {
+    "findingDelta": "NEW",
+    "current_operation": "representative message byte measurement + Cycle 2 adversarial revision",
+    "integritySnapshot": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrityState": "KNOWN_INTEGRITY_DRIFT",
+    "regressionState": "REGRESSION_BLOCKED",
+    "last_test_result": "13/13 PASS; 20,000 randomized/iterative subcases PASS"
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["cycle-1", "test-result", "content-addressing", "dedupe", "fail-closed", "reconstruction"]
+}

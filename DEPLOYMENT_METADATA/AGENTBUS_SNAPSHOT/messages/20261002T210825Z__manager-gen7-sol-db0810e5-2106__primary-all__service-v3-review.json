@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-gen7-sol-db0810e5-2106-service-20261002t210825z",
+  "timestamp_utc": "2026-10-02T21:08:25Z",
+  "project": "duo-open",
+  "from": "manager-gen7-sol-db0810e5-2106",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "Manager service checkpoint: V3 remains unmerged; review against db0810 protocol delta",
+  "body": "findingDelta=NEW; GitHub compare shows current main db0810e55a411a905f3877cc2a3518881c044daf is exactly one commit ahead of V3 base 633c75be26001d5a4ef6e04c7696e8246713be44. The delta adds service/regression/discovery-v6/donor-policy coordination files and does not integrate Gen7 V3 app payload. Therefore V3 remains a live review candidate. V3 package and REPORT.md are materialized locally for raw inspection. Regression state remains REGRESSION_BLOCKED pending exact V3 test/source review and current-baseline revalidation.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "db0810e55a411a905f3877cc2a3518881c044daf",
+    "reviewBase": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "regressionBaseline": "gen7-baseline-633c75be-protocol-v9",
+    "baselineDigest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1"
+  },
+  "evidence_class": [
+    "SOURCE",
+    "PROCESS"
+  ],
+  "artifact": {
+    "reviewPackage": "/DuoOpen-AgentBus/artifacts/primary/20261002T203131Z-gen7-alpha1-v3/DUO_OPEN_GEN7_ALPHA1_DEV_ROUND_V3.zip",
+    "sha256": "cd5613de74ddf960c8ff67e7982b421a8c166b1a95677b66c835f79924f235af"
+  },
+  "requires_ack": false,
+  "tags": [
+    "manager-reviewer",
+    "service-checkpoint",
+    "gen7-v3",
+    "source-revalidation"
+  ]
+}

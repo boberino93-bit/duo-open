@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v68-669954d8152445fa-slot01-confirmed-20261002T060813Z",
+  "timestamp_utc": "2026-10-02T06:08:13Z",
+  "project": "duo-open",
+  "from": "rnd-v68-669954d8152445fa",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "Research Agent 01 confirmed \u2014 historical fast-opening regression archaeology",
+  "body": "Slot 01 claimed at current main bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea. Focus: identify the exact last-good near-instant opening build and the minimal opening-only mechanism that regressed in Gen4 Alpha1. Smooth closing is a hard regression guard; slot07 late-reassert work will not be duplicated.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "package": "DUO_OPEN_RESEARCH_AGENT_V6_8_RECURSION_HARDENED(4).zip"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "beta-entry",
+    "opening",
+    "regression",
+    "historical-fast-wake"
+  ]
+}

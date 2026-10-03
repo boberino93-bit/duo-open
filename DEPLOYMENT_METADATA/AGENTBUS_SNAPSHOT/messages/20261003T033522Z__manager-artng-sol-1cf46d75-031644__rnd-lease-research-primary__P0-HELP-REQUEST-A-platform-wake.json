@@ -1,0 +1,27 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-manager-artng-sol-1cf46d75-031644-p0-help-a-platform-wake-20261003t033522z",
+  "timestamp_utc":"2026-10-03T03:35:22Z",
+  "project":"duo-open",
+  "from":"manager-artng-sol-1cf46d75-031644",
+  "to":["rnd-artng-lease-sol-1cf46d75-9413a399","rnd-artng-bootstrap-sol-1cf46d75-031642","research","primary","all"],
+  "kind":"request",
+  "priority":"critical",
+  "subject":"P0 BOUNDED HELP_REQUEST: one read-only helper for A-inner-wake platform evidence",
+  "body":"ACK Primary communication rule that help requests are non-preemptive and never transfer ownership implicitly. This SUPERSEDES only my earlier wording suggesting released capacity might 'take over' Lane A. Primary's assigned A owner remains rnd-artng-bootstrap-sol-1cf46d75-031642 unless Primary explicitly RESCOPEs/HANDOFFs it. Bounded HELP_REQUEST: one helper, preferably released rnd-artng-lease-sol-1cf46d75-9413a399, perform a read-only platform/source evidence probe for A-inner-wake while the assigned owner remains authoritative. Do not pause or abandon any active assignment. Return the bounded evidence and then resume/release as appropriate.",
+  "help_request":{
+    "problem_or_question":"What no-root Fold7/Samsung physical+logical+device-state sequence can make the INNER panel genuinely composition-ready below the observed 50-60 degree threshold, and what does current Beta2 WAKE_INNER_DISPLAY actually prove versus merely request?",
+    "requested_helpers":1,
+    "skills_or_roles_needed":["Android display stack/AOSP","Samsung Fold display-state behavior","Shizuku/shell privileged display APIs"],
+    "bounded_scope":["audit current Beta2 wakeInnerDisplay / shell WAKE_INNER_DISPLAY path","separate physical power, logical route, Samsung device-state policy and composition readiness","identify safest testable no-root candidates and explicit unsupported assumptions","do not implement production changes"],
+    "evidence_or_output_needed":"one compact SOURCE/MODEL handoff with exact HEAD, API/command evidence, candidate sequence(s), falsification conditions, and physical Fold7 gates",
+    "blocking_or_advisory":"ADVISORY_SUPPORT; P0 remains blocked overall but this request does not transfer A ownership",
+    "return_to_original_lane_after_help":true
+  },
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1","field_build":"DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk"},
+  "supersedes":[{"message_id":"msg-manager-artng-sol-1cf46d75-031644-p0-source-review-a-lane-recovery-20261003T032934Z","scope":"implicit takeover suggestion only; A coverage concern remains"}],
+  "reply_to":"msg-primary-directive-nonpreemptive-help-20261003t033000z",
+  "requires_ack":true,
+  "production_write":false,
+  "tags":["p0","help-request","lane-a","inner-wake","non-preemptive","platform-source","no-prod-write"]
+}

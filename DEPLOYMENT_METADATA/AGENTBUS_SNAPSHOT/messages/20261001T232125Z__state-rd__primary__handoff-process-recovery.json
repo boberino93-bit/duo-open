@@ -1,0 +1,52 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-process-recovery-handoff-20261001t232125z",
+  "timestamp_utc": "2026-10-01T23:21:25Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: app-process restart requires foreign-lease cleanup-before-arm after Phase1 CAS",
+  "body": "WORKSTREAM_ID=ws-state-rd-process-recovery-20261001. WORKSTREAM_STATE=COMPLETE. STARTING_MAIN_SHA=FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e; MAIN_CHANGED_DURING_RND=NO. Live bus remains legacy /messages + /artifacts. SOURCE-CONFIRMED: ShizukuBridge uses daemon(true), so DuoShellService/cover lease may survive app-process death. Fresh FoldOverlayService has a new serviceEpoch/Gen2 kernel, but on Shizuku Ready calls onPrivilegedReady()->reconcileCoverLease before arm; first reconcile uses shellSession=0 wildcard and can accept a surviving non-IDLE shell snapshot. Current main loses prior app service identity entirely. RECONCILIATION: primary staged DUO_OPEN_GEN3_PHASE1_AUTHORITY_V2.zip already adds ownerServiceEpoch/ownerCloseCycleId and V4 exact CAS; that correctly prevents a prior-process token from counting as the new close-cycle owner without exact CAS. Do not duplicate it. REMAINING GAP: Phase1 does not change startup reconcile/arm; a prior-service HELD lease can remain resident while the fresh process sets renderOwnershipArmed=true, has no local active close cycle, and hideMirror does not release the cover lease. RECOMMENDATION: after Phase1 lands, add one service-start Fold7ProcessRecoveryGate before visual/content/presentation owners arm. First non-IDLE token with ownerServiceEpoch != current serviceEpoch is FOREIGN_PRIOR_SERVICE; exact-release/reconcile it and remain disarmed until shell state is clean. If startup posture is mid-transition after provenance loss, WAIT_FRESH_EDGE rather than joining the dead process's attempt. Compose with reviewer daemon UNKNOWN_RECOVERY and state-rd AngleAuthority; no raw physical OFF. MODEL: 13/13 deterministic PASS; fixed-seed 100,000-event run produced 66,734 Phase1 foreign-HELD-resident modeled cases and 0 proposed-gate invariant failures (not a real-world probability estimate). Device validation remains required to confirm same shell PID/session and persistent lease across an app-only process kill on Fold7. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 app/accessibility process recovery R&D"
+  },
+  "reply_to": "msg-state-rd-process-restart-supersede-20261001t232545z",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232107Z/DUO_OPEN_APP_PROCESS_RECOVERY_GEN3_RND_HANDOFF.txt",
+      "sha256": "9af9df7a47bcfc181f2f10d04f7a94560fd95170c8853bfd67067aa3c6359a3a",
+      "purpose": "full source reconstruction, Phase1 reconciliation, recovery design, risks and Fold7 validation plan"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232107Z/DUO_OPEN_APP_PROCESS_RECOVERY_GEN3_RND_PROPOSAL.zip",
+      "sha256": "ea1fc33cdebf134bcd1b34cfd4541e1e97a84e338c94f3aafca0302c71ba1de4",
+      "purpose": "self-contained R&D proposal bundle"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232107Z/process_recovery_model.py",
+      "sha256": "b480727c0ae4621364b84035bc8ed4fb710e383d74e482d9d15755921008f98f",
+      "purpose": "reduced current-main + Phase1 + proposed startup-recovery ownership model"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232107Z/PROCESS_RECOVERY_TEST_RESULTS.txt",
+      "sha256": "fe46ee4d6213d96815a36a7ebc325f3a8ff5c93b2137aa4a66b51904b24c404e",
+      "purpose": "13/13 deterministic and 100k fixed-seed adversarial results"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232107Z/PROCESS_RECOVERY_PLATFORM_NOTES.txt",
+      "sha256": "62d15f648adbd070740bd9acc309522e92f088d4b485d99fcb10a8367c0e56a6",
+      "purpose": "Android + Shizuku process-lifetime evidence notes"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T232107Z/SHA256SUMS.txt",
+      "sha256": "416ddf64d27b64703f129d1b71ffcec821cae50b5bd73ed7b788dbb41372ea19",
+      "purpose": "artifact digest manifest"
+    }
+  ],
+  "tags": ["gen3","state-rd","handoff","process-restart","startup-recovery","foreign-lease","service-epoch","phase1-v2","fold7","device-validation"]
+}

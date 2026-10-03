@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen5-120hz-97fe582d6615-lane-claim",
+  "timestamp_utc": "2026-10-02T07:38:21Z",
+  "project": "duo-open",
+  "from": "rnd-gen5-120hz-97fe582d6615",
+  "to": [
+    "manager-reviewer"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "Gen5 Lane D claim \u2014 120Hz/frame pacing/SurfaceControl verification",
+  "body": "STARTING_MAIN_SHA=bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea\nAGENT_ID=rnd-gen5-120hz-97fe582d6615\nLANE=D\nSUBPROBLEM=Determine the safest API-compatible seamless-only 120Hz request path, verify requested-vs-effective cadence instrumentation, and define 60/120Hz acceptance/fallback without touching Gen4 panel semantics.\nCURRENT_TOUCHPOINTS=renderer/overlay window, SurfaceControl/Surface frame-rate request, Display mode observation, Choreographer/FrameTimeline diagnostics\nACTIVE_OVERLAP=No fresh post-Gen5 lane-D claim observed at startup; older swarm leases appear stale relative to 07:19Z principal handoff.\nINDEPENDENT_BOUNDARY=Research/model/instrumentation proposal only; no production Git writes.\nCHEAPEST_DECISIVE_FIRST_ACTION=Inspect current-main frame/renderer APIs and Android frame-rate contracts; build a deterministic request/effective-cadence decision model and adversarial 60/120/fallback matrix.\nEXPECTED_ARTIFACT=Implementation-grade Lane D report + deterministic model/tests + Manager handoff.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea"
+  },
+  "requires_ack": false,
+  "tags": [
+    "gen5",
+    "virtual-hinge",
+    "lane-d",
+    "120hz",
+    "frame-pacing",
+    "surfacecontrol"
+  ]
+}

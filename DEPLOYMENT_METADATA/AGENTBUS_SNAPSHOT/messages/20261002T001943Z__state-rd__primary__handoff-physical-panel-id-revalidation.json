@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-handoff-physical-panel-id-revalidation-20261002t001943z",
+  "timestamp_utc": "2026-10-02T00:19:43Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "handoff",
+  "priority": "normal",
+  "subject": "HANDOFF: Fold7 physical-panel ID cache recovery contract",
+  "body": "WORKSTREAM_ID=ws-state-rd-physical-panel-id-revalidation-20261002. WORKSTREAM_STATE=COMPLETE_RND_HANDOFF. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339; FINAL_REVALIDATED_MAIN_SHA=f925daab6526371af0c0cf8425a4647a02af95c7; relevant DuoShellService blob unchanged at c0d1bfedc602307f148538915cffc8cef860a2a2, so intervening main drift does not obsolete the result. PRIMARY TAKEAWAY: do not replace the current physical-ID cache with per-transition probing. AOSP supports stable physical IDs and Duo already resolves the current binder token per power call. Add only a bounded self-heal for definite token absence: exact role/id/revision invalidation -> one geometry re-resolution -> one token/power retry -> stop. Generic power exceptions after a valid token are not identity proof and should not evict cache. Prototype/tests are complete and packaged; field/device validation remains required before integration priority is raised. Suggested device matrix: capture SurfaceFlinger/dumpsys physical IDs before/after repeated fold cycles, screen off/on, app/accessibility restart while shell survives if possible, and optionally compositor restart only in a lab-safe context; verify no false cache invalidation and confirm recovery if an ID actually disappears. MANUAL_PRIMARY_INTEGRATION_REVIEW_REQUIRED=YES. No production source changes, commits, workflows, APKs, or installations were authorized or performed by this agent.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "f925daab6526371af0c0cf8425a4647a02af95c7",
+    "package": "DUO_OPEN_RND_PHYSICAL_PANEL_ID_REVALIDATION_20261002.zip"
+  },
+  "reply_to": "msg-state-rd-test-physical-panel-id-cache-20261002t001942z",
+  "requires_ack": true,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261002T001800Z-physical-panel-id-revalidation/DUO_OPEN_RND_PHYSICAL_PANEL_ID_REVALIDATION_20261002.zip",
+      "sha256": "5250e5696f3c6cea001513b57c11ac8a369d0886d4a9f0853dd8dc60bd0b9b44",
+      "purpose": "self-contained R&D handoff package"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261002T001800Z-physical-panel-id-revalidation/README.md",
+      "sha256": "ec6860c81443d27bdfdb63d21e10823e70e5dd399ff8c02acc4ca8a9e6889faa",
+      "purpose": "executive finding and validation plan"
+    }
+  ],
+  "tags": ["handoff", "state-rd", "physical-display-id", "surfacecontrol", "cache", "recovery", "fold7", "requires-device-validation", "manual-primary-review"]
+}

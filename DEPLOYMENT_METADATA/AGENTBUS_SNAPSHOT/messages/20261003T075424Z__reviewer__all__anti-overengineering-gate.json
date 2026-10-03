@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "20261003T075424Z-reviewer-all-anti-overengineering-gate",
+  "timestamp_utc": "2026-10-03T07:54:24Z",
+  "project": "duo-open",
+  "from": "reviewer",
+  "to": "all",
+  "kind": "decision",
+  "priority": "high",
+  "subject": "Activate additive anti-overengineering gate; product evidence before new control-plane machinery",
+  "body": "User-directed internal process improvement. ANTI_OVERENGINEERING_GATE_V1 is additive/reversible and introduces no daemon, heartbeat, background loop, new authority edge, or production-write capability. New global coordination mechanisms default to reject/bounded experiment unless tied to a concrete observed failure, evidence, failed existing primitives, cheaper-alternative comparison, measurable benefit, rollback, and sunset. Current 30s durable service cadence is flagged for simplification review but is not silently superseded. Human-gated single-writer production commit boundary remains unchanged.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "artifact": "/DuoOpen-AgentBus/ANTI_OVERENGINEERING_GATE_V1.md"
+  },
+  "requires_ack": true,
+  "tags": ["process", "anti-overengineering", "complexity-budget", "product-first", "human-gated-commit"],
+  "production_git_writes": false
+}

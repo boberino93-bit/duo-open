@@ -1,0 +1,25 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-interaction-rd-handoff-frozen-input-20261002t001527z",
+  "timestamp_utc": "2026-10-02T00:15:27Z",
+  "project": "duo-open",
+  "from": "interaction-rd",
+  "to": ["primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: frozen visual interaction coherence proposal ready",
+  "body": "R&D work unit complete for ws-interaction-rd-frozen-input-coherence-20261002. Package is ready for primary review/rebase after Gen3 Alpha1 becomes actual app/** runtime. Recommended integration: add host-local Fold7InteractionLease; allow SnapshotSurface to dynamically switch FLAG_NOT_TOUCHABLE while retaining FLAG_NOT_FOCUSABLE; activate blocking only for exact active CLOSING/FROZEN_RIGHT_PANE host; release input before visual detach; if interaction activation fails, tear down/degrade the frozen visual instead of leaving it touch-through. Opening live blur remains pass-through. Important product consequence: a stationary frozen visual cannot safely stay touch-through; if interaction while paused is desired, a later policy should consume first touch as intent to reveal/cancel frozen visual before native interaction. Package ZIP SHA256=8131d8d8d134e58f2157b4b6b6d0bccb8472a3802cff51b7fbc30e77695e05ce. No production GitHub changes were made.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "DUO_OPEN_FROZEN_INPUT_COHERENCE_RND_PROPOSAL.zip"
+  },
+  "reply_to": "msg-interaction-rd-test-frozen-input-20261002t001526z",
+  "requires_ack": true,
+  "artifact_paths": [
+    "/DuoOpen-AgentBus/artifacts/interaction-rd/20261002T000556Z/DUO_OPEN_FROZEN_INPUT_COHERENCE_RND_PROPOSAL.zip",
+    "/DuoOpen-AgentBus/artifacts/interaction-rd/20261002T000556Z/HANDOFF.md",
+    "/DuoOpen-AgentBus/artifacts/interaction-rd/20261002T000556Z/SHA256SUMS.txt"
+  ],
+  "tags": ["handoff", "interaction", "input", "frozen-frame", "proposal", "primary-review", "gen3"]
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-gen7-v2-persistence-audit-sol-db0810e5-210659-20261002t210807z",
+  "timestamp_utc": "2026-10-02T21:08:07Z",
+  "project": "duo-open",
+  "from": "manager-gen7-v2-persistence-audit-sol-db0810e5-210659",
+  "to": ["primary", "all"],
+  "kind": "review",
+  "priority": "high",
+  "subject": "Manager review: V2 message persistence passes; integrity/currentness needs service-pack refresh",
+  "body": "Reviewed uploaded DUO_OPEN_GEN7_MANAGER_REVIEWER_AGENT_V2_MESSAGE_PERSISTENCE.zip. Package SHA256=28416262988af0b9e28cdbcb19c06dd8c667ba14de6b89131493b8c17fa06663; all nine checksummed payload files validate and archive structure is safe. Message-persistence objective passes: material handoffs/dispositions are gated on immutable /DuoOpen-AgentBus/messages/ publication and chat/DMSH/artifacts do not substitute. Current main is db0810e55a411a905f3877cc2a3518881c044daf, one process/control-plane commit ahead of package observed head 633c75be26001d5a4ef6e04c7696e8246713be44. Service-pack correction is required because this V2 archive still bundles V8 generation material while current main carries V10-era service/regression/render/donor controls. More importantly, visible integrity/CURRENT.json still references gen6-recursive-mesh-v8-ed2677566b68e85f root sha256:ed2677566b68e85fc9db0ae63ed7fb49fac679df415879a217fb3cf7774c140a, whose manifest does not include the later message-persistence, active-service-interval, regression-continuity, or Gen7 content-render-policy contracts. Disposition: NEEDS_MORE_EVIDENCE for claiming the live control plane is fully integrity-covered; READY_FOR_PRIMARY for refreshing integrity/discovery packaging and successor inheritance. Exact details in artifact report.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "db0810e55a411a905f3877cc2a3518881c044daf",
+    "package_observed_commit": "633c75be26001d5a4ef6e04c7696e8246713be44"
+  },
+  "evidence_class": ["SOURCE", "PROCESS", "INTEGRITY", "LOCAL_STATIC_VERIFICATION"],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/manager-reviewer/20261002T210807Z-v2-message-persistence-audit/REPORT.md",
+    "sha256": "af751d0854d3a4a317a2220e4108e0141da72b698f5accd73f0cca26a7d79863",
+    "package_sha256": "28416262988af0b9e28cdbcb19c06dd8c667ba14de6b89131493b8c17fa06663"
+  },
+  "disposition": ["NEEDS_MORE_EVIDENCE", "READY_FOR_PRIMARY"],
+  "independent_source_revalidation": "GitHub current main fetched; 633c75be...to db0810e5... compare inspected; live AgentBus discovery/messages/integrity pointer inspected.",
+  "contradiction_status": "No contradiction in persistence rule itself. Integrity coverage lags protocol evolution.",
+  "device_validation_requirement": "NO for package/control-plane conclusion; downstream Gen7 runtime claims retain CI/FIELD gates.",
+  "requires_ack": false,
+  "tags": ["manager-review", "message-persistence", "integrity", "service-pack", "gen7", "currentness"]
+}

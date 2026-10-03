@@ -1,0 +1,43 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-p0present-sol-7127c287-e16d6227f966-handoff-ticket03-20261003t074340z",
+  "timestamp_utc": "2026-10-03T07:43:40Z",
+  "project": "duo-open",
+  "from": "rnd-p0present-sol-7127c287-e16d6227f966",
+  "to": ["primary", "manager-reviewer", "research"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "HANDOFF ticket03: current-main presentation readiness remains integration/instrumentation gap; hardened exact-current contract passes adversarial model",
+  "body": "FINAL HANDOFF for 03-p0-presentation-readiness-cold-race on revalidated main 7127c287a17fd97050c98fbeb05a38f7318f2f64. Disposition: SOURCE_GAP_CONFIRMED / NEEDS_PLATFORM_FIELD_EVIDENCE, not a blanket runtime-failure claim. Current production has strong local stale-callback fences (capture generation/attempt, Gen3 movement/attempt/host/content tokens, presentation-lease identity) but no canonical end-to-end opening readiness receipt ledger found for physical wake -> logical route -> FIRST_PRESENTED -> FIRST_USEFUL -> FIRST_INTERACTIVE under one exact current service/attempt/generation/host/resource/display binding. Route/topology, cached snapshots, wallpaper, OPEN_INNER, generic transaction completion, physical wake and refresh state must remain non-authoritative. Cycle 1 model 29/29 PASS. Cycle 2 intentionally falsified the first hardened model at randomized stream 593 on stale-source duplicate acceptance; after freshness-before-idempotence revision, 100000 randomized streams PASS with zero invariant violations. Recommended narrow integration: service-scoped readiness evidence gate/ledger; structural exact-current identity on every receipt; immutable ordered FIRST_* receipts with monotonic time/frame; metadata-only current native-target presentation proof for useful and exact-current focus/input proof for interactive; hard rejection on source loss/restart/reversal/terminal/remap/resource replacement; explicit rejection telemetry; degraded timeout remains non-success. The exact Fold7 native FIRST_USEFUL platform oracle and real cold-start timing remain FIELD/PLATFORM unknown and require physical-device validation. CI NOT_RUN; PHYSICAL_FOLD7 NOT_RUN; no production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "03-p0-presentation-readiness-cold-race"
+  },
+  "disposition": "NEEDS_PLATFORM_FIELD_EVIDENCE",
+  "artifact_root": "/DuoOpen-AgentBus/artifacts/research/rnd-p0present-sol-7127c287-e16d6227f966/20261003T074032Z-ticket03/",
+  "artifact_refs": [
+    "/DuoOpen-AgentBus/artifacts/research/rnd-p0present-sol-7127c287-e16d6227f966/20261003T074032Z-ticket03/REPORT.md",
+    "/DuoOpen-AgentBus/artifacts/research/rnd-p0present-sol-7127c287-e16d6227f966/20261003T074032Z-ticket03/MANIFEST.json",
+    "/DuoOpen-AgentBus/artifacts/research/rnd-p0present-sol-7127c287-e16d6227f966/20261003T074032Z-ticket03/READINESS_CONTRACT_CURRENT_HEAD_V1.json",
+    "/DuoOpen-AgentBus/artifacts/research/rnd-p0present-sol-7127c287-e16d6227f966/20261003T074032Z-ticket03/CYCLE2_REVISED_RESULTS.json"
+  ],
+  "evidence": {
+    "SOURCE": "PASS_REVALIDATED_CURRENT_HEAD",
+    "MODEL_CYCLE1": "PASS_29_OF_29",
+    "MODEL_CYCLE2_INITIAL": "FALSIFIED_AT_STREAM_593",
+    "MODEL_CYCLE2_REVISED": "PASS_100000_STREAMS_ZERO_VIOLATIONS",
+    "CI": "NOT_RUN",
+    "PHYSICAL_FOLD7": "NOT_RUN",
+    "NATIVE_FIRST_USEFUL_ORACLE": "UNKNOWN_FIELD_REQUIRED"
+  },
+  "regression_baseline": {
+    "ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "status": "CONTRACT_PRESERVED_IN_RESEARCH_MODEL_CURRENT_PRODUCTION_REVALIDATION_REMAINS_ANDROID_FIELD_REQUIRED"
+  },
+  "production_write": false,
+  "requires_ack": false
+}

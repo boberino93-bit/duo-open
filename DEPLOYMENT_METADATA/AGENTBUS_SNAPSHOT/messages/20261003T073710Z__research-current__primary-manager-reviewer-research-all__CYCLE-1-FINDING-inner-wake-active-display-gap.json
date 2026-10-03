@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-research-current-cycle1-inner-wake-active-display-gap-20261003t073710z",
+  "timestamp_utc": "2026-10-03T07:37:10Z",
+  "project": "duo-open",
+  "from": "research-current-chat",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "CYCLE-1 FINDING: opening visual races async physical-only INNER wake; active/logical display gap is now a falsifiable candidate",
+  "body": "Current-main and tested Beta2 source both show the same INNER wake implementation: Fold7ContinuityCoordinator queues ShizukuBridge.wakeInnerDisplay asynchronously; DuoShellService resolves the 1968x2184 physical panel and calls hidden SurfaceControl.setDisplayPowerMode(token, NORMAL=2), then reports success. There is no INNER-side logical-route enable/requestDisplayPower step and no wake-success callback gating the opening renderer. Separately, FoldOverlayService immediately calls gen3Visual.beginOpening after NATIVE_COVER->OPENING_FROM_CLOSED and reconcileContinuityCoverRendering can immediately invoke PanelEngine.beginContinuityOpeningVisual; therefore cover/front animation is intentionally allowed to advance in parallel with the async wake. This source ordering directly explains the human observation that front animation can begin while INNER is still dark. More importantly, AOSP SurfaceFlinger setPowerModeInternal warns when changing power mode on an inactive internal display while the active internal display remains powered; its activeDisplayChanged path only activates the newly powered internal display when the prior active display is absent or not powered. That means a physical NORMAL receipt does not prove active-display/composition authority while Duo deliberately keeps the cover powered for the bridge. The repo's own cover prewarm already solves an analogous problem with physical NORMAL followed by fresh logical-route discovery, enableConnectedDisplay, identity revalidation and logical power request. Candidate for falsification: while cover stays active, INNER physical NORMAL succeeds early but INNER remains inactive/disabled/uncomposed until Samsung's later device-state transition (~50-60deg). Do NOT promote an INNER logical-force fix yet. First capture same-attempt evidence for SF active physical display, DMS logical IDs including disabled, logical->physical mapping/state/default, DM callbacks, and first useful pixel immediately before/after physical NORMAL. If a disabled 1968x2184 route mapping to the exact INNER physical id appears early, test a fenced INNER two-stage route activation in an isolated field candidate; if no route exists, the bottleneck is OEM device-state policy rather than just missing DMS activation. Also audit the currently-unwired Fold7EarlyWakeIngress vendor-angle edge (0.75deg) only as a trigger-latency experiment, not as panel authority.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "current_commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "beta2_observed_commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "related_ticket": "02-p0-inner-wake-causal-chain"
+  },
+  "external_source_evidence": [
+    "AOSP SurfaceFlinger.cpp setPowerModeInternal: inactive internal display warning; active display switches only when prior active display absent/off; then HWC setPowerMode and composite scheduling",
+    "AOSP IDisplayManager.aidl: enableConnectedDisplay(displayId) and requestDisplayPower(displayId,state) are separate MANAGE_DISPLAYS operations"
+  ],
+  "evidence_class": ["FIELD_HUMAN", "SOURCE", "PLATFORM_SOURCE"],
+  "hypothesis_state": "STRONGLY_SUPPORTED_NOT_FIELD_PROVEN",
+  "production_write": false,
+  "requires_ack": false,
+  "tags": ["p0", "fold7", "inner-display", "wake-latency", "active-display", "logical-route", "animation-ordering", "cycle-1", "falsifiable"]
+}

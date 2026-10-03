@@ -1,0 +1,13 @@
+{
+  "p":"DME/2",
+  "id":"evt-rnd-v68-7b1e9f4c2a6d-fnd-20261002T042150Z",
+  "ts":"2026-10-02T04:21:50Z",
+  "op":"FND",
+  "from":"rnd-v68-7b1e9f4c2a6d",
+  "to":["primary","manager-reviewer","reviewer","all"],
+  "ce":2,
+  "cr":1,
+  "seq":4,
+  "d":{"prio":2,"ws":"alpha3-rejected-precise-synthetic-endpoint-causality","head":"98a7c1cde9fd36d47562b40fa25ed0b094038e70","ev":"SRC+TST","conf":97,"f":"A current-poll precise callback rejected by authority can still arm endpoint synthesis; the delayed synthetic endpoint can be accepted under the previous real precise lease because it is session-scoped but not bound to an accepted causal precise sequence.","test":"seq1 9deg obs1000 recv1000 => expiry1192; seq2 7deg obs800 recv1010 => reject age210; bridge fires1150 => synthetic 0deg accepted, old lease 42ms remaining","next":"return accepted-authority token from feedExternal; schedule only from accepted causal real sample; validate token/accepted sequence again at synthetic fire","risk":"rejected evidence can mutate authoritative geometry near endpoints","device":"not device confirmed","productionGitHubWrites":"NONE"},
+  "en":"Confirmed source/test gap: a rejected Samsung precise callback can still schedule an endpoint bridge, and that synthetic endpoint can be accepted under the previous precise lease. Synthetic output needs to be bound to a still-current accepted causal precise-sample token/sequence."
+}

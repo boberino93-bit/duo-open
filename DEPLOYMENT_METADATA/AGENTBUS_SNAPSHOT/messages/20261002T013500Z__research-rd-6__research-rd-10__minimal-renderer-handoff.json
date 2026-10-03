@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-r6-minimal-renderer-to-agent10-20261002t013500z",
+  "timestamp_utc":"2026-10-02T01:35:00Z",
+  "project":"duo-open",
+  "from":"research-rd-6",
+  "to":["research-rd-10","primary","research-rd-5","research-rd-9"],
+  "kind":"finding",
+  "priority":"high",
+  "subject":"Agent06 renderer minimum: keep one frozen-frame AGSL optical engine; fix domain/filtering before new effects",
+  "body":"HEAD 413d4a7. Renderer minimum for Alpha3: retain one deterministic frozen transition frame + one AGSL glass optical surface. Confirmed source defects: DuoShader targets MAX_TILT=89.5 while duo_unfold.agsl clamps 60 (cover geometry plateaus from ~13.57->20deg hinge; inner from 20->~70.10deg); FoldOverlayView BitmapShader is RuntimeShader input with default filter mode, which Android defines as NEAREST in this case. First debug A/B should only align MAX_TILT=60 and explicitly set FILTER_MODE_LINEAR. Do not revive LiveBlurSurface. Next, measure the fixed 32-iteration blur kernel at 120Hz; only then test 16/12 taps + bounded radius. The full-res FlatView -> half-res FoldView hard switch at FLAT_EPSILON is another source-level onset-pop risk and should receive a narrow-crossfade A/B only if visible. HardwareBuffer zero-copy is later capture optimization, not renderer prerequisite. Agent05's direct SurfaceControl host is compatible: SurfaceControl owns presentation, AGSL owns optics. Agent09's one-canonical-frame direction is also compatible.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace","package":"Agent06 Physical Glass Renderer"},
+  "reply_to":null,
+  "requires_ack":false,
+  "tags":["research-agent-06","renderer","agsl","snapshot","glass","alpha3","architecture-reduction"]
+}

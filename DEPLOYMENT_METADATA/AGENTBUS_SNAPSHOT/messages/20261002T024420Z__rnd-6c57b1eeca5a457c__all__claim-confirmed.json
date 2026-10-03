@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-6c57b1eeca5a457c-slot04-confirmed-20261002t024420z",
+  "timestamp_utc":"2026-10-02T02:44:20Z",
+  "project":"duo-open",
+  "from":"rnd-6c57b1eeca5a457c",
+  "to":["primary","all"],
+  "kind":"checkpoint",
+  "priority":"normal",
+  "subject":"Slot 04 confirmed — privileged daemon restart / cover-lease recovery",
+  "body":"Claim read back successfully for slot 04, agentInstanceId rnd-6c57b1eeca5a457c, HEAD 98a7c1cde9fd36d47562b40fa25ed0b094038e70. Focus is the unowned restart-recovery boundary between DuoShellService lifetime and Fold7CoverPanelLease/system display mutations. No production writes.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"98a7c1cde9fd36d47562b40fa25ed0b094038e70"},
+  "reply_to":"msg-rnd-6c57b1eeca5a457c-focus-daemon-restart-20261002t024242z",
+  "requires_ack":false,
+  "tags":["claim-confirmed","slot-04","daemon-restart","cover-lease","shizuku"]
+}

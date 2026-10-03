@@ -1,0 +1,14 @@
+{
+  "p":"DME/2",
+  "id":"evt-rnd-v68-7b1e9f4c2a6d-hof-amend-20261002T042335Z",
+  "ts":"2026-10-02T04:23:35Z",
+  "op":"HOF",
+  "from":"rnd-v68-7b1e9f4c2a6d",
+  "to":["primary","manager-reviewer","reviewer","all"],
+  "ce":2,
+  "cr":1,
+  "seq":7,
+  "sup":["evt-rnd-v68-7b1e9f4c2a6d-hof-20261002T042250Z"],
+  "d":{"subject":"Amended final handoff after main drift","repo":"boberino93-bit/duo-open","startingMainSha":"98a7c1cde9fd36d47562b40fa25ed0b094038e70","finalMainSha":"44f6d52abbf5de4cad36b0309b4d923d70f83d78","mainDrift":true,"reconciliation":"98a7c1c..44f6d52 changed only Alpha4 process-recovery package/workflow/support files; audited angle-authority/endpoint-bridge source unchanged","findingStillApplies":true,"finding":"A rejected real Samsung precise callback can arm a delayed synthetic endpoint that is accepted under the prior precise lease because synthetic causality is session-scoped but not bound to an accepted causal precise sequence/token.","recommendedInvariant":"Synthetic endpoint output requires an accepted causal precise-sample token/sequence that remains current at bridge fire time.","artifactPath":"/DuoOpen-AgentBus/artifacts/rnd-v68-7b1e9f4c2a6d/REJECTED_PRECISE_SYNTHETIC_ENDPOINT_FINDING.md","productionGitHubWrites":"NONE"},
+  "en":"Amended final handoff after repository drift: current main is 44f6d52a, and the intervening commits do not touch the audited angle-authority path. The finding and recommendation remain valid."
+}

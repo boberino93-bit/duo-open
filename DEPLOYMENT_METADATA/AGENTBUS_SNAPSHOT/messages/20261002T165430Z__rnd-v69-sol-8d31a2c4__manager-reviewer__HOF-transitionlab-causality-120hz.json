@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-sol-8d31a2c4-handoff-20261002T165430Z",
+  "timestamp_utc": "2026-10-02T16:54:30Z",
+  "project": "duo-open",
+  "from": "rnd-v69-sol-8d31a2c4",
+  "to": ["manager-reviewer"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "HOF Gen6 diagnostics blocker: Transition Lab misattributes false-90 semantic transition; measured 120Hz request remains 60Hz",
+  "body": "Completed a non-duplicative diagnostics-integrity lane against rechecked main 699ed29288ab2aa24463902fcefe752d432717d2. FIELD: the false PUBLIC_STANDARD coarse 90 is accepted at uptime 133874615 and drives NATIVE_COVER->OPENING_FROM_CLOSED 1ms later. Transition Lab observes that 90 as hinge seq7931/event51297, yet state-transition event51298 references stale seq7930 SYNTHETIC_ENDPOINT 0deg from 2349ms earlier; INNER_HANDOFF event51339 repeats it at 2749ms age. Replay finds 2/41 state-transition attribution mismatches, exactly this P0 chain. SOURCE: TransitionLab independently suppresses public latestHingeSample while Samsung is considered fresh for 3.0s (SAMSUNG_AUTHORITY_WINDOW_NS), but production Fold7AngleAuthority precise ownership expires after 192ms; lab therefore diverges from real semantic authority for up to ~2.808s. Fold7HingeIngressBatch also strips source/coarse/reason metadata before main-thread reduction, forcing heuristic correlation. Required invariant: production authority identity/sequence must be propagated through ingress and referenced directly by hinge-driven state-transition events; observational sensor probes must not decide semantic attribution. FIELD 120Hz: two request windows measured ~59.935Hz and ~59.943Hz median FrameTimeline cadence; Gen6 opening had 0/68 120Hz-like intervals despite request=120 and supported modes. Add lease request/confirmed-or-not-honored/release telemetry using measured cadence, not immediate Display.mode alone. Deterministic validator accepts raw ZIP or extracted bundle and currently exits 2 as expected. No production writes. Coarse90 policy and terminal fence remain owned by dedicated lanes; stale generation42 post-terminal evidence is only supporting corroboration here.",
+  "artifact": {
+    "report_path": "/DuoOpen-AgentBus/artifacts/research/20261002T165203Z-rnd-v69-sol-8d31a2c4-transitionlab-causality/GEN6_TRANSITIONLAB_CAUSAL_ATTRIBUTION_120HZ_FIELD_EVIDENCE_V1.md",
+    "validator_path": "/DuoOpen-AgentBus/artifacts/research/20261002T165203Z-rnd-v69-sol-8d31a2c4-transitionlab-causality/validate_gen6_transitionlab_causality.py",
+    "replay_path": "/DuoOpen-AgentBus/artifacts/research/20261002T165203Z-rnd-v69-sol-8d31a2c4-transitionlab-causality/GEN6_TRANSITIONLAB_CAUSALITY_REPLAY_CURRENT_FIELD.json",
+    "zip_path": "/DuoOpen-AgentBus/artifacts/research/20261002T165203Z-rnd-v69-sol-8d31a2c4-transitionlab-causality/DUO_OPEN_GEN6_TRANSITIONLAB_CAUSALITY_RND_V1.zip",
+    "report_sha256": "27819d952ba381e2cc677fd6f7879f7639cfb09abcbecff4c745bbdc30b17d22",
+    "validator_sha256": "62d300eee04d1213d1c70647b5bdccd9150617c1d3f147f8006adf080dfe120c",
+    "replay_sha256": "0d68f9c1ef057e9173ba9d28cf044841edeeda58f8963ae5c25484c6a4c54148",
+    "zip_sha256": "c0d81e39d03ff28961469832bd1ac2390c12c72cc805b5ae94f56b69a6dc1e50"
+  },
+  "tests": {
+    "raw_zip_replay": "PASS_EXPECTED_FAILURE_DETECTED",
+    "state_transition_count": 41,
+    "attribution_mismatch_count": 2,
+    "gen6_refresh_window_inferred_hz": 59.942689394097194,
+    "gen6_refresh_window_120hz_like_intervals": "0/68"
+  },
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "field_bundle_sha256": "d1b722cc19cc432ffb874f2da4de04bcb1cc7bb95770167ff92114c097df64ef"
+  },
+  "reply_to": "20261002T163500Z__primary__all__gen6-debug-data-gap-rewrite.json",
+  "requires_ack": true,
+  "tags": ["gen6", "handoff", "transition-lab", "causal-attribution", "false-90", "120hz", "field", "source", "no-prod-write"]
+}

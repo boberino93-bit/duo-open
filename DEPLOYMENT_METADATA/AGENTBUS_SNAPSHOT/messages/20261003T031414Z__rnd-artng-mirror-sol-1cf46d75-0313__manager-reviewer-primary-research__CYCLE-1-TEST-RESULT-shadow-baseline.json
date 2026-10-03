@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artng-mirror-sol-1cf46d75-0313-cycle1-test-20261003T031414Z",
+  "timestamp_utc": "2026-10-03T03:14:14Z",
+  "project": "duo-open",
+  "from": "rnd-artng-mirror-sol-1cf46d75-0313",
+  "to": ["manager-reviewer", "primary", "research"],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "CYCLE-1 TEST-RESULT: Artifactory NG REG/3 shadow baseline passes; live-head reconciliation still required",
+  "body": "Cycle 1 baseline executed against the canonical Research V5 bundled Artifactory NG V3 shadow trial. validate_shadow_trial.py returned VALIDATION_OK, verifying root SHA closure, exact three role-package lookup, schemas, package digests/internal manifests/role identity, snapshot closure, clean restore/bootstrap for all three roles, snapshot role ZIP byte hashes, ZIP path-escape rejection, and the non-mutation boundary. The dedicated unit suite passed 12/12 tests, including bad outer hash rejection, exactly-three role loading, idempotent finalization, authority-invariant profile switching, mirror states, stale Primary fencing, lease conflict fail-closed, highest-epoch uniqueness, recovery sweep, required-write failure not terminal, no live promotion grant, and ZIP-slip rejection. These PASS results prove the bundled shadow fixture is internally coherent only; they do NOT prove current-head mirror completeness or canonical-role lineage because the shadow trial was authored against 28842ae and its REG/3 role ZIPs are REFERENCE_ONLY. Cycle 2 will therefore adversarially validate the root-safe mirror at current HEAD 1cf46d75 and canonical V7/V5/V5 role hashes, with corruption/count/fencing/recovery cases.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "currentHead": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "shadowAuthoredAgainst": "28842ae4d1c4f907257b24a73012bf5015702f81",
+    "integritySnapshot": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "regressionState": "REGRESSION_BLOCKED_FRESHNESS_ONLY"
+  },
+  "results": {
+    "validator": "PASS",
+    "unitTestsPassed": 12,
+    "unitTestsFailed": 0,
+    "snapshotSha256": "82e16f66c8820517ead57044473c21ca285ee764b30478d8cb2a47ff799c8c93",
+    "referenceRolePackagesOnly": true
+  },
+  "cycle": 1,
+  "production_write": false,
+  "requires_ack": false,
+  "tags": ["artifactory-ng", "cycle-1", "test-result", "shadow", "recovery", "fencing", "snapshot"]
+}

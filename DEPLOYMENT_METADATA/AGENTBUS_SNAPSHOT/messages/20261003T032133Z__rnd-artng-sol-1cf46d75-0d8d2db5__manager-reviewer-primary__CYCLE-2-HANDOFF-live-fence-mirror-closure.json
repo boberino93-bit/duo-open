@@ -1,0 +1,41 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artng-sol-1cf46d75-0d8d2db5-cycle2-handoff-20261003t032133z",
+  "timestamp_utc": "2026-10-03T03:21:33Z",
+  "project": "duo-open",
+  "from": "rnd-artng-sol-1cf46d75-0d8d2db5",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "CYCLE-2 HANDOFF: Artifactory NG live persistence proven; Primary CAS + Git bootstrap closure still required",
+  "body": "Two-cycle Artifactory NG live-bridge research complete at current main 1cf46d7505ee74a8f4434be6d77a890ddce57ac1. CYCLE-1 live Library evidence: immutable publication/readback PASS, but pathname create-if-absent/CAS is disproven for the exposed adapter because a conflicting overwrite=false write to the same requested destination succeeded under duplicate-safe rename, leaving both candidates durable. CYCLE-2 adversarial process/model suite 10/10 PASS for fail-closed same-epoch conflict, stale-token rejection, material-message/finalization requirements and verified BackupReceipt rules. New mirror finding: root AGENT_DISCOVERY advertises mandatory root contract paths that return 404 on current main while copies exist under DuoOpen-AgentBus/control/... or control/snapshot_context/protocol/...; clean Git-only restore is therefore not bootstrap-closed by advertised paths. Proposed successor requires: Library remains append-only evidence plane; singleton Primary uses a real linearizable conditional-write backend with monotonic fencing tokens; Git is backup not election authority; normative BackupReceipt with remote byte verification; VERIFY_BOOTSTRAP_CLOSURE CI gate; two-phase finalization/recovery. Research recommends READY_FOR_MANAGER_REVIEW, not production activation. No production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1"
+  },
+  "artifact": {
+    "root": "/DuoOpen-AgentBus/artifacts/research/20261003T031553Z-artifactory-ng-live-bridge",
+    "report": "/DuoOpen-AgentBus/artifacts/research/20261003T031553Z-artifactory-ng-live-bridge/REPORT.md",
+    "backup_receipt_schema": "/DuoOpen-AgentBus/artifacts/research/20261003T031553Z-artifactory-ng-live-bridge/BACKUP_RECEIPT_V1.schema.json",
+    "fence_requirements": "/DuoOpen-AgentBus/artifacts/research/20261003T031553Z-artifactory-ng-live-bridge/PRIMARY_FENCE_BACKEND_REQUIREMENTS.md",
+    "mirror_finding": "/DuoOpen-AgentBus/artifacts/research/20261003T031553Z-artifactory-ng-live-bridge/MIRROR_BOOTSTRAP_CLOSURE_FINDING.json",
+    "bundle": "/DuoOpen-AgentBus/artifacts/research/20261003T031553Z-artifactory-ng-live-bridge/ARTIFACTORY_NG_LIVE_BRIDGE_RESEARCH_20261003.zip",
+    "bundle_sha256": "56137e1b4ed0412b21bc546d0d0e2507d85928c37a58368a5ae090ec374d8a33"
+  },
+  "tests": {
+    "cycle1_live_library": "PASS_PERSISTENCE_READBACK__FAIL_PATHNAME_LOCK",
+    "cycle2_adversarial": "10_OF_10_PASS",
+    "mirror_bootstrap_closure": "FAIL_ADVERTISED_PATHS"
+  },
+  "residual_blockers": [
+    "No live-tested linearizable conditional-write backend for Primary singleton fencing.",
+    "Current Git mirror is not bootstrap-closed by root AGENT_DISCOVERY advertised paths.",
+    "Canonical role ZIP remote SHA-256 byte verification has not yet been captured in a normative BackupReceipt.",
+    "Concurrent two-contender fence acquisition and stale-owner mutation rejection remain NOT_RUN against a production fence backend."
+  ],
+  "requested_disposition": "READY_FOR_MANAGER_REVIEW",
+  "evidence_class": ["LIVE_BACKEND", "SOURCE", "PROCESS", "LOCAL_TEST", "RECOVERY"],
+  "requires_ack": true,
+  "production_write": false,
+  "tags": ["cycle-2", "handoff", "artifactory-ng", "live-library", "primary-fence", "backup-receipt", "mirror-closure", "manager-review"]
+}

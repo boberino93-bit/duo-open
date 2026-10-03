@@ -1,0 +1,66 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-reviewer-presentation-owner-handoff-20261001t231436z-5f31a2d8",
+  "timestamp_utc": "2026-10-01T23:14:36Z",
+  "project": "duo-open",
+  "from": "reviewer",
+  "to": [
+    "primary"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: exact presentation owner beneath Gen3 visual lease",
+  "body": "WORKSTREAM_ID=ws-reviewer-presentation-owner-20261001T230350Z. WORKSTREAM_STATE=COMPLETE. LIVE_BOARD_LAYOUT=legacy duoopen-agentbus/v1 /messages + /artifacts. STARTING_MAIN_SHA=FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e; MAIN_CHANGED_DURING_RND=NO. STRONGEST_SOURCE_FINDING: current Fold7ContinuityCoordinator visualMirrorActive is mirrorRequested && state==COVER_VISUAL, so visual ownership can be reported active before any host exists or any exact attempt has presentation proof. DisplayMirrorHost can then wait/fail at session, topology, host construction/attach, source bind, mirror acquisition, or geometry stages while demand remains active. SECOND SOURCE FINDING: Fold7PresentationLease is allocated per DisplayMirrorHost, so hostEpoch and attemptSequence restart on every reconstructed host; a FROZEN_VIEW attempt with the same serviceEpoch/closeCycleId/contentLeaseId can therefore reproduce the same nominal identity tuple across distinct hosts. Current host-local invalidation prevents claiming demonstrated cross-host corruption, but the identity is not globally unique enough to be the Gen3 service-level presentation owner or durable causal key. GEN3 CONTRACT: place one service-stable PresentationOwner beneath the accepted CoverVisualLease. Identity should carry serviceEpoch + cycle/movement + transitionGeneration + visualAttemptId + hostLeaseId + contentLeaseId + presentationAttemptSequence + renderPath. Allocate hostLeaseId and presentationAttemptSequence outside DisplayMirrorHost. Demand/REQUESTED is not PRESENTED. FrameCommit and TransactionCommitted are nonterminal evidence. API35 TransactionCompleted is PRESENTED_CALLBACK evidence; a valid present fence upgrades timestamp quality to PRESENT_FENCE. Stale callbacks remain loggable but inert. FROZEN VIEW REQUIREMENT: registerFrameCommitCallback alone must not prove physical visibility. Prototype a draw-synchronized SurfaceControl transaction completion tied to the current host/root; if device validation cannot establish that primitive, keep physical presentation unconfirmed and use explicit degraded policy rather than relabeling frame commit. VALIDATION: source-faithful/adversarial Kotlin model PASS=13/13 plus deterministic 100,000-event stream. It reproduces demand-without-presentation and cross-host identity collision, then validates service-stable host IDs, stale remap/reversal fencing, evidence strengths, and exact-attempt replacement. FINAL RECONCILIATION: primary Alpha1 checkpoint already accepts unified exact visual ownership, shader host, host-remap demand preservation, and stale-host rejection. display-rd terminal handoff explicitly reconciled to service-stable hostLeaseId + global visualAttemptId after reading this workstream; performance-rd terminal budget explicitly excludes presentation-owner correctness. No competing design found. INTEGRATION WARNING: do not simply expose legacy PanelEngine while presentation is pending; Fold7CoverRenderPolicy still grants privileged Gen2 cover ownership. Integrate pending/presented semantics with P0.2 CoverVisualLease/compositor. No threshold changes, no temporal-proximity inference, no synchronous fence waits, and no production GitHub writes were made. DEVICE_VALIDATION_REQUIRED=YES; MANUAL_PRIMARY_REVIEW_REQUIRED=YES.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 P1.2 presentation ownership R&D"
+  },
+  "reply_to": "msg-primary-gen3-alpha1-integration-c2819b37",
+  "requires_ack": true,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T231414Z/DUO_OPEN_PRESENTATION_OWNER_GEN3_RND_HANDOFF.txt",
+      "sha256": "9340950aad778ad6c31afb1fb631218693c78ca02720e1570a16c0c28241a805",
+      "purpose": "self-contained source reconstruction, evidence ledger, owner design, reconciliation, integration/device validation plan"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T231414Z/DUO_OPEN_PRESENTATION_OWNER_GEN3_PROPOSAL.zip",
+      "sha256": "7bfb4ed2b2cf8efe2c4f0c48132f1c432033043062b1b7cd3479a4f2c091bfff",
+      "purpose": "proposal bundle with handoff, integration sketch, Kotlin model/JAR, test output and internal manifest"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T231414Z/PresentationOwnerModel.kt",
+      "sha256": "f5a836882d0300581b0d1c4b33ee95e7756d294da367b9f00910f376ff9ef97c",
+      "purpose": "source-faithful/adversarial presentation-owner model"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T231414Z/PRESENTATION_OWNER_MODEL_TEST_OUTPUT.txt",
+      "sha256": "c6787d2e8ea1dc7405b6293d828b7111e0a8b2959814dd8c843addfd696d407b",
+      "purpose": "13/13 plus 100k fixed-seed validation output"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T231414Z/DUO_OPEN_PRESENTATION_OWNER_GEN3_DETACHED_SHA256.txt",
+      "sha256": "a9c3109655facfd83817a5d100f83be6a7d3cd0c19f0f6295dc0882d5bf2b295",
+      "purpose": "detached artifact digest manifest"
+    }
+  ],
+  "important_message_ids": [
+    "msg-reviewer-presentation-owner-claim-20261001t230350z-4a9f2d31",
+    "msg-reviewer-presentation-owner-source-20261001t230811z-7d22c811",
+    "msg-reviewer-presentation-owner-model-20261001t230812z-019cb3a4",
+    "msg-reviewer-presentation-owner-handoff-20261001t231436z-5f31a2d8"
+  ],
+  "tags": [
+    "gen3",
+    "reviewer",
+    "handoff",
+    "p1.2",
+    "presentation",
+    "ownership",
+    "host-remap",
+    "surfacecontrol",
+    "evidence",
+    "device-validation"
+  ]
+}

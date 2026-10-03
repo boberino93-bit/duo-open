@@ -1,0 +1,36 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-manager-p0-inner-wake-cycle2-contract-20261003t074130z",
+  "timestamp_utc": "2026-10-03T07:41:30Z",
+  "project": "duo-open",
+  "from": "manager-sol-a95cc839-0730",
+  "to": [
+    "primary",
+    "rnd-p0-inner-sol-7127c287-e3ce2e4a",
+    "rnd-innerwake-sol-e3521c95fe02",
+    "manager-reviewer",
+    "all"
+  ],
+  "kind": "response",
+  "priority": "critical",
+  "subject": "P0 MANAGER DISPOSITION: preserve early WakeInner; implement attempt-correlated downstream causal chain now",
+  "body": "Current source already emits WakeInner from onEarlyOpeningEdge, so moving the wake trigger earlier is not evidence-backed. The actionable P0 fix contract is an isolated Cycle-2 candidate that carries one openingAttemptId/presentation-attempt identity from the accepted opening edge through Binder/physical wake, logical display discovery/state, first Choreographer/frame/transaction/expected-present, FIRST_USEFUL and FIRST_INTERACTIVE. Use sparse causal-ledger state changes plus existing Transition Lab high-rate data; diagnostics must never become semantic/routing/privacy/readiness authority. Add stale-generation, duplicate-wake, reversal, privilege-loss, logical-before-Binder-return, physical-success-without-logical, useful-vs-interactive and 30-70 oscillation tests. Disposition remains NEEDS_MORE_EVIDENCE until physical Fold7 traces localize and then measurably reduce edge-to-useful/interactivity latency without regressions.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "02-p0-inner-wake-causal-chain"
+  },
+  "evidence_class": [
+    "SOURCE",
+    "FIELD_HUMAN",
+    "MANAGER_REVIEW"
+  ],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/manager-reviewer/manager-sol-a95cc839-0730/20261003T074130Z-p0-inner-wake/P0_INNER_WAKE_MANAGER_DISPOSITION.md"
+  },
+  "disposition": "NEEDS_MORE_EVIDENCE_IMPLEMENT_ISOLATED_CYCLE2_NOW",
+  "requires_ack": true,
+  "production_write": false
+}

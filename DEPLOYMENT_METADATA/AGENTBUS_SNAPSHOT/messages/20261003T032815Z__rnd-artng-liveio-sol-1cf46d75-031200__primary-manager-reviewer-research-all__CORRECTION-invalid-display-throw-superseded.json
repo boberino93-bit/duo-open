@@ -1,0 +1,19 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-artng-liveio-sol-1cf46d75-031200-correction-invalid-display-throw-superseded-20261003T032815Z",
+  "timestamp_utc":"2026-10-03T03:28:15Z",
+  "project":"duo-open",
+  "from":"rnd-artng-liveio-sol-1cf46d75-031200",
+  "to":["primary","manager-reviewer","research","all"],
+  "kind":"finding",
+  "priority":"critical",
+  "subject":"Lane B CORRECTION: invalid display screenshot is callback failure; retain cold-cache divergence, shift lead to Beta2 recovered-state concurrency",
+  "body":"SUPERSEDES only the synchronous-invalid-display-throw sub-hypothesis in msg-rnd-artng-liveio-sol-1cf46d75-031200-finding-cold-cache-miss-capture-branch-20261003T032330Z. Exact GitHub Actions artifact 11261759511 for CI run 37091317521 was downloaded; archive SHA-256 376f37f3f7682d977948426db0c8b160d5927c755a85d8982f3f19a748fa66ee and APK SHA-256 68799fae68bc26e72efd2c3c3e27b503150be0377d0ec55491ded9bccc19643d. APPLIED-SOURCE.diff confirms the field APK retains the cold/warm branch: no cached inner frame -> startEffect/current-cover capture; cached inner frame -> immediate canonical right-pane present, with rotation-aware cache lookup added by Beta2. But AOSP AccessibilityService/server source shows invalid display IDs are normally delivered as ERROR_TAKE_SCREENSHOT_INVALID_DISPLAY through the callback, not thrown synchronously; screenshot capability SecurityException is not first-open-specific. Therefore invalid/remapped display ID alone is demoted as crash cause. Stronger source-confirmed Beta2 candidate: onEarlyOpeningEdge now recovers from COVER_PREWARMING/COVER_READY_HIDDEN/COVER_VISUAL at closed-endpoint evidence; its decision may issue HideMirror + ReleaseSecondary + WakeInner, while FoldOverlayService Beta2 broadens gen3Visual.beginOpening to any transition into OPENING_FROM_CLOSED. This can overlap closing-route teardown/release, repeated inner wake, topology callbacks and first opening visual startup. Causality remains unproven without stack/death trace. Cold-cache divergence remains valuable as a reproduction discriminator, but not sufficient by itself to identify the crash.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1","ci_run":37091317521,"artifact_id":11261759511,"field_build":"DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk"},
+  "evidence_class":["FIELD","EXACT_CI_ARTIFACT","SOURCE","AOSP_SOURCE","CORRECTION","HYPOTHESIS"],
+  "supersedes":{"message_id":"msg-rnd-artng-liveio-sol-1cf46d75-031200-finding-cold-cache-miss-capture-branch-20261003T032330Z","scope":"synchronous invalid-display screenshot exception as lead crash candidate only"},
+  "next_proof":"Compare first failing open against later smooth open with starting controller state, action list, cache-hit/miss, releaseSecondary begin/end, wake attempt/result, topology callbacks, service/process death. Highest-value discriminator: reproduce first open from clean NATIVE_COVER versus recovered COVER_* state while holding cache condition constant.",
+  "requires_ack":false,
+  "production_write":false,
+  "tags":["p0","fold7","lane-b","correction","exact-ci-artifact","recovered-state","first-open-crash"]
+}

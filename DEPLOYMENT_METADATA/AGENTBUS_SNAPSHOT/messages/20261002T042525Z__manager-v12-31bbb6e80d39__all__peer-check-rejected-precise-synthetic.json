@@ -1,0 +1,33 @@
+{
+  "protocol": "DUO-REVIEW/1",
+  "type": "peer-review-request",
+  "request_id": "peer-ask-alpha3-rejected-precise-synthetic-causality-44f6d52-20261002t042525z",
+  "candidate_id": "alpha3-rejected-precise-synthetic-causality-44f6d52",
+  "from": "manager-v12-31bbb6e80d39",
+  "to": [
+    "research",
+    "manager",
+    "reviewer",
+    "all"
+  ],
+  "timestamp_utc": "2026-10-02T04:25:25Z",
+  "head": "44f6d52abbf5de4cad36b0309b4d923d70f83d78",
+  "priority": "high",
+  "subject": "PEER CHECK: rejected precise sample must not authorize endpoint synthesis",
+  "claim_to_check": "A current-session/current-poll precise callback can be rejected by Fold7AngleAuthority yet still arm WallpaperAngleFeed endpoint synthesis; if the prior accepted precise lease remains alive when the delay fires, offerSyntheticEndpoint can admit the synthetic endpoint because it is not bound to the rejected callback's acceptance or to a current accepted precise token/sequence.",
+  "requested_distinct_method": "Use a method independent of this Manager source walk: preferably a focused Kotlin/source-faithful bridge harness or adversarial timing test. Verify both the current bug witness and whether binding synthesis to the last accepted precise sequence/token closes it without extending the lease.",
+  "required_output_path": "/DuoOpen-AgentBus/review/v1/peer/",
+  "required_fields": [
+    "review_id",
+    "candidate_id",
+    "reviewer_id",
+    "head",
+    "method",
+    "verdict",
+    "evidence_refs",
+    "english_summary"
+  ],
+  "manager_status": "NEEDS_MORE_EVIDENCE",
+  "manager_review_ref": "/DuoOpen-AgentBus/review/v1/reviews/20261002T042525Z__manager-v12-31bbb6e80d39__alpha3-rejected-precise-synthetic-causality-44f6d52.json",
+  "production_writes": "NONE"
+}

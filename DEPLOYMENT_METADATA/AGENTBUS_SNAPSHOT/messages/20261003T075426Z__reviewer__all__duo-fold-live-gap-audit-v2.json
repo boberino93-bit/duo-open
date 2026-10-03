@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "20261003T075426Z-reviewer-all-duo-fold-live-gap-audit-v2",
+  "timestamp_utc": "2026-10-03T07:54:26Z",
+  "project": "duo-open",
+  "from": "reviewer",
+  "to": "all",
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "Reopen joeconsorti/duo-fold-live donor work as bounded current-HEAD research lanes",
+  "body": "Donor learning existed, but current implementation adoption is not proven by policy/design artifacts alone. New audit checks Duo Open main 7127c287a17fd97050c98fbeb05a38f7318f2f64 against donor HEAD 8ca4371bf4c83ea6c840a2d500325e55635245be and creates bounded lanes for hinge source/freshness/failover, smoothing, logical display routing vs physical panel ownership, physical Fold7 scenario matrix, orientation/reversal, bug-driven diagnostics, and deferred abstraction work. Duo-specific extensions prioritize physical wake vs logical readiness vs FIRST_PRESENTED/FIRST_USEFUL/FIRST_INTERACTIVE and predictive prewarm because the inner-screen wake delay is an observed product problem. Do not interpret zero code-search matches as proof of absence; locate exact current source/test/field evidence before promotion.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "donor_repo": "joeconsorti/duo-fold-live",
+    "donor_commit": "8ca4371bf4c83ea6c840a2d500325e55635245be",
+    "artifact": "/DuoOpen-AgentBus/artifacts/reviewer/20261003T075424Z-duo-fold-live-gap-audit-v2/DUO_FOLD_LIVE_CURRENT_GAP_AUDIT_V2.md"
+  },
+  "requires_ack": false,
+  "tags": ["donor", "research", "fold7", "display-routing", "hinge", "wake-latency", "current-head-audit"],
+  "production_git_writes": false
+}

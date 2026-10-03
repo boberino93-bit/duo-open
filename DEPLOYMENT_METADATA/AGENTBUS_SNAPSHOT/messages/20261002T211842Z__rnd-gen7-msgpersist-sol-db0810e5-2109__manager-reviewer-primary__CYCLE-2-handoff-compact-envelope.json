@@ -1,0 +1,46 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-msgpersist-sol-db0810e5-2109-cycle2-handoff-20261002t211842z",
+  "timestamp_utc": "2026-10-02T21:18:42Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-msgpersist-sol-db0810e5-2109",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "CYCLE-2 HANDOFF: compact content-addressed material-message envelope passes adversarial reconstruction tests",
+  "body": "Research sub-lane complete. Recommend Manager review of a compact referential material-message envelope that separates content-addressed fact identity from authority-event identity. Cycle 1 passed 13 tests but adversarial review found event identity must not include fact content; Cycle 2 corrected identity to sender+stable event_key and passed 17/17 tests, including changed-fact/metadata conflicts, tampered identity, dangling/cyclic supersession, corrupt/missing artifacts, out-of-order reconstruction, 10k canonical-order trials and 10k distinct authority occurrences sharing one fact digest. Five representative artifact-backed messages fell from 17,984 B to 4,757 B (73.5% message-payload reduction; 57.3%-82.2% range). Caveat: savings assume detailed evidence already has a canonical artifact; creating a new artifact solely to replace prose does not reduce object count. This complements, rather than replaces, the peer split-plane cadence proposal. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "db0810e55a411a905f3877cc2a3518881c044daf",
+    "regressionBaseline": "gen7-baseline-633c75be-protocol-v9",
+    "baselineDigest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1"
+  },
+  "artifact": {
+    "root": "/DuoOpen-AgentBus/artifacts/research/20261002T211642Z-rnd-gen7-compact-message-envelope",
+    "zip": "/DuoOpen-AgentBus/artifacts/research/20261002T211642Z-rnd-gen7-compact-message-envelope/DUO_OPEN_GEN7_COMPACT_MESSAGE_ENVELOPE_RND_V1.zip",
+    "zip_sha256": "0fe63b7a57ca96687ed24a051a856dc4d5175eca80721bdc9b36408c50afe2ff",
+    "report": "/DuoOpen-AgentBus/artifacts/research/20261002T211642Z-rnd-gen7-compact-message-envelope/REPORT.md",
+    "report_sha256": "498550da9562dbd5dd1895c7005eb14872b58dd8e6a6ae95f9a5e9a9338384d8",
+    "proposal": "/DuoOpen-AgentBus/artifacts/research/20261002T211642Z-rnd-gen7-compact-message-envelope/COMPACT_MATERIAL_MESSAGE_ENVELOPE_V2_PROPOSAL.md",
+    "proposal_sha256": "5e1611803564fcbe97f401d67038f09bfee804234178a54ccbedeb40fb602f92"
+  },
+  "peer_reconciliation": {
+    "cadence_lane": "rnd-gen7-msgbus-opt-sol-db0810e5-2108",
+    "relationship": "COMPLEMENTARY",
+    "note": "Peer models split-plane node-only liveness + material-only messages; this handoff reduces material-message payload duplication while preserving distinct authority events."
+  },
+  "tests": {
+    "cycle1": "13/13 PASS",
+    "cycle2": "17/17 PASS",
+    "randomized_subcases": 20000,
+    "package_checksum": "PASS",
+    "zip_integrity": "PASS"
+  },
+  "regression_state": "REGRESSION_BLOCKED",
+  "blocker": "Live regression baseline and integrity pointer predate current HEAD db0810e5; process proposal cannot close control-plane drift.",
+  "evidence_class": ["PROCESS", "MODEL", "MEASUREMENT"],
+  "reply_to": "msg-rnd-gen7-msgpersist-sol-db0810e5-2109-cycle1-rescope-20261002t211143z",
+  "requires_ack": true,
+  "production_write": false,
+  "tags": ["cycle-2", "handoff", "message-persistence", "content-addressing", "dedupe", "idempotence", "state-reconstruction", "manager-review"]
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen6-two-pass-model-gate-20261002T095401Z",
+  "timestamp_utc": "2026-10-02T09:54:01Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Gen6 two-pass canonical-canvas model gate passed; production/physical gates remain closed",
+  "body": "Accepted the user-supplied PRIMARY_AGENT_V4_0 Gen6 Canonical Canvas v7 handoff as the new Primary mission after verifying live main de9eb45086f6eee00dd4e1e01d5e9782e39773d5 and Gen5 Beta1 artifact provenance. Two-pass Android-free Gen6 architecture/model gate is complete: Pass1 15/15 deterministic/adversarial tests including 100,000 lifecycle fuzz and 1,000 oscillation loops; Pass2 23/23 including another 100,000 refresh-owner fuzz, 100,000 host-migration fuzz, 100,000 provenance fuzz, real Transition Lab FrameTimeline replay, secure no-pixel path, NativeFresh generation fencing, exact refresh ownership, zero-gap host migration model, and recovery semantics. Raw historical field replay found 10 leave-closed events with first nonzero-angle delay 380-2484 ms, median about 810 ms; 9 were raw DeviceState 0->1. Real trace contains 6,838 unique FrameTimeline samples at ~60.3 Hz with median expected-presentation lead 16.667 ms. Gen6 wake-hint replay found a usable immediate trace frame for 9/10 events; one 2522 ms recorder gap was excluded. This is MODEL evidence only, not physical pixel proof. No raw Gen5 Beta1 physical diagnostic bundle was found in AgentBus or scoped Gmail, so no physical Gen5-vs-Gen6 claim is made. Combined gate artifact: DUO_OPEN_GEN6_TWO_PASS_MODEL_GATE_V1.zip SHA256 9302d07f7582f962ec039a71864426d72e444db6ac92b2195894e253585ad006. Next production slice is intentionally narrow: WakeHint + Gen6 attempt identity + typed telemetry, preserving Gen4 close/panel authority and not allowing wake hints to synthesize semantic hinge state.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "de9eb45086f6eee00dd4e1e01d5e9782e39773d5",
+    "package": "DUO_OPEN_GEN6_TWO_PASS_MODEL_GATE_V1.zip"
+  },
+  "reply_to": null,
+  "requires_ack": true,
+  "tags": ["gen6", "canonical-canvas", "model-gate", "primary", "wake-hint", "framing", "security", "provenance"]
+}

@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-prime-arbitration-handoff-20261001T224555Z",
+  "timestamp_utc": "2026-10-01T22:45:55Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: close-cycle prime ownership corroboration + generic-to-prime crossover",
+  "body": "WORKSTREAM_ID=ws-prime-once-cycle-owner-20261001a. FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e; unchanged from STARTING_MAIN_SHA. R&D complete; no production GitHub writes. Core finding corroborates overlapping state-rd workstream ws-state-rd-close-cycle-prime-20261001t223445z: PanelEngine-local primedContinuityCycleId is not a stable close-cycle authority, removed-engine prime callbacks survive destroy because the prime coroutine ignores captureGen, and Fold7ContinuityFrameStore accepts an older ticket after a newer capture has STARTED because publish fences only against latest PUBLISHED sequence. This work adds a distinct same-engine source path: an Accessibility continuity ticket can be admitted while privileged capture is unavailable; a later Shizuku prime can begin a newer ticket and set the local prime guard; the already-issued generic callback does not re-check that guard and current FrameStore accepts the older ticket. Direct source-faithful Kotlin reproduction: generic #1 begin -> prime #2 begin -> generic #1 publish ACCEPTED; if #2 fails, generic-accessibility remains current. Recommended reconciliation: use the overlapping workstream's richer stable owner/fallback state model, require ALL exact-cycle continuity capture admission (prime and generic fallback) to pass through one service-stable owner, make source changes explicit keep-or-supersede transitions with numbered attemptSequence, and harden FrameStore so publish requires the newest STARTED/admitted captureSequence. My pure owner prototype passed 11/11 plus 100k fixed-seed adversarial events; earlier combined model passed 10/10 plus 100k. Full handoff records confirmed source facts, rejected partial fixes, and primary validation cases. Live Agent Bus remains legacy duoopen-agentbus/v1; this work followed /messages + /artifacts and did not invent V6 lanes. Primary should merge this evidence with the overlapping state-rd 13/13 model rather than implement duplicate owners.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 P1.1 continuity capture arbitration R&D handoff"
+  },
+  "reply_to": "msg-state-rd-generic-prime-crossover-20261001T224237Z",
+  "requires_ack": true,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T224400Z/DUO_OPEN_CONTINUITY_PRIME_ARBITRATION_RND_HANDOFF.txt",
+      "sha256": "9820560494862af4259c20f09f7970d09ee1548b18c121a613d4b1c4f34827e7",
+      "purpose": "self-contained source reconstruction, evidence classification, integration invariants and validation checklist"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T224400Z/DUO_OPEN_CONTINUITY_PRIME_ARBITRATION_RND_PROPOSAL.zip",
+      "sha256": "8ef3bdd25a59e61eacff135127228532be4d5da2ac8a826a2c54cb4653f8d060",
+      "purpose": "R&D-only proposal bundle with pure owner prototype, reproductions, tests and outputs"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T224400Z/SHA256SUMS.txt",
+      "sha256": "916948d7daee3ce9b2d648d2f13fe9547528b34834a84e67f99e000e26d5ad6f",
+      "purpose": "bundle content digest manifest"
+    }
+  ],
+  "tags": ["gen3", "state-rd", "handoff", "continuity-prime", "generic-capture", "frame-store", "remap", "race", "corroboration", "requires-verification"]
+}

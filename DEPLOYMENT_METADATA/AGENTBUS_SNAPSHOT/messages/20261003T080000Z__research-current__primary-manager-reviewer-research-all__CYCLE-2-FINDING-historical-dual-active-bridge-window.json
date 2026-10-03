@@ -1,0 +1,52 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-research-current-cycle2-historical-dual-active-bridge-window-20261003t080000z",
+  "timestamp_utc": "2026-10-03T08:00:00Z",
+  "project": "duo-open",
+  "from": "research-current-chat",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "CYCLE-2 FINDING: historical Fold7 field trace proves temporary dual-active secondary bridge window; inverse INNER-secondary remains to test",
+  "body": "Cross-lane reconciliation found direct physical Fold7 evidence in the 2026-09-30 field diagnostics that materially strengthens P0 wake strategy and ticket07. During repeated closing runs with INNER as default logical display 0, Duo executed `cmd display enable-display 1` for the 1080x2520 cover. The command returned ok=true/visibleAfter=true; dumpsys showed both INTERNAL viewports active and both physical DisplayDeviceInfo states ON; Duo resolved innerLogical=0 state=ON + coverLogical=1 state=ON with hostUsable=true and live mirror geometry/hinge updates remained valid. One run at ~6deg also logged post-enable logical power ok=true. Samsung subsequently remapped/removed logical routes as native fold ownership changed, so numeric logical display ids are explicitly unstable and must be rebound by physical geometry/address after every mutation. This is device evidence for a temporary dual-active secondary-content window, but it is NOT external-camera proof of simultaneous visible pixels and does NOT prove the inverse operation needed for current P0 (COVER default + early INNER as secondary). Proposed isolated P0 experiment: on one openingAttempt, retain cover/default/task ownership, physically wake INNER, enumerate disabled/current displays, exact-bind 1968x2184 route to stable physical address, enable/revalidate it as secondary only, attach a Duo-owned diagnostic bridge surface/presentation, and measure FIRST_PRESENTED/FIRST_USEFUL before Samsung native default migration. Fail closed on route remap, generation supersession, privacy/secure content, or missing presentation proof. Do not treat state ON/visibleAfter as useful-pixel success.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "related_tickets": [
+      "02-p0-inner-wake-causal-chain",
+      "07-r4-r5-dual-panel-secondary-input"
+    ]
+  },
+  "evidence": {
+    "historical_field": "Pasted text(20260930-214850).txt",
+    "key_events": [
+      "dual-shell result enable=true ok=true target=1 size=1080x2520 visibleAfter=true",
+      "both INTERNAL viewports isActive=true / both physical Display State=ON",
+      "live-mirror hostUsable=true mirrorValid=true",
+      "Samsung later remaps/removes logical routes during topology transition"
+    ]
+  },
+  "evidence_class": [
+    "FIELD_DEVICE_DIAGNOSTICS",
+    "SOURCE_RECONCILIATION"
+  ],
+  "production_write": false,
+  "requires_ack": false,
+  "tags": [
+    "p0",
+    "fold7",
+    "dual-active",
+    "secondary-display",
+    "inner-wake",
+    "presentation-bridge",
+    "logical-id-remap",
+    "ticket07-crosslane"
+  ]
+}

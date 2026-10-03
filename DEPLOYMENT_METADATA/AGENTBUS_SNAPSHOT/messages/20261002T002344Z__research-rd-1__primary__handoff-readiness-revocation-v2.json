@@ -1,0 +1,48 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "project": "duo-open",
+  "from": "research-rd-1",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "priority": "high",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "179e688e234fd54cedf99aa7792c86de00bba947",
+    "package": "exact cover-readiness-gated Gen3 visual admission V2"
+  },
+  "requires_ack": false,
+  "id": "msg-research-rd-1-handoff-readiness-revocation-v2-20261002t002344z",
+  "timestamp_utc": "2026-10-02T00:23:44Z",
+  "kind": "handoff",
+  "subject": "HANDOFF V2: gate landed Gen3 closing Host binding on exact Fold7CoverReadiness",
+  "body": "WORKSTREAM_ID=ws-research-rd-1-readiness-revocation-20261002. WORKSTREAM_STATE=COMPLETE. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339; FINAL_MAIN_SHA=179e688e234fd54cedf99aa7792c86de00bba947; MAIN_CHANGED_DURING_RND=YES; final runtime 3.0.0-alpha1-zfold7. Authoritative finding after drift reconciliation: Gen3 now correctly separates visual-attempt ownership, but closing Host eligibility still bypasses exact cover readiness. Fold7ContinuityCoordinator.visualMirrorActive is demand-only; FoldOverlayService passes it as closingVisible; Fold7Gen3VisualCoordinator currentCoverDisplay() chooses a 1080x2520 Display whose state is not OFF, without requiring Fold7CoverReadiness READY/current Demand/expectedLogicalId/lease token. Gen3 already detaches on total geometry-host disappearance, so the missing invariant is specifically exact readiness. Recommended integration: keep Fold7CoverVisualAttemptOwner.visibleDemand semantic; make closing Host binding consume exact current Fold7CoverReadiness READY + Demand.expectedLogicalId/current lease identity; READY->WAITING calls hostLost+detachRenderer while demand remains; shell mutation success alone cannot bind; fresh exact READY creates a new hostEpoch/attempt; stale callbacks inert. No new shell protocol required. Model 16/16 + 100k PASS. Current Gen3 deployment workflow 36945202056 was SUCCESS with focused ownership tests/full build gate, but does not test this readiness-host composition. Full V2 handoff/package uploaded. No production GitHub writes by research-rd-1.",
+  "reply_to": "msg-research-rd-1-test-readiness-revocation-v2-20261002t002343z",
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T002341Z/DUO_OPEN_POST_READY_COVER_REVOCATION_RND_HANDOFF_V2.txt",
+      "sha256": "0000b123b4560ca03df20aaf0692030b215dd0284768fd0da4a8fb44ddbcad99",
+      "purpose": "authoritative current-main R&D handoff"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T002341Z/DUO_OPEN_POST_READY_COVER_REVOCATION_RND_PROPOSAL_V2.zip",
+      "sha256": "750d71720e9dc32013731e56c628e64859d326d723d2d1cd0aae9f3f9bb4bc9c",
+      "purpose": "self-contained V2 proposal package"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T002341Z/SHA256SUMS_V2.txt",
+      "sha256": "12b7e1f0d2608691a2231fd900e6dbca80863b4aa29cbc9108391bc814cd244e",
+      "purpose": "V2 integrity manifest"
+    }
+  ],
+  "tags": [
+    "handoff",
+    "gen3",
+    "current-main",
+    "cover-readiness",
+    "visual-admission",
+    "host-binding",
+    "device-validation"
+  ]
+}

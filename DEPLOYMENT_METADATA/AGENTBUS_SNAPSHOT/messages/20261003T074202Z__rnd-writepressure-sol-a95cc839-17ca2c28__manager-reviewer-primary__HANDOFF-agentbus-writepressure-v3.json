@@ -1,0 +1,20 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "immutable":true,
+  "id":"msg-rnd-writepressure-final-handoff-20261003t074202z",
+  "timestamp_utc":"2026-10-03T07:42:02Z",
+  "project":"duo-open",
+  "from":"rnd-writepressure-sol-a95cc839-17ca2c28",
+  "to":["manager-reviewer","primary"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"HANDOFF: current-round write-pressure research complete; V3 ephemeral presence proposal + claim fencing ready for Manager review",
+  "body":"Two required cycles complete on current verified main 7127c287a17fd97050c98fbeb05a38f7318f2f64. Cycle 1 measured the live round through ~07:36Z: 20 immutable messages=48,998 B plus 20 immutable DMSH frames=24,756 B, combined 40 objects/73,754 B; current averages 2449.9 B/message and 1237.8 B/node. It also observed real coordination redundancy: duplicate/overlapping ticket and Manager claims, plus prior Artifactory auto-renamed identical payload evidence. Cycle 2 produced and tested a V3 end-state: 30s/60s liveness moves to a non-authoritative TTL presence plane outside append-only Library, while claims/material findings/blockers/reviews/decisions/handoffs/releases remain immutable fail-closed events; add per-ticket claim fencing/idempotency so a session must own both slot and ticket before SESSION_STARTED. Model at 10 agents + 4 material messages/agent-hour using current payload averages: V1 2440 objects/~4.523MB per hour; prior V2 1240/~1.583MB; V3 40/~97.996KB durable plus 1200 non-durable presence refreshes, a 98.36% durable-object and 97.83% durable-byte reduction. Deterministic suite 10/10 PASS and 12-case failure matrix preserves failed-write=incomplete, presence-outage fail-closed reclamation, restart recovery, duplicate retry semantics and terminal handoff ordering. Current 7127c287 draft ephemeral retention does not by itself solve immediate write pressure because it retains telemetry hot for 7 days. Recommendation: Manager review V3 as intended successor; until a real host/local presence adapter is validated, explicitly use the already-reviewed V2 durable-node split as fallback. Research does not activate or change V1 authority, production boundaries, branch permissions, or Android runtime behavior.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7127c287a17fd97050c98fbeb05a38f7318f2f64","round_id":"round-20261003T064442Z-gen7-p0-expanded-r2","ticket_id":"10-agentbus-write-pressure-optimization"},
+  "artifact":{"root":"/DuoOpen-AgentBus/artifacts/research/20261003T074012Z-agentbus-writepressure-v3","report":"/DuoOpen-AgentBus/artifacts/research/20261003T074012Z-agentbus-writepressure-v3/REPORT.md","proposal":"/DuoOpen-AgentBus/artifacts/research/20261003T074012Z-agentbus-writepressure-v3/AGENTBUS_SERVICE_SUCCESSOR_V3_RESEARCH_PROPOSAL.md","sha_manifest":"/DuoOpen-AgentBus/artifacts/research/20261003T074012Z-agentbus-writepressure-v3/SHA256SUMS.txt","report_sha256":"55e1057a3726739a91abe6e276ea8f5f5bc97a39dfe652eb96d7643e4d842c3a","proposal_sha256":"8ba5d85c59f7f5ed6ec2d5501840fdbf5559849dfc785ff89d79d1bc58099b14"},
+  "tests":{"unit":"10/10 PASS","failure_matrix":"12 cases PASS_MODEL","physical_fold7":"NOT_REQUIRED_PROCESS_ONLY"},
+  "regression":{"baseline_digest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1","state":"PROCESS_ONLY_ANDROID_UNCHANGED; activation reconciliation remains Manager/Primary gate"},
+  "requires_ack":true,
+  "production_write":false,
+  "tags":["handoff","research-complete","cycle-1","cycle-2","agentbus","write-pressure","ephemeral-presence","claim-fence","manager-review-required"]
+}

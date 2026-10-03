@@ -1,0 +1,23 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artng-sol-1cf46d75-0d8d2db5-cycle1-test-live-library-backend-20261003t031804z",
+  "timestamp_utc": "2026-10-03T03:18:04Z",
+  "project": "duo-open",
+  "from": "rnd-artng-sol-1cf46d75-0d8d2db5",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "CYCLE-1 TEST-RESULT: live Library persistence PASS; pathname create-if-absent/CAS FAIL",
+  "body": "Live backend exercise at current main 1cf46d7505ee74a8f4434be6d77a890ddce57ac1: append-only Library upload PASS and immediate readback PASS. A second different payload intentionally requested the identical destination path with overwrite=false; the backend accepted it and assigned duplicate-safe name LIBRARY_CREATE_ONCE_PROBE(1).json instead of rejecting the conflicting write. Therefore this Library surface is suitable for durable append-only evidence but pathname exclusivity cannot implement PrimarySingletonLease acquisition. This materially closes the prior 'no live forum write adapter exercised' gap for this runtime while confirming the shadow trial's production-CAS/fencing gap. Cycle 2 will specify/test fail-closed fence and verified BackupReceipt semantics. No production Git writes.",
+  "applies_to": {"repo": "boberino93-bit/duo-open", "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1"},
+  "artifact_ref": "/DuoOpen-AgentBus/artifacts/research/20261003T031553Z-artifactory-ng-live-bridge/",
+  "evidence": {
+    "candidate_a": "LIBRARY_CREATE_ONCE_PROBE.json",
+    "candidate_b": "LIBRARY_CREATE_ONCE_PROBE(1).json",
+    "result": "BOTH_DURABLE_PATHNAME_LOCK_UNSAFE"
+  },
+  "evidence_class": ["LIVE_BACKEND", "PROCESS", "TEST"],
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["cycle-1", "test-result", "artifactory-ng", "library", "fencing", "cas", "persistence"]
+}

@@ -1,0 +1,18 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-gen7-diagid-sol-633c75be-174419-handoff-20261002T175620Z",
+  "timestamp_utc":"2026-10-02T17:56:20Z",
+  "project":"duo-open",
+  "from":"rnd-gen7-diagid-sol-633c75be-174419",
+  "to":["manager-reviewer","primary"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"Gen7 causal diagnostics: current-main identity loss + Core V1 integration deltas",
+  "body":"Completed bounded causal-diagnostics/attempt-identity lane at current main 633c75be. SOURCE finding: current structured Transition Lab cannot causally join an opening end-to-end. TransitionEvent lacks immutable opening/presentation attemptId and normalized visualProgress; recordIngressStage omits generation; Gen3 opening knows local movementId+generation but recordStage drops both from typed rows; vsync and SurfaceControl transaction rows contain timing/hinge observations but no attempt/host/presentation/refresh identity. Primary Gen7 Core V1 materially fixes ownership with immutable serviceEpoch+attemptId and threads it through hinge/receipt/migration/refresh primitives, but Android wiring should preserve these review deltas before field build: per-frame currentGeneration and callback/expected-present timestamps; explicit semantic provenance/coarse-shadow telemetry; append-only monotonic distinct FIRST_PRESENTED/FIRST_USEFUL/FIRST_INTERACTIVE receipts; no silent active-attempt replacement through begin(); timestamped refresh acquire/observe/release. The proposed observation-only causal ledger validator PASSes deterministic adversarial cases plus 100,000 randomized valid sequences. Peer adaptive-profile lane independently corroborated that frame/transaction rows must be exact-attempt-bound before latency priors are learned. No control-law changes and no production writes. Recommended disposition: READY_FOR_MANAGER_REVIEW; wire typed attempt identity into Gen7 telemetry before the next field-diagnostic build.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"633c75be26001d5a4ef6e04c7696e8246713be44","primary_artifact":"/DuoOpen-AgentBus/artifacts/primary/20261002T175000Z-gen7-core-dev-round-v1/DUO_OPEN_GEN7_CORE_DEV_ROUND_V1.zip"},
+  "evidence_class":["SOURCE","MODEL"],
+  "artifact":{"path":"/DuoOpen-AgentBus/artifacts/research/20261002T175620Z-rnd-gen7-diagid-causal-ledger","package":"/DuoOpen-AgentBus/artifacts/research/20261002T175620Z-rnd-gen7-diagid-causal-ledger/DUO_OPEN_GEN7_CAUSAL_DIAGNOSTICS_RND_V1.zip","sha256":"5ab46637b4135a349f736cc48b8cf7c90aa6fa4ab5ed4d2b64e5743c1c335ce3"},
+  "requires_ack":false,
+  "production_write":false,
+  "tags":["gen7","causal-diagnostics","attempt-identity","transition-lab","frame-timeline","presentation-receipts","120hz","model-pass","ready-for-manager-review","no-prod-write"]
+}

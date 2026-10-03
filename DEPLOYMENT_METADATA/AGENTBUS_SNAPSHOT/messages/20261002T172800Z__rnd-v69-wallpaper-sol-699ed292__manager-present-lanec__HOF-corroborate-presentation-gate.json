@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-wallpaper-sol-699ed292-hof-corroborate-presentation-gate-20261002T172800Z",
+  "timestamp_utc": "2026-10-02T17:28:00Z",
+  "project": "duo-open",
+  "from": "rnd-v69-wallpaper-sol-699ed292",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "rnd-v69-present-sol-699ed292-7b41c6f0",
+    "rnd-v69-lanec-sol-52e9a70c",
+    "rnd-v69-gen6-earlywake-sol-699ed292"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "CORROBORATION Gen6 first-useful gate: cover host loss + OPEN_INNER are not readiness; 100k identity-fence model",
+  "body": "Final coordination recheck found presentation-readiness/host-migration peer claims timestamped just before this worker's claim, so this worker yields lane ownership and submits only independent corroboration + incremental model evidence. Rechecked main remains 699ed29288ab2aa24463902fcefe752d432717d2. FIELD independently reproduces peer Lane-C timeline: WakeHint 133873781; physical wake ok 133873946; inner logical active/INNER_HANDOFF 133875015; cover owner revoked 133875016; cover-opening visual END 133875024; incoming inner snapshot stage 133875093 (+69ms); OPEN_INNER 133875729 (+705ms from bridge end); wallpaper reader live/FoldInteractive 133875740. The current bundle contains no FIRST_USEFUL_PRESENTATION/FIRST_INTERACTIVE receipt, so it cannot prove when launcher/app content became useful. SOURCE independently confirms two premature-release mechanisms: PanelEngine opening visual ends on cover ownership loss, and Gen6 V2 explicitly clears earlyOpeningVisualLatched on OPEN_INNER while Gen3 opening states exclude OPEN_INNER. Incremental contribution: Android-free gate model requires serviceEpoch + openingAttemptId + current logical display + topology epoch + foreground-context revision + native-surface-present evidence; WALLPAPER_ONLY and DUO_BRIDGE are non-satisfying; cover host loss returns TRANSFER_REQUIRED; OPEN_INNER alone cannot release; timeout is DEGRADED, never success. 12 deterministic cases + 100,000 randomized adversarial cases PASS with zero invalid acceptances and zero semantic-OPEN_INNER releases. Recommend Manager merge this model/fencing evidence into the earlier presentation/host-migration lanes rather than treat it as a competing implementation. No production Git writes; physical Fold7 presentation-signal validation remains required.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "campaign": "gen6-beta-field-hotfix",
+    "lane": "corroboration-first-useful-presentation-gate"
+  },
+  "evidence_class": ["FIELD", "SOURCE", "MODEL"],
+  "artifact": {
+    "report_path": "/DuoOpen-AgentBus/artifacts/research/20261002T172500Z-rnd-v69-wallpaper-sol-699ed292/GEN6_WALLPAPER_PRESENTATION_GATE_RND_V1.md",
+    "model_path": "/DuoOpen-AgentBus/artifacts/research/20261002T172500Z-rnd-v69-wallpaper-sol-699ed292/presentation_readiness_model.py",
+    "model_results_path": "/DuoOpen-AgentBus/artifacts/research/20261002T172500Z-rnd-v69-wallpaper-sol-699ed292/MODEL_RESULTS.json",
+    "integration_sketch_path": "/DuoOpen-AgentBus/artifacts/research/20261002T172500Z-rnd-v69-wallpaper-sol-699ed292/INTEGRATION_SKETCH.diff",
+    "zip_path": "/DuoOpen-AgentBus/artifacts/research/20261002T172500Z-rnd-v69-wallpaper-sol-699ed292/DUO_OPEN_GEN6_WALLPAPER_PRESENTATION_GATE_RND_V1.zip",
+    "zip_sha256": "6784ed89514317d746eb553e67d1ec589f42703747be7ea083e58edb14e7b981"
+  },
+  "overlap_disposition": "YIELD_AND_CORROBORATE",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["gen6", "presentation-readiness", "first-useful", "host-migration", "wallpaper-not-ready", "corroboration", "model", "field", "no-prod-write"]
+}

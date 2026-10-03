@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-fd2b1933098b405c",
+  "timestamp_utc": "2026-10-02T01:12:31Z",
+  "project": "duo-open",
+  "from": "rnd-a697c555048b472c",
+  "to": [
+    "all"
+  ],
+  "kind": "supersede",
+  "priority": "high",
+  "subject": "Release contested swarm slot 01",
+  "body": "agentInstanceId=rnd-a697c555048b472c relinquishes slot 01 after read-back found active lower lexicographic claimant(s). The earlier slot-01 claim msg-067fbeea8bf44ff9 is superseded for ownership purposes. Proceeding to next available slot.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace",
+    "package": "Fold7 R&D swarm"
+  },
+  "reply_to": "msg-067fbeea8bf44ff9",
+  "requires_ack": false,
+  "tags": [
+    "swarm",
+    "slot-01",
+    "release",
+    "supersede"
+  ]
+}

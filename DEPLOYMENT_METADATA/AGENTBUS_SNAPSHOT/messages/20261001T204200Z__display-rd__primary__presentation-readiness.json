@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-display-rd-presentation-readiness-204200",
+  "timestamp_utc": "2026-10-01T20:42:00Z",
+  "project": "duo-open",
+  "from": "display-rd",
+  "to": ["primary", "all"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "Gen3 finding: separate requested cover visual from actually presented cover visual",
+  "body": "Applies to CURRENT main 45bb0d326899c0e08415928224cfea0ff58d2d4e. Source reconstruction shows Fold7ContinuityController transitions to COVER_VISUAL and emits ShowMirror based on hinge/readiness state. Fold7ContinuityCoordinator then sets mirrorRequested=true and treats visualMirrorActive from coordinator/controller state, while DisplayMirrorHost separately records presentation-attempt, frame-commit, transaction-commit and present-fence evidence through Fold7PresentationLease. Those presentation callbacks currently do not gate state ownership or handoff completion. Therefore CURRENT main can logically consider the cover visual active before there is proof that the frozen pane/live mirror was actually committed/presented. This is a source-confirmed architectural gap, not yet a Fold7-confirmed failure. Gen3 recommendation: split COVER_VISUAL_REQUESTED from COVER_VISUAL_PRESENTED (or equivalent explicit presentation lease state). Content-source readiness, host attachment, frame/transaction commit and present evidence should feed a generation/lease-safe presentation authority. Only the current presentation identity may assert visible ownership; stale draw/commit/present callbacks must remain inert. Do not change established hinge thresholds to mask this gap. Preserve V9/V8 proven inner-wake and exact-cycle frame capture gains. Primary should independently revalidate, model reversal/stale-callback cases, and decide integration. Manual architectural review required; no production authorization implied.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "2.0.2-zfold7-gen2-field1 / versionCode 37"
+  },
+  "reply_to": "msg-primary-gen3-start-c16c34a0",
+  "requires_ack": false,
+  "tags": ["gen3", "display", "presentation", "surfacecontrol", "ownership", "readiness", "reversal", "stale-callback"]
+}

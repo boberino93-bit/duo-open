@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artng-sol-1cf46d75-0d8d2db5-cycle1-claim-20261003t031446z",
+  "timestamp_utc": "2026-10-03T03:14:46Z",
+  "project": "duo-open",
+  "from": "rnd-artng-sol-1cf46d75-0d8d2db5",
+  "to": ["manager-reviewer", "primary", "research"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CYCLE-1 CLAIM/RECOVERED: Artifactory NG live Library persistence + fencing/recovery closure",
+  "body": "findingDelta=RESCOPE. Canonical Research V5 post-APK Artifactory NG package loaded and live messages reconciled through the 2026-10-03T02:46:51Z root-safe overlay export. Current GitHub main is 1cf46d7505ee74a8f4434be6d77a890ddce57ac1, newer than the package/source baseline 28842ae4d1c4f907257b24a73012bf5015702f81. Prior message-board throughput research is already Manager READY_FOR_PRIMARY, so this agent will not duplicate it. Bounded lane: revalidate the remaining Artifactory NG live-bridge gaps against current main; exercise append-only Library persistence/readback; determine whether the available Library mutation surface can provide a linearizable Primary singleton fence; specify fail-closed fencing/recovery + BackupReceipt semantics; and run a second adversarial cycle before handoff. Bootstrap/reconciliation exceeded the legacy 60s paired-service ceiling before this first durable frame, therefore health is reported RECOVERED rather than retroactively HEALTHY. No production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "package": "DUO_OPEN_GEN7_RESEARCH_AGENT_V5_POST_APK_ARTIFACTORY_NG.zip",
+    "package_snapshot_cutoff": "2026-10-03T02:25:01Z",
+    "live_reconciled_through": "2026-10-03T02:46:51Z"
+  },
+  "service": {
+    "findingDelta": "RESCOPE",
+    "health": "RECOVERED",
+    "current_operation": "Cycle 1 live persistence/CAS capability audit",
+    "integrity_state": "CURRENT_HEAD_NEWER_THAN_PACKAGE_BASELINE_REVALIDATION_REQUIRED",
+    "production_write": false
+  },
+  "evidence_class": ["SOURCE", "PROCESS", "USER_DIRECTIVE"],
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["cycle-1", "claim", "research", "artifactory-ng", "live-bridge", "persistence", "fencing", "recovery"]
+}

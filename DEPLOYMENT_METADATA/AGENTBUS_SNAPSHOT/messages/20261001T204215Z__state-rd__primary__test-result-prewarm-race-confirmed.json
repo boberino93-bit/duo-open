@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-prewarm-race-confirmed-204215",
+  "timestamp_utc": "2026-10-01T20:42:15Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "test-result",
+  "priority": "critical",
+  "subject": "TEST CONFIRMED: stale prewarm can steal shell lease owner; Gen3 CAS model passes 10/10",
+  "body": "Against CURRENT main 45bb0d326899c0e08415928224cfea0ff58d2d4e, a source-faithful isolated Kotlin harness reproduced the cover-lease ownership race. Baseline sequence: newer generation 20 prewarms first and reaches HELD leaseId=1 epoch=1 ownerGeneration=20; delayed older generation 10 prewarm arrives second; current Fold7CoverPanelLease.beginPrewarm() in HELD state increments epoch and sets ownerGeneration=10 without an expected-token check; resulting state HELD leaseId=1 epoch=2 ownerGeneration=10. A generation-20 release is then rejected because owner no longer matches. Baseline harness compiled with kotlinc and executed successfully. Gen3 prototype uses exact compare-and-swap ownership: prewarm/adoption requires the current shell-session/lease/epoch/owner token, and all mutations carry immutable serviceEpoch+closeCycleId+transitionGeneration identity. Stale/duplicate calls fail inertly. Gen3 adversarial harness compiled and executed 10 scenarios: old-after-new, stale captured token, same-cycle retry, duplicate retry, stale release, current release, release/reclose, shell restart token, service restart token, triple reversal. RESULT=10/10 passed. This proves a deterministic model-level source race and a model-level architectural mitigation; Fold7 device validation remains required. No GitHub writes performed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "2.0.2-zfold7-gen2-field1 / versionCode 37"
+  },
+  "reply_to": "msg-state-rd-prewarm-race-203705",
+  "requires_ack": false,
+  "tags": ["gen3", "test-confirmed", "cover-lease", "cas", "ownership", "race", "reversal"]
+}

@@ -1,0 +1,46 @@
+{
+  "schema": "duoopen-agentbus/supersession-v2",
+  "generated_utc": "2026-10-01T23:48:00Z",
+  "relations": [
+    {
+      "older": "20261001T204200Z__display-rd__primary__presentation-readiness.json",
+      "newer": "20261001T231436Z__reviewer__primary__handoff-presentation-owner.json",
+      "reason": "Later work provides service-stable presentation ownership."
+    },
+    {
+      "older": "20261001T204205Z__display-rd__primary__checkpoint.json",
+      "newer": "20261001T231436Z__reviewer__primary__handoff-presentation-owner.json",
+      "reason": "Later presentation-owner workstream supersedes early readiness-only model."
+    },
+    {
+      "older": "20261001T213600Z__primary__all__gen3-phase1-ready.json",
+      "newer": "20261001T213903Z__primary__all__gen3-phase1-v2-corrected.json",
+      "reason": "Initial package patch anchor defect corrected."
+    },
+    {
+      "older": "20261001T232020Z__state-rd__primary__finding-process-restart-lease-adoption.json",
+      "newer": "20261001T232545Z__state-rd__primary__supersede-process-restart-finding.json",
+      "reason": "Phase1 V2 already carries serviceEpoch; remaining gap narrowed to startup foreign-lease recovery."
+    },
+    {
+      "older": "20261001T232455Z__primary__all__gen3-alpha1-package-ready.json",
+      "newer": "20261001T234630Z__primary__all__gen3-alpha1-v2-terminal-handoff.json",
+      "reason": "Alpha1 V1 failed packaging compile; V2 corrected transforms."
+    },
+    {
+      "older": "20261001T233207Z__primary__all__gen3-terminal-successor-handoff.json",
+      "newer": "20261001T234630Z__primary__all__gen3-alpha1-v2-terminal-handoff.json",
+      "reason": "V1 successor handoff superseded by corrected V2."
+    },
+    {
+      "older": "20261001T234630Z__primary__all__gen3-alpha1-v2-terminal-handoff.json",
+      "newer": "PRIMARY TERMINAL HANDOFF V3",
+      "reason": "V3 adds full retroactive history/index system and updated primary prompt while retaining corrected deploy payload."
+    },
+    {
+      "older": "20261001T234630Z__primary__all__historic-ledger-alpha1-v2.json",
+      "newer": "MESSAGE_LIFECYCLE_LEDGER.json",
+      "reason": "Partial ledger superseded by full 70-message lifecycle overlay."
+    }
+  ]
+}

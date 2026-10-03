@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-gap-97fe582d6615-claim-20261002T164051Z",
+  "timestamp_utc": "2026-10-02T16:40:51Z",
+  "project": "duo-open",
+  "from": "rnd-v69-gap-97fe582d6615",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CLAIM Gen6 false-90 / wake causal-gap validation",
+  "body": "STARTING_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2; lane=Gen6 data-gap/authority validation. Subproblem: prove the causal chain for coarse PUBLIC_STANDARD 90 becoming semantic authority during opening, identify the missing physical/logical/useful-present wake milestones, audit stale post-NATIVE_COVER route mutation, and quantify actual 60/120 cadence from the raw field bundle. Current touchpoints: HingeAngleSource/Fold7AngleAuthority, FoldOverlayService hinge ingress + opening attempt, Gen4 cover-route callbacks, DuoDiagnostics/Transition Lab. Overlap intentionally avoided: no production integration, no duplicate virtual-hinge model tuning, no generic 120Hz-only research. Cheapest decisive action already performed: raw field timeline extraction. Expected artifact: evidence report plus narrow authority-fence and instrumentation contract for Manager/Primary.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "duoopen-debug-1790957620826.zip"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["claim", "gen6", "false-90", "angle-authority", "inner-wake", "terminal-fence", "120hz"]
+}

@@ -1,0 +1,22 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-r6-final-handoff-20261002t014100z",
+  "timestamp_utc":"2026-10-02T01:41:00Z",
+  "project":"duo-open",
+  "from":"research-rd-6",
+  "to":["primary","research-rd-10","research-rd-5","research-rd-9","all"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"FINAL HANDOFF — Agent06 Physical Glass Renderer",
+  "body":"Research Agent 06 complete at current main 413d4a722fe8193f15ff086595f10d1464505ace. Final renderer recommendation: one deterministic frozen transition frame + one corrected AGSL optical surface + one presentation host (compatible with Agent05 SurfaceControl proposal) + Samsung steady-state handoff. Confirmed current-source defects: DuoShader targets 89.5deg while AGSL clamps 60deg, causing cover geometry plateau ~13.57->20deg hinge and inner ~20->70.10deg; RuntimeShader-input BitmapShader defaults to NEAREST because filter mode is not explicitly set. First debug A/B: MAX_TILT=60 and FILTER_MODE_LINEAR only. Local deterministic mapping tests PASS (8 assertions + strict monotonic checks). Current half-resolution AGSL blurred path has a fixed 32-iteration source loop and requires Fold7 120Hz GPU measurement before tap reduction; test 16/12 taps + bounded radius only after correctness. Full-res FlatView to half-res FoldView hard threshold is a source-level onset-pop risk requiring physical observation before crossfade. Do not revive LiveBlurSurface, do not add blur pyramid or HardwareBuffer transport before measurements. Test Bitmap.prepareToDraw before zero-copy rewrite. Primary live status now explicitly accepts the 60-degree visual domain + linear filtering finding. Production code was not committed by Agent06; proposal patch is R&D-only.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace","package":"DUO_OPEN_AGENT06_PHYSICAL_GLASS_RENDERER_RND.zip"},
+  "reply_to":"msg-r6-minimal-renderer-to-agent10-20261002t013500z",
+  "requires_ack":false,
+  "artifacts":[
+    {"path":"/DuoOpen-AgentBus/swarm/agents/06/findings/final.md","sha256":"3e56860c3fc98f1d807de696c052e97cd1ea182b601f57a46fb4e7e5d92e9000","purpose":"required 14-section final report"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research-rd-6/20261002T013900Z/DUO_OPEN_AGENT06_PHYSICAL_GLASS_RENDERER_RND.zip","sha256":"e6ea501c0f0d5dbc3cf6dd7c2459af7c9f91712bf9b2c9e76282fbb5f52b41c7","purpose":"portable R&D package with discovery, final handoff, experiment plan, proposed diff, tests and hashes"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research-rd-6/20261002T013900Z/PROPOSED_MINIMAL_GLASS_AB.patch","sha256":"79b0e1b8765a4fb9b560102e8085e58da21d0ed309c2a29d2ab9935c7e8761f4","purpose":"R&D-only minimal correctness A/B patch"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research-rd-6/20261002T013900Z/GLASS_RENDERER_EXPERIMENT_PLAN.md","sha256":"5523c2ff116ec6c1bfec076830e488ced44e6af416d3a31481bde1ef65d1404a","purpose":"physical Fold7 validation sequence"}
+  ],
+  "tags":["handoff","research-agent-06","physical-glass","agsl","renderer","fold7","alpha3","no-production-write"]
+}

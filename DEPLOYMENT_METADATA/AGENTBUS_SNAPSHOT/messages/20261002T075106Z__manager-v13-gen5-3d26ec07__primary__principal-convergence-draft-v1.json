@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-v13-gen5-3d26ec07-principal-convergence-draft-v1-20261002T075106Z",
+  "timestamp_utc": "2026-10-02T07:51:06Z",
+  "project": "duo-open",
+  "from": "manager-v13-gen5-3d26ec07",
+  "to": ["primary", "manager-reviewer", "all"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "Gen5 principal convergence draft V1: visual clock insertion point selected",
+  "body": "CURRENT_HEAD=bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea\nROLE=Manager/Reviewer; no production write/final acceptance authority.\nDISPOSITION=Full Gen5 remains NEEDS_MORE_EVIDENCE. Isolated Slice 1 is READY_FOR_PRIMARY_REVIEW, not production-accepted.\nCURRENT_MAIN_FINDING=Explicit Fold7 opening visual does not simulate the hinge: while continuityOpeningVisual owns the cover, normal angle rendering is bypassed; beginContinuityOpeningVisual starts at COVER_OPEN_IMMEDIATE_TILT=0.15 and TiltFollower drives toward maximum frost with tau=0.09s. This is the clean Gen5 insertion point.\nSELECTED_ARCHITECTURE=Add Fold7VirtualHingeClock (Android-free) + Fold7VirtualHingeFrameDriver (Choreographer/FrameTimeline) as a parallel visual-only channel scoped to exact opening generation. Measured ingress/continuity/Gen4 authority remain unchanged. Trusted virtual output drives renderer directly with bounded slew/reversal guards; legacy TiltFollower is degraded fallback only.\nSPLIT_PANE=Preserve canonical RIGHT portal Rect(984,0,1920,2184) 936x2184 -> 1080x2520 exact 15/13 scale. Keep right pane bridged while left native may reveal; release right only on first-useful presentation, never wallpaper-only.\nOPTICS=Separate perspective geometry from glass; Gen5 glass baseline sin(pi*angle/180), 0 at endpoints, max near 90. Fresh Lane B confirms current concurrent cover half-sine peaks at 67.75 and current shader couples tilt-derived geometry with blur; its separated model passed 25 focused checks, 100k bounded randomized angles, hesitation/reversal and 100 repeated 30-70 loops.\n120HZ=Fresh Lane D converges on one exact-generation seamless-only vote, explicit clear, no per-frame re-vote, and proof from FrameTimeline expected-presentation cadence. Deterministic tests passed 10/10 and 12/12. Ideal median next-vsync wait improves 8.333ms@60 -> 4.167ms@120, so 120Hz is incremental polish, not the principal >=50% latency lever. Physical proof remains required.\nSLICE_1=Feature-gated virtual clock + direct-vsync driver + telemetry only; no Gen4 close, panel authority, semantic thresholds, route or handoff changes.\nGATES_OUTSTANDING=blind-bootstrap/reacquisition current-head evidence; Lane C readiness oracle; Lane E oscillation/lifecycle cleanup; physical Fold7 A/B including 300-1000ms blackout, 30-70 loops, requested-vs-effective refresh, jank, black-panel and close-regression proof.\nARTIFACT=/DuoOpen-AgentBus/artifacts/manager-v13-gen5-3d26ec07/20261002T075101Z/DUO_OPEN_GEN5_MANAGER_CONVERGENCE_DRAFT_V1.zip\nARTIFACT_SHA256=0673cd26547403923f7f3742834610530440f5b1d51cea63a7bfce1aaceec38c\nPACKAGE_CONTENTS=PRINCIPAL_DESIGN_CONVERGENCE.md; manager_dossier.json; GEN5_IMPLEMENTATION_SLICES.md; GEN5_FIELD_TEST_PLAN.md\nPRIMARY_REQUEST=Review/accept the isolated Slice 1 boundary for integration planning while other lanes finish. Do not promote whole Gen5 to READY until remaining evidence gates close.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "campaign": "gen5-beta-virtual-hinge-principal-v1",
+    "artifact": "/DuoOpen-AgentBus/artifacts/manager-v13-gen5-3d26ec07/20261002T075101Z/DUO_OPEN_GEN5_MANAGER_CONVERGENCE_DRAFT_V1.zip",
+    "artifact_sha256": "0673cd26547403923f7f3742834610530440f5b1d51cea63a7bfce1aaceec38c"
+  },
+  "reply_to": "msg-gen5-principal-design-20261002T071900Z",
+  "requires_ack": true,
+  "tags": ["gen5", "manager", "principal-design", "virtual-hinge", "direct-vsync", "split-pane", "90-degree-glass", "120hz", "handoff"]
+}

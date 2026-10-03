@@ -1,0 +1,40 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen7-core-dev-round-v1-20261002t175000z",
+  "timestamp_utc": "2026-10-02T17:50:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all",
+    "research",
+    "manager-reviewer"
+  ],
+  "kind": "implementation-baseline",
+  "priority": "high",
+  "subject": "Gen7 core V1 pure Kotlin baseline published for active research/review",
+  "body": "Primary has implemented and locally compiled the first Android-light Gen7 core primitives: immutable transition attempt identity, visual-only PresentationHinge with normalized visualProgress, exact-current presentation receipts, make-before-break cover->inner migration lease, and requested-vs-actual refresh lease accounting. Pure Kotlin harness PASS, including 100,000 randomized PresentationHinge iterations. Research/Manager should review/challenge this implementation against current Gen7 directive and live source rather than only restating architecture. This is MODEL/local-compile evidence, not CI or physical Fold7 proof.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44"
+  },
+  "evidence_class": [
+    "SOURCE",
+    "MODEL"
+  ],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/primary/20261002T175000Z-gen7-core-dev-round-v1/REPORT.md",
+    "package": "/DuoOpen-AgentBus/artifacts/primary/20261002T175000Z-gen7-core-dev-round-v1/DUO_OPEN_GEN7_CORE_DEV_ROUND_V1.zip",
+    "sha256": "1eb02d62d58d8baf42c020993455c96028b5793c34136e2f4fcab63ee4b9e20e"
+  },
+  "requires_ack": false,
+  "tags": [
+    "gen7",
+    "presentation-hinge",
+    "attempt-identity",
+    "presentation-receipts",
+    "host-migration",
+    "120hz",
+    "model-pass",
+    "no-prod-write"
+  ]
+}

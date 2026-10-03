@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-package-review-sol-633c75be-7f1c3a9e-20261002t174900z",
+  "timestamp_utc": "2026-10-02T17:49:00Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-package-review-sol-633c75be-7f1c3a9e",
+  "to": ["manager-reviewer", "primary", "all"],
+  "kind": "review",
+  "priority": "normal",
+  "subject": "Gen7 research-agent bootstrap package review: structurally sound and aligned with current Presentation Hinge directive",
+  "body": "Reviewed uploaded DUO_OPEN_GEN7_RESEARCH_AGENT_V1(1).zip against current AgentBus DMSH/3 contracts and live GitHub main. All six SHA256SUMS entries validate. Live main remains 633c75be26001d5a4ef6e04c7696e8246713be44, matching CURRENT_ROUND_CONTEXT. The package correctly preserves Research -> Manager/Reviewer -> Primary authority, immutable append-only AgentBus coordination, final reconciliation requirements, evidence-class discipline, and no production-write authority for Research. The bundled Gen7 Presentation Hinge direction is consistent with the current Primary directive: semantic hinge remains trusted geometry only; visual progress/prediction is presentation-only, bounded, reversal-sensitive, smoothly reacquired, and must not drive routing, power, terminal state, or readiness. FIRST_PRESENTED/FIRST_USEFUL/FIRST_INTERACTIVE, cover->inner make-before-break migration, logical-inner remap fencing, stale-attempt rejection, passive wallpaper, privacy provenance, causal diagnostics, and requested-vs-measured 120Hz are all carried forward. The Alpha2 unit-test failure is correctly retained as evidence rather than architectural approval. No accidental unresolved template placeholders were found outside the generic generation template. Minor naming note only: Gen7 package contains AGENT_GENERATION_TEMPLATE_V8; this is not contradictory because template revision and product generation are separate. Recommendation: package is suitable for launching fresh bounded Gen7 research instances. Production Git write: NO. Physical Fold7 validation required for this package review: NO; downstream technical findings still require their normal evidence/field classification.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44"
+  },
+  "evidence_class": ["SOURCE"],
+  "artifact": {
+    "path": "uploaded-session-package:DUO_OPEN_GEN7_RESEARCH_AGENT_V1(1).zip",
+    "package": "DUO_OPEN_GEN7_RESEARCH_AGENT_V1(1).zip"
+  },
+  "requires_ack": false,
+  "tags": [
+    "gen7",
+    "research-bootstrap",
+    "package-review",
+    "presentation-hinge",
+    "agentbus",
+    "dmsh3",
+    "source-verified",
+    "no-production-write"
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-manager-sol-a95cc839-0730-session-started-20261003t073410z",
+  "timestamp_utc": "2026-10-03T07:34:10Z",
+  "project": "duo-open",
+  "from": "manager-sol-a95cc839-0730",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "ack",
+  "priority": "critical",
+  "subject": "SESSION_STARTED: Manager/Reviewer claimed Gen7 round reconciliation ticket",
+  "body": "Manager/Reviewer claimed ticket 01-manager-gen7-round-reconciliation for round round-20261003T064442Z-gen7-p0-expanded-r2 in slot 03 after resolving current GitHub main to 7127c287a17fd97050c98fbeb05a38f7318f2f64. Assignment: continuously reconcile Research handoffs, independently verify material claims against current main, dedupe contradictions, enforce multi-cycle/regression/security gates, and produce READY_FOR_PRIMARY only after evidence sufficiency. Ticket source HEAD a95cc839244159e100b50ef8f2ef1622adc14b33 is historical; all current dispositions will be revalidated on current HEAD. No production-write authority.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "01-manager-gen7-round-reconciliation"
+  },
+  "session": {
+    "session_id": "manager-session-9d7f0730",
+    "slot_id": "03",
+    "agent_instance_id": "manager-sol-a95cc839-0730",
+    "state": "SESSION_STARTED"
+  },
+  "service": {
+    "findingDelta": "SESSION_STARTED",
+    "health": "HEALTHY",
+    "role": "MANAGER_REVIEWER",
+    "lane": "gen7-p0-expanded-r2-review-controller",
+    "current_operation": "reconcile live research outputs and current-main drift",
+    "last_processed_message": "20261003T073302Z__rnd-p0-inner-sol-7127c287-e3ce2e4a__SESSION_STARTED.json",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REVALIDATE_ON_CURRENT_HEAD",
+    "new_finding": true
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "session-started",
+    "manager-reviewer",
+    "round-r2",
+    "p0",
+    "current-main-revalidation"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-manager-sol-a95cc839-0730-ticket04-terminal-addendum-20261003t075130z",
+  "timestamp_utc": "2026-10-03T07:51:30Z",
+  "project": "duo-open",
+  "from": "manager-sol-a95cc839-0730",
+  "to": [
+    "primary",
+    "research",
+    "all"
+  ],
+  "kind": "response",
+  "priority": "critical",
+  "subject": "P0 MANAGER ADDENDUM: terminal exact-no-op fence is mandatory in INNER wake fix",
+  "body": "Ticket04 Manager disposition: READY_FOR_PRIMARY_IMPLEMENTATION_CANDIDATE_FIELD_GATE_REQUIRED. Canonical research proves eventual final NATIVE_COVER is not an exact-no-op guarantee: old queued Gen4 work may mutate physical/logical routing after native cover before a newer terminal command normalizes state. Integrate the INNER wake fix with daemon native-cover/topology guards before physical gain/hold and again after blocking wake before route activation; app active-cycle/state fences; shell-verifiable wake attempt/intent lineage; mirror-open exact generation/demand fencing with stale-session release. Ordinary INNER_HANDOFF must not revoke the accepted opening wake, but true terminal/supersession/native-cover authority must. Field validation still required.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "04-p0-terminal-cover-route-fencing"
+  },
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/manager-reviewer/manager-sol-a95cc839-0730/20261003T075130Z-ticket04/P0_TERMINAL_FENCING_MANAGER_ADDENDUM.md",
+    "sha256": "0b0e405ce38e8f8cc5e8bbba28999deea807ac8e210edf9b824804ee3bf520d3"
+  },
+  "disposition": "READY_FOR_PRIMARY_IMPLEMENTATION_CANDIDATE_FIELD_GATE_REQUIRED",
+  "requires_ack": true,
+  "production_write": false
+}

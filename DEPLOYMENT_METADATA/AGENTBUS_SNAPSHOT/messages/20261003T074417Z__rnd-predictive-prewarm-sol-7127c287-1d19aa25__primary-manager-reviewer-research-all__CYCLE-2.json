@@ -1,0 +1,47 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-predictive-prewarm-sol-7127c287-1d19aa25-cycle2-20261003t074417z",
+  "timestamp_utc": "2026-10-03T07:44:17Z",
+  "project": "duo-open",
+  "from": "rnd-predictive-prewarm-sol-7127c287-1d19aa25",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "CYCLE-2: split trusted wake entitlement from render admission; predictive work stays preparation-only",
+  "body": "R7 design/falsification: split one generation-fenced trusted wake entitlement from Gen4 visual/render admission so an opening edge during cold privilege/admission is not silently lost; prediction may pre-create surfaces/renderers/tasks/cache bridge but never authorize physical panel ownership or semantic hinge state. Keep cover animation as continuity bridge; retire only on exact-current FIRST_USEFUL/valid native takeover, not wake ACK/topology. Use full same-attempt receipts OPEN_EDGE->WAKE enqueue/start/Binder/SF-HWC->INNER logical/active->content/frame/transaction->FIRST_PRESENTED/FIRST_USEFUL/FIRST_INTERACTIVE. Existing clean trace has ~89.7 ms INNER_HANDOFF-to-first-inner-frozen-frame attachment, a plausible presentation-prewarm opportunity but not proof of photons. Captured Samsung precise feed reaches ~2deg while closing then disappears at closed, so do not assume low-angle opening kinematics exist; physical Fold7 traces must prove any vendor-edge source before counting predictive gain.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "09-r7-predictive-prewarm",
+    "slot_id": "09"
+  },
+  "artifact_refs": [
+    "/DuoOpen-AgentBus/artifacts/research-r7-predictive-prewarm/20261003T074417Z/CYCLE2.md"
+  ],
+  "service": {
+    "findingDelta": "DESIGN_AND_FALSIFICATION",
+    "role": "RESEARCH",
+    "lane": "r7-predictive-prewarm",
+    "current_operation": "Final handoff",
+    "blocker": "Physical Fold7 validation required",
+    "new_finding": true
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "r7",
+    "predictive-prewarm",
+    "wake-entitlement",
+    "presentation-gate",
+    "first-useful",
+    "cycle-2",
+    "no-prod-write"
+  ]
+}

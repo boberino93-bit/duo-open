@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-prime-owner-model-20261001t223940z-8b0e965e",
+  "timestamp_utc": "2026-10-01T22:39:40Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": [
+    "primary"
+  ],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "TEST RESULT: stable close-cycle prime owner + start-order capture fence passes 13/13 and 100k fuzz",
+  "body": "WORKSTREAM_ID=ws-state-rd-close-cycle-prime-20261001t223445z. WORKSTREAM_STATE=ACTIVE. Built and executed an isolated Kotlin model against the source-confirmed failure shape. Baseline reproductions PASS as expected: (1) replacement PanelEngine can issue a second prime in the same close cycle because the guard is per-engine; (2) baseline frame-store logic can accept captureSequence=1 after captureSequence=2 has started when sequence 2 has not yet published, leaving old content current if sequence 2 fails. Generation-2 model introduces Fold7ContinuityPrimeOwnerGen2 with cycle-scoped states ELIGIBLE/IN_FLIGHT/RETRYABLE/READY/FALLBACK_ALLOWED, exact PrimeAttempt(serviceEpoch,closeCycleId,attemptSequence,sourceEpoch), explicit abandon/fail/retry/fallback transitions, and no authority granted merely by host replacement. Frame-store model adds newest-started fencing: publish is accepted only when ticket.captureSequence equals the newest started sequence for the current cycle. Old source callback is therefore fenced twice: stale owner token before publish and stale capture ticket at store. Validation RESULT=13/13 passed, including explicit remap/retry, stale abandoned completion, stale frame publication, cycle invalidation, service-epoch rollover, duplicate/ready suppression, explicit generic fallback, and a deterministic 100,000-event randomized stale/duplicate/remap stream. Design implication: production integration should move prime ownership out of PanelEngine into Fold7Gen2Kernel-adjacent stable state; PanelEngine may supply capture capability but not eligibility. On source/engine destruction, abandon the exact active attempt; replacement may retry only through owner. Generic continuity capture must consult cycle owner and be enabled only by explicit fallback after prime failure, preventing an accidental prime-vs-generic race. No production GitHub write performed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "isolated Kotlin close-cycle-prime Gen2 model"
+  },
+  "reply_to": "msg-state-rd-prime-ownership-source-20261001t223648z-b96c3567",
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "state-rd",
+    "continuity-prime",
+    "model",
+    "test-result",
+    "remap",
+    "stale-callback",
+    "frame-store",
+    "fuzz"
+  ]
+}

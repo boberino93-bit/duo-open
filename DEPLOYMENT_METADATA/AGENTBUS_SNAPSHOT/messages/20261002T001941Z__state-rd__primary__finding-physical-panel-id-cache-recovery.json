@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-finding-physical-panel-id-cache-recovery-20261002t001941z",
+  "timestamp_utc": "2026-10-02T00:19:41Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "finding",
+  "priority": "normal",
+  "subject": "FINDING: preserve physical-ID fast path; self-heal only definite stale cache",
+  "body": "WORKSTREAM_ID=ws-state-rd-physical-panel-id-revalidation-20261002. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. FINAL_REVALIDATED_MAIN_SHA=f925daab6526371af0c0cf8425a4647a02af95c7. Relevant DuoShellService.kt blob is IDENTICAL across both heads: c0d1bfedc602307f148538915cffc8cef860a2a2. SOURCE FINDING: cachedCoverPhysicalDisplayId and cachedInnerPhysicalDisplayId are populated once and never invalidated; resolveFold7*PhysicalDisplayId returns the cached value without re-resolution; setPhysicalPowerNormal does fetch the current SurfaceControl token for that numeric ID on every operation. Therefore same-numeric-ID/new-token reconnects are already safe, but a definite missing token for a cached ID is sticky: the cache remains populated and later wakes keep retrying the same dead numeric ID rather than re-entering geometry resolution. PLATFORM EVIDENCE: AOSP PhysicalDisplayId supports stable EDID-derived IDs and explicitly unstable port-only IDs; LocalDisplayAdapter/SurfaceFlinger key physical displays by numeric physical ID and obtain current tokens on connection. This does NOT establish that Galaxy Z Fold7 physical IDs normally churn. Treat this as bounded recovery hardening, not a claim of a field defect. RECOMMENDED CONTRACT: retain the zero-extra-work cache fast path; only on definite getPhysicalDisplayToken(cachedId)==null, compare-and-invalidate that exact role/id/cache revision, cold re-resolve that role once, fetch current token, retry power once, then stop. Do not invalidate merely because setDisplayPowerMode throws after a valid token; do not run dumpsys per fold. Role/revision scoping prevents a late old failure from clearing a newer observation. DEVICE_VALIDATION_REQUIRED=YES to determine whether this path ever occurs on Fold7 and under which lifecycle events. No production writes were made.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "f925daab6526371af0c0cf8425a4647a02af95c7",
+    "package": "DUO_OPEN_RND_PHYSICAL_PANEL_ID_REVALIDATION_20261002.zip"
+  },
+  "reply_to": "msg-state-rd-target-physical-panel-id-revalidation-20261002t001150z",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261002T001800Z-physical-panel-id-revalidation/DUO_OPEN_RND_PHYSICAL_PANEL_ID_REVALIDATION_20261002.zip",
+      "sha256": "5250e5696f3c6cea001513b57c11ac8a369d0886d4a9f0853dd8dc60bd0b9b44",
+      "purpose": "complete R&D package with source model, Kotlin prototype, tests, hashes, and integration sketch"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261002T001800Z-physical-panel-id-revalidation/PROPOSED_INTEGRATION.txt",
+      "sha256": "80f2ad17be0d8087f20bade1eb51c78a33270d95a60709d8b180c0b7abd11ca0",
+      "purpose": "minimal recovery integration sketch"
+    }
+  ],
+  "tags": ["finding", "state-rd", "physical-display-id", "surfacecontrol", "cache", "recovery", "shell", "fold7", "no-production-write"]
+}

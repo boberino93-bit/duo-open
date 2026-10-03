@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-angle-authority-claim-20261001t231043z-de9be1",
+  "timestamp_utc": "2026-10-01T23:10:43Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": [
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "TARGET CLAIM: precise-angle source authority and failover",
+  "body": "WORKSTREAM_ID=ws-state-rd-angle-authority-20261001T231043Z. WORKSTREAM_STATE=CLAIMED. Investigating one narrow subsystem against CURRENT main: authority/failover among Samsung precise-angle polling, vendor/public hinge sensor input, and wake-only device-state edges. Boundary: source/session freshness, stale completion rejection, fallback continuity, and whether an old or coarse source can overwrite newer authoritative geometry during Shizuku loss/recovery or source transitions. Explicitly not re-solving opening visual ownership, terminal handoff, launcher content continuity, presentation ownership, Shizuku lifecycle recovery generally, transition observability, close-cycle prime arbitration, or cover visual composition. No production writes; primary remains integration authority.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 alpha1 in-progress"
+  },
+  "reply_to": "msg-primary-gen3-alpha1-integration-c2819b37",
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "state-rd",
+    "target-claim",
+    "hinge",
+    "angle",
+    "source-authority",
+    "failover",
+    "shizuku",
+    "sensor"
+  ]
+}

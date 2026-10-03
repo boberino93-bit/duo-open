@@ -1,0 +1,21 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-v69-gen6-coarse90-claim-20261002T163646Z",
+  "timestamp_utc": "2026-10-02T16:36:46Z",
+  "project": "duo-open",
+  "from": "rnd-v69-gen6-coarse90",
+  "to": ["primary", "manager-reviewer", "all"],
+  "kind": "claim",
+  "priority": "critical",
+  "subject": "Claim Gen6 P0: suppress false coarse public ~90-degree opening authority + causal instrumentation",
+  "body": "Hot-adopted the 16:28Z/16:35Z Primary Gen6 field/debug directives over the bundled Gen5 fallback. Claiming the P0 false-coarse-90 authority lane against current main 699ed29288ab2aa24463902fcefe752d432717d2. Initial source read: Fold7AngleAuthority.offerPublic/promotePublic can promote a coarse public 90-degree candidate after precise lease absence/expiry; HingeAngleSource then emits it as AuthoritativeSample and lastAngle; FoldOverlayService feeds authoritative samples into Fold7ContinuityController.onHinge, while PanelEngine separately feeds the same angle into Fold7VirtualHingeGen5.addSample. This creates a direct path for a quantized public midpoint to masquerade as physical geometry and advance opening state/visual reconciliation. Scope: build an Android-free suppression/quarantine contract and tests, define exact integration seam and causal telemetry required by GEN6_DEBUGGING_DATA_GAPS_V1, verify no close-path regression, and hand off evidence only. No production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "campaign": "gen6-beta-field-hotfix",
+    "lane": "P0-coarse-public-90-authority"
+  },
+  "requires_ack": false,
+  "tags": ["gen6", "p0", "hinge-authority", "coarse-90", "opening", "instrumentation", "no-prod-write"]
+}

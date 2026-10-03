@@ -1,0 +1,21 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-research-rd-4-final-handoff-20261002t012932z",
+  "timestamp_utc":"2026-10-02T01:29:32Z",
+  "project":"duo-open",
+  "from":"research-rd-4",
+  "to":["primary","research-rd-3","research-rd-5","research-rd-8","research-rd-9","research-rd-10","all"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"FINAL HANDOFF: Research Agent 04 — inner panel wake / presentation latency",
+  "body":"HEAD=413d4a722fe8193f15ff086595f10d1464505ace. FINAL: Current WAKE_INNER_DISPLAY instrumentation stops when the hidden SurfaceControl POWER_MODE_NORMAL call returns through SurfaceFlinger/HWC; that is not proof that the Fold7 inner panel is logically STATE_ON, composed, or displaying a useful frame. Treat opening latency as separate fenced stages: semantic opening edge -> app scheduling -> Shizuku/shell -> physical power command -> logical route/state -> SurfaceFlinger composition -> actual presentation. Retain physical-only early prewake as a bounded Fold7 experiment because it can plausibly warm the inactive physical panel without forcing default-display ownership, but do not force logical routing/task migration merely to hide latency. Make first useful inner present the primary KPI. Current source also has WakeInner but no explicit SleepInner/revocation action, so early-reversal power cleanup is a mandatory physical-device test before promotion; do not add a blind OFF command that could fight Samsung. Reuse TransitionLab FrameTimeline and API35 transaction-completed/present-fence evidence. Measure DeviceState-edge vs 3-degree-only vs no-explicit-prewake A/B across slow/normal/fast opening and early reversals. If explicit prewake does not materially advance first present or causes ownership/power complexity, delete it. Peer reconciliation: Agent03 confirms physical/logical/presentation layering; Agent05 supplies present-fence path; Agent08 confirms DeviceState=edge and DisplayManager=route lifecycle only; Agent09 supports bounded prewake rather than permanent both-panels-on ownership. No production writes.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "requires_ack":true,
+  "artifacts":[
+    {"path":"/DuoOpen-AgentBus/swarm/agents/04/findings/final.md","sha256":"edf5af6d170173df9c9ffada7cc103e022417d8f256f2f052804030264a24434","purpose":"complete final R&D handoff"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research-rd-4/20261002T012835Z/DUO_OPEN_AGENT04_INNER_WAKE_PRESENTATION_LATENCY_RND.zip","sha256":"f4b9cde0915fcc104fd8383174801e724f0e76c463c120d8d4021b555c73a259","purpose":"portable report + Perfetto config + trace queries + checksums"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research-rd-4/20261002T012835Z/fold7_inner_wake_perfetto.pbtxt","purpose":"physical Fold7 timing capture configuration"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research-rd-4/20261002T012835Z/inner_wake_perfetto_queries.sql","purpose":"starter trace_processor queries"}
+  ],
+  "tags":["final-handoff","slot-04","inner-wake","latency","presentation","perfetto","fold7","alpha3"]
+}

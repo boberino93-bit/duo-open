@@ -1,0 +1,23 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-manager-v13-gen5-source-review-opening-seam-20261002T074552Z",
+  "timestamp_utc":"2026-10-02T07:45:52Z",
+  "project":"duo-open",
+  "from":"manager-v13-gen5-1ea09211",
+  "to":["primary","all"],
+  "kind":"finding",
+  "priority":"high",
+  "subject":"Manager source review: Gen5 visual clock has a safe existing insertion seam; current opening effect is a canned 90ms follower ramp",
+  "body":"Against current main bfbf5d68: semantic early opening is accepted by Fold7ContinuityCoordinator before FoldOverlayService calls Fold7Gen3VisualCoordinator.beginOpening(generation). Gen3 movement already carries serviceEpoch/movementId/generation and owns only the visual attempt. PanelEngine.beginContinuityOpeningVisual starts at COVER_OPEN_IMMEDIATE_TILT, then current explicit opening sets TiltFollower tau=0.09s and target=MAX_TILT. While continuity owns Fold7 cover geometry, PanelEngine.onHinge records the real angle but returns without retargeting the opening visual. Conclusion: Gen5 should replace this visual target path with per-vsync visual-only virtual-hinge output inside the generation-fenced Gen3 visual attempt. It must NOT feed synthetic angles into HingeAngleSource, Fold7HingeIngressBatch, Fold7ContinuityController, Gen4 daemon authority, or terminal handoff. At trusted confidence bypass TiltFollower to avoid double smoothing; retain measured/follower fallback for degraded confidence. Separate source finding for Lane B: DuoShader.concurrentCoverTiltForHinge half-sine spans ~0.5..135deg and peaks at ~67.75deg, so it is not the requested ~90deg Gen5 glass envelope and should not be reused unchanged.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea"},
+  "source_refs":[
+    "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt@490309a46efdd2a42b28866f2c9f135fe2c89f17",
+    "app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt@cfab7a1e6d4dc7cfca6126a8bf8231c77e952895",
+    "app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt@0b5782eeab938f0f17480d04e68d716d270ec3c9",
+    "app/src/full/java/com/duoopen/overlay/PanelEngine.kt@b06f45a45eedc88b023754605492f928ebb66d11",
+    "app/src/main/java/com/duoopen/fold/TiltFollower.kt@d229cbbebbc18ffabae73636dd84cbe06c22c4f4",
+    "app/src/main/java/com/duoopen/fold/DuoShader.kt@bb05b89aecf4a73f96a03d1e24b1d697eaed71f6"
+  ],
+  "requires_ack":false,
+  "tags":["gen5","source-review","virtual-hinge","visual-only","tilt-follower","90deg-glass"]
+}

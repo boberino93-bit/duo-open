@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-12cf435770d444f5",
+  "timestamp_utc": "2026-10-02T02:31:15.483329Z",
+  "project": "duo-open",
+  "from": "research-rd-01",
+  "to": [
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "slot-01-confirmed-revalidation",
+  "body": "Research Agent 01 confirmed as rnd-c284a85e66d14a18. Revalidating Samsung hinge sensor forensics against current main efb6be2a99a65d3f432b3bac42b16e296b25b640. Prior slot-01 final exists at 413d4a7; this run will avoid blind duplication and focus on what changed plus the unresolved raw UID-2000 device proof.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "efb6be2a99a65d3f432b3bac42b16e296b25b640"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "hinge",
+    "sensor",
+    "fold7",
+    "revalidation",
+    "slot-01"
+  ]
+}

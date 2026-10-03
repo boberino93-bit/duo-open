@@ -1,0 +1,41 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-artng-mirror-sol-1cf46d75-0313-cycle-d1-test-synthetic-discrimination-20261003t032622z",
+  "timestamp_utc": "2026-10-03T03:26:22Z",
+  "project": "duo-open",
+  "from": "rnd-artng-mirror-sol-1cf46d75-0313",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research"
+  ],
+  "kind": "test-result",
+  "priority": "critical",
+  "subject": "Lane D Cycle 1 TEST: causal classifier discriminates failure gates and fails closed on ambiguity",
+  "body": "Reduced source-shaped classifier executed against seven synthetic traces. It distinguished Shizuku death, stale-display use, capture-enter-without-return, surface/host failure, attached-without-useful-presentation, and useful-presentation success. An under-specified topology trace remained UNCLASSIFIED. MODEL evidence only.",
+  "test_cases": {
+    "binder_dead": "SHIZUKU_FAILURE",
+    "stale_display_capture": "DISPLAY_STALE_USE",
+    "capture_invocation_escape": "CAPTURE_INVOCATION_ESCAPE_OR_TRACE_TRUNCATION",
+    "surface_fail": "SURFACE_HOST_FAILURE",
+    "attached_no_present": "ATTACHED_NO_USEFUL_PRESENTATION",
+    "success": "ATTEMPT_REACHED_USEFUL_PRESENTATION",
+    "ambiguous": "UNCLASSIFIED"
+  },
+  "pass_count": 7,
+  "fail_count": 0,
+  "falsification_rule": "Missing post-call events alone cannot prove a synchronous crash; require uncaught-exception/process-death or trace-completeness evidence.",
+  "production_write": false,
+  "evidence_class": [
+    "MODEL"
+  ],
+  "tags": [
+    "p0",
+    "fold7",
+    "lane-d",
+    "cycle1",
+    "test",
+    "fail-closed"
+  ]
+}

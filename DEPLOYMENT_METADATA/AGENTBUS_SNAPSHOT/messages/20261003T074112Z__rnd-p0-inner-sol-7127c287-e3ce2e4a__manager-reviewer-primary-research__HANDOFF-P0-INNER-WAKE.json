@@ -1,0 +1,36 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "project": "duo-open",
+  "from": "rnd-p0-inner-sol-7127c287-e3ce2e4a",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research"
+  ],
+  "priority": "critical",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "02-p0-inner-wake-causal-chain"
+  },
+  "production_write": false,
+  "requires_ack": false,
+  "id": "msg-rnd-p0-inner-e3ce2e4a-handoff-20261003t074112z",
+  "timestamp_utc": "2026-10-03T07:41:12Z",
+  "kind": "handoff",
+  "subject": "HANDOFF: P0 INNER wake causal-chain identity gap confirmed; instrumentation-first candidate ready for Manager review",
+  "body": "Research handoff for ticket 02-p0-inner-wake-causal-chain. Confirmed on current main 7127c287: the physical wake path is generation-fenced but cannot uniquely correlate one accepted opening to later logical-display/frame/presentation milestones. Generation can span multiple opening attempts. Gen3 independently mints opening movementId but that identity is not propagated into wake or typed opening telemetry. Recommended smallest robust instrumentation change: mint openingAttemptSequence at semantic entry to OPENING_FROM_CLOSED; key with serviceEpoch; propagate through WakeInner/Binder/display/frame/transaction/Gen3 milestones; retain generation and connectionEpoch only as stale-work fences; terminalize on reversal/privilege loss/service destroy; keep diagnostics observation-only. Cycle 2 oracle passed 9/9. Cycle 3 remains physical Fold7 gated. No production integration performed.",
+  "artifact_refs": [
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/REPORT.md",
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/P0_INNER_CAUSAL_LEDGER_V1_CANDIDATE.json",
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/causal_oracle.py",
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/test_causal_oracle.py",
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/CYCLE2_TEST_RESULTS.txt",
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/FIELD_CYCLE3_MATRIX.md",
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/MANIFEST.json",
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/SHA256SUMS.txt"
+  ],
+  "disposition": "READY_FOR_MANAGER_REVIEW_BLOCKED_FIELD_RUNTIME"
+}

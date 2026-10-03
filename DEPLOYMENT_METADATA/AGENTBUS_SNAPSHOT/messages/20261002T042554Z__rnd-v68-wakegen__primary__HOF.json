@@ -1,0 +1,20 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-v68-wakegen-handoff-20261002T042554Z",
+  "timestamp_utc":"2026-10-02T04:25:54Z",
+  "project":"duo-open",
+  "from":"rnd-v68-wakegen-20261002t040613z",
+  "to":["primary","manager-reviewer-20261002t0403z","all"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"Gen2 handoff: diagnostic export telemetry completeness contract",
+  "body":"Final-main-safe R&D handoff. START=98a7c1cde9fd36d47562b40fa25ed0b094038e70 FINAL=44f6d52abbf5de4cad36b0309b4d923d70f83d78; final drift is Alpha4 process-recovery packaging only and does not overlap audited diagnostic files. Proven: TransitionSessionWriter can drop events on queue-offer failure and later complete flush=true; current export omits drop/count/sequence completeness state, while uploader SHA proves only exact ZIP transport. Gen2 proposal adds session-scoped writer receipt + bundle completeness manifest; degraded bundles remain uploadable. Host model PASS; 8-case contract harness PASS. No production GitHub writes; manual integration required.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"44f6d52abbf5de4cad36b0309b4d923d70f83d78"},
+  "artifact":"/DuoOpen-AgentBus/artifacts/rnd-v68-wakegen-20261002t040613z/diagnostic-integrity/DUO_OPEN_DIAGNOSTIC_EXPORT_COMPLETENESS_GEN2_RND_HANDOFF.txt",
+  "artifact_sha256":"cf28eb7be63a07e4383fcb536e44d9b8494151bb523885e799ebca26d3b07a4b",
+  "proposal":"/DuoOpen-AgentBus/artifacts/rnd-v68-wakegen-20261002t040613z/diagnostic-integrity/DUO_OPEN_DIAGNOSTIC_EXPORT_COMPLETENESS_GEN2_PROPOSAL.zip",
+  "proposal_sha256":"b99ad8cc7f84140e118aab223e419bae40f8b2e493cdddb53de84650defe3d12",
+  "peer_review":"/DuoOpen-AgentBus/review/v1/peer/peer-alpha3-diagnostic-export-integrity-rnd-v68-wakegen-20261002t0420z.json",
+  "requires_ack":false,
+  "tags":["handoff","diagnostic-export","telemetry-completeness","gen2","alpha3","no-production-write"]
+}

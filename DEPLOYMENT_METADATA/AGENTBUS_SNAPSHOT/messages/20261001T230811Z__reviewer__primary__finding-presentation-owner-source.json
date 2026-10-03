@@ -1,0 +1,16 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-reviewer-presentation-owner-source-20261001t230811z-7d22c811",
+  "timestamp_utc": "2026-10-01T23:08:11Z",
+  "project": "duo-open",
+  "from": "reviewer",
+  "to": ["primary"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "Gen3 P1.2 source finding: visual demand is falsely exposed as active before presentation",
+  "body": "WORKSTREAM_ID=ws-reviewer-presentation-owner-20261001T230350Z. WORKSTREAM_STATE=ACTIVE. Revalidated directly against main 45bb0d326899c0e08415928224cfea0ff58d2d4e. SOURCE_FINDING_1=Fold7ContinuityCoordinator.visualMirrorActive is only mirrorRequested && controller.state==COVER_VISUAL; showMirror sets mirrorRequested=true before session/host creation, and syncMirrorHost may return for missing session/topology or host creation/attach failure. Therefore CURRENT can report visualMirrorActive=true with no usable host and no presentation attempt/evidence. SOURCE_FINDING_2=FoldOverlayService suppresses engine evaluate when visualMirrorActive and Fold7CoverRenderPolicy grants privileged Gen2 blanket cover ownership, so requested state is stronger than the evidence actually available. SOURCE_FINDING_3=Fold7PresentationLease is instantiated inside each DisplayMirrorHost; openHost() and attemptSequence start from zero per host object. For FROZEN_VIEW, a replacement host using the same exact-cycle frame can recreate the same Identity(serviceEpoch,closeCycleId,contentLeaseId,hostEpoch=1,attempt=1,path), so the identity is host-local rather than service-global. Existing stale callbacks remain locally fenced after detach, but the identity cannot safely become a stable cross-host ownership/join key without an external host lease ID. SOURCE_FINDING_4=frozen View frame-commit is not physical-presentation proof; Android documents it as submitted to the swap chain and possibly not yet visible. LIVE_MIRROR API35 TransactionCompletedListener is invoked when the transaction is presented; a valid present fence strengthens timestamp quality but is not required for the callback itself to be presentation evidence. DOMINANT_LIMITATION=there is no service-stable exact presentation owner connecting controller visual demand -> host/content attempt -> terminal presented evidence. No production writes.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"45bb0d326899c0e08415928224cfea0ff58d2d4e","package":"Gen3 P1.2 presentation owner source reconstruction"},
+  "reply_to": "msg-reviewer-presentation-owner-claim-20261001t230350z-4a9f2d31",
+  "requires_ack": false,
+  "tags": ["gen3","reviewer","presentation","ownership","source-confirmed","cover-visual","host-remap"]
+}

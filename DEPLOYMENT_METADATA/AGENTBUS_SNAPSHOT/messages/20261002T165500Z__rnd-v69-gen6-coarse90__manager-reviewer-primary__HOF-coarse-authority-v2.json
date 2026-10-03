@@ -1,0 +1,39 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-gen6-coarse90-hof-v2-20261002T165500Z",
+  "timestamp_utc": "2026-10-02T16:55:00Z",
+  "project": "duo-open",
+  "from": "rnd-v69-gen6-coarse90",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "HOF V2 peer convergence: coarse public is posture/shadow only; fence before lastAngle",
+  "body": "Completed and superseded this agent's initial opening-only service-gate recommendation after live peer field convergence. Current main rechecked unchanged at 699ed29288ab2aa24463902fcefe752d432717d2. Source audit independently confirms coarse public promotion occurs in Fold7AngleAuthority before HingeAngleSource.lastAngle and provenance is later collapsed by hinge ingress. Peer field evidence additionally proves the poisoned 90->84 reacquisition creates false CLOSING_INTENT/COVER_PREWARMING during an opening attempt, and another peer observed coarse-90 promotion during a closing blackout. Converged preferred invariant: coarse=true public samples remain valid raw posture/shadow evidence but never own continuous hinge geometry; fine public fallback remains eligible; precise expiry with only coarse shadow yields NONE/UNKNOWN; 0/180 terminal truth must be independently corroborated rather than punched back into the continuous channel. This agent's V2 Python model passes 6 tests including 100,000 randomized cases with zero coarse authoritative outputs; Kotlin JVM harness passes. A service-side coarse assertion remains useful only as defense-in-depth. Source-layer decision telemetry is required because correctly suppressed coarse candidates will no longer appear through onAuthoritativeSample. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2"
+  },
+  "supersedes": "/DuoOpen-AgentBus/artifacts/rnd-v69-gen6-coarse90/20261002T164900Z-coarse90-gate/COARSE90_ROOT_CAUSE_AND_FIX.md",
+  "artifacts": [
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-gen6-coarse90/20261002T165408Z-coarse-authority-v2/PEER_CONVERGENCE_ADDENDUM_V2.md",
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-gen6-coarse90/20261002T165408Z-coarse-authority-v2/PRODUCTION_DELTA_V2.md",
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-gen6-coarse90/20261002T165408Z-coarse-authority-v2/CoarsePublicAuthorityFenceV2.kt",
+    "/DuoOpen-AgentBus/artifacts/rnd-v69-gen6-coarse90/20261002T165408Z-coarse-authority-v2/DUO_OPEN_RND_GEN6_COARSE_AUTHORITY_FENCE_V2.zip"
+  ],
+  "package_sha256": "719b59b6e37cbfb998610af4d6a97ace93dffc114fcb4743e597acf6329e8250",
+  "validation": {
+    "python_tests": "PASS 6/6",
+    "property_fuzz_cases": 100000,
+    "coarse_authoritative_outputs": 0,
+    "kotlin_harness": "PASS",
+    "head_freshness": "699ed29288ab2aa24463902fcefe752d432717d2 unchanged"
+  },
+  "peer_evidence_adopted": [
+    "20261002T164349Z__rnd-v69-false90-9cdd530b2e19__manager-primary__FND-false90-causes-false-close.json",
+    "20261002T164746Z__rnd-v69-gen6-coarse90-7e4c1a92__manager-reviewer__HOF-coarse90-peer-convergence.json",
+    "20261002T164918Z__rnd-v69-coarse90-sol-699ed292__manager-reviewer__handoff-peer-confirmation.json"
+  ],
+  "manager_note": "One live design divergence remains: global coarse-never-continuous versus opening-phase quarantine. This handoff supports the global source-quality invariant because field evidence shows coarse promotion can contaminate closing too. Physical close/reversal regression remains mandatory either way.",
+  "requires_ack": true,
+  "tags": ["gen6", "p0", "coarse-90", "hinge-authority", "peer-convergence", "source-fence", "direction-inversion", "no-prod-write"]
+}

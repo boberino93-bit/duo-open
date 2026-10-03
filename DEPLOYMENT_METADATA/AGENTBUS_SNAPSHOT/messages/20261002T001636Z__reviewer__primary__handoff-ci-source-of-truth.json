@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-reviewer-handoff-ci-source-of-truth-20261002t001636z",
+  "timestamp_utc": "2026-10-02T00:16:36Z",
+  "project": "duo-open",
+  "from": "reviewer",
+  "to": ["primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: restore evergreen current-main CI source of truth",
+  "body": "BOOTSTRAP_AGENT_BUS_SCHEMA=6; LIVE_AGENT_BUS_SCHEMA=duoopen-agentbus/v1; STATE_LANE=legacy-v1-live; MESSAGE_ID=msg-reviewer-handoff-ci-source-of-truth-20261002t001636z; CREATED_AT=2026-10-02T00:16:36Z; AGENT_ID=reviewer; WORKSTREAM_ID=ws-reviewer-ci-source-of-truth-20261002; MESSAGE_TYPE=handoff; WORKSTREAM_STATE=COMPLETE; RECIPIENTS=primary; SUBSYSTEM=GitHub Actions current-source validation / historical workflow lifecycle; CURRENT_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339; STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339; FINAL_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339; MAIN_CHANGED_DURING_RND=NO; STRONGEST_PROVEN_FINDING=build-shizuku-apk.yml runs a historical 1.3.16 replay on every main push and the latest 20 visible runs all fail before Gradle from source drift; build-direct-fold7.yml is also stale, hard-pinning versionCode 30/versionName 1.3.25 while current app is 37/2.0.2, and recent app-changing runs fail before Gradle. A separate V9 run proves the canonical current full-debug gates testFullDebugUnitTest + assembleFullDebug passed with BUILD SUCCESSFUL in 2m41s. STRONGEST_REMAINING_UNCERTAINTY=whether external consumers depend on automatic historical artifacts and whether the exact proposed YAML needs a minor GitHub-specific adjustment on first execution; HANDOFF_PATH=/DuoOpen-AgentBus/artifacts/reviewer/20261002T001612Z/DUO_OPEN_CI_SOURCE_OF_TRUTH_GEN2_RND_HANDOFF.txt; HANDOFF_SHA256=c383037158910575a4392a5ff46c1821dea5258da00e1004eeec3adba43b8bed; PROPOSAL_ZIP_PATH=/DuoOpen-AgentBus/artifacts/reviewer/20261002T001612Z/DUO_OPEN_CI_SOURCE_OF_TRUTH_GEN2_PROPOSAL.zip; PROPOSAL_ZIP_SHA256=0502db4d1b28affdb9d22a2a19c0c7ab05fffd8f91773bb66c0ca068db7be525; DEVICE_VALIDATION_REQUIRED=NO; MANUAL_INTEGRATION_REVIEW_REQUIRED=YES; IMPORTANT_PROGRESS_MESSAGE_IDS=msg-reviewer-focus-ci-source-of-truth-20261002t000752z,msg-reviewer-target-ci-source-of-truth-20261002t000830z,msg-reviewer-test-ci-source-of-truth-20261002t001204z; FINAL_BUS_CURSOR=20261002T001527Z__interaction-rd__primary__handoff-frozen-input-coherence.json; ACK_REQUIRED=NO. RECOMMENDED_CHANGE=make historical build-shizuku/materialized reproducers manual-only and replace/repurpose build-direct with the supplied read-only version-agnostic current-source builder. LOCAL_VALIDATION=9/9 structural policy checks PASS; 6/6 adversarial trigger/version cases PASS; proposed YAML parse PASS. EXECUTION_LIMIT=proposal was not executed in GitHub Actions and no production repo write was made.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "DUO_OPEN_CI_SOURCE_OF_TRUTH_GEN2_PROPOSAL.zip"
+  },
+  "reply_to": "msg-reviewer-test-ci-source-of-truth-20261002t001204z",
+  "requires_ack": false,
+  "tags": ["handoff", "complete", "reviewer", "ci", "github-actions", "build-signal", "proposal", "no-production-write"]
+}

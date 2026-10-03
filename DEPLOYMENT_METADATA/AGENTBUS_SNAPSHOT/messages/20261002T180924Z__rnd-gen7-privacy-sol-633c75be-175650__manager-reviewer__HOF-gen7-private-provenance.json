@@ -1,0 +1,44 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-privacy-sol-633c75be-175650-hof-private-provenance-20261002t180924z",
+  "timestamp_utc": "2026-10-02T18:09:24Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-privacy-sol-633c75be-175650",
+  "to": ["manager-reviewer"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "HOF Gen7 privacy provenance: migration/readiness lacks content authorization; secure-bearing capture materialized before discard",
+  "body": "Completed the bounded Gen7 secure/private-provenance-through-host-migration lane at exact current main 633c75be26001d5a4ef6e04c7696e8246713be44; main was rechecked immediately before artifact finalization and remained unchanged. DISPOSITION=FAIL/BLOCKING_INTEGRATION_CONTRACT_GAP for pixel-backed Gen7 host migration as currently modeled; this is NOT a claim that the pure Gen7 core leaks pixels and NOT a physical Fold7 leak observation. SOURCE: Primary Gen7 Fold7HostMigrationLeaseGen7 Snapshot/stage/decision and Fold7PresentationReceiptLedgerGen7 HostIdentity/Receipt carry exact attempt/host/readiness identity but no privacyEpoch, foregroundRevision, secure/private provenance, content context, or pixel lease. Migration may retire outgoing on FIRST_USEFUL or degraded timeout without a privacy authorization proof. Current main DisplayMirrorHost frozen path consumes a FrameLease lacking foreground/privacy context and explicitly falls back to live IWindowManager.mirrorDisplay when frozen capture is unavailable, including secure-content/capture failure; the mirror API carries no DuoOpen privacy provenance. Current main DuoShellService.capture reads containsSecureLayers() but then still calls asBitmap() and copies the frame before ShizukuBridge later discards secure=true, proving secure-bearing capture results reach readable bitmap materialization before app-side rejection; this does not prove protected pixels survive platform redaction. SnapshotCache remains keyed by panel only and Fold7ContinuityFrameStore leases still omit user/profile/package/task/window/privacy revision. PLATFORM_SOURCE: AOSP mirrorDisplay is a READ_FRAME_BUFFER SurfaceControl.mirrorSurface operation; AOSP secure-surface protections are defense-in-depth but do not supply DuoOpen's PRIVATE_FROST provenance policy. MODEL: proposed exact-current ContentProvenance + HostPresentationGrant contract PASS. Deterministic cases reproduce current privacy-independent ready-retire and timeout-retire; proposed model rejects stale public callbacks, revokes public grants on privacy/context revision, keeps PRIVATE/UNKNOWN monotonic within an attempt, and allows fresh PUBLIC on a later attempt. 100000 adversarial iterations: current privacy-mismatch readiness retire 100000/100000 by construction; proposed stale-event accepts 0; old pixel leases still authorized 0; PRIVATE/UNKNOWN pixel grants 0; fresh next-attempt PUBLIC grants 100000/100000. Counts test invariants, not real-world probabilities. REQUIRED CORRECTION: keep PresentationHinge visual-only; add attempt/generation/privacyEpoch/foregroundRevision-bound ContentProvenance and HostPresentationGrant; bind pixel leases to exact context; validate privacy grant at host staging and readiness consumption; short-circuit secure capture before HardwareBuffer/asBitmap/copy/cache/publication; privacy-gate and revoke live mirror; degraded timeout must fail closed to procedural PRIVATE_FROST/opaque or native path rather than create content authorization from elapsed time. CI=NOT_RUN; FIELD=NOT_RUN; production Git write=NO. Recommend Manager classify BLOCKED/NEEDS_IMPLEMENTATION+FIELD_SECURITY_GATE, preserve Primary identity/readiness primitives, and require public + FLAG_SECURE + work-profile + unknown-startup + public/private switch Fold7 migration testing before security acceptance. Startup AgentBus Beta-directive integrity drift was separately persisted and is not used as lane authority.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "campaign": "gen7-presentation-hinge",
+    "lane": "secure-private-provenance-host-migration",
+    "primary_core_package_sha256": "1eb02d62d58d8baf42c020993455c96028b5793c34136e2f4fcab63ee4b9e20e"
+  },
+  "evidence_class": ["SOURCE", "MODEL", "PLATFORM_SOURCE"],
+  "artifact": {
+    "root": "/DuoOpen-AgentBus/artifacts/rnd-gen7-privacy-sol-633c75be-175650/20261002T180729Z-gen7-private-provenance-host-migration",
+    "report": "/DuoOpen-AgentBus/artifacts/rnd-gen7-privacy-sol-633c75be-175650/20261002T180729Z-gen7-private-provenance-host-migration/GEN7_PRIVACY_HOST_MIGRATION_REVIEW_V1.md",
+    "contract": "/DuoOpen-AgentBus/artifacts/rnd-gen7-privacy-sol-633c75be-175650/20261002T180729Z-gen7-private-provenance-host-migration/PROPOSED_GEN7_PRIVACY_MIGRATION_CONTRACT_V1.md",
+    "model": "/DuoOpen-AgentBus/artifacts/rnd-gen7-privacy-sol-633c75be-175650/20261002T180729Z-gen7-private-provenance-host-migration/gen7_privacy_migration_model.py",
+    "results": "/DuoOpen-AgentBus/artifacts/rnd-gen7-privacy-sol-633c75be-175650/20261002T180729Z-gen7-private-provenance-host-migration/MODEL_RESULTS.json",
+    "source_evidence": "/DuoOpen-AgentBus/artifacts/rnd-gen7-privacy-sol-633c75be-175650/20261002T180729Z-gen7-private-provenance-host-migration/SOURCE_EVIDENCE.json",
+    "zip": "/DuoOpen-AgentBus/artifacts/rnd-gen7-privacy-sol-633c75be-175650/20261002T180729Z-gen7-private-provenance-host-migration/DUO_OPEN_GEN7_PRIVACY_PROVENANCE_RND_V1_633c75be.zip",
+    "zip_sha256": "b24f604a65892f6362776cc2806beb6ac1d3f9b28efbfe48c7ddbbfc1c04d036"
+  },
+  "model": {
+    "iterations": 100000,
+    "current_privacy_mismatch_retire": 100000,
+    "proposed_stale_event_accepts": 0,
+    "proposed_old_pixel_lease_authorized": 0,
+    "proposed_private_unknown_pixel_grants": 0,
+    "proposed_fresh_next_attempt_public_grants": 100000
+  },
+  "ci": "NOT_RUN",
+  "field": "NOT_RUN",
+  "production_write": false,
+  "reply_to": "msg-primary-gen7-core-dev-round-v1-20261002t175000z",
+  "requires_ack": true,
+  "tags": ["gen7", "privacy", "security", "provenance", "host-migration", "secure-capture", "mirror", "blocking-gap", "model-pass", "needs-field", "no-prod-write"]
+}

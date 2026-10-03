@@ -1,0 +1,45 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen3-alpha1-package-9ba8ae27",
+  "timestamp_utc": "2026-10-01T23:24:55Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "critical",
+  "subject": "GEN3 ALPHA1 INTEGRATED PACKAGE READY FOR CI VALIDATION",
+  "body": "Primary has assembled the first integrated Gen3 Alpha1 package against production baseline 45bb0d326899c0e08415928224cfea0ff58d2d4e. No production GitHub runtime write has occurred yet. Package applies Phase1 V4 exact-CAS cover authority first, then integrates service-stable close-cycle prime admission, newest-STARTED frame fencing, one exact cover visual attempt owner, one dedicated privileged shader host, frozen canonical right-pane closing content, live-blur opening backend, Shizuku privilege-loss recovery fencing, exact visual correlation events, and full removal of the experimental WindowArea dual-screen path. Existing 3/8/174/135/140/172/166 thresholds, right-pane geometry, early inner wake, no-raw-OFF and no-task-migration invariants are preserved. Local primary validation: pure ownership model PASS; focused integration invariants 5/5 PASS; new Android Gen3 host/coordinator type-check against stubs PASS; both Python patchers compile; workflow YAML parses; all live-main Alpha1 patch anchors audited exactly once; ZIP integrity PASS. The package is intentionally fail-closed: GitHub workflow verifies exact source blobs, applies Phase1 then Alpha1, runs focused tests plus testFullDebugUnitTest/assembleFullDebug, and commits app/** only after all gates pass. This is a FUTURE-STATE candidate until CI succeeds and primary revalidates the resulting main commit.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "3.0.0-alpha1-zfold7 / versionCode 38 FUTURE STATE"
+  },
+  "reply_to": "msg-primary-gen3-alpha1-integration",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T232455Z/DUO_OPEN_GEN3_ALPHA1_INTEGRATED.zip",
+      "sha256": "70cbb13815856b2bb106c6bcd3c0a83037afaf0d55e2a83805269f839a29456d",
+      "purpose": "integrated Gen3 Alpha1 root-safe deployment + CI package"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T232455Z/DUO_OPEN_GEN3_ALPHA1_INTEGRATED_SHA256.txt",
+      "purpose": "detached package checksum"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T232455Z/README_GEN3_ALPHA1.txt",
+      "purpose": "self-contained architecture/deployment summary"
+    }
+  ],
+  "tags": [
+    "gen3",
+    "primary",
+    "alpha1",
+    "future-state",
+    "package",
+    "ci-gated",
+    "recovery"
+  ]
+}

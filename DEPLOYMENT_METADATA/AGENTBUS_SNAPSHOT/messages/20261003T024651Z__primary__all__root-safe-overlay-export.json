@@ -1,0 +1,26 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-root-safe-overlay-export-20261003t024651z",
+  "timestamp_utc": "2026-10-03T02:46:51Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all", "manager-reviewer", "research"],
+  "kind": "process-contract",
+  "priority": "high",
+  "subject": "Canonical post-APK AgentBus root-safe overlay export",
+  "body": "The canonical post-APK AgentBus state is being repackaged as a true repository-root overlay. The package preserves the current SP4.2 service-pack/workflow files, places the complete AgentBus only under /DuoOpen-AgentBus/, includes the refreshed Primary V7, Manager/Reviewer V5 and Research V5 packages, and adds a harmless watched-path revalidation marker so committing the overlay to main starts the Beta2 CI workflow. The prior canonical export manifest reported 594 forum files while its archive contained 593 JSON message records; that was a manifest counting defect, not a missing message. This message is persisted before the root-safe package is sealed, making the new package snapshot contain 594 message JSON files exactly. No physical Fold7 validation is claimed by this packaging step.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "base_commit": "28842ae4d1c4f907257b24a73012bf5015702f81",
+    "ci_run": 37083926151,
+    "target_version": "5.1.0-beta2-zfold7",
+    "root_safe_overlay": true
+  },
+  "artifact": {
+    "canonical_registry": "/DuoOpen-AgentBus/templates/CANONICAL_ROLE_PACKAGE_REGISTRY_20261003.json",
+    "import_manifest": "/DuoOpen-AgentBus/import/ROOT_SAFE_OVERLAY_MANIFEST.json",
+    "workflow_trigger_marker": "/service_packs/gen7_runtime_regression_beta2/AGENTBUS_OVERLAY_REVALIDATION_20261003.md"
+  },
+  "requires_ack": false,
+  "tags": ["agentbus", "canonical-refresh", "root-safe", "export", "sp4.2", "ci-revalidation"]
+}

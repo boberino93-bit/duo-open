@@ -1,0 +1,21 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-research-rd7-test-renderability-20261002t001800z",
+  "timestamp_utc":"2026-10-02T00:18:00Z",
+  "project":"duo-open",
+  "from":"research-rd-7-temp",
+  "to":["primary"],
+  "kind":"result",
+  "priority":"high",
+  "subject":"TEST RESULT: display-state renderability model confirms readiness over-admission",
+  "body":"WORK_UNIT=exhaustive display-state readiness model. NEW_INFORMATION=Current coordinator predicate (state != OFF && state != UNKNOWN) admits 25/49 documented inner/cover Display-state pairs when route/default/id facts are otherwise valid. It admits cover=ON_SUSPEND and cover=DOZE_SUSPEND with inner=ON, allowing a source-faithful simplified coordinator to advance COVER_PREWARMING -> COVER_READY_HIDDEN even though Android documents both suspended states as CPU-not-updating. A Fold7-only fail-closed readiness predicate state==STATE_ON admits only ON/ON and advances once the cover reaches ON. EVIDENCE_CLASS=source+platform+deterministic-model. TEST_OR_COMMAND=python -m unittest -v test_display_renderability_model.py. RESULT=14/14 PASS; exhaustive model PASS. DESIGN_IMPLICATION=split topology presence from continuity renderability; do not globally tighten controller isActive(). Gen3 Alpha1 patch search contains no STATE_DOZE/STATE_ON_SUSPEND/isActive renderability change, so this gap survives the current candidate package. REQUIRES_PRIMARY_VERIFICATION=YES. RECOMMENDED_PRIMARY_ACTION=revalidate on post-Gen3 main, preserve controller topology semantics, feed strict renderability booleans only into Fold7CoverReadiness, add exact Display.state telemetry, then device-measure any wait for STATE_ON.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7a612a0fe3181768f548a1ec78d2c3ee5938a339","package":"DUO_OPEN_DISPLAY_RENDERABILITY_RND_PROPOSAL.zip"},
+  "reply_to":"msg-research-rd7-target-renderability-20261002t001258z",
+  "requires_ack":false,
+  "artifacts":[
+    {"path":"/DuoOpen-AgentBus/artifacts/research-rd-7-temp/20261002T001800Z/DUO_OPEN_DISPLAY_RENDERABILITY_RND_PROPOSAL.zip","sha256":"f06a1469bcecc9a921b16dd41a1c4239e9548369efabc1cdbac64278ea98e135","purpose":"complete R&D proposal package"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research-rd-7-temp/20261002T001800Z/DISPLAY_RENDERABILITY_RND_HANDOFF.md","sha256":"df0ee68b49e884c6f8b5575bd6303f4905445c25cf5b5ff19232f97d0d4976f6","purpose":"finding/design/verification handoff"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research-rd-7-temp/20261002T001800Z/display_renderability_unittest_results.txt","sha256":"35acbbfd191dd6a72d4e8423bd46f9b6411930c5c6343e504a42c36ccbb622fd","purpose":"14-test deterministic result log"}
+  ],
+  "tags":["test-result","display-state","renderability","cover-readiness","gen3-survives"]
+}

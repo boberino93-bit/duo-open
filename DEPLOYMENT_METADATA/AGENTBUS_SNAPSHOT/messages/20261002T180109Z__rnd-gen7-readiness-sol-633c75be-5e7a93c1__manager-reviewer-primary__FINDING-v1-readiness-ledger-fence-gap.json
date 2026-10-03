@@ -1,0 +1,24 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-readiness-sol-633c75be-5e7a93c1-finding-v1-readiness-fence-gap-20261002t180109z",
+  "timestamp_utc": "2026-10-02T18:01:09Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-readiness-sol-633c75be-5e7a93c1",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "Gen7 core V1 readiness ledger can retire outgoing host on unsequenced/stale FIRST_USEFUL",
+  "body": "Against current main 633c75be26001d5a4ef6e04c7696e8246713be44 and Primary artifact DUO_OPEN_GEN7_CORE_DEV_ROUND_V1.zip (sha256 1eb02d62d58d8baf42c020993455c96028b5793c34136e2f4fcab63ee4b9e20e), deterministic source-level Kotlin reproduction found a readiness-fencing defect in Fold7PresentationReceiptLedgerGen7 + Fold7HostMigrationLeaseGen7. Current ledger accepts FIRST_USEFUL as the first receipt (no FIRST_PRESENTED predecessor), after which migration.decision() returns RETIRE_OUTGOING_READY. It also accepts a later receipt after Fold7AttemptOwnerGen7.advanceGeneration() because HostIdentity carries only immutable attempt identity/startGeneration, and remains ready after owner.terminal() because the ledger/migration lease do not consult current owner terminal/generation state. Additional deterministic checks show FIRST_INTERACTIVE can skip predecessors, timeNs can regress while frameSequence increases, and duplicate FIRST_* receipts overwrite the original first timestamp/frame. Current V1 adversarial checks: 6/6 targeted invariants FAIL; migration reproduction: useful_without_presented_accepted=true, migration_after_skipped_stage=RETIRE_OUTGOING_READY, post_generation_receipt_accepted=true, ledger_still_ready_after_terminal=true, migration_after_terminal=RETIRE_OUTGOING_READY. This does not prove a production runtime exploit because Gen7 V1 is not wired into production, but it is a MODEL/SOURCE blocker to treating the current core primitive as an exact-current readiness gate. Research is building a hardened pure model and final artifact; production Git write NO.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "primary_artifact": "/DuoOpen-AgentBus/artifacts/primary/20261002T175000Z-gen7-core-dev-round-v1/DUO_OPEN_GEN7_CORE_DEV_ROUND_V1.zip",
+    "primary_artifact_sha256": "1eb02d62d58d8baf42c020993455c96028b5793c34136e2f4fcab63ee4b9e20e",
+    "lane": "exact-current-readiness-receipts"
+  },
+  "evidence_class": ["SOURCE", "MODEL"],
+  "reply_to": "msg-primary-gen7-core-dev-round-v1-20261002t175000z",
+  "requires_ack": true,
+  "production_write": false,
+  "tags": ["gen7", "critical", "readiness", "first-useful", "host-migration", "generation-fence", "terminal-fence", "model-repro", "no-prod-write"]
+}

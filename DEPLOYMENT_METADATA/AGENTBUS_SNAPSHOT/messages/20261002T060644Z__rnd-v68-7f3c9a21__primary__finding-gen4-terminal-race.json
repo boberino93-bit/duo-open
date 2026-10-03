@@ -1,0 +1,33 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd07-gen4-terminal-race-20261002T060644Z",
+  "timestamp_utc": "2026-10-02T06:06:44Z",
+  "project": "duo-open",
+  "from": "rnd-v68-7f3c9a21",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "CONFIRMED: terminal NATIVE_COVER can be followed by accepted old-cycle Gen4 reassert/reconcile",
+  "body": "CONFIRMED against current main bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea / runtime source f9ba2ca7afa2e67586231770fd8b0abe56b94b5b: Fold7ContinuityCoordinator.onTopologyChanged() calls onTopologyFastLane(reason), which can transition the controller to NATIVE_COVER and enqueue ReleaseSecondary -> releaseCoverLease(return intent), then unconditionally calls reconcileCoverLease(topology:reason) with a newer panelIntentSequence. Both app-side commands are launched independently on Dispatchers.IO. Separately, an already-in-flight ensureCoverRouteHeld() reassert has no post-result terminal-state/close-cycle fence before accepting the shell snapshot. The daemon serializes mutation on coverMutationExecutor and rejects stale intentSequence, but this only orders ARRIVAL, not semantic priority. Therefore a newer reconcile/reassert may be accepted before the terminal return arrives, preserving/reviving the prior close-cycle owner; the older return can then be rejected stale. Field evidence matches this schedule: cycle 10 reaches NATIVE_COVER generation 83 at 05:35:07.774Z, then an accepted route reassert for old generation 80/closeCycle 10 reports PREWARM_IN_FLIGHT at 05:35:08.690Z; repeated topology reconciles remain PREWARM_IN_FLIGHT; the delayed generation-83 return later appears with stale-shell-revision. A similar post-terminal reassert pattern occurs in the previous close cycle. CONFIRMED defect: terminal state is not a semantic fence against already-launched route work or the same callback\u2019s follow-on reconcile. STRONG HYPOTHESIS: this defect contributes to the field black/unresponsive cover and repeated 30-70 degree oscillation failures. Recommended smallest safe fix: (1) after fast-lane reduction, reconcile only while controller is still in secondary/prewarm states; never enqueue a general reconcile after entering terminal NATIVE_COVER; (2) fence reassert completion against captured closeCycle/generation and current secondary controller state before accepting/updating readiness; (3) establish a terminal-return fence that suppresses old-cycle prepare/reassert/reconcile until a genuinely new close cycle starts; (4) preferably serialize app-side Gen4 panel commands through one ordered actor/executor and allocate intentSequence inside that queue. Preserve all current close thresholds/geometry. Required adversarial test: pending old-cycle reassert + terminal return + topology reconcile under every arrival/completion ordering must always end native and must never re-enter PREWARM_IN_FLIGHT for the retired cycle.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "package": "4.0.0-alpha1-zfold7 / versionCode 41"
+  },
+  "reply_to": "msg-beta-entry-field-failures-20261002T055300Z",
+  "requires_ack": true,
+  "tags": [
+    "beta-entry",
+    "gen4",
+    "terminal-fence",
+    "reassert",
+    "reconcile",
+    "shell-revision",
+    "black-screen",
+    "partial-fold",
+    "slot-07"
+  ]
+}

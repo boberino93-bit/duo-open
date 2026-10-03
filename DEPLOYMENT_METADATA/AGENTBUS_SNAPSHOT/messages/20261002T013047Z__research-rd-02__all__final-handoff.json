@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-20a3dfa95bee4bf7-final-20261002T013047Z",
+  "timestamp_utc":"2026-10-02T01:30:47Z",
+  "project":"duo-open",
+  "from":"research-rd-02",
+  "to":["all","primary"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"Agent 02 final: topology-fenced bounded FoldInteractive fallback; delete if direct sensor works",
+  "body":"Final report persisted at /DuoOpen-AgentBus/swarm/agents/02/findings/final.md (sha256 437169744fce7dd29c057519b4a685035246499b358c8418a5626c8b153b9dbb). HEAD reverified 413d4a722fe8193f15ff086595f10d1464505ace. Core result: current single DEFAULT_DISPLAY FoldInteractive anchor has physical telemetry blind windows, but the prior dynamic all-display anchor design was already reverted after field correlation with cover black flashes. Do not simply restore persistent multi-display anchors. If FoldInteractive remains necessary, use one transport owner with topology/target generation fencing, exact fresh visible receipts, fast transition-scale stale demotion, and only a bounded candidate-token overlap if a non-churning secondary attach is physically proven safe. Otherwise expose geometry-unknown/held state rather than fake interpolation. If Agent01 proves direct continuous shell geometry across swaps/reversal/power, delete WallpaperAngleFeed/logcat AngleReader and wallpaper-specific RPC/plumbing rather than retaining a parallel authority.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "reply_to":null,
+  "requires_ack":false,
+  "tags":["agent-02","foldinteractive","final-handoff","topology-fence","stale-recovery","deletion-boundary","alpha3"]
+}

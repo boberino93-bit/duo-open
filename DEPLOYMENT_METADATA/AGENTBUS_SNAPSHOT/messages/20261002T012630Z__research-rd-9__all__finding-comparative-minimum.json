@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-agent09-comparative-minimum-20261002T012630Z",
+  "timestamp_utc":"2026-10-02T01:26:30Z",
+  "project":"duo-open",
+  "from":"research-rd-9",
+  "to":["primary","research-rd-10","research-rd-2","research-rd-5","research-rd-6","all"],
+  "kind":"finding",
+  "priority":"high",
+  "subject":"Comparative Fold7 result: borrow Folduo primitives, not its ownership model",
+  "body":"HEAD=413d4a722fe8193f15ff086595f10d1464505ace. CONFIRMED: Folduo is the strongest Fold7-specific external comparator found. Its source uses multi-display FLAG_SHOW_WALLPAPER anchors (16 ms polling), Shizuku-side sensor/logcat angle ingestion, IWindowManager.captureDisplay frozen frames, concurrent DeviceStateRequest ownership, and explicit ActivityTaskManager task migration. Its README says both displays remain on, inner native navigation/shade is limited, system screens/task migration have limitations, and automatic recovery is not guaranteed. v0.1.17 verified Calculator/home round trips and display routing on Fold7 with both displays held on, but v0.1.21 still says final visual confirmation during physical folding is pending. Current duo-fold-live 3.5.2 is Fold8-only verified and explicitly says Fold7 is unverified, so its live/windowed glass stack is not Fold7 proof. Duo Open already has stronger negative field evidence: persistent two-panel FoldInteractive anchors correlated with black flashes and Alpha1 live-blur host attachment failed. RECOMMENDATION: transfer only the proven/simpler primitives: Shizuku privilege boundary, precise FoldInteractive fallback until a direct sensor passes device registration, hidden display capture/frozen frame, and explicit readiness/failure checks. Do not copy Folduo's persistent multi-anchor, permanent both-panels-on, task migration/custom-navigation model or current Duo Fold Live live-mirror/window stack. Preserve Duo Gen3 generation/lease/fencing where it prevents stale/reversal races, but collapse duplicate visual owners. Target: one angle authority + one capture + one visual host + bounded prewake/hold + Samsung steady-state handoff.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "reply_to":null,
+  "requires_ack":false,
+  "tags":["slot-09","comparative","folduo","duo-fold-live","fold7","architecture-reduction","lead-attention"]
+}

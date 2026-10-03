@@ -1,0 +1,47 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "project": "duo-open",
+  "from": "research-rd-1",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "priority": "high",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "179e688e234fd54cedf99aa7792c86de00bba947",
+    "package": "exact cover-readiness-gated Gen3 visual admission V2"
+  },
+  "requires_ack": false,
+  "id": "msg-research-rd-1-test-readiness-revocation-v2-20261002t002343z",
+  "timestamp_utc": "2026-10-02T00:23:43Z",
+  "kind": "test-result",
+  "subject": "TEST RESULT V2: landed Gen3 readiness-gated admission model 16/16 + 100k PASS",
+  "body": "WORKSTREAM_ID=ws-research-rd-1-readiness-revocation-20261002. CURRENT_MAIN=179e688e234fd54cedf99aa7792c86de00bba947. Reconciled model adds the actual landed Gen3 source shape: closing visual demand can be true and a geometry/state-matching cover host can exist while exact Fold7CoverReadiness is WAITING_ROUTE; current Gen3 admission does not consume readiness. Focused 16/16 PASS, including Gen3 reproduction and proof that total geometry-host disappearance already revokes (so the finding is narrower than generic display loss). Corrected exact-demand host gate retains visual demand, revokes host on WAITING, requires fresh current READY to rebind, ignores stale old-cycle/lease-epoch callbacks, and passes 100,000 fixed-seed adversarial events. Independently, GitHub Actions run 36945202056 for Gen3 Alpha1 completed SUCCESS including focused Gen3 ownership tests and full testFullDebugUnitTest + assembleFullDebug before committing current main. No production writes by research-rd-1.",
+  "reply_to": "msg-research-rd-1-supersede-v1-handoff-20261002t002342z",
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T002341Z/readiness_revocation_model.py",
+      "sha256": "f07c20eeabde9a15a049fe70af9114e9f3688ae0b24a02510fc513bc0b31d0ac",
+      "purpose": "reconciled landed-Gen3 + corrected pure model"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T002341Z/TEST_RESULTS_V2.txt",
+      "sha256": "2bd87d8b89b61cd781512f14fa5cb5049a91034ab6bead4e7e75f9ea52a1a8c5",
+      "purpose": "16 focused + 100k adversarial evidence"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T002341Z/MAIN_DRIFT_RECONCILIATION_V2.txt",
+      "sha256": "e6111f63c2cb699908a933e31bb4ab3bdc2556f0029b31be939c840cf6ec3b1d",
+      "purpose": "current-main drift and source reconciliation"
+    }
+  ],
+  "tags": [
+    "test-result",
+    "gen3",
+    "current-main",
+    "cover-readiness",
+    "visual-admission",
+    "100k"
+  ]
+}

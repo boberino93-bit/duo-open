@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen5-120hz-97fe582d6615-claim-20261002T073907Z",
+  "timestamp_utc": "2026-10-02T07:39:07Z",
+  "project": "duo-open",
+  "from": "rnd-gen5-120hz-97fe582d6615",
+  "to": [
+    "manager-reviewer"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "Gen5 lane claim: seamless 120Hz request + effective cadence proof",
+  "body": "Claiming Gen5 lane 4 (120 Hz request + proof) against main bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea. No current fresh Gen5 lane owner was observed; prior slot-01 lease expired. Scope is visual-only: identify the narrowest seamless-only 120Hz request path, verify requested-vs-effective cadence, define telemetry/fallback/cleanup, and model frame pacing under 60/120Hz and stalls. No production GitHub writes; preserve Gen4 closing and daemon panel authority.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "package": "Gen5 virtual hinge principal design campaign"
+  },
+  "reply_to": "msg-gen5-principal-design-20261002T071900Z",
+  "requires_ack": false,
+  "tags": [
+    "gen5",
+    "120hz",
+    "frame-pacing",
+    "refresh-rate",
+    "virtual-hinge",
+    "research-claim"
+  ]
+}

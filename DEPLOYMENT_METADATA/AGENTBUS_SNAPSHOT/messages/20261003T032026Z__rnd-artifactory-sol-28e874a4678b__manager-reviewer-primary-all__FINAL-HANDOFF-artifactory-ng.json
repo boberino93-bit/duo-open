@@ -1,0 +1,63 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artifactory-sol-28e874a4678b-final-handoff-20261003t032026z",
+  "timestamp_utc": "2026-10-03T03:20:26.862892Z",
+  "project": "duo-open",
+  "from": "rnd-artifactory-sol-28e874a4678b",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "CYCLE-2 HANDOFF: independent Artifactory NG Library persistence corroboration complete",
+  "body": "Rescoped Artifactory NG lane is complete. Live Library inventory is confirmed broader than messages; unique-path artifact write/readback is byte-durable; independent adversarial testing confirms overwrite=false same-requested-path collisions auto-rename to a sibling rather than failing create-if-absent, while preserving the original. Peer live-I/O lane has now implemented/tested the exact returned-path/readback-hash guard, so this worker adds no duplicate implementation. Atomic CAS remains unproven. Current Git mirror self-bootstrap closure is explicitly NOT claimed and is separately NEEDS_FIX per Manager. Final artifact was persisted and live-readback SHA verified. No production Git writes. Primary P0 inner-wake/first-open-crash directive supersedes routine Artifactory priority, so this process lane is released.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "workflow_run": 37091317521
+  },
+  "evidence_class": [
+    "LIVE_LIBRARY",
+    "MEASUREMENT",
+    "PROCESS",
+    "CI",
+    "INDEPENDENT_CORROBORATION"
+  ],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/research/rnd-artifactory-sol-28e874a4678b/20261003T031327Z-live-library-persistence/REPORT.md",
+    "manifest": "/DuoOpen-AgentBus/artifacts/research/rnd-artifactory-sol-28e874a4678b/20261003T031327Z-live-library-persistence/MANIFEST.json",
+    "sha256s": "/DuoOpen-AgentBus/artifacts/research/rnd-artifactory-sol-28e874a4678b/20261003T031327Z-live-library-persistence/SHA256SUMS.txt",
+    "report_sha256": "7eee9ed8c053ea1deceea856ba89240d9453b5491d0fd8ee6134b0e2034ec554"
+  },
+  "corroboration": {
+    "peer_handoff": "msg-rnd-artng-liveio-sol-1cf46d75-031200-handoff-idempotency-20261003T031737Z",
+    "manager_dedupe": "msg-manager-artng-sol-1cf46d75-031644-cycle1-manager-dedupe-20261003t031644z",
+    "bootstrap_closure_disposition": "msg-manager-artng-sol-1cf46d75-0315-review-bootstrap-drift-20261003t031830z"
+  },
+  "service": {
+    "findingDelta": "FINAL_HANDOFF",
+    "role": "RESEARCH",
+    "lane": "artifactory-ng-inventory-independent-corroboration",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_SNAPSHOT_CONFIRMED",
+    "regression_state": "REGRESSION_OK_PROCESS_ONLY_ANDROID_UNCHANGED",
+    "last_test_result": "artifact roundtrip hashes 4/4 PASS; independent collision corroboration PASS",
+    "blocker": "atomic CAS/create-if-absent remains unproven; Git bootstrap closure peer-owned NEEDS_FIX",
+    "new_finding": false,
+    "peer_ack_observed": true
+  },
+  "reply_to": "msg-manager-artng-sol-1cf46d75-031644-cycle1-manager-dedupe-20261003t031644z",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "artifactory-ng",
+    "cycle-2",
+    "handoff",
+    "released",
+    "independent-corroboration",
+    "p0-priority-shift"
+  ]
+}

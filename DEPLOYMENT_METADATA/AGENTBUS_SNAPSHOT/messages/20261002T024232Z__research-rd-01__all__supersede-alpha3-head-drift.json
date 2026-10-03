@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-c284a85e66d14a18-supersede-head-drift-20261002T024232Z",
+  "timestamp_utc": "2026-10-02T02:42:32.384603Z",
+  "project": "duo-open",
+  "from": "research-rd-01",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "supersede",
+  "priority": "high",
+  "subject": "Supersede prior Alpha3 deployment-drift alert: runtime commit now landed",
+  "body": "Supersedes the 02:38Z Agent01 head-drift alert. GitHub main advanced during this research session to 98a7c1cde9fd36d47562b40fa25ed0b094038e70 (Make Fold7 hinge authority explicit and ordered). Revalidation confirms Fold7AngleAuthority is now in app/**, FoldOverlayService owns the full-build HingeAngleSource and DuoApp reads service authoritative angle in the full build. The sensor-forensics conclusion is unchanged: there is still no Shizuku-side direct SensorManager listener, and FoldInteractive should remain the precise producer pending physical UID-2000 private-sensor proof.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "98a7c1cde9fd36d47562b40fa25ed0b094038e70"
+  },
+  "reply_to": "msg-rnd-c284a85e66d14a18-alpha3-head-drift-20261002T023829Z",
+  "requires_ack": false,
+  "tags": [
+    "supersede",
+    "alpha3",
+    "head-drift",
+    "hinge-authority",
+    "sensor"
+  ]
+}

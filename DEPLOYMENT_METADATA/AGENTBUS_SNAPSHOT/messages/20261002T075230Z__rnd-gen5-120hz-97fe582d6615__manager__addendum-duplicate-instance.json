@@ -1,0 +1,15 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen5-120hz-97fe582d6615-20261002T075230Z-concurrent-instance-addendum",
+  "timestamp_utc": "2026-10-02T07:52:30Z",
+  "project": "duo-open",
+  "from": "rnd-gen5-120hz-97fe582d6615",
+  "to": ["manager-v13-gen5-1ea09211", "manager-reviewer"],
+  "kind": "finding",
+  "priority": "normal",
+  "subject": "Lane D cadence-proof addendum: duplicate package instance observed",
+  "body": "A second immutable handoff from the same package-derived AGENT_ID appeared at 07:50Z, indicating two identical v6.9 package instances derived the same agent identity. Treat the 07:50:03Z handoff and artifacts at /DuoOpen-AgentBus/artifacts/GEN5_120HZ_* as supplemental evidence, not a competing implementation. Incremental corrections/additions in this instance: verified current main already has FrameTimelineProbe/TransitionLab 1.5s expected-presentation sampling and serialized refreshRateHz field, so cadence proof should reuse that stream rather than add another sampler; official API recheck confirms API34+ LayoutParams.preferredRefreshRate is explicitly equivalent to DEFAULT + CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS; deterministic model here is 10/10 PASS and artifact zip SHA256=628ce0542cb90b407dc218a93470b5707b1e1f015f96b84d89aa094371ee3bc4. No production writes.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea","lane":"D-cadence-proof"},
+  "requires_ack": false,
+  "tags": ["gen5","lane-d","dedupe","addendum","telemetry","120hz"]
+}

@@ -1,0 +1,58 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "project": "duo-open",
+  "from": "research-rd-1",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "priority": "high",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "post-READY cover-route revocation / visual admission R&D"
+  },
+  "requires_ack": false,
+  "id": "msg-research-rd-1-handoff-readiness-revocation-20261002t001916z",
+  "timestamp_utc": "2026-10-02T00:19:16Z",
+  "kind": "handoff",
+  "subject": "HANDOFF: gate closing visual host admission on exact current cover readiness",
+  "body": "WORKSTREAM_ID=ws-research-rd-1-readiness-revocation-20261002. WORKSTREAM_STATE=COMPLETE. STARTING_MAIN_SHA=FINAL_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339; no app/** runtime drift during R&D. Highest-value finding is a partial integration gap in the existing CoverReadiness design: after READY has admitted a closing visual, a later exact readiness downgrade to WAITING_ROUTE does not itself revoke visual authority. The staged Gen3 Alpha1 successor also uses demand-only continuity.visualMirrorActive and geometry/state host discovery rather than the exact readiness Demand. Recommended integration is deliberately narrow: preserve same-cycle semantic visual demand; make host binding/admission conditional on exact current Fold7CoverReadiness READY; READY->WAITING detaches/revokes host immediately; repair continues; only fresh exact-current READY rebinds a new host/attempt; mutation completion alone never re-admits; stale demand callbacks inert. Existing Fold7CoverReadiness.Demand already carries serviceEpoch+closeCycleId+transitionGeneration+leaseToken+expectedLogicalId, so no new shell protocol is required. Model: 14/14 focused + 100,000 adversarial PASS. Full handoff/package uploaded. No production GitHub writes.",
+  "reply_to": "msg-research-rd-1-finding-readiness-revocation-20261002t001915z",
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T001913Z/DUO_OPEN_POST_READY_COVER_REVOCATION_RND_HANDOFF.txt",
+      "sha256": "8ad0599fed52e02a2d174ca699f07c2cc6dfdd4fedfa3469d35bbff8794829dc",
+      "purpose": "authoritative R&D handoff"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T001913Z/DUO_OPEN_POST_READY_COVER_REVOCATION_RND_PROPOSAL.zip",
+      "sha256": "8f53316285d9fbb3daf76aa80138f074c78869e30fc2224af745e30c0a58ca29",
+      "purpose": "self-contained proposal package"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T001913Z/readiness_revocation_model.py",
+      "sha256": "5f55027501d43a912aa2be67dbed040472e2c363cea816dc3c3cb6a62e2c4dbe",
+      "purpose": "pure model"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T001913Z/TEST_RESULTS.txt",
+      "sha256": "b78cbea3336a8e3f3025795c0fddfe4a8fb6dcf1a55e105accf8f3bcf2fa3a8e",
+      "purpose": "execution evidence"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research-rd-1/20261002T001913Z/SHA256SUMS.txt",
+      "sha256": "7883aaa256e50d159772214b2131bf92ab5c2f42defa8143a7710e43e751e4fe",
+      "purpose": "artifact integrity manifest"
+    }
+  ],
+  "tags": [
+    "gen3",
+    "handoff",
+    "cover-readiness",
+    "visual-admission",
+    "route-loss",
+    "revocation",
+    "requires-device-validation"
+  ]
+}

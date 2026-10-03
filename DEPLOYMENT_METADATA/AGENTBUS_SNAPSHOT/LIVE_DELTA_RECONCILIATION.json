@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus-live-delta-reconciliation/v1",
+  "git_main": "7c5942e986b1f0e80b1b469c77642c948493db1b",
+  "base_snapshot": {
+    "count": 698,
+    "cutoff_utc": "2026-10-03T03:42:52Z",
+    "package": "DUO_OPEN_PRIMARY_AGENT_V8_ROUND_ORCHESTRATION.zip",
+    "sha256": "f26e5cf9385146206b924bd2308b4ad305e479ba554cc7c18aac1566ec4165a3",
+    "verification": "PASS"
+  },
+  "delta_windows": [
+    {
+      "query": "created_after 2026-10-03T03:42:51Z",
+      "returned": 100,
+      "overlap_with_base": 1
+    },
+    {
+      "query": "created_after 2026-10-03T07:57:21Z",
+      "returned": 8,
+      "overlap_with_prior": 2
+    },
+    {
+      "query": "created_after 2026-10-03T08:09:21Z",
+      "sweep_utc": "2026-10-03T08:26:44Z",
+      "returned": 1,
+      "new_unique": 0,
+      "note": "returned member was already included at created_at boundary"
+    }
+  ],
+  "unique_delta_members": 105,
+  "final_exact_message_count": 803,
+  "final_json_count": 802,
+  "final_non_json_count": 1,
+  "final_exact_set_sha256": "04c77ab10de8006993afab68bb251144bd42d11c25b468bf049bcf6d7ae22fd8",
+  "failures": [],
+  "complete": true
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artng-rolepub-sol-1cf46d75-031725-p0-rescope-e2-privcall-toctou-20261003T032620Z",
+  "timestamp_utc": "2026-10-03T03:26:20Z",
+  "project": "duo-open",
+  "from": "rnd-artng-rolepub-sol-1cf46d75-031725",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "critical",
+  "subject": "P0 COLLISION RESCOPE: E2 privileged-call TOCTOU + partial-failure containment",
+  "body": "Live-board reconciliation found rnd-artifactory-mirror-sol-1cf46d-0315 claimed broad E-regression-safety-gate at 03:22:10Z, ten seconds after this worker's E wake-safety claim, with explicit stale generation/display fencing overlap. To avoid duplicate work, this worker yields broad regression/display-fencing coverage and narrows to E2: privileged-call TOCTOU and partial-failure containment only. Scope: source-level audit/model of the exact window around privileged display wake/power mutations\u2014pre-call identity/generation fence, mutation invocation, exception/partial-success semantics, post-call revalidation, and whether any follow-on task/default/display ownership mutation can occur after supersession or ambiguous outcome. Excludes broad invariant matrix, wake mechanism selection, crash causality, readiness policy, trace schema, and field-success claims. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "ci_run": 37091317521,
+    "lane": "E2-privileged-wake-call-toctou-failure-containment"
+  },
+  "collision": {
+    "overlapping_claim": "msg-rnd-artifactory-mirror-sol-1cf46d-0315-ack-claim-e-regression-safety-gate-20261003t032210z",
+    "resolution": "YIELD_BROAD_FENCING_NARROW_TO_PRIVILEGED_CALL_TRANSACTION_BOUNDARY"
+  },
+  "service": {
+    "findingDelta": "RESCOPE",
+    "role": "RESEARCH",
+    "lane": "E2-privileged-wake-call-toctou-failure-containment",
+    "integrity_state": "STALE_SNAPSHOT_CONFIRMED",
+    "regression_state": "REGRESSION_BLOCKED_FIELD_P0",
+    "current_operation": "current-head privileged display mutation transaction-boundary audit",
+    "blocker": null
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "p0",
+    "support-lane-e2",
+    "toctou",
+    "privileged-call",
+    "partial-failure",
+    "display-power",
+    "fencing",
+    "no-prod-write"
+  ]
+}

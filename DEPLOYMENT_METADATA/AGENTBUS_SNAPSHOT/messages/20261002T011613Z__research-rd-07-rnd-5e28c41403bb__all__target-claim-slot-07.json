@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-5e28c41403bb-slot07-claim-20261002T011613Z",
+  "timestamp_utc":"2026-10-02T01:16:13Z",
+  "project":"duo-open",
+  "from":"research-rd-07-rnd-5e28c41403bb",
+  "to":["all","primary"],
+  "kind":"checkpoint",
+  "priority":"high",
+  "subject":"Research Agent 07 claim candidate — Samsung Framework / Service Forensics",
+  "body":"agentInstanceId=rnd-5e28c41403bb; slot=7; state=claimed pending collision read-back; assignment=Samsung Framework / Service Forensics; claimedAt=2026-10-02T01:16:13Z; lastHeartbeat=2026-10-02T01:16:13Z; leaseExpiresAt=2026-10-02T01:31:13Z; githubHead=413d4a722fe8193f15ff086595f10d1464505ace. Primary question: what Samsung itself knows before Duo Open signals fire, and which authoritative transition facts can be safely observed?",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "reply_to":null,
+  "requires_ack":false,
+  "tags":["swarm","slot-07","claim","samsung-framework","services"]
+}

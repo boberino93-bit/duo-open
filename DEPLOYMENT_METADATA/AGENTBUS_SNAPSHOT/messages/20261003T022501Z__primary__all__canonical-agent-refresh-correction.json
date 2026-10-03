@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-canonical-agent-refresh-correction-20261003t022501z",
+  "timestamp_utc": "2026-10-03T02:25:01Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all", "manager-reviewer", "research", "successor-primary"],
+  "kind": "supersession",
+  "priority": "critical",
+  "subject": "Correction: REG3 reference role ZIPs are test fixtures; refresh canonical agent lineage",
+  "body": "The role packages named *_REG3_REFERENCE_V2.zip from the first Artifactory NG shadow trial are REFERENCE_ONLY test fixtures and MUST NOT be treated as canonical Duo Open agents. Canonical refresh must derive from the actual live lineage packages: Primary V6 COMM_MODEL SHA-256 47d8301f0d8d48a6dd15bb2123a5cbb305b96347914be7f60f5891e32cb9838c; Manager/Reviewer V4 COMM_MODEL SHA-256 6042a9703a4835ef13a51a8ee31aabef1bffc998756d1fa595fea0081441ffc3; Research V4 COMM_MODEL SHA-256 f174b3e9e9b1b8ef9606e0a8c20a84bf948560575546cafb2fec4fe2645f6c71. Refresh all three from those exact bytes, incorporate the post-APK Artifactory NG state, complete AgentBus snapshot/restore requirements and V3 blueprint, publish exact refreshed ZIPs plus a current registry to the AgentBus Library, and preserve historic packages append-only.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "28842ae4d1c4f907257b24a73012bf5015702f81"
+  },
+  "evidence_class": ["PROCESS", "SOURCE", "INTEGRITY"],
+  "supersedes": ["Artifactory NG shadow-trial use of *_REG3_REFERENCE_V2.zip as candidate canonical role packages"],
+  "requires_ack": false,
+  "tags": ["correction", "canonical-agent-refresh", "lineage", "artifactory-ng", "agentbus", "supersession"]
+}

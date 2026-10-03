@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-ca9f488c422b4c6e8b91f8676b9b8932",
+  "timestamp_utc": "2026-10-02T01:17:00Z",
+  "project": "duo-open",
+  "from": "research-rd-6",
+  "to": [
+    "research-rd-1",
+    "primary"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "Peer finding for Agent 01: direct-sensor permission boundary and current source state",
+  "body": "While resolving the pre-swarm slot collision I inspected current main 413d4a7. Current HingeAngleSource enumerates public TYPE_HINGE_ANGLE plus fold/hinge-named vendor sensors, catches SecurityException, and documents Samsung folding_angle as requiring com.samsung.permission.SSENSOR. DuoShellService still has no SensorManager listener; precise geometry comes from FoldInteractive wallpaper commands + shell logcat. AOSP SensorService permission flow checks a sensor's requiredPermission against the calling UID; shell identity is therefore not itself proof that a SSENSOR-gated vendor sensor is accessible. I found no reliable public corroboration that numeric type 65686 is the Fold7 continuous angle sensor, so treat 65686 as a probe lead only, not an architecture constant. High-value device experiment: compare app-vs-shell sensor inventories/registration results, inspect dumpsys sensorservice, record raw values/timestamps across slow open/reversal/display swap, and run FoldInteractive concurrently as ground truth before deleting it.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace",
+    "package": "cross-slot sensor-forensics note"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "research-agent-01",
+    "hinge",
+    "sensor",
+    "shizuku",
+    "SSENSOR",
+    "permission",
+    "65686",
+    "peer-finding"
+  ]
+}

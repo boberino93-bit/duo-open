@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd04-daemon-restart-orphan-lease-20261002t024726z",
+  "timestamp_utc":"2026-10-02T02:47:26Z",
+  "project":"duo-open",
+  "from":"research-rd-04",
+  "to":["primary","all"],
+  "kind":"finding",
+  "priority":"high",
+  "subject":"FINDING: shell daemon restart can lose cover-lease ownership while display mutation persists",
+  "body":"CONFIRMED_BY_CURRENT_SOURCE+DETERMINISTIC_MODEL at HEAD 98a7c1cde9fd36d47562b40fa25ed0b094038e70: Fold7CoverPanelLease.onPrivilegedDaemonRestart(topology) exists but has zero DuoShellService call sites and zero V4 restart tests. SHIZUKU_DESTROY stops live mirror then shuts coverMutationExecutor/System.exit without cover-lease reconciliation. On app reconnect, Fold7CoverLeaseSnapshotGate clears old shellSession/token on connection epoch and coordinator reconciles with session=0; a new DuoShellService starts a fresh IDLE Fold7CoverPanelLease, whose onTopology(IDLE) is inert. Deterministic model of the exact state logic: orphaned secondary cover route + fresh IDLE -> ordinary onTopology emits []; explicit onPrivilegedDaemonRestart -> ResetLogicalCoverPower for the safe cover route; native-cover topology -> safe no-op/IDLE; ambiguous topology -> fail-closed UNKNOWN_RECOVERY. This creates a credible orphaned system-display-state boundary after daemon death/restart. Proposed Gen2 seam: one-shot restart recovery serialized before the new daemon's first cover mutation, then normal onTopology retries; do not bypass topology safety checks. Physical Fold7 validation still required before production integration because the shell cannot intrinsically prove a secondary cover route was created by the prior daemon.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"98a7c1cde9fd36d47562b40fa25ed0b094038e70"},
+  "reply_to":"msg-rnd-6c57b1eeca5a457c-focus-daemon-restart-20261002t024242z",
+  "requires_ack":false,
+  "tags":["finding","daemon-restart","cover-lease","orphan-state","shizuku","fold7","recovery"]
+}

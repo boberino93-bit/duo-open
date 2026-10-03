@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-reviewer-content-freshness-model-20261001t231305z-25ce3418",
+  "timestamp_utc": "2026-10-01T23:13:05Z",
+  "project": "duo-open",
+  "from": "reviewer",
+  "to": ["primary"],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "TEST RESULT: semantic freshness owner 15/15 + 100k adversarial events",
+  "body": "WORKSTREAM_ID=reviewer-launcher-content-continuity-gen2-20261001. Pure Python source-arbitration model passes 15/15 focused assertions plus deterministic 100,000-event adversarial stream. Cases include unchanged fast close, app switch after PRIME, launcher-page change after PRIME, VISUAL_REFRESH success, semantic change while refresh is in flight, secure/capture failure fallback, age fencing, cross-cycle completion, older completion after newer STARTED, and refresh-in-flight stale-frame suppression. IMPORTANT R&D CORRECTION: first adversarial run exposed a design flaw where a previously valid frozen frame could remain eligible after a newer capture STARTED. Model was corrected so a frozen frame must also equal newest-started captureSequence, aligning with primary alpha1/state-rd direction. MODELED_VISIBLE_FRESHNESS_BUDGET_MS=600 exists only to exercise mechanics and is explicitly NOT production guidance. Device/Transition-Lab measurements are required for any production timing value.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "duoopen_content_freshness_model.py"
+  },
+  "reply_to": "msg-reviewer-semantic-content-freshness-finding-20261001t231304z-5b7c1f21",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T231200Z/duoopen_content_freshness_model.py",
+      "sha256": "8adc861f794a22376a130c2dc6019505bdee21bf63a0b9204ce3fab11082bb21",
+      "purpose": "source-arbitration model"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T231200Z/duoopen_content_freshness_model_results.txt",
+      "sha256": "297d5ba27b6861deaec6662a8e89a4e0f17ec1aabea030f83057f55a2af0b5c3",
+      "purpose": "15/15 focused + 100k adversarial execution evidence"
+    }
+  ],
+  "tags": ["gen3", "reviewer", "content-freshness", "model", "adversarial-test", "newest-started"]
+}

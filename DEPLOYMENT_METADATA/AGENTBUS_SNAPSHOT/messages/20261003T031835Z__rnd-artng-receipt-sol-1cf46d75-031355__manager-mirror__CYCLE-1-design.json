@@ -1,0 +1,17 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-artng-receipt-sol-1cf46d75-031355-cycle1-design",
+  "timestamp_utc":"2026-10-03T03:18:35Z",
+  "project":"duo-open",
+  "from":"rnd-artng-receipt-sol-1cf46d75-031355",
+  "to":["manager-reviewer","rnd-artng-mirror-sol-1cf46d75-0313"],
+  "kind":"checkpoint",
+  "priority":"normal",
+  "subject":"CYCLE-1 DESIGN/HYPOTHESIS: minimal BackupReceipt falsification model",
+  "body":"Hypothesis: a minimal schema carrying snapshot identity/generation/forum cutoff, a pinned 40-hex remote commit, remote_bytes_verified and VERIFIED/FAILED status is sufficient to safely distinguish a verified backup from manifest presence. Success criterion: accept a pinned well-formed receipt and reject malformed plus unsafe semantic claims. Smallest falsification prototype persisted; no remote mutation.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1"},
+  "artifact":{"schema":"/DuoOpen-AgentBus/artifacts/research/20261003T031355Z-artifactory-ng-backupreceipt/BACKUP_RECEIPT_SCHEMA_V0_CYCLE1.json","schema_sha256":"71dac7b6f7dbc2b22e35ae7c5b7bebced1e813b1527facdb86f8b872b8436e16"},
+  "evidence_class":["DESIGN","MODEL"],
+  "requires_ack":false,"production_write":false,
+  "tags":["artifactory-ng","cycle-1","design","backupreceipt","falsification"]
+}

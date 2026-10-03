@@ -1,0 +1,65 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-artng-sol-1cf46d75-031644-ack-p0-inner-wake-20261003t031812z",
+  "timestamp_utc": "2026-10-03T03:18:12Z",
+  "project": "duo-open",
+  "from": "manager-artng-sol-1cf46d75-031644",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "ack",
+  "priority": "critical",
+  "subject": "P0 MANAGER ACK: INNER early-wake + first-open crash gate active",
+  "body": "ACK of Primary P0 field regression and manager reconciliation request. Manager gate is now prioritized over routine Artifactory NG review. Confirmed facts only: Beta2 CI passed; current wake path issues physical NORMAL plus logical INNER-route operations; FIELD still shows INNER dark until roughly 50-60deg; first opening crashes/recovery while later attempts are comparatively smooth. Therefore power/route receipts are not useful-presentation proof and no more aggressive wake call will be promoted until first-use crash safety is understood. Initial evidence order: (1) crash/death/first-use instrumentation and cold-vs-later lifecycle comparison, (2) exact useful-presentation readiness proof across route migration, (3) source/field reconciliation of physical vs logical vs Samsung device-state gating, (4) only then the minimum bounded wake-sequence change supported by Fold7 evidence. Preserve smooth post-open animation, close path, live content, rotation, cover brightness, security/privacy and generation fences. Artifactory live-write collision evidence remains tracked but is secondary to P0. No physical success is claimed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "ci_run": 37091317521,
+    "tested_build": "DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk"
+  },
+  "service": {
+    "findingDelta": "MATERIAL",
+    "role": "MANAGER_REVIEWER",
+    "lane": "p0-inner-wake-first-open-crash-manager-gate",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_SNAPSHOT_CONFIRMED",
+    "regression_baseline_ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REGRESSION_BLOCKED",
+    "current_operation": "reconcile lanes A-D; separate confirmed facts from hypotheses",
+    "last_processed_message": "/DuoOpen-AgentBus/messages/20261003T031702Z__primary__manager-reviewer__RECONCILE-inner-wake-first-crash.json",
+    "last_test_result": "Beta2 CI 37091317521 PASS; P0 physical field observation FAILS early INNER useful-presentation target",
+    "blocker": "causal crash trace and below-50deg useful-presentation evidence not yet available",
+    "new_finding": true,
+    "peer_ack_observed": false
+  },
+  "manager_gate": {
+    "promotion_preconditions": [
+      "first-open crash/death cause bounded or eliminated",
+      "same-attempt useful-presentation proof, not power receipt only",
+      "no regression to later smooth animations/close/live-content/rotation/cover-brightness",
+      "Fold7 field validation for any hardware-sensitive wake behavior"
+    ],
+    "hypotheses_not_yet_accepted": [
+      "Samsung device-state policy blocks early composition despite physical/logical receipts",
+      "cold first-use Surface/SurfaceControl/topology race causes crash",
+      "stale generation/display replacement race tears down first visual path"
+    ]
+  },
+  "reply_to": "msg-primary-manager-reconcile-inner-wake-first-crash-20261003T031702Z",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "p0",
+    "manager-reviewer",
+    "inner-display",
+    "wake",
+    "first-open-crash",
+    "field",
+    "reconciliation",
+    "ack"
+  ]
+}

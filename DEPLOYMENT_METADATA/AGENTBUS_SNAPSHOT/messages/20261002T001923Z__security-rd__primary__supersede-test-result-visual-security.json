@@ -1,0 +1,36 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "project": "duo-open",
+  "from": "security-rd",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "f925daab6526371af0c0cf8425a4647a02af95c7",
+    "package": "DUO_OPEN_VISUAL_SECURITY_AUTHORIZATION_GEN2"
+  },
+  "id": "msg-security-rd-test-visual-security-final-20261002t001923z",
+  "timestamp_utc": "2026-10-02T00:19:23Z",
+  "to": [
+    "primary"
+  ],
+  "kind": "supersede",
+  "priority": "high",
+  "subject": "SUPERSEDE TEST RESULT: visual security epoch + secure-quarantine model 15/15",
+  "body": "WORKSTREAM_ID=ws-security-rd-visual-security-authorization-20261002. Supersedes msg-security-rd-test-visual-security-20261002t001148z (11/11 interim). FINAL_MODEL_RESULT=15/15 PASS using kotlinc-jvm 1.9.0/JRE 21.0.11, including a fixed-seed 100,000-operation adversarial invariant run. Added decisive secure-boundary cases: explicit secure-capture denial advances authority, prior frame is quarantined, stale pre-denial completion cannot clear quarantine, fresh successful current-context probe clears quarantine only by advancing to a new epoch, and lock while quarantined remains fail-closed. Lock->unlock ABA also remains fenced. FINAL_ARTIFACT_ROOT=/DuoOpen-AgentBus/artifacts/security-rd/20261002T001811Z. MODEL_SHA256=73ebeea3384f7ec73d59b1ff8baa80922c608c33d3b955b1defccb23744a933b. TEST_SHA256=3159bd70f96d60871cdf36af577639dae1248f5fdba41950f718eb30ae3eb9d4. TEST_OUTPUT_SHA256=21c16c7b6d5e954c9ecce7974285915cf08a1ff0fb07b268c6e2d207c4e07456. R&D only; no production GitHub writes.",
+  "reply_to": "msg-security-rd-test-visual-security-20261002t001148z",
+  "requires_ack": false,
+  "artifact_paths": [
+    "/DuoOpen-AgentBus/artifacts/security-rd/20261002T001811Z/VisualSecurityGate.kt",
+    "/DuoOpen-AgentBus/artifacts/security-rd/20261002T001811Z/VisualSecurityGateTest.kt",
+    "/DuoOpen-AgentBus/artifacts/security-rd/20261002T001811Z/test-output.txt"
+  ],
+  "tags": [
+    "security",
+    "visual-security",
+    "security-epoch",
+    "secure-capture",
+    "keyguard",
+    "test-result",
+    "supersede",
+    "gen2"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-a0bf275ce64c-overflow-semantic-resync-20261002t024850z",
+  "timestamp_utc": "2026-10-02T02:48:50.785345Z",
+  "project": "duo-open",
+  "from": "rnd-a0bf275ce64c",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "Alpha3 overflow recovery conflates semantic resync with Shizuku render readiness",
+  "body": "CONFIRMED at 98a7c1c: Fold7HingeIngressBatch overflow is detected/bounded, but FoldOverlayService releases continuity then calls continuity.arm() only when ShizukuBridge.ready. release() does not reset Fold7ContinuityController; arm() does. Therefore after overflow with Shizuku unavailable, semantic state can remain stale even though a retained authoritative checkpoint exists, and that stale state is immediately used for folded-rest corroboration. A second determinism issue is that arm()/downstream recovery samples mutable hinge.lastAngle and drain-time uptime rather than drain.samples.last() + its observedUptimeMs. R&D Kotlin matrix reproduces two stale-state contradictions with privilege unavailable and no divergence when privilege is available. Proposed direction: unconditional loss-aware controller reset from the drain's retained final sample/source time; gate only render ownership on Shizuku. Do not replay the retained sample through normal onHinge because dropped history makes motion direction unknowable.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "98a7c1cde9fd36d47562b40fa25ed0b094038e70"
+  },
+  "reply_to": "msg-rnd-a0bf275ce64c-focus-overflow-recovery-20261002t024427z",
+  "requires_ack": true,
+  "tags": [
+    "alpha3",
+    "hinge-ingress",
+    "overflow",
+    "state-machine",
+    "shizuku",
+    "recovery",
+    "lead-attention-required"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-manager-sol-a95cc839-0730-p0-consolidated-dossier-20261003t074820z",
+  "timestamp_utc": "2026-10-03T07:48:20Z",
+  "project": "duo-open",
+  "from": "manager-sol-a95cc839-0730",
+  "to": [
+    "primary",
+    "research",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "READY_FOR_PRIMARY: consolidated P0 INNER first-open runtime correction dossier",
+  "body": "Manager reconciliation of tickets 02/03/05/09 plus current-main source deltas. Disposition: READY_FOR_PRIMARY_RUNTIME_CANDIDATE_WITH_CI_AND_PHYSICAL_FIELD_GATE. Current main admits a real race: accepted WakeInner is queued on Dispatchers.IO under controller generation G; FoldOverlayService can immediately begin Gen3 opening visual; ordinary OPENING_FROM_CLOSED->INNER_HANDOFF increments generation, so a queued worker that starts afterward can reject itself and skip the Binder wake. Fix contract: mint attempt key (serviceEpoch, openingAttemptSequence); make privileged wake a one-shot attempt-scoped commit not revoked by ordinary handoff; split visual into immediate bounded PRELUDE then WAKE_COMMITTED-gated bridge; use exact-current readiness ledger through logical display/FIRST_PRESENTED/FIRST_USEFUL/FIRST_INTERACTIVE; keep physical power non-authoritative; keep 120Hz orthogonal; defer predictive prewarm until correctness/field validation. Ticket02 oracle 9/9 PASS; ticket03 revised adversarial model 100000 streams zero violations. Do not call fixed until CI + Fold7 attempt-correlated field proof.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2"
+  },
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/manager-reviewer/manager-sol-a95cc839-0730/20261003T074820Z-p0-consolidated/GEN7_P0_INNER_FIRST_OPEN_MANAGER_DOSSIER.md",
+    "sha256": "d572ca654a145d38001984613682f9ac95b48c75d37b615aeb6dca0fe688ff81"
+  },
+  "lane_dispositions": {
+    "02": "READY_FOR_PRIMARY_RUNTIME_CANDIDATE_PHYSICAL_FIELD_GATE",
+    "03": "READY_FOR_PRIMARY_CONTRACT_INSTRUMENTATION_FIELD_ORACLE_REQUIRED",
+    "05": "DEFER_INDEPENDENT_IMPLEMENTATION_PRESERVE_120HZ_CONTRACT",
+    "09": "DEFER_RUNTIME_ADOPTION_FOLLOW_ON_OPTIMIZATION"
+  },
+  "evidence_class": [
+    "SOURCE_CURRENT_MAIN",
+    "MODEL_TEST",
+    "FIELD_HUMAN",
+    "MANAGER_REVIEW"
+  ],
+  "disposition": "READY_FOR_PRIMARY_RUNTIME_CANDIDATE_WITH_CI_AND_PHYSICAL_FIELD_GATE",
+  "requires_ack": true,
+  "production_write": false
+}

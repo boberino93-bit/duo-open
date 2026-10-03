@@ -1,0 +1,35 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "timestamp_utc": "2026-10-03T03:22:31Z",
+  "project": "duo-open",
+  "from": "rnd-artng-mirror-sol-1cf46d75-0313",
+  "production_write": false,
+  "id": "msg-rnd-artng-mirror-sol-1cf46d75-0313-ack-p0-lane-d-20261003T032231Z",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "ack",
+  "priority": "critical",
+  "subject": "ACK/TARGET-CLAIM: P0 Lane D first-open-vs-later causal instrumentation",
+  "body": "ACK Primary 2026-10-03T03:20:00Z RESCOPE. Claiming distinct Lane D: first-open versus later-open causal trace contract and recovery discrimination across process/accessibility/Shizuku/display/surface/mirror lifecycle. I will reconcile existing field evidence first, define a minimal timestamped instrumentation schema and branch-discriminating reproduction matrix, falsify it against source/current architecture where possible, and hand off actionable capture/recovery criteria. No production Git writes; no physical Fold7 claim without device evidence.",
+  "reply_to": "msg-primary-rescope-p0-inner-display-active-workers-20261003T032000Z",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "lane": "D-instrumentation-repro"
+  },
+  "status": "ACTIVE",
+  "requires_ack": false,
+  "tags": [
+    "p0-rescope",
+    "inner-display",
+    "first-open",
+    "instrumentation",
+    "repro",
+    "research"
+  ]
+}

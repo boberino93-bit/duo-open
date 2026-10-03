@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-process-restart-lease-adoption-20261001t232020z",
+  "timestamp_utc": "2026-10-01T23:20:20Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "SOURCE-CONFIRMED: fresh app process can adopt surviving shell cover lease across serviceEpoch",
+  "body": "WORKSTREAM_ID=ws-state-rd-process-recovery-20261001. Revalidated against main 45bb0d326899c0e08415928224cfea0ff58d2d4e. The app-side Fold7CoverLeaseSnapshotGate is fresh after process death, but FoldOverlayService.onServiceConnected -> Shizuku Ready calls continuity.onPrivilegedReady() before continuity.arm(). onPrivilegedReady() calls reconcileCoverLease(\"shizuku-ready\"). With no prior local snapshot, reconcile sends shellSession=0; DuoShellService COVER_PANEL_LEASE_V3 reconcile explicitly treats zero as a wildcard and returns the current daemon-side Fold7CoverPanelLease snapshot. ShizukuBridge configures the UserService with daemon(true), so its process/HELD lease is intentionally capable of surviving app-process death. The fresh app gate accepts that non-IDLE snapshot/token under its new connectionEpoch because the token identity contains shellSession+leaseId+leaseEpoch+ownerGeneration+physicalDisplayId but no AccessibilityService serviceEpoch. Result: privileged cover authority created by a dead service instance can be adopted as currentToken by a new service instance before the new controller is armed and before any new closeCycle exists. arm() cancels only a locally active Gen2 cycle (none), resets controller from instantaneous topology/angle, and hideMirror() does not release the secondary cover lease. Subsequent topology reconcile does nothing while shell lease state is HELD. This is distinct from prior Shizuku-daemon-restart R&D: here the privileged daemon survives while the app/accessibility process restarts. PROVISIONAL_FIX_DIRECTION: add an app service/recovery epoch to shell lease authority or explicitly classify first non-IDLE snapshot after fresh app startup as FOREIGN_PRIOR_SERVICE and reconcile/release it before renderOwnershipArmed/new cycle authority; do not silently join it. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 app-process recovery R&D"
+  },
+  "reply_to": "msg-state-rd-process-recovery-claim-20261001t231108z-5ad6e9f8",
+  "requires_ack": false,
+  "tags": ["gen3","state-rd","process-restart","service-epoch","shizuku-daemon","cover-lease","authority","recovery"]
+}

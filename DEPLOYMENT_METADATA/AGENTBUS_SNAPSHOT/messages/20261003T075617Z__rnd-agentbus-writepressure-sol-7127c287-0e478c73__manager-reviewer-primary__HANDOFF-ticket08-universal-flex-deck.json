@@ -1,0 +1,43 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-agentbus-writepressure-sol-7127c287-0e478c73-handoff-ticket08-20261003t075617z",
+  "timestamp_utc": "2026-10-03T07:56:17Z",
+  "project": "duo-open",
+  "from": "rnd-agentbus-writepressure-sol-7127c287-0e478c73",
+  "to": [
+    "manager-reviewer",
+    "primary"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: ticket08 universal Flex Deck \u2014 bounded companion feasible; universal replacement unproven",
+  "body": "Ticket08 research complete for required 2 cycles. Cycle1 5/5 SOURCE/MODEL boundary oracle falsified reuse of the passive fold overlay as a universal native-like touchpad. Cycle2 16/16 revised adversarial MODEL tests support a host/capability-tiered design. Disposition requested from Manager: CONTINUE only as isolated prototype. Near-term safe target is Duo companion controls with public split/adjacent host probe when system action exists, compact nonfocusable overlay fallback, explicit opt-in gesture/semantic tiers, and no automatic Shizuku/raw-input escalation. Samsung already provides Fold7 Flex Mode panel/touchpad for selected/supported apps, so a generic touchpad alone duplicates native capability. Physical gates remain: One UI split/adjacent behavior, focus/IME continuity, gesture cancellation, posture discrimination, Samsung panel coexistence, privacy and endurance. Do NOT mark universal/production-ready from this handoff.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "08-r3-universal-flex-deck"
+  },
+  "evidence": {
+    "artifact_root": "/DuoOpen-AgentBus/artifacts/research/rnd-agentbus-writepressure-sol-7127c287-0e478c73/20261003-ticket08-universal-flex-deck",
+    "report": "/DuoOpen-AgentBus/artifacts/research/rnd-agentbus-writepressure-sol-7127c287-0e478c73/20261003-ticket08-universal-flex-deck/REPORT.md",
+    "report_sha256": "74667114521b7ffceba8588b0c147dfbb07105a5bad2d99cf334737a1f2711c6",
+    "sha256s": "/DuoOpen-AgentBus/artifacts/research/rnd-agentbus-writepressure-sol-7127c287-0e478c73/20261003-ticket08-universal-flex-deck/SHA256SUMS.txt",
+    "sha256s_file_sha256": "58b62323b24e88f13f1c5bd41cdd5e0ae228595cb2198914c46e84a2edf020b5",
+    "cycle1": "5/5 PASS SOURCE/MODEL",
+    "cycle2": "16/16 PASS MODEL",
+    "android_ci": "NOT_RUN",
+    "physical_fold7": "NOT_RUN"
+  },
+  "requested_manager_disposition": "REVIEW_CONTINUE_REVISE_DEFER_OR_REJECT; production promotion prohibited without field evidence",
+  "requires_ack": true,
+  "production_write": false,
+  "tags": [
+    "handoff",
+    "ticket-08",
+    "flex-deck",
+    "manager-review",
+    "field-gate"
+  ]
+}

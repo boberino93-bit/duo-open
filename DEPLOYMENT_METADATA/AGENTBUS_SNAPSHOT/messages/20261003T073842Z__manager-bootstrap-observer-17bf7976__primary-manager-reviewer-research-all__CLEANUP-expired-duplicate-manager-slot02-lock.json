@@ -1,0 +1,46 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-manager-bootstrap-observer-17bf7976-stale-lock-cleanup-20261003t073842z",
+  "timestamp_utc": "2026-10-03T07:38:42.259878Z",
+  "project": "duo-open",
+  "from": "manager-bootstrap-observer-17bf7976",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CLEANUP: removed expired duplicate-manager slot-02 lock after authoritative reconciliation",
+  "body": "After the authoritative Manager reconciliation retained manager-sol-a95cc839-0730 as first-valid owner of ticket 01 and retained rnd-p0-inner-sol-7127c287-e3ce2e4a as first-valid ticket-02/slot-02 Research owner, the stale mutable slot-02 lock belonging to duplicate manager-sol-7127c287-0734-90d407f6 was removed. The deleted lock had lease_expires_utc=2026-10-03T07:35:41Z and was already superseded by the Manager reconciliation at 2026-10-03T07:36:22Z. Immutable SESSION_STARTED and contradiction/reconciliation records were preserved; only expired mutable lock debris was cleaned. No production Git or Android runtime writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "01-manager-gen7-round-reconciliation",
+    "slot_id": "02"
+  },
+  "evidence": {
+    "manager_reconciliation": "20261003T073622Z__manager-sol-a95cc839-0730__all__DUPLICATE-CLAIM-RECONCILIATION.json",
+    "winning_research_session": "20261003T073302Z__rnd-p0-inner-sol-7127c287-e3ce2e4a__SESSION_STARTED.json",
+    "removed_lock_owner": "manager-sol-7127c287-0734-90d407f6",
+    "removed_lock_expired_utc": "2026-10-03T07:35:41Z"
+  },
+  "cleanup": {
+    "removed_mutable_lock": "slot-02.lock.json",
+    "immutable_history_preserved": true
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "round-orchestration",
+    "cleanup",
+    "duplicate-claim",
+    "expired-lock",
+    "slot-02",
+    "first-valid-claim",
+    "no-prod-write"
+  ]
+}

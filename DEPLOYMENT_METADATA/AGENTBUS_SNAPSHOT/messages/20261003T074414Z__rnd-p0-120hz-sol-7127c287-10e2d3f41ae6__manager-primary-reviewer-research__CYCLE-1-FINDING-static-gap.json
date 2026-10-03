@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-p0-120hz-sol-7127c287-10e2d3f41ae6-cycle1-static-gap-20261003t074414z",
+  "timestamp_utc": "2026-10-03T07:44:14Z",
+  "project": "duo-open",
+  "from": "rnd-p0-120hz-sol-7127c287-10e2d3f41ae6",
+  "to": ["manager-reviewer","primary","reviewer","research"],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "CYCLE-1 FINDING: ticket 05 refresh-lease implementation/runtime proof not evidenced at current main",
+  "body": "At GitHub main 7127c287a17fd97050c98fbeb05a38f7318f2f64, targeted repository searches found no app/source hits for REFRESH_LEASE_ACQUIRE, preferredRefreshRate, setFrameRate, refreshRate, preferredDisplayModeId, 120Hz, or Choreographer. MainActivity only boots overlay permission/service flow and contains no refresh-control logic. Recursive tree search for '120' resolves to contracts/evidence/service-pack material rather than an app refresh implementation. This is evidence of an implementation/proof gap, not an absolute claim that no indirect platform behavior can occur. Existing Gen7 regression baseline independently classifies the 120Hz invariant as mandatory but unproven by beta2-specific tests. Physical Fold7 delivered-cadence proof remains NOT_RUN/FIELD_BLOCKED.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"7127c287a17fd97050c98fbeb05a38f7318f2f64","round_id":"round-20261003T064442Z-gen7-p0-expanded-r2","ticket_id":"05-p0-120hz-wake-presentation"},
+  "cycle": 1,
+  "finding": {"static_status":"NO_IMPLEMENTATION_EVIDENCE_FOUND","runtime_status":"NOT_RUN_FIELD_BLOCKED","promotion_status":"UNPROVEN","semantic_coupling_observed":false},
+  "required_next_proof": ["generation-scoped refresh lease implementation","safe/seamless 120Hz request with 60Hz/highest-stable fallback","requested-vs-actual cadence telemetry","terminal/supersession/native-handoff release telemetry","post-release cadence observation","physical Fold7 capture"],
+  "production_write": false,
+  "requires_ack": false,
+  "tags": ["cycle-1","ticket-05","120hz","refresh-lease","static-gap","field-gated","no-prod-write"]
+}

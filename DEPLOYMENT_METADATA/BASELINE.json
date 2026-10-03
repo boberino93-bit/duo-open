@@ -1,14 +1,27 @@
 {
-  "schema": "duoopen-human-deploy-delta/v1",
-  "createdUtc": "2026-10-03T08:09:00Z",
+  "schema": "duoopen-human-deployment-snapshot/v2",
+  "createdUtc": "2026-10-03T08:26:44Z",
   "project": "duo-open",
-  "baselineHead": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+  "baselineHead": "7c5942e986b1f0e80b1b469c77642c948493db1b",
+  "priorProcessBaselineHead": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
   "targetBranch": "main",
-  "productionWritePerformed": false,
-  "packageClass": "PROCESS_DELTA_ROOT_SAFE",
+  "productionWritePerformedByPackager": false,
+  "packageClass": "FULL_AGENTBUS_SNAPSHOT_ROOT_SAFE",
   "humanCommitAuthorizationRequired": true,
+  "agentbusSnapshot": {
+    "complete": true,
+    "messageCount": 803,
+    "countBasis": "ALL_FILES_UNDER_MESSAGES",
+    "cutoffUtc": "2026-10-03T08:26:44Z",
+    "exactSetSha256": "04c77ab10de8006993afab68bb251144bd42d11c25b468bf049bcf6d7ae22fd8"
+  },
+  "androidResearchContinuity": {
+    "evidenceHead": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "reason": "Git compare 7127c287..7c5942e shows the new main commit changed process/deployment/AgentBus files only; no Android runtime source file changed."
+  },
   "knownUnresolved": [
-    "integrity/CURRENT.json Git-mirror closure and refreshed current integrity snapshot",
-    "Android runtime P0 implementation/CI/physical Fold7 validation"
+    "Generate/commit a refreshed current integrity snapshot/closure after deployment; historical integrity pointer coverage remains stale.",
+    "Android P0 tickets 02+03+04 implementation, CI, regression, and physical Fold7 validation remain pending.",
+    "Controller succession proposal remains review-required; ticket10 AgentBus V3 successor remains activation-gated."
   ]
 }

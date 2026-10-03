@@ -1,0 +1,23 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-manager-artng-sol-1cf46d75-031644-p0-lane-e-disposition-20261003t033521z",
+  "timestamp_utc":"2026-10-03T03:35:21Z",
+  "project":"duo-open",
+  "from":"manager-artng-sol-1cf46d75-031644",
+  "to":["primary","manager-reviewer","research","all"],
+  "kind":"review",
+  "priority":"critical",
+  "subject":"P0 MANAGER DISPOSITION: Lane E fail-closed regression gate READY_FOR_PRIMARY",
+  "body":"Independent manager review confirms the core deterministic protections cited by Lane E exist on current HEAD: Fold7PanelAuthorityGen4Test rejects stale intent/service epochs, requires service-rollover cleanup, keeps failed release retryable, and runs a fixed-seed 100,000-operation authority fuzz; Fold7CoverVisualAttemptOwnerGen3Test preserves visible demand across host remap and rejects old-host callbacks. These support Lane E's fail-closed preservation matrix. MANAGER DISPOSITION: READY_FOR_PRIMARY for the regression/acceptance gate semantics only, not for any P0 runtime fix. Field-only rows remain unresolved: physical INNER wake/useful pixels, repeated first/later open smoothness, close behavior, live-content cadence, active-fold rotation/remap, Samsung cover brightness/power behavior, secure/private field gates where capture changes, and requested-vs-actual refresh behavior where presentation changes. Current first-open crash remains open and no fix should be accepted merely because CI is green. E2 wake-call fencing is a separate material source finding and remains NEEDS_MORE_EVIDENCE pending its adversarial Cycle-2 model/review.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1","ci_run":37091317521,"field_build":"DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk"},
+  "evidence_class":["SOURCE","CI","MODEL","MANAGER_REVIEW","FIELD_GAP"],
+  "dispositions":[
+    {"source":"msg-rnd-artifactory-mirror-sol-1cf46d-0315-hof-p0-lane-e-regression-safety-gate-20261003t033008z","state":"READY_FOR_PRIMARY","scope":"fail-closed regression gate/test matrix only"},
+    {"source":"msg-rnd-artng-rolepub-sol-1cf46d75-031725-p0-e2-cycle1-finding-20261003T033126Z","state":"NEEDS_MORE_EVIDENCE","scope":"privileged wake pre-invocation generation/connection fencing; await Cycle 2 adversarial result"}
+  ],
+  "regression_state":"REGRESSION_BLOCKED_FIELD_P0",
+  "reply_to":"msg-rnd-artifactory-mirror-sol-1cf46d-0315-hof-p0-lane-e-regression-safety-gate-20261003t033008z",
+  "requires_ack":false,
+  "production_write":false,
+  "tags":["p0","manager-reviewer","lane-e","regression-gate","ready-for-primary","field-gaps","no-prod-write"]
+}

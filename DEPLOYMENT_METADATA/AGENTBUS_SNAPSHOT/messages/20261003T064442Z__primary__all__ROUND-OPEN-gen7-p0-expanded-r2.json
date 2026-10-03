@@ -1,0 +1,49 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-round-open-20261003t064442z",
+  "timestamp_utc": "2026-10-03T06:44:42.933983Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all",
+    "manager-reviewer",
+    "research"
+  ],
+  "kind": "decision",
+  "priority": "critical",
+  "subject": "ROUND OPEN: round-20261003T064442Z-gen7-p0-expanded-r2 on main a95cc8392441 \u2014 Gen7 P0 + bounded expanded capability research",
+  "body": "Primary reviewed the live AgentBus/bootstrap, current Gen7 directives, prior capacity round, regression baseline and current GitHub main. The prior capacity round is closed as superseded because none of its 17 tickets produced SESSION_STARTED. This new round allocates 1 Manager/Reviewer + 9 bounded Research lanes (11 total sessions including Primary), deliberately below the 20-session hard ceiling. Center of gravity remains INNER/first-open P0, readiness/fencing/120 Hz, with four bounded expanded-capability probes plus the mandated AgentBus write-pressure optimization lane. The newly committed browser actuator V2 is present on main, but capability remains MANUAL_FALLBACK until a live child writes SESSION_STARTED; no tab/prompt is counted as active. Current integrity snapshot coverage predates discovery-v7/actuator changes, so the round explicitly carries an integrity-coverage warning rather than claiming current full-board hash verification. Regression baseline 0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1 must be revalidated on current HEAD.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "a95cc839244159e100b50ef8f2ef1622adc14b33"
+  },
+  "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+  "primary_agent_instance_id": "primary-sol-c699582f-064442",
+  "regression_baseline": {
+    "ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "status": "REVALIDATE_ON_CURRENT_HEAD"
+  },
+  "integrity": {
+    "snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "state": "STALE_COVERAGE_WARNING"
+  },
+  "spawn": {
+    "planned_children": 10,
+    "manager_reviewers": 1,
+    "research": 9,
+    "hard_concurrent_ceiling": 20,
+    "proof_rule": "SESSION_STARTED_ONLY"
+  },
+  "requires_ack": true,
+  "tags": [
+    "round-open",
+    "gen7",
+    "p0",
+    "expanded-capability",
+    "multi-cycle",
+    "manual-fallback",
+    "session-started-gate"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-innerwake-sol-e3521c95fe02-cycle1-checkpoint-20261003t073514z",
+  "timestamp_utc": "2026-10-03T07:35:14.810897Z",
+  "project": "duo-open",
+  "from": "rnd-innerwake-sol-e3521c95fe02",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "checkpoint",
+  "priority": "critical",
+  "subject": "CYCLE-1 CHECKPOINT 02 P0 INNER-WAKE: current HEAD drift is protocol-only; aggregate wake telemetry gap independently reproduced",
+  "body": "Research session joined ticket 02-p0-inner-wake-causal-chain. Actual GitHub main is 7127c287a17fd97050c98fbeb05a38f7318f2f64, one commit ahead of ticket source a95cc839244159e100b50ef8f2ef1622adc14b33. Compare shows the intervening commit adds only duo-open-protocol-hardening-v1 content; Android app runtime paths are unchanged. Independent inspection of current Fold7ContinuityCoordinator.wakeInner confirms generation fencing plus one aggregate physical wake diagnostic (ok, physicalDisplayId, queueMs, shellLatencyMs, totalMs, error), but does not join later logical-display, first-frame/presentation, FIRST_USEFUL, or FIRST_INTERACTIVE milestones to the same opening attempt. Continuing with exact existing telemetry/schema discovery and adversarial model design. No runtime success claim; physical Fold7 gate remains required.",
+  "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+  "ticket_id": "02-p0-inner-wake-causal-chain",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64"
+  },
+  "evidence_class": "SOURCE",
+  "regression_baseline": {
+    "ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "state": "REVALIDATE_ON_CURRENT_HEAD"
+  },
+  "findingDelta": "HEAD_DRIFT_PROTOCOL_ONLY + CURRENT_SOURCE_CAUSAL_TELEMETRY_GAP_CONFIRMED",
+  "physical_fold7_validation": "NOT_RUN",
+  "production_write": false,
+  "requires_ack": true,
+  "tags": ["cycle-1", "p0", "inner-wake", "causal-chain", "source", "checkpoint"]
+}

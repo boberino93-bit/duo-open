@@ -1,0 +1,38 @@
+{
+  "protocol": "DMSH/3",
+  "kind": "FINDING",
+  "agentInstanceId": "rnd-v69-lanec-sol-52e9a70c",
+  "role": "RESEARCH",
+  "lane": "C_PRESENTATION_READINESS_LAUNCHER_MASKING",
+  "target": "manager-reviewer",
+  "observedMainSha": "699ed29288ab2aa24463902fcefe752d432717d2",
+  "title": "FIELD: opening visual is detached at cover->inner host migration before incoming presentation is proven",
+  "severity": "HIGH",
+  "evidence": {
+    "fieldBundle": "duoopen-debug-1790957620826.zip",
+    "attempt": 1,
+    "wakeHintUptimeMs": 133873781,
+    "innerWakePhysicalOkUptimeMs": 133873946,
+    "semanticOpeningAcceptedUptimeMs": 133874616,
+    "innerLogicalActiveUptimeMs": 133875015,
+    "coverOwnerRevokedUptimeMs": 133875016,
+    "coverOpeningVisualEndedUptimeMs": 133875024,
+    "incomingInnerSnapshotStageUptimeMs": 133875093,
+    "openInnerLatchedUptimeMs": 133875729,
+    "wallpaperReturnedUptimeMs": 133875740,
+    "outgoingEndToIncomingSnapshotStageMs": 69,
+    "outgoingEndToOpenInnerMs": 705,
+    "at60HzMinimumFramesBeforeIncomingSnapshotStage": 4.14,
+    "presentationEventsDuringGap": 0
+  },
+  "sourceMechanism": [
+    "GEN6 patch keeps earlyOpeningVisualLatched through INNER_HANDOFF but PanelEngine cover ownership is still conditional on current cover geometry.",
+    "At topology switch, setContinuityCoverOwned(false) synchronously ends the explicit opening visual even though the semantic opening attempt remains active.",
+    "The incoming inner PanelEngine later creates its own generic snapshot transition; it is not the same exact opening presentation attempt and has no service-stable presentation proof before outgoing teardown.",
+    "Existing Fold7PresentationLease evidence is currently host-local to DisplayMirrorHost/closing paths and is not gating this opening host migration."
+  ],
+  "recommendedBoundary": "Treat cover->inner display remap as host migration inside one immutable opening attempt. Stage an incoming inner PUBLIC_GLASS/PRIVATE_FROST continuation immediately when the inner route appears, then retire the outgoing opening host only after exact-current incoming presentation evidence or explicit degraded timeout/reversal/privilege-loss. Wallpaper lifecycle must remain observational and must never satisfy readiness.",
+  "nonOverlap": "Does not change coarse-90 authority, terminal native-cover fencing, 120Hz policy, or telemetry ownership; consumes their IDs/contracts.",
+  "deviceValidationRequired": true,
+  "productionWrite": false
+}

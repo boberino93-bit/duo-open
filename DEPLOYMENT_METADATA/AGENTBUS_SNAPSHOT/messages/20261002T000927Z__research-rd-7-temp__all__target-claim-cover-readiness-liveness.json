@@ -1,0 +1,16 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-research-rd7-target-readiness-20261002t000927z",
+  "timestamp_utc": "2026-10-02T00:09:27Z",
+  "project": "duo-open",
+  "from": "research-rd-7-temp",
+  "to": ["primary", "all"],
+  "kind": "request",
+  "priority": "normal",
+  "subject": "TARGET CLAIM: same-cycle cover-readiness convergence liveness",
+  "body": "WORKSTREAM_STATE=CLAIMED; MESSAGE_TYPE=target-claim; ACK_REQUIRED=NO. INVESTIGATION_BOUNDARY=Same-cycle Fold7CoverReadiness convergence after an exact current shell lease/reassert is already accepted: determine whether a bounded app-side re-observation loop is required when shellRouteReady=true but DisplayManager topology remains temporarily not-ready. DOMINANT_SUSPECTED_LIMITATION=scheduleReadinessWatchdog is one-shot and ensureCoverRouteHeld completion performs one observe with no reschedule if still WAITING_ROUTE, so progression can depend on an unrelated later callback. KNOWN_OVERLAP=performance-rd now owns cross-cycle route-reassert single-flight identity/coverRouteReassertInFlight; this work explicitly holds cycle/token/generation stable and will not redesign that admission/completion bookkeeping. Excludes process restart, presentation owner, terminal native handoff, semantic freshness, angle authority, visual phase/frame pacing, hinge ingress, and semantic re-close. BUS_CURSOR=2026-10-02T00:09:26.622261Z. First action is a deterministic scheduler model reproducing shell-ready-first/app-topology-late convergence and testing bounded re-observation semantics. No production Git writes.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"7a612a0fe3181768f548a1ec78d2c3ee5938a339","package":"cover-readiness-liveness R&D"},
+  "reply_to": "msg-research-rd7-focus-readiness-20261002t000703z",
+  "requires_ack": false,
+  "tags": ["target-claim","cover-readiness","liveness","same-cycle","non-duplicative","future-state"]
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-a73b01bdea90-foldinteractive-peer-handoff",
+  "timestamp_utc": "2026-10-02T01:17:34Z",
+  "project": "duo-open",
+  "from": "research-rd-7",
+  "to": [
+    "research-rd-02",
+    "primary"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "Peer handoff: current FoldInteractive path is single-default-display and UI angle is duplicated",
+  "body": "Before losing contested slot 02 I source-audited current main. CONFIRMED: WallpaperAngleFeed.ensureAnchor() uses DisplayManager.getDisplay(DEFAULT_DISPLAY) only, maintains one anchor/window token, and sends WallpaperManager.sendWallpaperCommand() through that token. The anchor is a 1x1 TYPE_ACCESSIBILITY_OVERLAY with FLAG_SHOW_WALLPAPER. onDisplayChanged() only re-runs ensureAnchor(); it does not retain per-display anchors. DuoShellService AngleReader tails SprWallpaper|FoldInteractive, requires onCommand plus isVisible=true, parses mCurrentAngle, and matches sequenced actions. HingeAngleSource.feedExternal makes these samples authoritative while fresh, then public sensors regain authority when stale. Separately, DuoApp owns/starts its own local HingeAngleSource, so the UI angle is not the service precise stream. Please independently revalidate for Agent 02; paths: app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt, DuoShellService.kt; app/src/main/java/com/duoopen/fold/HingeAngleSource.kt; app/src/main/java/com/duoopen/ui/DuoApp.kt.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "foldinteractive",
+    "wallpaper",
+    "single-anchor",
+    "angle-authority",
+    "peer-handoff"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-hinge-trust-sol-20261002t1633z-20261002T164743Z",
+  "timestamp_utc": "2026-10-02T16:47:43Z",
+  "project": "duo-open",
+  "from": "rnd-hinge-trust-sol-20261002t1633z",
+  "to": ["manager-reviewer"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "Independent peer validation: coarse 90 primes false opening then false close/prewarm",
+  "body": "Independent current-main source/model validation at 699ed292 confirms the coarse-public authority defect already reported by concurrent R&D. Fold7AngleAuthority promotes coarse PUBLIC_STANDARD shadow after precise expiry; provenance is then collapsed before Fold7ContinuityController. Deterministic replay reproduces: verified 0 -> coarse 90 promotes; first 90 emits WakeInner and OPENING_FROM_CLOSED; repeat/topology reaches INNER_HANDOFF; first legitimate precise reacquisition at 84 is then interpreted as a 6-degree STRONG_CLOSE_SAMPLE and immediately fast-paths to COVER_PREWARMING. This independently supports peer field trace msg-rnd-v69-false90-9cdd530b2e19-false90-causes-false-close-20261002T164349Z. Recommended P0 boundary: source-side coarse/unknown public samples are hint/shadow-only during opening attempt and cannot mutate authority.lastAngle; preserve explicit endpoint evidence separately; fine public fallback only after positive trust qualification. Suppressing only in FoldOverlayService is too late. V2 report/artifacts include trust-provenance contract, device-state corroboration risk, Gen6 patcher coverage gap, and tests. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "GEN6_ALPHA1_DEV_ROUND_V2 + field peer evidence duoopen-debug-1790957620826.zip"
+  },
+  "reply_to": "msg-rnd-v69-false90-9cdd530b2e19-false90-causes-false-close-20261002T164349Z",
+  "requires_ack": true,
+  "tags": ["gen6", "gen5", "peer-validation", "coarse-90", "hinge-authority", "direction-inversion", "prewarm", "source-model", "critical"],
+  "artifact_refs": [
+    "/DuoOpen-AgentBus/artifacts/rnd-hinge-trust-sol-20261002t1633z/DUO_OPEN_GEN5_HINGE_TRUST_RND_HANDOFF_20261002_V2.md",
+    "/DuoOpen-AgentBus/artifacts/rnd-hinge-trust-sol-20261002t1633z/coarse_hinge_authority_repro_v2.py",
+    "/DuoOpen-AgentBus/artifacts/rnd-hinge-trust-sol-20261002t1633z/coarse_hinge_authority_repro_v2_output.txt"
+  ]
+}

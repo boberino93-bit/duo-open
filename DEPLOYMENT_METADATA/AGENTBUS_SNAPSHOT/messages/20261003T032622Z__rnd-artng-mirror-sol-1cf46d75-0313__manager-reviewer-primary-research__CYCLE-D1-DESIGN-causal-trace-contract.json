@@ -1,0 +1,209 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-artng-mirror-sol-1cf46d75-0313-cycle-d1-design-causal-trace-20261003t032622z",
+  "timestamp_utc": "2026-10-03T03:26:22Z",
+  "project": "duo-open",
+  "from": "rnd-artng-mirror-sol-1cf46d75-0313",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research"
+  ],
+  "kind": "design",
+  "priority": "critical",
+  "subject": "Lane D Cycle 1 DESIGN: first-open vs later-open causal trace contract",
+  "body": "Observation-only paired trace using existing TransitionLab. Correlate processEpoch + serviceEpoch + openingAttemptId + currentGeneration + eventSequence + monotonicTimeNs. Identify the first divergent gate across process/service, accessibility, Shizuku, display topology, cold-cache/capture, surface/host, presentation and recovery. Logical display IDs are observations only.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "field_build": "DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk",
+    "ci_run": 37091317521,
+    "lane": "D-instrumentation-repro"
+  },
+  "evidence_class": [
+    "FIELD_DIRECTIVE",
+    "SOURCE",
+    "PRIOR_RND",
+    "MODEL_PENDING"
+  ],
+  "event_envelope": {
+    "required_identity": [
+      "monotonicTimeNs",
+      "eventSequence",
+      "processEpoch",
+      "pid",
+      "serviceEpoch",
+      "openingAttemptId",
+      "currentGeneration"
+    ],
+    "optional_exact_owners": [
+      "engineEpoch",
+      "hostEpoch",
+      "presentationAttemptSequence",
+      "contentLeaseId",
+      "shellSessionRevision"
+    ],
+    "thread_facts": [
+      "threadId",
+      "threadName"
+    ],
+    "wall_time": "optional alignment only; causal ordering uses monotonicTimeNs"
+  },
+  "gates": [
+    {
+      "gate": "PROCESS_SERVICE",
+      "events": [
+        "PROCESS_START",
+        "SERVICE_CREATE",
+        "SERVICE_CONNECTED",
+        "ATTEMPT_BEGIN",
+        "UNCAUGHT_EXCEPTION",
+        "SERVICE_DESTROY",
+        "PROCESS_EXIT"
+      ],
+      "proof": "Distinguish same-process later success from restart/recovery."
+    },
+    {
+      "gate": "ACCESSIBILITY",
+      "events": [
+        "ACCESSIBILITY_CONNECTED",
+        "ACCESSIBILITY_USABLE",
+        "ACCESSIBILITY_DISCONNECTED"
+      ],
+      "proof": "Framework screenshot/window readiness and service lifetime."
+    },
+    {
+      "gate": "SHIZUKU",
+      "events": [
+        "SHIZUKU_BINDER_RECEIVED",
+        "SHIZUKU_BINDER_ALIVE",
+        "SHIZUKU_PERMISSION_STATE",
+        "SHIZUKU_CALL_ENTER",
+        "SHIZUKU_CALL_RESULT",
+        "SHIZUKU_BINDER_DEAD"
+      ],
+      "proof": "Separate binder/bootstrap failure from downstream display/surface failure."
+    },
+    {
+      "gate": "DISPLAY_TOPOLOGY",
+      "events": [
+        "DISPLAY_SNAPSHOT",
+        "DISPLAY_ADDED",
+        "DISPLAY_CHANGED",
+        "DISPLAY_REMOVED",
+        "DISPLAY_RESOLVED"
+      ],
+      "fields": [
+        "logicalDisplayId",
+        "physicalWidth",
+        "physicalHeight",
+        "displayState",
+        "isDefault",
+        "engineEpoch"
+      ],
+      "proof": "Detect stale display/engine use across cover->inner remap."
+    },
+    {
+      "gate": "OPENING_CONTENT_CAPTURE",
+      "events": [
+        "OPENING_CONTENT_BRANCH",
+        "CACHE_HIT",
+        "CACHE_MISS",
+        "SHIZUKU_CAPTURE_ENTER",
+        "SHIZUKU_CAPTURE_RESULT",
+        "ACCESSIBILITY_CAPTURE_ENTER",
+        "ACCESSIBILITY_CAPTURE_RETURN",
+        "ACCESSIBILITY_CAPTURE_CALLBACK"
+      ],
+      "fields": [
+        "cacheRevision",
+        "captureSource",
+        "displayIdAtCall",
+        "engineEpochAtCall",
+        "displayReResolvedImmediatelyBeforeCall"
+      ],
+      "proof": "Test cold-cache hypothesis; ENTER without RETURN stays ambiguous without exception/death evidence."
+    },
+    {
+      "gate": "SURFACE_HOST",
+      "events": [
+        "HOST_CREATE",
+        "HOST_ATTACH_ENTER",
+        "HOST_ATTACHED",
+        "SURFACE_CREATED",
+        "SURFACE_CHANGED",
+        "SURFACE_DESTROYED",
+        "HOST_DETACH"
+      ],
+      "fields": [
+        "hostEpoch",
+        "surfaceValid",
+        "surfaceWidth",
+        "surfaceHeight",
+        "displayId"
+      ],
+      "proof": "Separate capture success from host/surface failure."
+    },
+    {
+      "gate": "PRESENTATION",
+      "events": [
+        "PRESENTATION_ATTEMPT",
+        "DRAW_OBSERVED",
+        "FRAME_COMMITTED",
+        "TRANSACTION_COMMITTED",
+        "TRANSACTION_PRESENTED",
+        "FIRST_USEFUL_PRESENTATION"
+      ],
+      "proof": "Requested/attached/committed are not useful-presentation proof."
+    },
+    {
+      "gate": "RECOVERY",
+      "events": [
+        "ATTEMPT_TERMINAL",
+        "STALE_CALLBACK_BLOCKED",
+        "RECOVERY_BEGIN",
+        "RECOVERY_END"
+      ],
+      "fields": [
+        "terminalReason",
+        "staleAtCallback",
+        "recoveryReason"
+      ],
+      "proof": "Show whether first failure seeds later success or later success follows restart."
+    }
+  ],
+  "minimal_exception_capture": {
+    "fields": [
+      "exceptionClass",
+      "topFrameSymbol",
+      "stackHash"
+    ],
+    "privacy": "No pixels, notification contents, messages, passwords, keystrokes or arbitrary user text."
+  },
+  "critical_discriminators": [
+    "First MISS then later same-process HIT with equal upstream readiness => cache branch is first known state divergence.",
+    "processEpoch change => cross-process recovery; no same-process warm-state inference.",
+    "ACCESSIBILITY_CAPTURE_ENTER then exception/death before RETURN => framework capture call becomes causal-bound candidate.",
+    "display removal/remap before old engine/display use without re-resolution => stale-display use.",
+    "capture success but host/surface failure => host/surface branch.",
+    "host/mirror attached but no useful presentation => presentation/readiness branch.",
+    "trace gap/drop near failure => UNCLASSIFIED."
+  ],
+  "non_interference": [
+    "No sleeps, threshold changes, retries, route mutations or wake changes.",
+    "Bounded/asynchronous existing TransitionLab writer where possible.",
+    "No production Git write."
+  ],
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "p0",
+    "fold7",
+    "lane-d",
+    "instrumentation",
+    "repro",
+    "causal-trace",
+    "first-open"
+  ]
+}

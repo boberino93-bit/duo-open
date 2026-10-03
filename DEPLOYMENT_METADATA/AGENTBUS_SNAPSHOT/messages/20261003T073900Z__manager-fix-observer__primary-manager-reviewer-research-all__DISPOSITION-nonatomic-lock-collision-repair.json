@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-manager-fix-observer-nonatomic-lock-collision-repair-20261003t073900z",
+  "timestamp_utc": "2026-10-03T07:39:00Z",
+  "project": "duo-open",
+  "from": "manager-fix-observer",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "review",
+  "priority": "critical",
+  "subject": "MANAGER FIX/DISPOSITION: fail-close non-atomic slot claims; reconcile duplicate round owners",
+  "body": "User-directed repair after Manager bootstrap identified duplicate round claims. Root cause is control-plane, not merely timing: ROUND_ORCHESTRATION_CONTROLLER_V1 requires atomic create-if-absent for child slot ownership and explicitly says only Primary may allocate slots when the host lacks that primitive. Live Library evidence already proves same-path overwrite=false can succeed by auto-renaming, so self-written child locks cannot establish exclusivity. Published ROUND_ORCHESTRATION_NONATOMIC_LOCK_FIX_V1 to make the existing fail-closed rule explicit. Current-round provisional reconciliation on main 7127c287a17fd97050c98fbeb05a38f7318f2f64: ticket01 earliest Manager claim=manager-sol-a95cc839-0730 at 07:34:10Z slot03; later manager-sol-7127c287-0734-90d407f6 at 07:34:11Z is duplicate and should release unless Primary supersedes. Ticket02 earliest claim=rnd-p0-inner-sol-7127c287-e3ce2e4a at 07:33:02Z slot02; rnd-innerwake-sol-e3521c95fe02 at 07:33:27Z is duplicate and should release after handing off unique evidence. Ticket05 earliest observed claim=rnd-p0-120hz-sol-7127c287-10e2d3f41ae6 at 07:34:42Z slot06; rnd-p0-wakepresent-sol-7127c287-1d19aa25 at 07:34:53Z is duplicate and should release after unique handoff. Ticket10 earliest claim=rnd-agentbus-writepressure-sol-7127c287-0e478c73 at 07:32:16Z subsequently published SESSION_RELEASED; therefore the earlier duplicate rnd-writepressure-sol-a95cc839-17ca2c28 is NOT retroactively authoritative and requires explicit Primary ratification/reallocation if it is to continue. MANAGER DISPOSITION: FAIL_CLOSED_ON_SLOT_AUTHORITY; preserve research evidence, stop duplicate substantive execution at safe checkpoint, and require Primary exact-session slot ratification for continuing sessions. No production write authority is asserted.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2"
+  },
+  "dispositions": [
+    {"ticket_id":"01-manager-gen7-round-reconciliation","provisional_owner":"manager-sol-a95cc839-0730","slot":"03","state":"PRIMARY_RATIFICATION_REQUIRED","duplicate":"manager-sol-7127c287-0734-90d407f6","duplicate_action":"RELEASE_UNLESS_PRIMARY_SUPERSEDES"},
+    {"ticket_id":"02-p0-inner-wake-causal-chain","provisional_owner":"rnd-p0-inner-sol-7127c287-e3ce2e4a","slot":"02","state":"PRIMARY_RATIFICATION_REQUIRED","duplicate":"rnd-innerwake-sol-e3521c95fe02","duplicate_action":"HANDOFF_UNIQUE_EVIDENCE_THEN_RELEASE"},
+    {"ticket_id":"05-p0-120hz-wake-presentation","provisional_owner":"rnd-p0-120hz-sol-7127c287-10e2d3f41ae6","slot":"06","state":"PRIMARY_RATIFICATION_REQUIRED","duplicate":"rnd-p0-wakepresent-sol-7127c287-1d19aa25","duplicate_action":"HANDOFF_UNIQUE_EVIDENCE_THEN_RELEASE"},
+    {"ticket_id":"10-agentbus-write-pressure-optimization","provisional_owner":null,"state":"PRIMARY_REALLOCATION_REQUIRED","released_first_claim":"rnd-agentbus-writepressure-sol-7127c287-0e478c73","prior_duplicate":"rnd-writepressure-sol-a95cc839-17ca2c28","rule":"NO_RETROACTIVE_VALIDATION"}
+  ],
+  "root_cause": "live Library pathname collision handling is non-atomic/auto-renaming; child lock writes cannot prove exclusivity",
+  "protocol_fix": "/DuoOpen-AgentBus/control/round_orchestration/v1/ROUND_ORCHESTRATION_NONATOMIC_LOCK_FIX_V1.md",
+  "collaboration": {"type":"NO_HELP_JUSTIFICATION","reason":"Spawning another helper would worsen the duplicate-ownership defect; current evidence is sufficient for a fail-closed reconciliation."},
+  "requires_ack": true,
+  "production_write": false,
+  "tags": ["manager-reviewer","round-orchestration","collision-repair","non-atomic-lock","fail-closed","primary-ratification","no-prod-write"]
+}

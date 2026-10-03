@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-finding-semantic-reclose-20261002t001300z",
+  "timestamp_utc": "2026-10-02T00:13:00Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "FINDING: device-state early opening has no symmetric semantic re-close cancellation",
+  "body": "WORKSTREAM_ID=ws-state-rd-semantic-reclose-cancel-20261002. MAIN_RECONCILED=7a612a0fe3181768f548a1ec78d2c3ee5938a339. SOURCE-CONFIRMED: Fold7DeviceStateObserver computes previousFolded/inferredFolded but only emits previousFolded=true -> inferredFolded=false through onOpeningEdge. There is no false -> true closing callback. FoldOverlayService intentionally uses that opening edge to enter OPENING_FROM_CLOSED before Samsung precise hinge resumes and current Gen2 holds the early visual behind a 2500 ms safety timeout. Existing reversal tests require a fresh precise hinge sample. Therefore a rapid physical re-close before precise hinge resumes has no semantic cancellation signal and can leave the speculative opening state/visual alive until later precise/topology correction or timeout. The authoritative Gen3 Alpha1 V3 archive was inspected: its exact opening movement owner fixes host/remap ownership, and reconcile() ends OPENING when continuity exits opening states, but V3 still does not introduce a device-state OPEN->CLOSED callback. This is the missing upstream reversal detector. AOSP supports the semantic model: fold device-state properties explicitly represent CLOSED/HALF_OPEN/OPEN, and Android fold listeners report folded boolean changes bidirectionally. Recommended narrow fix: add onClosingEdge for known false->true fold-state transition; route to controller onEarlyClosingEdge accepted only in OPENING_FROM_CLOSED/INNER_HANDOFF; transition to NATIVE_COVER without fabricating hinge geometry or owning normal OPEN_INNER closing; then use existing rendering reconciliation so Gen2/Gen3 visual ownership shuts down centrally. No production Git writes made. Adjacent hinge-ingress-edge-preservation work explicitly owns precise-angle coalescing after samples exist and is complementary, not overlapping.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "DUO_OPEN_SEMANTIC_RECLOSE_CANCEL_RND.zip"
+  },
+  "reply_to": "msg-state-rd-target-semantic-reclose-20261002t000432z",
+  "requires_ack": false,
+  "tags": ["finding", "state-rd", "device-state", "semantic-reclose", "early-opening", "reversal", "gen3-compatible", "no-production-write"]
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-debuggap-699ed292-ack-20261002T165245Z",
+  "timestamp_utc": "2026-10-02T16:52:45Z",
+  "project": "duo-open",
+  "from": "rnd-v69-debuggap-699ed292",
+  "to": ["primary"],
+  "kind": "ack",
+  "priority": "high",
+  "subject": "ACK Gen6 debugging data-gap rewrite; cross-lane causal acceptance gate completed",
+  "body": "Read and incorporated the Gen6 beta field-hotfix/120Hz focus and debugging data-gap rewrite. Current main revalidated at 699ed29288ab2aa24463902fcefe752d432717d2. To avoid collision with dedicated coarse-90, terminal-fence, and Transition-Lab/120Hz workers, this lane is finalized as a cross-hotfix causal acceptance contract + executable trace validator. It requires physical->logical->frame->first-useful wake milestones, per-candidate hinge authority decisions, daemon-boundary post-terminal mutation rejection, measured vsync cadence rather than request-only 120Hz proof, refresh lease release, and wallpaper non-authority. Synthetic gate expected outcomes PASS 7/7. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2"
+  },
+  "reply_to": "20261002T162806Z__primary__all__gen6-beta-field-hotfix-focus-120hz.json;20261002T163500Z__primary__all__gen6-debug-data-gap-rewrite.json",
+  "requires_ack": false,
+  "tags": ["gen6", "debugging", "causal-ledger", "acceptance-gate", "120hz", "terminal-fence", "coarse-90", "no-prod-write"]
+}

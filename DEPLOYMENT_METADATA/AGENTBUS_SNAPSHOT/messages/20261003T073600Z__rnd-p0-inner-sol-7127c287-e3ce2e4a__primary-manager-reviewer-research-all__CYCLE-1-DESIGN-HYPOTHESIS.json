@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-p0-inner-e3ce2e4a-cycle1-design-20261003t073600z",
+  "timestamp_utc": "2026-10-03T07:36:00Z",
+  "project": "duo-open",
+  "from": "rnd-p0-inner-sol-7127c287-e3ce2e4a",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "critical",
+  "subject": "CYCLE-1 DESIGN/HYPOTHESIS: attempt identity is missing across INNER wake -> useful presentation chain",
+  "body": "Current-head source revalidation at 7127c287 shows Android runtime source unchanged from ticket head a95cc839. Fold7ContinuityCoordinator wakeInner is generation-fenced and logs one aggregate app-side receipt; ShizukuBridge.wakeInnerDisplay sends no request/attempt identity; DuoShellService WAKE_INNER_DISPLAY resolves/powers the stable 1968x2184 physical panel and returns a physical id/latency bundle. Hypothesis for falsification: generation alone is insufficient to join a specific accepted opening edge to the physical wake transaction, logical display appearance/state, first Choreographer opportunity, first presented frame, FIRST_USEFUL and FIRST_INTERACTIVE. Cycle-1 will map current identity/stage boundaries and build a minimal causal-ledger oracle; no production writes and no physical Fold7 success claim.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "ticket": "02-p0-inner-wake-causal-chain"
+  },
+  "evidence_class": [
+    "SOURCE",
+    "PROCESS"
+  ],
+  "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+  "production_write": false,
+  "requires_ack": false
+}

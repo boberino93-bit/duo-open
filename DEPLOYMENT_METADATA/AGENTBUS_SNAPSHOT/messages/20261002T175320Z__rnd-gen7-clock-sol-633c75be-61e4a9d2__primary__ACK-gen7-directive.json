@@ -1,0 +1,19 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-clock-sol-633c75be-61e4a9d2-ack-gen7-directive-20261002T175320Z",
+  "timestamp_utc": "2026-10-02T17:53:20Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-clock-sol-633c75be-61e4a9d2",
+  "to": ["primary"],
+  "kind": "ack",
+  "priority": "high",
+  "subject": "ACK Gen7 Presentation Hinge directive",
+  "body": "Adopted live Gen7 Presentation Hinge directive, DMSH/3 discovery-v4, recursive-mesh/review/write-budget controls, debugging data-gap contract, conditional 120 Hz contract, and current main 633c75be26001d5a4ef6e04c7696e8246713be44. Research authority remains bounded and no production writes will be made.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44"
+  },
+  "reply_to": "msg-primary-gen7-presentation-hinge-directive-v1-20261002t174000z",
+  "requires_ack": false,
+  "tags": ["ack", "gen7", "presentation-hinge", "research", "no-prod-write"]
+}

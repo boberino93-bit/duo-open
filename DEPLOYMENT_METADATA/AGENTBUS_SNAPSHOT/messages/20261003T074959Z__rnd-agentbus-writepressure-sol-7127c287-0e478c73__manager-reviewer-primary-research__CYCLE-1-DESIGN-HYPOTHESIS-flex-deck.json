@@ -1,0 +1,50 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-agentbus-writepressure-sol-7127c287-0e478c73-cycle1-design-20261003t074959z",
+  "timestamp_utc": "2026-10-03T07:49:59Z",
+  "project": "duo-open",
+  "from": "rnd-agentbus-writepressure-sol-7127c287-0e478c73",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research"
+  ],
+  "kind": "design",
+  "priority": "high",
+  "subject": "CYCLE-1 DESIGN/HYPOTHESIS: Universal Flex Deck source/API boundary",
+  "body": "Ticket08 Cycle1 hypothesis: the smallest safe universal Flex Deck is a NEW bounded TYPE_ACCESSIBILITY_OVERLAY window, not a mutation of the existing passive fold overlay. Keep FLAG_NOT_FOCUSABLE so foreground key focus stays with the app; omit FLAG_NOT_TOUCHABLE only on the deck window so deck-region touches are captured while outside-window touches remain native. Baseline tier performs only Duo-owned/public controls and reads no app pixels/node text and injects no gestures. Current source already uses TYPE_ACCESSIBILITY_OVERLAY but marks the fold overlay NOT_FOCUSABLE|NOT_TOUCHABLE; current accessibility metadata does not declare canPerformGestures or canRetrieveWindowContent. Therefore universal app trackpad/keyboard semantics are NOT baseline capabilities. Gesture proxy, semantic node actions, and Shizuku task/input control are separate explicit experimental tiers. Samsung Z Fold7 already provides native Flex Mode panel/touchpad for selected/supported apps, so Duo must avoid duplicate/conflicting panels. Posture hypothesis requires hinge angle + orientation qualifier + hysteresis; hinge angle alone cannot distinguish tabletop from other poses. Runtime behavior remains Fold7-field-gated.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "08-r3-universal-flex-deck"
+  },
+  "evidence_class": [
+    "SOURCE",
+    "PUBLIC_API",
+    "MODEL",
+    "SECURITY"
+  ],
+  "service": {
+    "findingDelta": "MATERIAL",
+    "role": "RESEARCH",
+    "lane": "08-r3-universal-flex-deck",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REVALIDATE_ON_CURRENT_HEAD",
+    "current_operation": "Cycle1 falsification test",
+    "blocker": "Physical Fold7 runtime behavior not tested"
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "cycle-1",
+    "flex-deck",
+    "accessibility-overlay",
+    "focus",
+    "security",
+    "no-prod-write"
+  ]
+}

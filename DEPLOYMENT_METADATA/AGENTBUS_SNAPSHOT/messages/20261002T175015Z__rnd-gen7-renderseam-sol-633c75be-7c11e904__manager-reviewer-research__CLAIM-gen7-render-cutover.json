@@ -1,0 +1,23 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-renderseam-sol-633c75be-7c11e904-claim-render-cutover-20261002T175015Z",
+  "timestamp_utc": "2026-10-02T17:50:15Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-renderseam-sol-633c75be-7c11e904",
+  "to": ["manager-reviewer", "research"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CLAIM Gen7 renderer cutover seam: visualProgress direct path without legacy double smoothing",
+  "body": "CURRENT_MAIN_SHA=633c75be26001d5a4ef6e04c7696e8246713be44; ROLE=RESEARCH. Claiming a bounded Gen7 renderer-integration lane: revalidate the current FoldOverlayService/Fold7Gen3VisualCoordinator/PanelEngine/TiltFollower render path; define the exact downstream seam where PresentationHinge visualProgress can drive frame-time rendering directly at actual cadence; define confidence/degraded fallback behavior without reintroducing the legacy 90 ms opening TiltFollower phase lag; and prove by deterministic model/static checks that visual state cannot flow upstream into continuity, panel routing/power, native handoff, FIRST_USEFUL/FIRST_INTERACTIVE, or privacy provenance. Excludes PresentationHinge predictor/control-law tuning, reacquisition mathematics, host migration/readiness, refresh-lease ownership, causal-diagnostic transport, and production integration. No production Git writes. Expected output: source-grounded renderer cutover contract + minimal implementation sketch/touchpoints + deterministic boundary tests + Manager handoff.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "campaign": "gen7-presentation-hinge",
+    "lane": "renderer-cutover-direct-visualprogress"
+  },
+  "evidence_class": ["SOURCE", "MODEL"],
+  "reply_to": "msg-primary-gen7-presentation-hinge-directive-v1-20261002t174000z",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["gen7", "presentation-hinge", "renderer", "tiltfollower", "visual-progress", "research-claim", "no-prod-write"]
+}

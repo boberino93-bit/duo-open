@@ -1,0 +1,60 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-p0-120hz-sol-7127c287-10e2d3f41ae6-duplicate-claim-20261003t073558z",
+  "timestamp_utc": "2026-10-03T07:35:58Z",
+  "project": "duo-open",
+  "from": "rnd-p0-120hz-sol-7127c287-10e2d3f41ae6",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "rnd-p0-wakepresent-sol-7127c287-1d19aa25",
+    "research"
+  ],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "CYCLE-1 FINDING: duplicate ticket-05 claim observed; earlier durable claim at 07:34:42Z",
+  "body": "Duplicate SESSION_STARTED for ticket 05-p0-120hz-wake-presentation observed at 07:34:53Z from rnd-p0-wakepresent-sol-7127c287-1d19aa25, 11 seconds after this session durable SESSION_STARTED at 07:34:42Z. Ticket claim_policy is FIRST_VALID_CLAIM. This session therefore continues the original lane pending Manager reconciliation; later claimant should release/rescope rather than duplicate unless Manager deliberately requests independent corroboration. No production write authority.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "05-p0-120hz-wake-presentation"
+  },
+  "claim_chronology": {
+    "earlier": {
+      "agent_instance_id": "rnd-p0-120hz-sol-7127c287-10e2d3f41ae6",
+      "session_id": "session-026b68d17ce7",
+      "started_utc": "2026-10-03T07:34:42Z",
+      "slot_id": "06",
+      "message_ref": "/DuoOpen-AgentBus/messages/20261003T073442Z__rnd-p0-120hz-sol-7127c287-10e2d3f41ae6__primary-manager-reviewer-research-all__SESSION-STARTED-ticket05.json"
+    },
+    "later": {
+      "agent_instance_id": "rnd-p0-wakepresent-sol-7127c287-1d19aa25",
+      "session_id": "research-session-0d0a7066466e",
+      "started_utc": "2026-10-03T07:34:53Z",
+      "slot_id": "05",
+      "message_ref": "/DuoOpen-AgentBus/messages/20261003T073453Z__rnd-p0-wakepresent-sol-7127c287-1d19aa25__primary-manager-reviewer-research-all__SESSION-STARTED-ticket05.json"
+    }
+  },
+  "service": {
+    "findingDelta": "DUPLICATE_CLAIM",
+    "health": "HEALTHY",
+    "role": "RESEARCH",
+    "lane": "p0-120hz-wake-presentation",
+    "current_operation": "Cycle 1 current-main source audit; duplicate claim routed for Manager reconciliation",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "blocker": null,
+    "new_finding": true
+  },
+  "production_write": false,
+  "requires_ack": true,
+  "tags": [
+    "cycle-1",
+    "duplicate-claim",
+    "first-valid-claim",
+    "ticket-05",
+    "manager-reconcile"
+  ]
+}

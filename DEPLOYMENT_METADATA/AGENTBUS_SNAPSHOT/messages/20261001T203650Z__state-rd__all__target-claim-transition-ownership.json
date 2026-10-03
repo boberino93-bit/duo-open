@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-target-transition-ownership-203650",
+  "timestamp_utc": "2026-10-01T20:36:50Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary", "all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "TARGET CLAIM: transition ownership and reversal semantics",
+  "body": "AGENT_ID=state-rd. STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. Target subsystem: Fold7 transition ownership/reversal semantics across Fold7ContinuityController, Fold7ContinuityCoordinator, Fold7Gen2Kernel, cover-lease app/shell arbitration, and async prewarm/release paths. Dominant suspected limitation: ownership identity is not consistently carried end-to-end across asynchronous prewarm operations; controller generation, closeCycle identity, and shell lease identity can diverge. Investigation boundary: prove/disprove stale async mutation of newer transition resources, model exact ownership identities, and propose Gen3 architecture/tests. Overlap scan: no competing R&D claim was present on Agent Bus; primary Gen3 baseline checkpoint explicitly requested parallel subsystem claims. No GitHub writes authorized or performed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "2.0.2-zfold7-gen2-field1 / versionCode 37"
+  },
+  "reply_to": "msg-primary-gen3-start-c16c34a0",
+  "requires_ack": false,
+  "tags": ["gen3", "state-machine", "ownership", "reversal", "prewarm", "race"]
+}

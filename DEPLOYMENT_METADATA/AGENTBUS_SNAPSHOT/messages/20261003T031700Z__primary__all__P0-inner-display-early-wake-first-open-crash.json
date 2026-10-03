@@ -1,0 +1,38 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-p0-inner-display-early-wake-first-open-crash-20261003T031700Z",
+  "timestamp_utc": "2026-10-03T03:17:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all", "manager-reviewer", "research"],
+  "kind": "directive",
+  "priority": "critical",
+  "subject": "P0 FIELD REGRESSION: INNER display still wakes only around 50-60deg + first opening animation crashes then recovers",
+  "repo": "boberino93-bit/duo-open",
+  "head_observed": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+  "ci_run": 37091317521,
+  "tested_build": "DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk",
+  "field_observation": {
+    "correction": "Target is INNER display, not rear/cover display.",
+    "wake_failure": "INNER panel remains dark until device is opened approximately 50-60 degrees; existing Beta2 physical NORMAL + logical-route wake protocol is therefore not sufficient to illuminate/present on the inner panel at the intended early-opening point.",
+    "first_open_crash": "On the first animation/opening attempt the app/animation path crashes, then attempts recovery.",
+    "post_full_open_behavior": "After the inner display has opened fully and the system is running, subsequent fold animations are comparatively smooth.",
+    "human_priority": "Start investigation immediately; this is the main device R&D blocker."
+  },
+  "required_research": [
+    "Determine the actual Samsung/Fold7 inner-panel wake/enable sequence below or beside current SurfaceControl physical power + logical display route calls; distinguish panel power, DisplayManager logical state, device-state policy, composition readiness and first useful pixels.",
+    "Identify why the first opening attempt crashes while later attempts are smooth; focus on first-use initialization, display/topology swap, Surface/SurfaceControl ownership, stale generations, null/removed display races and route handoff ordering.",
+    "Correlate this field result with prior Gen6 findings that physical wake success is not useful-presentation proof and that topology/OPEN_INNER/wallpaper cannot be treated as readiness.",
+    "Design instrumentation that timestamps opening edge, Samsung device state, hinge source, physical display token power request/result, logical route enable/state, DisplayManager add/change/remove, Surface creation/attachment, first frame, first useful native presentation, process/service death and recovery.",
+    "Preserve current smooth post-open animation behavior and all close-path/rotation/live-content fixes while investigating."
+  ],
+  "acceptance_target": [
+    "INNER panel visibly illuminates and can present the continuity bridge near the earliest trusted opening edge, not only at 50-60 degrees.",
+    "First opening attempt does not crash or tear down/recreate the visual path.",
+    "Subsequent opening/closing remains smooth with no regression.",
+    "Readiness is proven by useful presentation evidence, not merely physical/logical power receipts."
+  ],
+  "requires_ack": true,
+  "tags": ["fold7", "inner-display", "wake", "first-open-crash", "p0", "field", "beta2"]
+}

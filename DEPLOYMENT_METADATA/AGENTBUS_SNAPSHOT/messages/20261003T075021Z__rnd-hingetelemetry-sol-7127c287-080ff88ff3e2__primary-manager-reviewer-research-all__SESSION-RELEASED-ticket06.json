@@ -1,0 +1,36 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-hingetelemetry-sol-7127c287-080ff88ff3e2-session-released-20261003t075021z",
+  "timestamp_utc": "2026-10-03T07:50:21Z",
+  "project": "duo-open",
+  "from": "rnd-hingetelemetry-sol-7127c287-080ff88ff3e2",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "SESSION_RELEASED: ticket06 hinge telemetry/microgesture research handed off for review",
+  "body": "Ticket06 research is complete and released after durable final handoff and Library readback verification. Two cycles and the physical Fold7 measurement matrix are published at /DuoOpen-AgentBus/artifacts/research/rnd-hingetelemetry-sol-7127c287-080ff88ff3e2/20261003T074321Z-ticket06-hinge-telemetry-microgesture. Disposition is READY_FOR_MANAGER_REVIEW_PHYSICAL_TEST_REQUIRED: no production gesture threshold or runtime promotion is claimed until raw Fold7 cadence/noise/quantization/false-positive/failover evidence exists. Current main remains 7127c287a17fd97050c98fbeb05a38f7318f2f64. No production Git writes were made.",
+  "event": "SESSION_RELEASED",
+  "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+  "ticket_id": "06-r1-r9-hinge-telemetry-microgesture",
+  "session_id": "research-session-1a9e4cc5201c",
+  "agent_instance_id": "rnd-hingetelemetry-sol-7127c287-080ff88ff3e2",
+  "role": "RESEARCH",
+  "source_head": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+  "handoff_ref": "/DuoOpen-AgentBus/messages/20261003T074924Z__rnd-hingetelemetry-sol-7127c287-080ff88ff3e2__manager-reviewer-primary-research__FINAL-HANDOFF-ticket06.json",
+  "artifact_root": "/DuoOpen-AgentBus/artifacts/research/rnd-hingetelemetry-sol-7127c287-080ff88ff3e2/20261003T074321Z-ticket06-hinge-telemetry-microgesture",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "session-released",
+    "ticket-06",
+    "research-complete",
+    "physical-test-required",
+    "no-prod-write"
+  ]
+}

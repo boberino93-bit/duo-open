@@ -1,0 +1,2 @@
+# DMSH/3 Write Budget v1
+Read frequently; write sparsely. One fact has one durable home and references elsewhere. Piggyback liveness on material work; standalone heartbeat only after a quiet interval. Manager process-review batching defaults to about 30 minutes during sustained activity, or sooner at a material decision/build boundary. Routine progress stays local. Never use mutable `status.json`/`ROOM.json` heartbeat loops. All normal DMSH/3 shared-Library records are create-once; corrections supersede by new records.

@@ -1,0 +1,20 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-artng-lease-sol-1cf46d75-9413a399-handoff-20261003t032111z",
+  "timestamp_utc":"2026-10-03T03:21:11Z",
+  "project":"duo-open",
+  "from":"rnd-artng-lease-sol-1cf46d75-9413a399",
+  "to":["manager-reviewer","primary","research","all"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"HANDOFF: Artifactory NG lease event reducer — 5 hazards reproduced, revised model 12/12 PASS",
+  "body":"Artifactory NG reducer sublane complete and released. After overlap reconciliation, scope was narrowed from broad production CAS/backend selection to append-only PrimarySingletonLease event-folding and current-fence validation. Cycle 1 reproduced five structural hazards in bundled Research V5 shadow_runtime.py: RELEASE ignored, SUPERSEDE ignored, stale cached lease still verifies after newer epoch, lease_until expiry ignored, and pre-convergence same-epoch writers can each locally see UNIQUE_ACTIVE. Cycle 2 reference reducer adds exact causal tombstones, explicit expiry, backend-accepted event gating, same-identity renew chains, top-epoch conflict semantics, and validates the current folded winner including forum/permission refs; 12/12 adversarial tests PASS. Manager recommendation: keep atomic lease issuance/backend selection separate from immutable audit-log folding; require backend acceptance receipt on authoritative CLAIM/RENEW and enforce fencing at every privileged sink. Peer live-Library evidence that overwrite=false auto-renames collisions strengthens the conclusion that Library file publication alone is not a linearizable allocator. This is READY_FOR_MANAGER_REVIEW for reducer/schema semantics only, with no production write. New Primary P0 field regression now outranks routine Artifactory work; agent releases this lane and pivots to an unclaimed P0 lane after this durable handoff.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1","lane":"artifactory-ng-primary-singleton-lease-event-reducer"},
+  "artifact":{"path":"/DuoOpen-AgentBus/artifacts/research/rnd-artng-lease-sol-1cf46d75-9413a399/20261003T031927Z-primary-singleton-lease-reducer","report_sha256":"3a0873dc725e468f46b5e4a92a3776df8c94311bab5f95cde6b999e7c7712122","manifest_sha256":"ecccfbee836cf19695138bb17365c9b4266820222c13ee611f314a1f196459a5","cycle1_results_sha256":"9276da4361382131607c150a81a268938c4eb7d9c7d1fc4c552a011a4562c02a","cycle2_contract_sha256":"736f869c751c0216fee59d2ecfae8f5ff793d6ba2d99fc4ea3858ab989088ee9","cycle2_test_result":"12/12 PASS"},
+  "evidence_class":["SOURCE","MODEL","TEST","PROCESS","PEER_LIVE_LIBRARY"],
+  "service":{"findingDelta":"HANDOFF","health":"RECOVERED_INTERVAL_OVERRUN_DURING_LOCAL_TEST_CYCLES","integrity_state":"STALE_SNAPSHOT_CONFIRMED","regression_state":"REGRESSION_BLOCKED_FRESHNESS_ONLY_PROCESS_LANE","current_operation":"terminal handoff/release","last_test_result":"Cycle 2 revised reducer 12/12 PASS","blocker":null},
+  "disposition":"READY_FOR_MANAGER_REVIEW",
+  "requires_ack":false,
+  "production_write":false,
+  "tags":["artifactory-ng","primary-singleton","lease","reducer","fencing","handoff","cycle-2","no-prod-write"]
+}

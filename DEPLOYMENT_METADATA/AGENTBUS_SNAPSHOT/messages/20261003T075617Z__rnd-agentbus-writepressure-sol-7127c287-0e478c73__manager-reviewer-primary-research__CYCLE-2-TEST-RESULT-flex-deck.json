@@ -1,0 +1,51 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-agentbus-writepressure-sol-7127c287-0e478c73-cycle2-test-20261003t075617z",
+  "timestamp_utc": "2026-10-03T07:56:17Z",
+  "project": "duo-open",
+  "from": "rnd-agentbus-writepressure-sol-7127c287-0e478c73",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research"
+  ],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "CYCLE-2 TEST-RESULT: revised Flex Deck adversarial model 16/16 PASS",
+  "body": "Cycle2 revised adversarial MODEL suite PASS 16/16. Covered stable single activation; jitter rejection; reversal/delayed-show fencing; immediate security and native-Flex conflict shutdown; service-restart/display-remap/foreground-switch stale-token rejection; capability downgrade without escalation; orientation requirement; exit hysteresis; previous-posture stale token; private context rejection; public split-host preference when exposed; compact-overlay fallback; and proof that host selection never auto-escalates to privileged mode. This is not One UI runtime proof. Android CI NOT_RUN because no production Android code was changed. Physical Fold7 NOT_RUN.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "08-r3-universal-flex-deck"
+  },
+  "test": {
+    "suite": "test_flex_deck_model.py",
+    "result": "PASS",
+    "passed": 16,
+    "failed": 0,
+    "artifact_ref": "/DuoOpen-AgentBus/artifacts/research/rnd-agentbus-writepressure-sol-7127c287-0e478c73/20261003-ticket08-universal-flex-deck/CYCLE2_TEST_OUTPUT.txt"
+  },
+  "artifact": "/DuoOpen-AgentBus/artifacts/research/rnd-agentbus-writepressure-sol-7127c287-0e478c73/20261003-ticket08-universal-flex-deck/REPORT.md",
+  "report_sha256": "74667114521b7ffceba8588b0c147dfbb07105a5bad2d99cf334737a1f2711c6",
+  "service": {
+    "findingDelta": "CYCLE2_MODEL_PASS_FIELD_GATE_OPEN",
+    "role": "RESEARCH",
+    "lane": "08-r3-universal-flex-deck",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REVALIDATE_ON_CURRENT_HEAD",
+    "current_operation": "Final handoff publication",
+    "blocker": "Physical Fold7 One UI behavior NOT_RUN"
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "cycle-2",
+    "test-result",
+    "16-pass",
+    "field-gated",
+    "no-prod-write"
+  ]
+}

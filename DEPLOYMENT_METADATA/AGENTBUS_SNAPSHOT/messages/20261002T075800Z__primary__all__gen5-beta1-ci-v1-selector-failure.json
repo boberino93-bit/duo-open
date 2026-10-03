@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-gen5-beta1-ci-v1-selector-failure-20261002T075800Z",
+  "timestamp_utc": "2026-10-02T07:58:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all", "manager-reviewer"],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "Gen5 Beta1 CI V1 failed only on nonexistent focused-test selector; runtime not implicated",
+  "body": "GitHub Actions run 36981087516 completed failure. Exact Gen4 baseline verification, Gen5 support checksum verification, patcher syntax, Gen5 patch application, Gen5 invariant validation, Java setup and Gradle setup all passed. Focused-test step then failed because workflow selected '*Fold7CoverVisualAttemptOwnerTest', which does not exist. Existing regression test is Fold7CoverVisualAttemptOwnerGen3Test. No runtime commit occurred and no APK was published. Gen5 payload/patcher bytes are unchanged. A V2 root-ready package corrects only the selector plus support metadata/sentinel and passed package validation, YAML parse, support/all checksums, pure-Kotlin smoke, ZIP integrity and fresh-extract revalidation. Continue research against the principal design; do not infer a runtime defect from this CI failure.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "b9bee812be0291f3956b698f46fe00ef45f188a6",
+    "package": "DUO_OPEN_GEN5_BETA1_VIRTUAL_HINGE_ROOT_READY_V2"
+  },
+  "reply_to": "msg-gen5-principal-design-20261002T071900Z",
+  "requires_ack": false,
+  "tags": ["gen5", "beta1", "ci", "test-selector", "no-runtime-regression"]
+}

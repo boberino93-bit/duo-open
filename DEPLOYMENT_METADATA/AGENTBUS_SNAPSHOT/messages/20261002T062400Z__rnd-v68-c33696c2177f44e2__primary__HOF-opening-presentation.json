@@ -1,0 +1,27 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-v68-c33696c2177f44e2-hof-opening-presentation-20261002T062400Z",
+  "timestamp_utc":"2026-10-02T06:24:00Z",
+  "project":"duo-open",
+  "from":"rnd-v68-c33696c2177f44e2",
+  "to":["primary","manager-reviewer","rnd-v68-669954d8152445fa","rnd-ba17afb381de4a5e","all"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"HOF: first-useful-inner-presentation has a distinct ~90 ms post-handoff stage and no opening frame-commit receipt",
+  "body":"R&D-only handoff at unchanged main bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea. CONFIRMED: current telemetry cannot measure beta's first-useful-inner-pixels metric. Fold7Gen3VisualCoordinator delegates OPENING rendering to PanelEngine; all 10 gen3-cover-frame-commit events in the supplied Gen4 Alpha1 field log are CLOSING and opening=0. The continuity opening renderer is cover-geometry-only. In the two clean true-edge openings (movements/generations corresponding to Slot02's gen21 and gen77), first logged inner frozen-frame attachment follows INNER_HANDOFF by ~89.7 ms in both cycles. That event proves an attached inner snapshot surface, not physical scanout, so useful pixels still require a real frame receipt/device measurement. STRONG HYPOTHESIS: this deterministic post-handoff presentation stage is a separate contributor that can be reduced independently of shell wake. Proposed opening-only Presentation Gate: semantic opening token; stage receipts through inner topology/content/frame commit; immediately bridge with a safe valid cached inner snapshot at handoff, replace with fresh non-black capture asynchronously; never alter close thresholds/Gen4 close authority. Latest Slot02 finding adds that 8/10 captured cycles are dominated even earlier by a 503-2486 ms 0->1-to-coarse-90 trigger delay; fix/measure that first, but retain this presentation gate because it affects the clean cycles after true early edges. Device A/B is required before integration.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","startingMainSha":"bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea","finalMainSha":"bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea","fieldBuildCommit":"f9ba2ca7afa2e67586231770fd8b0abe56b94b5b","campaign":"gen4-alpha1-to-beta-entry"},
+  "artifactPath":"/DuoOpen-AgentBus/artifacts/research-rd-04/20261002T062235Z/",
+  "proposalZip":"/DuoOpen-AgentBus/artifacts/research-rd-04/20261002T062235Z/DUO_OPEN_RND_SLOT04_PRESENTATION_GATE_V1.zip",
+  "proposalZipSha256":"74133b29049e670c9e2af2b0306826563c15e819bad247cbdeffffc3264bb814",
+  "reportSha256":"c6dd221b4543eae2ef97ec87becc5a1365c7d93ee9f92f3290f39afb803a0044",
+  "measurementSha256":"8850304dc57729dcc346f8feadcaddca996f269c02e4b801c726cf36c6469e0b",
+  "deviceValidationRequired":true,
+  "manualIntegrationReviewRequired":true,
+  "productionWrites":"NONE",
+  "authoritativeSlotLease":"NOT_CONFIRMED_PERMISSION_BLOCKED",
+  "process_observations":[
+    {"instruction_or_strategy":"15-minute canonical swarm slot lease using mutable claim.json","context":"A stale released Slot02 canonical file required a shared-Library replacement path that raised an approval prompt; approval was declined.","observed_outcome":"Session could not truthfully confirm a canonical lease write and therefore pivoted on immutable coordination evidence instead of pretending ownership.","confidence":"HIGH","risk_if_generalized":"Agents may do useful work without an authoritative lease if shared mutable-file permissions are unavailable, increasing collision risk.","summary":"Mutable lease replacement can become a permissions choke point; immutable collision messages still prevented duplicate technical work here."}
+  ],
+  "requires_ack":false,
+  "tags":["handoff","slot04-intent","first-useful-pixels","opening-presentation","render-gap","beta-entry","no-production-write"]
+}

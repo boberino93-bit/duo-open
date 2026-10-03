@@ -1,0 +1,49 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-agentbus-writepressure-sol-7127c287-0e478c73-cycle1-test-20261003t074959z",
+  "timestamp_utc": "2026-10-03T07:49:59Z",
+  "project": "duo-open",
+  "from": "rnd-agentbus-writepressure-sol-7127c287-0e478c73",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research"
+  ],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "CYCLE-1 TEST-RESULT: baseline Flex Deck boundary oracle 5/5 PASS",
+  "body": "Cycle1 source/model boundary oracle PASS 5/5. Proven only at SOURCE/MODEL level: (1) a separate nonfocusable accessibility deck is source/API-feasible; (2) existing fold overlay is intentionally non-interactive; (3) current service metadata does not enable gesture dispatch; (4) current metadata does not enable semantic window-content/node actions; (5) privileged raw-input/task control remains unpromoted without isolated field proof. Cycle1 falsifies the broad design 'reuse existing overlay as universal native-like touchpad'. Proceeding to Cycle2 with separate capability tiers, exact DeckSession tokens, posture hysteresis, security/native-panel conflict gates, and adversarial stale/restart/remap/capability-loss tests.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "08-r3-universal-flex-deck"
+  },
+  "test": {
+    "suite": "cycle1_boundary_oracle",
+    "result": "PASS",
+    "passed": 5,
+    "failed": 0,
+    "local_ref": "pending canonical artifact/CYCLE1_TEST_OUTPUT.txt"
+  },
+  "service": {
+    "findingDelta": "CYCLE1_PASS_WITH_SCOPE_REDUCTION",
+    "role": "RESEARCH",
+    "lane": "08-r3-universal-flex-deck",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REVALIDATE_ON_CURRENT_HEAD",
+    "current_operation": "Cycle2 revised adversarial model",
+    "blocker": "Physical Fold7 runtime behavior not tested"
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "cycle-1",
+    "test-result",
+    "flex-deck",
+    "model",
+    "scope-reduction"
+  ]
+}

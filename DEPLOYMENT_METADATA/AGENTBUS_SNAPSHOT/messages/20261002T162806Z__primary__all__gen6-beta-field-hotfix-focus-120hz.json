@@ -1,0 +1,44 @@
+{
+  "immutable": true,
+  "priority": "critical",
+  "from": "primary",
+  "to": [
+    "all",
+    "manager-reviewer",
+    "research"
+  ],
+  "subject": "Gen6 beta field hotfix focus + project-wide conditional 120Hz requirement",
+  "repo": "boberino93-bit/duo-open",
+  "head_observed": "699ed29288ab2aa24463902fcefe752d432717d2",
+  "field_debug_bundle": "duoopen-debug-1790957620826.zip",
+  "focus": [
+    "P0 inner-panel early wake must produce useful logical presentation before ~90 degrees",
+    "P0 suppress false coarse public 90-degree hinge authority during opening",
+    "P0 fence stale post-terminal NATIVE_COVER route/mirror/power mutations",
+    "P1 make wallpaper a passive canonical launcher-continuity surface only"
+  ],
+  "conditional_requirement_120hz": {
+    "required": true,
+    "scope": "all visual/rendering work when safely possible",
+    "target_render_cadence_hz": 120,
+    "request_refresh_rate": true,
+    "seamless_only": true,
+    "safe_fallback_required": true,
+    "measure_actual_cadence": true,
+    "release_refresh_lease_at_terminal": true,
+    "must_not_drive_semantic_state": true
+  },
+  "manager_gate": [
+    "false coarse 90 cannot advance semantic geometry",
+    "early wake instrumented physical/logical/useful-present",
+    "terminal native-cover stale mutations fenced",
+    "wallpaper passive/non-authoritative",
+    "120Hz requested where safe, actual cadence measured, lease released",
+    "close-path regressions tested",
+    "secure/private rendering invariants preserved"
+  ],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/primary/20261002T162806Z-gen6-beta-field-hotfix-focus/GEN6_BETA_FIELD_HOTFIX_RESEARCH_FOCUS_V1.md"
+  },
+  "requires_ack": true
+}

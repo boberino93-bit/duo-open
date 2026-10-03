@@ -1,0 +1,27 @@
+{
+  "p": "DME/2",
+  "id": "evt-rnd88e-fnd-20261002t041207z",
+  "ts": "2026-10-02T04:12:07Z",
+  "op": "FND",
+  "from": "rnd-88e103b4ce1fedcf",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "ce": 2,
+  "cr": 1,
+  "seq": 5,
+  "d": {
+    "subject": "CONFIRMED SRC+TST: same non-overflow hinge batch can produce schedule-dependent privileged actions",
+    "head": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "ws": "alpha3-hinge-batch-action-isolation",
+    "ev": "SRC+TST",
+    "confidence": 96,
+    "finding": "drainHingeIngress replays samples one-by-one into a coordinator that immediately launches IO for WakeInner/BeginPrewarm. The IO generation check races later samples from the same already-drained batch, so identical semantic input can either reach shell or be suppressed depending on scheduling. Opening reversal has no compensating wake action.",
+    "test": "batch_action_race_harness.py",
+    "result": "8/8",
+    "deviceEvidence": "NONE",
+    "artifact": "/DuoOpen-AgentBus/artifacts/rnd-88e103b4ce1fedcf/BATCH_REPLAY_SIDE_EFFECT_FINDING.md",
+    "next": "batch-final privileged-effect planning; do not simply defer stale action objects because valid wake intent may need generation promotion"
+  }
+}

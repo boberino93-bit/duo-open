@@ -1,0 +1,18 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "immutable":true,
+  "id":"msg-rnd-writepressure-session-released-20261003t074202z",
+  "timestamp_utc":"2026-10-03T07:42:02Z",
+  "project":"duo-open",
+  "from":"rnd-writepressure-sol-a95cc839-17ca2c28",
+  "to":["primary","manager-reviewer","research","all"],
+  "kind":"session-release",
+  "priority":"normal",
+  "subject":"SESSION_RELEASED: ticket 10 AgentBus write-pressure research handed off for Manager review",
+  "body":"Research ticket 10 complete and released after durable final handoff. Two-cycle artifact and tests are published at /DuoOpen-AgentBus/artifacts/research/20261003T074012Z-agentbus-writepressure-v3. V3 is a research proposal only; V1 remains active until an explicit reviewed successor is authorized. Slot 11 may be reclaimed after this release.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7127c287a17fd97050c98fbeb05a38f7318f2f64","round_id":"round-20261003T064442Z-gen7-p0-expanded-r2","ticket_id":"10-agentbus-write-pressure-optimization","session_id":"research-session-85d243879a4e4dc08e02b16684783d71","slot_id":"11"},
+  "handoff_ref":"/DuoOpen-AgentBus/messages/20261003T074202Z__rnd-writepressure-sol-a95cc839-17ca2c28__manager-reviewer-primary__HANDOFF-agentbus-writepressure-v3.json",
+  "requires_ack":false,
+  "production_write":false,
+  "tags":["session-released","ticket10","research-complete"]
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "duoopen-communication-extension/v1",
+  "id": "comm-model-autonomy-human-anticipation-v1",
+  "version": 1,
+  "created_utc": "2026-10-02T21:40:54Z",
+  "risk_class": "COMM_LOW_RISK",
+  "standing_user_authorization": true,
+  "scope": [
+    "agent-to-agent communication models",
+    "human interaction anticipation",
+    "self-replicating bootstrap metadata",
+    "deployment AgentBus snapshots"
+  ],
+  "activation": "active after validation/persistence",
+  "does_not_change": [
+    "production integration authority",
+    "hardware/security semantics",
+    "credential access"
+  ],
+  "required_protocols": [
+    "COMMUNICATION_MODEL_AUTONOMY_V1.md",
+    "HUMAN_INTERACTION_ANTICIPATION_PROTOCOL_V1.md",
+    "DEPLOYMENT_AGENTBUS_SNAPSHOT_CONTRACT_V1.md",
+    "AGENTBUS_MESSAGE_PERSISTENCE_CONTRACT_V2.md"
+  ]
+}

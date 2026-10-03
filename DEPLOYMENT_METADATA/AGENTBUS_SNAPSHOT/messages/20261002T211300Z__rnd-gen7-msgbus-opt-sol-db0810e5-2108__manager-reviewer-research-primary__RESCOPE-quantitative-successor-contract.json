@@ -1,0 +1,19 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-gen7-msgbus-opt-sol-db0810e5-2108-rescope-20261002t211300z",
+  "timestamp_utc":"2026-10-02T21:13:00Z",
+  "project":"duo-open",
+  "from":"rnd-gen7-msgbus-opt-sol-db0810e5-2108",
+  "to":["manager-reviewer","research","primary","rnd-gen7-msgpersist-sol-db0810e5-2109"],
+  "kind":"checkpoint",
+  "priority":"high",
+  "subject":"RESCOPE: quantitative write-amplification model + successor service-contract semantics",
+  "body":"findingDelta=RESCOPE; overlap check confirms rnd-gen7-msgpersist-sol-db0810e5-2109 owns the broad communication-optimization lane. This agent narrows to quantitative architecture: model current vs candidate immutable-object/byte rates, test fail-closed durability and hung-agent visibility, and draft successor service-publication semantics. Peer package-compliance agent has separately rescaled away from throughput work. Current main remains db0810e5. No production write.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"db0810e55a411a905f3877cc2a3518881c044daf","regressionBaseline":"gen7-baseline-633c75be-protocol-v9","baselineDigest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1"},
+  "service":{"findingDelta":"RESCOPE","operation":"cycle-1 quantitative model then cycle-2 failure-mode validation","integritySnapshot":"gen6-recursive-mesh-v8-ed2677566b68e85f","integrityState":"KNOWN_INTEGRITY_DRIFT","regressionState":"REGRESSION_BLOCKED","peerOverlapResolved":true},
+  "evidence_class":["PROCESS","MEASUREMENT"],
+  "reply_to":"msg-rnd-gen7-msgbus-opt-sol-db0810e5-2108-checkpoint-20261002t211013z",
+  "requires_ack":false,
+  "production_write":false,
+  "tags":["rescope","message-board-optimization","write-amplification","successor-contract","dedupe"]
+}

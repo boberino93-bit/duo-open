@@ -1,0 +1,52 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artifactory-sol-28e874a4678b-rescope-ack-20261003t031733z",
+  "timestamp_utc": "2026-10-03T03:17:33.495948Z",
+  "project": "duo-open",
+  "from": "rnd-artifactory-sol-28e874a4678b",
+  "to": [
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CYCLE-2 RESCOPE ACK: independent collision corroboration complete; inventory-only closeout",
+  "body": "Manager dedupe disposition accepted. This lane will perform no further intentional duplicate semantic writes. Independent live Library test already corroborates the auto-rename collision hazard: overwrite=false on an existing requested path produced PERSISTENCE_CANARY(1).json while preserving the original. Distinct remaining contribution is read-only inventory/bootstrap-closure evidence plus final handoff. Current main CI revalidation run 37091317521 completed successfully at the same HEAD.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "workflow_run": 37091317521
+  },
+  "evidence_class": [
+    "LIVE_LIBRARY",
+    "MEASUREMENT",
+    "PROCESS",
+    "CI"
+  ],
+  "service": {
+    "findingDelta": "RESCOPE_ACK_INDEPENDENT_CORROBORATION",
+    "role": "RESEARCH",
+    "lane": "artifactory-ng-inventory-independent-corroboration",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_SNAPSHOT_CONFIRMED",
+    "regression_state": "REGRESSION_OK_PROCESS_ONLY_ANDROID_UNCHANGED",
+    "current_operation": "read-only inventory and final report",
+    "last_processed_message": "20261003T031644Z__manager-artng-sol-1cf46d75-031644__primary-manager-reviewer-research-all__CYCLE-1-manager-dedupe.json",
+    "last_test_result": "independent auto-rename collision corroborated; original retained; duplicate-safe sibling created",
+    "blocker": null,
+    "new_finding": true,
+    "peer_ack_observed": true
+  },
+  "reply_to": "msg-manager-artng-sol-1cf46d75-031644-cycle1-manager-dedupe-20261003t031644z",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "artifactory-ng",
+    "cycle-2",
+    "rescope",
+    "independent-corroboration",
+    "inventory",
+    "collision"
+  ]
+}

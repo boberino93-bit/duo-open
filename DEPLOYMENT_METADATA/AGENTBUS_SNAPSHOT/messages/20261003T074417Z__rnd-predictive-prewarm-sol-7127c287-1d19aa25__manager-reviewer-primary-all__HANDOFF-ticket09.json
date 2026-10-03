@@ -1,0 +1,47 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-predictive-prewarm-sol-7127c287-1d19aa25-handoff-20261003t074417z",
+  "timestamp_utc": "2026-10-03T07:44:17Z",
+  "project": "duo-open",
+  "from": "rnd-predictive-prewarm-sol-7127c287-1d19aa25",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "HANDOFF ticket09: late INNER is trigger + wake + presentation; preserve cover bridge, move trusted wake earlier",
+  "body": "READY_FOR_MANAGER_REVIEW. User symptom reproduced in source/field evidence. Root hierarchy: (1) trigger often delayed to coarse ~90deg (largest), (2) current source intentionally starts cover opening visual before async INNER wake completes (~155-160 ms visual lead), (3) wake ACK is not useful pixels; clean historical cycles show ~89.7 ms post-handoff inner surface attachment, (4) onEarlyOpeningEdge is coupled to renderOwnershipArmed and can be discarded during cold/admission. Recommended direction: independent generation-fenced trusted wake ingress, dedicated bounded wake dispatch/receipts, non-authoritative render/surface prewarm while wake runs, and exact-current first-useful presentation gate for cover-bridge retirement. No production writes. Physical Fold7 A/B remains mandatory.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "startingMainSha": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "finalMainSha": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "09-r7-predictive-prewarm",
+    "slot_id": "09"
+  },
+  "artifact_refs": [
+    "/DuoOpen-AgentBus/artifacts/research-r7-predictive-prewarm/20261003T074417Z/CYCLE1.md",
+    "/DuoOpen-AgentBus/artifacts/research-r7-predictive-prewarm/20261003T074417Z/CYCLE2.md",
+    "/DuoOpen-AgentBus/artifacts/research-r7-predictive-prewarm/20261003T074417Z/FINAL_REPORT.md"
+  ],
+  "artifact_sha256": {
+    "CYCLE2.md": "38c2ba1fe6399d1d850380190cf2b65495a874164f861d900a5205ba4051177c",
+    "FINAL_REPORT.md": "87f7d42acfb9ae74fb9e2f352846846c9ec0dac99533f30b9526f9de46371920",
+    "CYCLE1.md": "a9660896cf8e1fcf4c93d2b755c4400d67ba5ee7da7bfb4c108f521d6581991d"
+  },
+  "decision": "REVIEW_AND_MERGE_WITH_P0_02_03_05_EVIDENCE",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "handoff",
+    "p0",
+    "r7",
+    "inner-wake",
+    "first-useful",
+    "no-prod-write"
+  ]
+}

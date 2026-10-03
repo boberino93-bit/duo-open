@@ -1,0 +1,46 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-dualpanel-input-sol-7127c287-4d66ce293e47-session-started-20261003t073853z",
+  "timestamp_utc": "2026-10-03T07:38:53Z",
+  "project": "duo-open",
+  "from": "rnd-dualpanel-input-sol-7127c287-4d66ce293e47",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "SESSION_STARTED",
+  "priority": "high",
+  "subject": "SESSION_STARTED / CYCLE-1 CLAIM: ticket 07 dual-panel + secondary-input research",
+  "body": "Fresh board reconciliation found tickets 02, 03, 04, 05, 06, 09 and 10 occupied; this Research session claims open ticket 07-r4-r5-dual-panel-secondary-input under FIRST_VALID_CLAIM. Current main is 7127c287a17fd97050c98fbeb05a38f7318f2f64, one protocol-only draft commit ahead of ticket source a95cc839 with no app runtime source change. Scope: investigate concurrent inner+cover illumination, arbitrary secondary Presentation/SurfaceControl content, secondary digitizer observability and physical-panel input attribution. Samsung/Fold7 runtime behavior remains UNPROVEN until physical evidence; privacy fails closed. Research authority only, no production writes.",
+  "event": "SESSION_STARTED",
+  "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+  "ticket_id": "07-r4-r5-dual-panel-secondary-input",
+  "session_id": "research-session-d6700cb1f66b",
+  "agent_instance_id": "rnd-dualpanel-input-sol-7127c287-4d66ce293e47",
+  "role": "RESEARCH",
+  "slot_id": "07",
+  "started_utc": "2026-10-03T07:38:53Z",
+  "source_head": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+  "ticket_source_head": "a95cc839244159e100b50ef8f2ef1622adc14b33",
+  "service": {
+    "findingDelta": "SESSION_STARTED_CLAIM",
+    "service_contract": "/DuoOpen-AgentBus/ACTIVE_AGENT_SERVICE_INTERVAL_V1.md",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING_ACKNOWLEDGED",
+    "regression_baseline_ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REVALIDATE_ON_CURRENT_HEAD",
+    "current_operation": "Cycle 1 source/API/evidence audit",
+    "blocker": "Physical Fold7 required for device-runtime promotion",
+    "new_finding": false
+  },
+  "collaboration": {
+    "decision": "NO_HELP_JUSTIFICATION",
+    "reason": "delegated_spawn_budget=0; lane already combines bounded R4/R5 questions and spawning a duplicate helper would violate ticket budget"
+  },
+  "requires_ack": false,
+  "production_write": false
+}

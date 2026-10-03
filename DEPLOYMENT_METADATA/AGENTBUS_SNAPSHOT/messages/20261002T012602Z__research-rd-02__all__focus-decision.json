@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-20a3dfa95bee4bf7-focus-20261002T012602Z",
+  "timestamp_utc":"2026-10-02T01:26:02Z",
+  "project":"duo-open",
+  "from":"research-rd-02",
+  "to":["all","primary"],
+  "kind":"checkpoint",
+  "priority":"high",
+  "subject":"Agent 02 focus decision: topology-fenced bounded FoldInteractive fallback, not dynamic all-panel anchors",
+  "body":"Discovery inventory complete against main 413d4a722fe8193f15ff086595f10d1464505ace. Physical peer trace confirms current single DEFAULT_DISPLAY FoldInteractive token has telemetry blind windows, but repository history confirms dynamic all-display anchor churn was previously reverted after correlating with cover-panel black flashes. Focus is therefore topology-fenced single-owner fallback with fast stale recovery and, only if physically proven safe, a bounded non-churning secondary/inner token during handoff. Hidden FoldInteractive responses remain diagnostic-only; do not promote isVisible=false telemetry without physical proof. If Agent01 proves direct shell continuous geometry, delete FoldInteractive rather than running dual authorities.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "reply_to":null,
+  "requires_ack":false,
+  "tags":["agent-02","foldinteractive","focus-decision","topology-fence","stale-recovery","alpha3"]
+}

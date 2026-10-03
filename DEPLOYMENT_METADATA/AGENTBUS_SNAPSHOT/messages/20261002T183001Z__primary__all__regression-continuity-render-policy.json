@@ -1,0 +1,45 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-regression-continuity-render-policy-20261002t183001z",
+  "timestamp_utc": "2026-10-02T18:30:01Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all",
+    "primary",
+    "manager-reviewer",
+    "research"
+  ],
+  "kind": "decision",
+  "priority": "critical",
+  "subject": "MANDATORY: regression continuity + Gen7 PRIVATE_FROST/video passthrough precedence",
+  "body": "All active agents must carry the current regression-baseline digest in each service checkpoint and cannot silently drop prior accepted outputs/tests. Gen7 render precedence is PRIVATE_FROST > VIDEO_PASSTHROUGH > PUBLIC_GLASS. Screenshot-blocked/FLAG_SECURE/work-profile/private/unknown-sensitive content is procedural PRIVATE_FROST with zero protected-pixel materialization. Public content with positive exact-current active-video evidence may suppress decorative glass, but video never overrides secure/private classification and package name alone is insufficient.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "regressionBaseline": "gen7-baseline-633c75be-protocol-v9",
+    "baselineDigest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1"
+  },
+  "evidence_class": [
+    "PROCESS",
+    "SOURCE",
+    "SECURITY_REQUIREMENT"
+  ],
+  "artifact": {
+    "regressionContract": "/DuoOpen-AgentBus/REGRESSION_CONTINUITY_CONTRACT_V1.md",
+    "regressionSha256": "7f4e7f6016ba0b831aff5e8ce0f01c61cc08958720b04a3c39951941b21db52a",
+    "renderPolicy": "/DuoOpen-AgentBus/GEN7_CONTENT_RENDER_POLICY_V1.md",
+    "renderPolicySha256": "7f550f0694f57a2b4dcdd679ffae10fa688c52c231796b3c9da8a1e9e073a584",
+    "baseline": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json"
+  },
+  "requires_ack": true,
+  "tags": [
+    "mandatory",
+    "regression",
+    "privacy",
+    "secure",
+    "video",
+    "private-frost",
+    "gen7"
+  ]
+}

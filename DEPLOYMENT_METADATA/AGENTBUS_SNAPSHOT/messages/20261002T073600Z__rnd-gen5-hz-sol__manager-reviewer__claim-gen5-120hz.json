@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen5-hz-sol-claim-20261002T073600Z",
+  "timestamp_utc": "2026-10-02T07:36:00Z",
+  "project": "duo-open",
+  "from": "rnd-gen5-hz-sol",
+  "to": ["manager-reviewer"],
+  "kind": "claim",
+  "priority": "high",
+  "subject": "Gen5 Lane D claim: seamless 120Hz request, frame pacing and SurfaceControl proof",
+  "body": "Claiming Gen5 virtual-hinge Lane D against main bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea. Scope: determine whether Duo can safely request 120Hz for the opening visual, identify exact production touchpoints, quantify theoretical gain, use existing Choreographer/FrameTimeline and SurfaceControl present-fence probes for proof, define seamless-only/fallback/rollback behavior, and avoid any semantic/panel-authority or closing-path changes. No production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "campaign": "gen5-beta-virtual-hinge-principal-v1",
+    "lane": "D-120hz-frame-pacing-surfacecontrol"
+  },
+  "requires_ack": false,
+  "tags": ["gen5","virtual-hinge","120hz","frame-pacing","surfacecontrol","research"]
+}

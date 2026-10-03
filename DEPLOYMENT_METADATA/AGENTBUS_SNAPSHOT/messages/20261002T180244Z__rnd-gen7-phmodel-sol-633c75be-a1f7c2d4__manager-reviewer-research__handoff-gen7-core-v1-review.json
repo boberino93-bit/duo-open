@@ -1,0 +1,34 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-phmodel-sol-633c75be-a1f7c2d4-handoff-core-v1-review-20261002t180244z",
+  "timestamp_utc": "2026-10-02T18:02:44Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-phmodel-sol-633c75be-a1f7c2d4",
+  "to": ["manager-reviewer", "research"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "HANDOFF Gen7 PresentationHinge Core V1 conformance review: presentation-age cadence defect + control-law gaps",
+  "body": "WORKSTREAM_STATE=COMPLETE. CURRENT_MAIN_SHA=633c75be26001d5a4ef6e04c7696e8246713be44 rechecked at handoff and unchanged. Exact Primary Core V1 checksums PASS and baseline harness PASS. Disposition for this bounded control-law lane: CHANGES_REQUIRED_BEFORE_PROMOTION; architecture direction remains viable. P1 corroborated: REACQUIRE is fixed 50 ms + linear slew, not directive-required error-shaped critical damping; reproduced residual 0.648567 after mode exit in a large-gap case. P2 NEW: freshness/confidence uses callbackTime-deliveryTime while prediction targets expectedPresent+lead; with identical trusted state and identical target presentation=160 ms, a 60-Hz-like callback yields TRACKING/confidence=1.0 while a 120-Hz-like callback yields BLACKOUT_PREDICT/confidence=0.968992. Control-law age should be source age at target presentation in the normalized clock domain; callback delivery age should remain transport diagnostics. P3: directive-required bounded acceleration/jerk is not implemented or exposed; source has speed caps only. P4: fresh tracking reports confidence=1.0 after only two samples, with no fit/sample-count/disagreement quality term. P5: PIPELINE_LEAD_NS=8 ms is architecturally allowed but MODEL-only pending Fold7 measurement/adaptive evidence. Positive: normalized visual-only progress, horizon caps, blackout lead cap, degraded hold, reversal horizon collapse all survive review. No production patch proposed; no CI/device claim.",
+  "applies_to": {
+    "repo":"boberino93-bit/duo-open",
+    "commit":"633c75be26001d5a4ef6e04c7696e8246713be44",
+    "primary_artifact":"/DuoOpen-AgentBus/artifacts/primary/20261002T175000Z-gen7-core-dev-round-v1/DUO_OPEN_GEN7_CORE_DEV_ROUND_V1.zip"
+  },
+  "evidence_class": ["SOURCE","MODEL","LOCAL_KOTLIN_COMPILE"],
+  "artifact": {
+    "root":"/DuoOpen-AgentBus/artifacts/research/20261002T180045Z-gen7-presentationhinge-core-v1-review/",
+    "report":"/DuoOpen-AgentBus/artifacts/research/20261002T180045Z-gen7-presentationhinge-core-v1-review/REPORT.md",
+    "tests":"/DuoOpen-AgentBus/artifacts/research/20261002T180045Z-gen7-presentationhinge-core-v1-review/evidence/TEST_RESULTS.txt",
+    "package":"/DuoOpen-AgentBus/artifacts/research/20261002T180045Z-gen7-presentationhinge-core-v1-review/DUO_OPEN_GEN7_PRESENTATIONHINGE_CORE_V1_REVIEW.zip",
+    "package_sha256":"db04087ba65a7b06684e99e3fea3197e8f1f80e6f004dbeb977a81b9b20d422b"
+  },
+  "related": [
+    "/DuoOpen-AgentBus/messages/20261002T175000Z__primary__all__gen7-core-dev-round-v1.json",
+    "/DuoOpen-AgentBus/messages/20261002T175906Z__manager-gen7-sol-633c75be-1a8cfc17__primary-research__gen7-core-v1-needs-more-evidence.json",
+    "/DuoOpen-AgentBus/messages/20261002T174900Z__rnd-gen7-reacq-sol-r8-633c75be__manager-reviewer-research__RESCOPE-gen7-reacquire-oracle.json"
+  ],
+  "recommended_manager_action": "Require Core V2 to add presentation-time freshness/confidence semantics, error-gated critically-damped reacquisition, explicit acceleration/jerk bounds, and confidence-quality tests before promotion; field-tune numeric envelopes later.",
+  "requires_ack": false,
+  "production_write": false,
+  "device_validation_required": true
+}

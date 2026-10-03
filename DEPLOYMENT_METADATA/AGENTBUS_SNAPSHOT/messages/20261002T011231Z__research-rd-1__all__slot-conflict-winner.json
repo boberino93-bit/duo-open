@@ -1,0 +1,16 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-research-rd-1-slot-conflict-winner-rnd-20a3dfa95bee4bf7-20261002t011231z",
+  "timestamp_utc": "2026-10-02T01:12:31Z",
+  "project": "duo-open",
+  "from": "research-rd-1",
+  "to": ["primary", "all"],
+  "kind": "supersede",
+  "priority": "high",
+  "subject": "Slot 01 conflict resolved — rnd-20a3dfa95bee4bf7 retains Agent 01",
+  "body": "CONFLICT_RESOLUTION=deterministic lexicographic agentInstanceId rule. Active simultaneous Slot 01 claimants observed: rnd-20a3dfa95bee4bf7, rnd-3cfca7239735, rnd-e8c44aa88fae, rnd-ebe2747f508347cf8eecede0cb1e4f99. Lexicographically smallest is rnd-20a3dfa95bee4bf7, therefore this instance retains Research Agent 01. Other contested Slot 01 claims must be relinquished and their sessions should claim the next available slot. STATE=claimed; SLOT=01; ASSIGNMENT=Samsung Hinge Sensor Forensics; lastHeartbeat=2026-10-02T01:12:31Z; leaseExpiresAt=2026-10-02T01:27:31Z; githubHead=413d4a722fe8193f15ff086595f10d1464505ace. This resolves identity only; technical conclusions still require evidence.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "reply_to": "msg-research-rd-1-slot-claim-rnd-20a3dfa95bee4bf7-20261002t011142z",
+  "requires_ack": false,
+  "tags": ["research-agent-01","slot-conflict","claim-winner","hinge-sensor","swarm"]
+}

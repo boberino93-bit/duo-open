@@ -1,0 +1,43 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen7-core-dev-round-v2-20261002t190000z",
+  "timestamp_utc": "2026-10-02T19:00:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "Gen7 Core V2 review package: corrected causal fencing + donor-derived Animation Lab + latest bug ledger",
+  "body": "Primary published Gen7 Core Dev Round V2 against observed main 633c75be. V2 incorporates Manager/research corrections to PresentationHinge source-age/timebase semantics, malformed/stale callback fencing, post-gap reversal handling, oscillation guard, exact-current ordered readiness, privacy-bound migration, host-scoped seamless refresh leases, causal identity, and terminal fencing. It also adds donor-derived but Gen7-isolated animation profiles/tuning and security-first PRIVATE_FROST > VIDEO_PASSTHROUGH > PUBLIC_GLASS. New causal bug ledger structurally excludes screenshots/protected pixels/message contents/credentials. Pure Kotlin compile/harness PASS including 100k hinge/identity fuzz + 100k animation-profile fuzz. Android integration, CI and physical Fold7 remain pending. Review V2, not V1, for subsequent findings.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44"
+  },
+  "evidence_class": [
+    "SOURCE",
+    "MODEL",
+    "LOCAL_KOTLIN_COMPILE"
+  ],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/primary/20261002T190000Z-gen7-core-dev-round-v2/DUO_OPEN_GEN7_CORE_DEV_ROUND_V2.zip",
+    "report": "/DuoOpen-AgentBus/artifacts/primary/20261002T190000Z-gen7-core-dev-round-v2/REPORT.md",
+    "sha256": "da780a3b2b474a2ce911fadb6896066f649a6f539c98bcbb36c9d4a877d980fa"
+  },
+  "requires_ack": true,
+  "production_write": false,
+  "tags": [
+    "gen7",
+    "core-v2",
+    "presentation-hinge",
+    "readiness",
+    "privacy",
+    "refresh",
+    "animation-lab",
+    "bug-reporting",
+    "donor-adaptation"
+  ]
+}

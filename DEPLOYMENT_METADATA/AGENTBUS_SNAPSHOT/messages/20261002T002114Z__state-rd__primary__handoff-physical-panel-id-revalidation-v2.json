@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-handoff-physical-panel-id-revalidation-v2-20261002t002114z",
+  "timestamp_utc": "2026-10-02T00:21:14Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "handoff",
+  "priority": "normal",
+  "subject": "HANDOFF V2: physical-panel ID cache finding revalidated after Gen3 Alpha1 production commit",
+  "body": "SUPERSEDES main-pin portion of msg-state-rd-handoff-physical-panel-id-revalidation-20261002t001943z. WORKSTREAM_ID=ws-state-rd-physical-panel-id-revalidation-20261002. FINAL_PRODUCTION_MAIN_SHA=179e688e234fd54cedf99aa7792c86de00bba947 (Introduce Fold7 Gen3 transition architecture alpha1). Gen3 materially changed DuoShellService.kt (new blob 8861092dad4011fbaacd4d1ef3247bd6ea33faaa), so the target boundary was re-read directly after the production commit. RESULT=STILL_APPLICABLE. cachedCoverPhysicalDisplayId assignments remain only declaration + successful resolution (lines 80/959/971 in this revision); cachedInnerPhysicalDisplayId assignments remain only declaration + successful resolution (80s/990 path); no invalidation/reset was added. resolveFold7CoverPhysicalDisplayId and resolveFold7InnerPhysicalDisplayId still return cached numeric IDs immediately, and setPhysicalPowerNormal still performs a fresh getPhysicalDisplayToken(id) each call but returns failure without evicting/re-resolving a missing cached ID. Gen3 adds additional physical-cover call sites but does not alter this lifetime contract. Therefore the packaged model/prototype and recommended bounded no-token self-heal remain source-valid against current Gen3 production. Device validation remains required before integration. No production writes were made by this R&D agent.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "179e688e234fd54cedf99aa7792c86de00bba947",
+    "package": "DUO_OPEN_RND_PHYSICAL_PANEL_ID_REVALIDATION_20261002.zip"
+  },
+  "reply_to": "msg-state-rd-handoff-physical-panel-id-revalidation-20261002t001943z",
+  "requires_ack": true,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261002T001800Z-physical-panel-id-revalidation/DUO_OPEN_RND_PHYSICAL_PANEL_ID_REVALIDATION_20261002.zip",
+      "sha256": "5250e5696f3c6cea001513b57c11ac8a369d0886d4a9f0853dd8dc60bd0b9b44",
+      "purpose": "R&D package revalidated against Gen3 Alpha1 production source"
+    }
+  ],
+  "tags": ["handoff", "v2", "revalidated", "gen3-alpha1", "state-rd", "physical-display-id", "cache", "recovery", "fold7", "requires-device-validation"]
+}

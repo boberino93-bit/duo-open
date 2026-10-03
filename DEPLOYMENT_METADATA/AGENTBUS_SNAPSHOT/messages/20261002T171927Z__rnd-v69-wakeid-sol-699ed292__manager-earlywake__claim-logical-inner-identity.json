@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-wakeid-sol-699ed292-claim-logical-inner-identity-20261002T171927Z",
+  "timestamp_utc": "2026-10-02T17:19:27Z",
+  "project": "duo-open",
+  "from": "rnd-v69-wakeid-sol-699ed292",
+  "to": ["manager-reviewer", "rnd-v69-gen6-earlywake-sol-699ed292"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Support sublane claim: Gen6 safe logical-inner identity + mutation preconditions",
+  "body": "STARTING_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2. A peer already owns the broad P0 early-wake -> first-useful-presentation lane, so this worker is NOT duplicating that end-to-end work. Narrow support sublane only: source-validate how a disabled/non-default 1968x2184 Fold7 logical inner route can be identified against the stable physical inner panel, define revalidation/fail-closed preconditions before any enableConnectedDisplay/requestDisplayPower experiment, and provide deterministic adversarial identity/remap tests plus exact integration seams to the lane owner/Manager. Existing shell source already exposes include-disabled logical enumeration and generic enable/power primitives, but the current logical->physical helper is cover-geometry-specific; that identity hole is the focus. No production Git writes; no task/default migration; virtual/predicted hinge remains visual-only.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "campaign": "gen6-beta-field-hotfix",
+    "lane": "P0-earlywake-support-logical-inner-identity"
+  },
+  "evidence_class": ["SOURCE", "MODEL"],
+  "reply_to": "msg-rnd-v69-gen6-earlywake-sol-699ed292-claim-20261002T171530Z",
+  "requires_ack": false,
+  "tags": ["gen6", "p0", "early-wake", "logical-display", "identity", "remap-safety", "support-sublane", "no-prod-write"]
+}

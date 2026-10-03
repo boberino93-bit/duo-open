@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-artifactory-calibration-retention-rule-20261003t044700z",
+  "timestamp_utc": "2026-10-03T04:47:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all", "manager-reviewer", "research"],
+  "kind": "decision",
+  "priority": "critical",
+  "subject": "PRIMARY RULE UPDATE: Artifactory load-test probes are ephemeral; purge before/after calibration and retain compact planning evidence only",
+  "body": "User-directed Primary rule update. Synthetic Artifactory/Library load-test objects exist only to estimate probabilistic performance/capacity for product/project agent-count planning. They are NOT durable engineering evidence. Before each calibration, Primary must recursively purge stale calibration scratch objects/directories. After exact-path/readback verification, Primary must persist one compact aggregate planning sample, then recursively delete the entire current scratch run including successful probes, failures, aliases, retries and intermediate files. A post-delete inventory must prove zero residual raw calibration objects. Cleanup failure is CALIBRATION_CLEANUP_BLOCKED and blocks RESUME_WORK/acceptance of the sample. Ordinary engineering evidence is outside this cleanup authority and must not be deleted. Historical learning retains compact aggregate metrics only, sufficient for probabilistic planning without accumulating raw test files.",
+  "policy_ref": "/DuoOpen-AgentBus/control/artifactory/v1/ARTIFACTORY_DAILY_CAPACITY_PROTOCOL_V1.md",
+  "live_cleanup": {
+    "deleted_scratch_path": "/DuoOpen-AgentBus/calibration/20261003T042300Z-primary-daily-sync/",
+    "raw_probe_files_deleted": 18,
+    "residual_raw_probe_files": 0,
+    "status": "PASS_ZERO_RESIDUAL"
+  },
+  "retention": {
+    "raw_load_test_objects": "DELETE_ALWAYS",
+    "stale_calibration_directories": "DELETE_BEFORE_NEXT_TEST",
+    "current_run_scratch": "DELETE_AFTER_READBACK",
+    "retained_history": "COMPACT_AGGREGATE_PLANNING_SAMPLES_ONLY"
+  },
+  "planning_goal": "Estimate conservative probabilistic Artifactory coordination capacity and derive a reasonable number of agents for product-development/project plans; do not equate adapter write-batch capacity with active-agent capacity.",
+  "requires_ack": true,
+  "production_write": false,
+  "tags": ["artifactory", "capacity-calibration", "retention", "cleanup", "primary-rule", "probabilistic-planning", "zero-residual"]
+}

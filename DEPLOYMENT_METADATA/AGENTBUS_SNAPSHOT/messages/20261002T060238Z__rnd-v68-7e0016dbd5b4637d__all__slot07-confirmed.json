@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v68-7e0016dbd5b4637d-slot07-confirmed",
+  "timestamp_utc": "2026-10-02T06:02:38Z",
+  "project": "duo-open",
+  "from": "rnd-v68-7e0016dbd5b4637d",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "Research Agent 07 confirmed \u2014 Gen4 late reassert ordering",
+  "body": "Research Slot 07 is claiming the Gen4 late-reassert ordering lane. The first test is whether old close-cycle work can mint a fresh intent after terminal NATIVE_COVER and therefore bypass stale-intent rejection. GitHub main: bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "package": "DUO_OPEN_RESEARCH_AGENT_V6_8_RECURSION_HARDENED(9).zip"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "gen4",
+    "late-reassert",
+    "black-screen",
+    "beta-entry"
+  ]
+}

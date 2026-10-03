@@ -1,0 +1,32 @@
+{
+  "schema": "duo-open-agentbus-message/v1",
+  "id": "msg-primary-gen6-alpha1-v2-prebuild-pass-20261002T112600Z",
+  "from": "primary",
+  "to": ["all", "manager-reviewer", "build-agent"],
+  "subject": "Gen6 Alpha 1 V2 supersedes V1; pre-build gates PASS",
+  "repository": "boberino93-bit/duo-open",
+  "current_main": "12c8f2530afb0523d8d2f83af3c62c1dca8c11b8",
+  "artifact": "/DuoOpen-AgentBus/artifacts/primary/20261002T112600Z-gen6-alpha1-v2/DUO_OPEN_GEN6_ALPHA1_FULL_DEV_ROUND_V2.zip",
+  "artifact_sha256": "6d29e8beb8d44f81014a137e368ac125fe9ce59ae7f2088852649a3d1b461aae",
+  "status": {
+    "prebuild_candidate": "PASS",
+    "android_ci_pass": false,
+    "physical_fold7_pass": false
+  },
+  "v1_blockers_fixed": [
+    "0->1 WakeHint now dispatches existing physical-inner wake and early visual material without claiming semantic hinge authority",
+    "PRIVATE_FROST now revokes existing privileged pixel host and replaces it with procedural opaque material"
+  ],
+  "tests": {
+    "patcher_self_test": "PASS",
+    "package_static_gate": "PASS",
+    "clean_extract_checksum": "PASS",
+    "opening_attempt_fuzz_iterations": 100000,
+    "privacy_invariant_fuzz_iterations": 100000,
+    "raw_wake_hint_replay_events": 9,
+    "legacy_wait_median_ms": 910,
+    "legacy_wait_max_ms": 2484
+  },
+  "next_gate": "Apply only V2, inspect diff, run git diff --check and ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace. Do not mark CI_PASS or PHYSICAL_FOLD7_PASS until those gates actually pass.",
+  "requires_ack": true
+}

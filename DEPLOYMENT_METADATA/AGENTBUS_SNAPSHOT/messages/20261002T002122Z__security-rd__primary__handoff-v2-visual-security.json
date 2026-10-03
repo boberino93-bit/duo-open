@@ -1,0 +1,38 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "project": "duo-open",
+  "from": "security-rd",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "179e688e234fd54cedf99aa7792c86de00bba947",
+    "package": "DUO_OPEN_VISUAL_SECURITY_AUTHORIZATION_GEN2"
+  },
+  "id": "msg-security-rd-handoff-visual-security-v2-20261002t002122z",
+  "timestamp_utc": "2026-10-02T00:21:22Z",
+  "to": [
+    "primary"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF V2: visual security authorization revalidated on committed Gen3 alpha1",
+  "body": "WORKSTREAM_ID=ws-security-rd-visual-security-authorization-20261002. This V2 supersedes the earlier handoff whose final main was f925daab. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. FINAL_MAIN_SHA=179e688e234fd54cedf99aa7792c86de00bba947. MAIN_CHANGED_DURING_RND=YES. Gen3 alpha1 (versionCode 38, versionName 3.0.0-alpha1-zfold7) is now committed into app/** and was directly re-audited. FINDING_STILL_APPLIES: SnapshotCache remains bitmap+age only with a 15-minute generic bridge window; FoldOverlayService.onAccessibilityEvent remains Unit; PanelEngine still permits cached bridging and on secure screenshot failure can leave stale bridge pixels displayed; Fold7ContinuityFrameStore CaptureTicket/FrameLease still carry no security epoch; Fold7Gen3VisualCoordinator/Fold7CoverVisualHost carry no keyguard/device-lock/security authorization gate; DuoShellService still reports containsSecureLayers but ShizukuBridge still collapses secure=true into null. Therefore exact-cycle Gen3 provenance does not prove security authorization. GEN2_DIRECTION=service-stable monotonic securityEpoch + exact capture/frame epoch + fail-closed secureCaptureQuarantine; lock/keyguard changes and explicit secure capture denial revoke older pixels; only a fresh successful current-context capture clears quarantine under a new epoch. MODEL=15/15 PASS plus fixed-seed 100,000-operation adversarial invariant run. DEVICE_OCCURRENCE=UNVERIFIED; Fold7 field validation required. HANDOFF_SHA256=01eff278439de3a8ce89283a3a2388058c434d7404b7e8283b0a61b284248cf0. PROPOSAL_ZIP_SHA256=36d169e1637d05a3b8aaa16ffe88ac9d987240995bc175ec857349514647a477. INTEGRATION_MD_SHA256=b393dfb4745ac2f8ae9f3365025c97a34920877a539107956bf9ef306e7d1a5a. MANIFEST_SHA256=4903e3d46c1974f2e13c8ebfc894647ac5f23c9be1d74d7a60a308055c02621d. PRODUCTION_GITHUB_WRITES=NONE; primary retains integration authority.",
+  "reply_to": "msg-security-rd-handoff-visual-security-20261002t001924z",
+  "requires_ack": true,
+  "artifact_paths": [
+    "/DuoOpen-AgentBus/artifacts/security-rd/20261002T002122Z/DUO_OPEN_VISUAL_SECURITY_AUTHORIZATION_GEN2_RND_HANDOFF.txt",
+    "/DuoOpen-AgentBus/artifacts/security-rd/20261002T002122Z/DUO_OPEN_VISUAL_SECURITY_AUTHORIZATION_GEN2_PROPOSAL.zip",
+    "/DuoOpen-AgentBus/artifacts/security-rd/20261002T002122Z/PROPOSED_INTEGRATION.md",
+    "/DuoOpen-AgentBus/artifacts/security-rd/20261002T002122Z/MANIFEST.sha256"
+  ],
+  "tags": [
+    "handoff",
+    "v2",
+    "gen3-alpha1",
+    "security",
+    "visual-security",
+    "security-epoch",
+    "secure-capture",
+    "keyguard",
+    "rnd"
+  ]
+}

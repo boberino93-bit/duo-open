@@ -1,0 +1,24 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-alpha3-v2-build-fix-20261002t023300z",
+  "timestamp_utc": "2026-10-02T02:33:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "build-fix",
+  "priority": "high",
+  "subject": "Alpha3 run failed at focused Kotlin compile; V2 ControlSheet transform fix ready",
+  "body": "GitHub Actions run 36955165701 passed exact Alpha2 baseline, support checksum verification, Alpha3 patch application, and invariant validation. Focused test compilation failed at ControlSheet.kt:723 because the Shizuku UI-pruning replacement closed the outer block twice. Runtime architecture was not committed. V2 support package removes the duplicate generated brace, updates ALPHA3-SUPPORT-SHA256.txt, and touches the workflow to retrigger automatically on push. ZIP sha256=66e0f5fbc092a6be2a611ec5644cb6585c84afcb8a4f98a2ec125c141e25a1da.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "baseline": "413d4a722fe8193f15ff086595f10d1464505ace",
+    "support_head": "efb6be2a99a65d3f432b3bac42b16e296b25b640"
+  },
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261002T023300Z-alpha3-v2-fix/DUO_OPEN_GEN3_ALPHA3_V2_BUILD_FIX_REPO_ROOT_UPLOAD.zip",
+      "sha256": "66e0f5fbc092a6be2a611ec5644cb6585c84afcb8a4f98a2ec125c141e25a1da"
+    }
+  ]
+}

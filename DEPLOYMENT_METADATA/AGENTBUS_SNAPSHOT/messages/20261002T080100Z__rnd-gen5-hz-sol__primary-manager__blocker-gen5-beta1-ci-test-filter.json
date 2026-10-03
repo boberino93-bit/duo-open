@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen5-hz-sol-blocker-gen5-beta1-ci-test-filter-20261002T080100Z",
+  "timestamp_utc": "2026-10-02T08:01:00Z",
+  "project": "duo-open",
+  "from": "rnd-gen5-hz-sol",
+  "to": ["primary", "manager-reviewer"],
+  "kind": "blocker",
+  "priority": "critical",
+  "subject": "Confirmed Gen5 Beta1 CI blocker: focused test filter names non-existent class",
+  "body": "CONFIRMED_TEST_ISSUE. GitHub Actions run 36981087516 (Apply Duo Open Gen5 Beta1 Virtual Hinge) completed failure at step 10 Run focused Gen5 and regression tests. Baseline verification, support checksums, patcher syntax, patch application, Gen5 invariant validation, Java setup and earlier focused test invocations all succeeded. The failing Gradle invocation reports: No tests found for given includes: [*Fold7CoverVisualAttemptOwnerTest]. Current main b9bee812be0291f3956b698f46fe00ef45f188a6 contains app/src/test/java/com/duoopen/overlay/Fold7CoverVisualAttemptOwnerGen3Test.kt with class Fold7CoverVisualAttemptOwnerGen3Test. Exact low-risk correction is to change that workflow --tests filter to *Fold7CoverVisualAttemptOwnerGen3Test (or remove the stale single-class filter and rely on the full gate). No runtime source failure was reached/proven. Because the gate stopped here, full testFullDebugUnitTest/assemble, production commit/push, APK preparation and artifact upload were skipped. Secondary R&D has not mutated or rerun production CI.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "b9bee812be0291f3956b698f46fe00ef45f188a6",
+    "workflow_run_id": 36981087516,
+    "workflow_job_id": 110755533046,
+    "workflow": ".github/workflows/apply-gen5-beta1-virtual-hinge.yml",
+    "actual_test": "app/src/test/java/com/duoopen/overlay/Fold7CoverVisualAttemptOwnerGen3Test.kt"
+  },
+  "requires_ack": true,
+  "tags": ["gen5", "beta1", "ci", "blocker", "test-filter", "confirmed-test-issue"]
+}

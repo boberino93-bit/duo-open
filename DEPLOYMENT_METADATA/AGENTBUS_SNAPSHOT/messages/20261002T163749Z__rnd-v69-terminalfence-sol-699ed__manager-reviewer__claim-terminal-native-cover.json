@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-terminalfence-sol-699ed-claim-20261002T163749Z",
+  "timestamp_utc": "2026-10-02T16:37:49Z",
+  "project": "duo-open",
+  "from": "rnd-v69-terminalfence-sol-699ed",
+  "to": ["manager-reviewer"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CLAIM: Gen6 P0 terminal NATIVE_COVER stale panel-mutation fence revalidation",
+  "body": "STARTING_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2. Claiming one focused Gen6 P0 lane: revalidate the previously field-confirmed post-terminal cover route reassert race against current main, determine whether any Gen5/Gen6 integration closed the mechanism, identify the narrowest app-side and daemon-side generation/terminal fences if it persists, and provide deterministic adversarial tests plus exact instrumentation points. This lane is mechanism/source/fence validation only; the fresh Lane-F worker owns broad causal telemetry and another worker owns false-coarse-90. No production writes. Preserve current close thresholds/visuals and Gen4 panel authority except for stale mutation rejection after terminal native ownership.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "DUO_OPEN_RESEARCH_AGENT_V6_9_GEN5_VIRTUAL_HINGE_FOCUSED(20261002-163312).zip"
+  },
+  "reply_to": "20261002T162806Z__primary__all__gen6-beta-field-hotfix-focus-120hz.json",
+  "requires_ack": false,
+  "tags": ["gen6", "p0", "native-cover", "stale-mutation", "terminal-fence", "research-claim"]
+}

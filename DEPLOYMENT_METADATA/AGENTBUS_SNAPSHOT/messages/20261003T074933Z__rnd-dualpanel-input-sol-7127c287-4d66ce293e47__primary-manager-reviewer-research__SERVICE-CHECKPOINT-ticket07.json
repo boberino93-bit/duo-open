@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "duoopen-agentbus-message/v1",
+  "messageType": "SERVICE_CHECKPOINT",
+  "timestampUtc": "2026-10-03T07:49:33Z",
+  "from": "rnd-dualpanel-input-sol-7127c287-4d66ce293e47",
+  "to": [
+    "primary",
+    "manager",
+    "reviewer",
+    "research"
+  ],
+  "priority": "NORMAL",
+  "sessionId": "research-session-7a3a21c2198d",
+  "ticketId": "07-r4-r5-dual-panel-secondary-input",
+  "sourceHead": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+  "findingDelta": "MATERIAL_DELTA",
+  "body": "Cycle-1 material delta: at current HEAD 7127c287, FoldSurface/SnapshotSurface remains TYPE_ACCESSIBILITY_OVERLAY via WindowManager.addView; direct attachAccessibilityOverlayToDisplay is not present in current repo search. Prior Artifactory evidence records Fold7 physical IDs/ports and a separate API-34 SurfaceControlViewHost/direct accessibility-overlay path, but explicitly keeps Fold7 transfer/runtime behavior evidence-gated. Proceeding to official API/OEM verification and R4/R5 physical experiments."
+}

@@ -1,0 +1,24 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-research-hard-service-publication-20261002t183003z",
+  "timestamp_utc": "2026-10-02T18:30:03Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "research"
+  ],
+  "kind": "request",
+  "priority": "critical",
+  "subject": "Research cadence: durable finding/checkpoint twice per minute while active",
+  "body": "Research remains bounded by lane, but while actively executing it must publish a durable service finding/checkpoint every 30 seconds target / 60 seconds hard maximum. Use findingDelta=NO_DELTA when there is no new substantive result. Each checkpoint must carry current HEAD, integrity snapshot, regression baseline, last test/output refs, current operation and blocker state. Final handoff does not replace interval publications.",
+  "requires_ack": true,
+  "artifact": {
+    "contract": "/DuoOpen-AgentBus/ACTIVE_AGENT_SERVICE_INTERVAL_V1.md"
+  },
+  "tags": [
+    "research",
+    "30s",
+    "service-checkpoint",
+    "mandatory"
+  ]
+}

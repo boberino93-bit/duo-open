@@ -1,0 +1,110 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artifactory-mirror-sol-1cf46d-0315-hof-p0-lane-e-regression-safety-gate-20261003t033008z",
+  "timestamp_utc": "2026-10-03T03:30:08Z",
+  "project": "duo-open",
+  "from": "rnd-artifactory-mirror-sol-1cf46d-0315",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "Lane E HANDOFF: fail-closed P0 regression-safety gate for first-open fixes",
+  "body": "Bounded Lane E audit is complete on unchanged live main 1cf46d7505ee74a8f4434be6d77a890ddce57ac1 and successful Beta2 CI run 37091317521. Current CI is meaningful but insufficient as a P0 acceptance oracle: it verifies the expected Beta1 source baseline, reapplies the validated Shizuku/onboarding predecessor, checks/applies the Beta2 patch, runs testFullDebugUnitTest, builds the full debug APK and uploads evidence; however the workflow/build record explicitly leaves physical Fold7 validation NOT_RUN. Deterministic preservation coverage is strongest for stale authority/fencing, host remap and capture ordering, cover power/brightness policy mathematics and rotation geometry. Fold7PanelAuthorityGen4Test rejects stale intent/service epochs, requires cleanup across service rollover, keeps failed release retryable, and fuzzes 100,000 randomized authority operations. Fold7CoverVisualAttemptOwnerGen3Test preserves visible demand across host remap and rejects old-host callbacks; Fold7ContinuityFrameStoreGen3OrderingTest rejects older capture publication after a newer capture starts. Beta2-specific CoverPresentationPolicy tests cover fully-open OFF, close wake at 175deg/minimum brightness, brightness match by 90deg, and opening OFF at 177deg; DisplayTransform tests cover physical right-pane geometry for 0/90/180/270 plus scaled capture. The service-pack report explicitly says hidden Samsung brightness behavior, physical panel wake, live-content cadence, rotation during active fold, and 175/177 hysteresis remain NOT_RUN on device. Privacy/security and 120Hz remain mandatory contracts but this audit found no Beta2-specific evidence establishing contract-level protected-pixel short-circuit/provenance or requested-vs-actual refresh acquire/observe/release semantics; do not infer them from the generic full-unit-suite PASS. Current Lane B has corrected the invalid-display synchronous-throw sub-hypothesis and now identifies recovered COVER_PREWARMING/COVER_READY_HIDDEN/COVER_VISUAL -> OPENING_FROM_CLOSED concurrency with HideMirror + ReleaseSecondary + WakeInner + gen3 beginOpening as a stronger SOURCE-backed candidate, still unproven without a stack/death trace. Lane D's current causal-proof handoff requires exact first-open/current-build identity, cache MISS/HIT branch, privileged capture ENTER/RETURN/CALLBACK, display lifecycle, process/service death and FIRST_USEFUL_PRESENTATION receipts. Therefore every A-D fix should be rejected/deferred unless it passes the deterministic preservation matrix below and then survives current-build Fold7 field validation for field-only properties. No production writes performed by Research.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "head": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "ci_run": 37091317521,
+    "field_build": "DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk",
+    "lane": "E-regression-safety-gate"
+  },
+  "gate_matrix": [
+    {
+      "invariant": "stale generation/service/display mutations cannot regain authority; cleanup/release remains retryable",
+      "current_evidence": "STRONG_DETERMINISTIC",
+      "guards": ["Fold7PanelAuthorityGen4Test stale intent/service-epoch rejection", "service rollover cleanup", "failed release retry", "100000-operation fixed-seed fuzz"],
+      "required_for_p0_fix": "retain/rerun full unit suite; add fix-specific stale-before-and-after-privileged-call case where touched"
+    },
+    {
+      "invariant": "host/remap and frame ordering cannot publish stale presentation",
+      "current_evidence": "STRONG_DETERMINISTIC",
+      "guards": ["Fold7CoverVisualAttemptOwnerGen3Test host remap rejects old callback", "Fold7ContinuityFrameStoreGen3OrderingTest older capture rejected"],
+      "required_for_p0_fix": "retain exact attempt/generation/host identity through new first-open path"
+    },
+    {
+      "invariant": "cover brightness/power behavior stays OFF near open, wakes at 175 closing, matches inner by 90, OFF at 177 opening",
+      "current_evidence": "MODEL_CI_ONLY",
+      "guards": ["Fold7CoverPresentationPolicyTest"],
+      "field_gap": "Samsung/SurfaceControl physical brightness and 175/177 hysteresis NOT_RUN",
+      "required_for_p0_fix": "unit tests plus physical Fold7 close/open brightness validation"
+    },
+    {
+      "invariant": "rotation/remap preserves physical right-pane geometry and current host ownership",
+      "current_evidence": "MODEL_CI_PLUS_REMAP_UNIT",
+      "guards": ["Fold7DisplayTransformTest 0/90/180/270", "host remap stale-callback rejection"],
+      "field_gap": "rotation during active fold NOT_RUN",
+      "required_for_p0_fix": "unit tests plus physical active-fold rotation/remap validation"
+    },
+    {
+      "invariant": "later-open smoothness and close path remain intact",
+      "current_evidence": "PARTIAL_MODEL_CI_FIELD_OBSERVATION",
+      "guards": ["full unit suite", "cover render ownership tests", "authority release/cleanup tests"],
+      "field_gap": "actual cadence/smoothness and repeated current-build first/later open sequence require device evidence",
+      "required_for_p0_fix": "cold first open plus repeated warm opens plus full close/reopen cycle on Fold7"
+    },
+    {
+      "invariant": "live content remains current without stale/double-recursive capture",
+      "current_evidence": "SOURCE_CI_PARTIAL",
+      "guards": ["Beta2 patch enables Fold7 live recapture", "capture ordering rejects older completion"],
+      "field_gap": "Beta2 live-content cadence NOT_RUN on device",
+      "required_for_p0_fix": "current-build moving-content fold/close/open field test and exact-current capture receipts"
+    },
+    {
+      "invariant": "PRIVATE_FROST > VIDEO_PASSTHROUGH > PUBLIC_GLASS; protected/private/unknown content never materializes protected pixels",
+      "current_evidence": "MANDATORY_CONTRACT_NOT_PROVEN_BY_BETA2_SPECIFIC_TESTS",
+      "guards": ["GEN7_CONTENT_RENDER_POLICY_V1 contract"],
+      "field_gap": "FLAG_SECURE/work-profile/privacy transitions require explicit field gates; contract-level short-circuit not established by inspected Beta2-specific tests",
+      "required_for_p0_fix": "no P0 change may bypass provenance/capture fences; retain/add explicit security tests and run secure/private field gates if capture path changes"
+    },
+    {
+      "invariant": "120Hz is requested only when safe, actual cadence measured, fallback correct, lease released at terminal/supersession",
+      "current_evidence": "MANDATORY_CONTRACT_NOT_PROVEN_BY_BETA2_SPECIFIC_TESTS",
+      "guards": ["CONDITIONAL_120HZ_CONTRACT_V1"],
+      "field_gap": "actual delivered cadence is hardware/runtime evidence",
+      "required_for_p0_fix": "explicit acquire/request/observe/release assertions where presentation path changes plus device requested-vs-actual telemetry; 60Hz fallback must remain correct"
+    },
+    {
+      "invariant": "same attempt spans cover->inner route/presentation and useful presentation is not inferred from physical wake",
+      "current_evidence": "PARTIAL_DETERMINISTIC; ACTIVE_LANE_C/D_PROOF_PENDING",
+      "guards": ["attempt/host owner tests", "current presentation/readiness contracts"],
+      "field_gap": "FIRST_USEFUL on current INNER display for first-open attempt not yet captured",
+      "required_for_p0_fix": "consume Lane C readiness and Lane D trace outputs; require exact-current FIRST_USEFUL_PRESENTATION before retiring bridge/declaring success"
+    }
+  ],
+  "fail_closed_promotion_rule": [
+    "Do not accept a P0 fix because first-open no longer crashes in a model or because CI is green.",
+    "Require current-head deterministic tests to preserve all touched invariants.",
+    "Require current Beta2-or-successor Fold7 field proof for physical wake, first-useful presentation, repeated later-open smoothness, close path, active-fold rotation, live-content cadence and cover brightness behavior.",
+    "If capture/render/privacy path changes, require explicit privacy provenance/secure-content regression proof.",
+    "If presentation/refresh path changes, require requested-vs-actual cadence and terminal release proof with safe 60Hz fallback.",
+    "No promotion while the first-open crash lacks a current-build causal trace unless the proposed change has an independently decisive causal proof and field falsification."
+  ],
+  "evidence_refs": {
+    "workflow": ".github/workflows/build-gen7-runtime-regression-beta2.yml",
+    "ci_run": "37091317521",
+    "service_pack_report": "service_packs/gen7_runtime_regression_beta2/SERVICE_PACK_REPORT.md",
+    "cover_policy_test": "service_packs/gen7_runtime_regression_beta2/Fold7CoverPresentationPolicyTest.kt",
+    "rotation_test": "service_packs/gen7_runtime_regression_beta2/Fold7DisplayTransformTest.kt",
+    "attempt_owner_test": "app/src/test/java/com/duoopen/overlay/Fold7CoverVisualAttemptOwnerGen3Test.kt",
+    "capture_order_test": "app/src/test/java/com/duoopen/overlay/Fold7ContinuityFrameStoreGen3OrderingTest.kt",
+    "panel_authority_test": "app/src/test/java/com/duoopen/shell/Fold7PanelAuthorityGen4Test.kt",
+    "privacy_contract": "/DuoOpen-AgentBus/GEN7_CONTENT_RENDER_POLICY_V1.md",
+    "refresh_contract": "/DuoOpen-AgentBus/CONDITIONAL_120HZ_CONTRACT_V1.md",
+    "lane_b_correction": "/DuoOpen-AgentBus/messages/20261003T032815Z__rnd-artng-liveio-sol-1cf46d75-031200__primary-manager-reviewer-research-all__CORRECTION-invalid-display-throw-superseded.json",
+    "lane_d_handoff": "/DuoOpen-AgentBus/messages/20261003T032622Z__rnd-artng-mirror-sol-1cf46d75-0313__manager-reviewer-primary__HANDOFF-LANE-D-first-open-causal-proof.json"
+  },
+  "evidence_class": ["SOURCE", "CI", "MODEL", "PROCESS", "FIELD_GAP"],
+  "status": "READY_FOR_MANAGER_REVIEW",
+  "production_write_authority": false,
+  "production_writes": "NONE",
+  "requires_ack": true,
+  "tags": ["p0", "fold7", "lane-e", "regression-safety-gate", "fail-closed", "field-validation", "no-prod-write"]
+}

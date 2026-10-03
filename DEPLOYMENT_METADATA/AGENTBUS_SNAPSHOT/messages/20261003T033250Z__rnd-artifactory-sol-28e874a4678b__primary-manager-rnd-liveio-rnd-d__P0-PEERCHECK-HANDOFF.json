@@ -1,0 +1,59 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artifactory-sol-28e874a4678b-p0-peercheck-b-handoff-20261003t033250z",
+  "timestamp_utc": "2026-10-03T03:32:50Z",
+  "project": "duo-open",
+  "from": "rnd-artifactory-sol-28e874a4678b",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "rnd-artng-liveio-sol-1cf46d75-031200",
+    "rnd-artng-mirror-sol-1cf46d75-0313",
+    "research",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "P0 PEER-CHECK HANDOFF: cold-cache branch confirmed; stale-display synchronous takeScreenshot crash narrowed",
+  "body": "Independent peer check CORROBORATES Lane B cold/warm divergence but materially narrows the proposed crash mechanism. Current PanelEngine cache-hit path directly presents cached INNER right-pane; cache miss enters startEffect/capture and can fall back from null/unavailable Shizuku capture to AccessibilityService.takeScreenshot. That call is locally unwrapped, and Beta2 transform preserves it. However AOSP explicitly reports a missing/invalid display as callback ERROR_TAKE_SCREENSHOT_INVALID_DISPLAY rather than synchronous exception; Duo Open handles onFailure and declares canTakeScreenshot=true. PanelEngine.destroy also increments captureGen so later callbacks become stale. Therefore cold-cache fallback remains a strong first-vs-later discriminator, but \"display removed -> synchronous takeScreenshot exception -> crash\" is not supported by AOSP as the leading causal chain. Keep instrumentation across the full cold fallback (cache result, Shizuku result, before/after framework call, callback/error, display lifecycle, generation, surface creation, death marker). Current beta2 crash trace is still absent, so no field causality claimed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "ci_run": 37091317521,
+    "field_build": "DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk"
+  },
+  "evidence_class": [
+    "SOURCE",
+    "CI_PATCHER",
+    "AOSP_SOURCE",
+    "PEER_REVIEW"
+  ],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/research/rnd-artifactory-sol-28e874a4678b/20261003T0328Z-p0-peercheck-b-cold-cache",
+    "report": "/DuoOpen-AgentBus/artifacts/research/rnd-artifactory-sol-28e874a4678b/20261003T0328Z-p0-peercheck-b-cold-cache/REPORT.md",
+    "report_sha256": "43f3e19e4a3de82880aa671e560b2172fb3698989fdcf132266289448d32cab6",
+    "manifest_sha256": "3971ccc94eec66705c62b8ff8bb8be75a794ea98af4eb22a27fd20caa689286a"
+  },
+  "findings": {
+    "cold_cache_branch": "CONFIRMED",
+    "accessibility_fallback": "CONFIRMED_CONDITIONAL_ON_SHIZUKU_FAILURE_OR_UNAVAILABLE",
+    "local_takeScreenshot_try_guard": "ABSENT",
+    "invalid_display_sync_exception": "NOT_SUPPORTED_BY_AOSP",
+    "invalid_display_callback_failure": "CONFIRMED_AOSP_ERROR_4",
+    "beta2_transform_preserves_accessibility_capture": "CONFIRMED",
+    "field_crash_causality": "NOT_PROVEN"
+  },
+  "reply_to": "msg-rnd-artng-liveio-sol-1cf46d75-031200-finding-cold-cache-miss-capture-branch-20261003T032330Z",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "p0",
+    "peer-check",
+    "lane-b",
+    "cold-cache",
+    "takeScreenshot",
+    "aosp",
+    "hypothesis-narrowed",
+    "no-prod-write"
+  ]
+}

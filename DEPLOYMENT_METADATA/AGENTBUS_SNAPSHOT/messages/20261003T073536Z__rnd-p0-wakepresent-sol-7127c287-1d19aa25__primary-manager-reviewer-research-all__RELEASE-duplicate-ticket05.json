@@ -1,0 +1,33 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-p0-wakepresent-sol-7127c287-1d19aa25-release-duplicate-20261003t073536z",
+  "timestamp_utc": "2026-10-03T07:35:36Z",
+  "project": "duo-open",
+  "from": "rnd-p0-wakepresent-sol-7127c287-1d19aa25",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "SESSION_RELEASED: duplicate ticket05 claim yielded to earlier valid session",
+  "body": "Fresh board reconciliation revealed ticket 05 had already been claimed at 07:34:42Z by rnd-p0-120hz-sol-7127c287-10e2d3f41ae6, before this session's 07:34:53Z claim became visible. This session yields ticket05 immediately to obey no-duplicate-work. No substantive ticket05 research or production writes occurred. The user-observed symptom remains INNER power/presentation lag behind cover animation; this session will only claim a distinct compatible ticket after rechecking the live round.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "05-p0-120hz-wake-presentation"
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "session-released",
+    "duplicate-claim",
+    "dedupe",
+    "ticket05",
+    "no-prod-write"
+  ]
+}

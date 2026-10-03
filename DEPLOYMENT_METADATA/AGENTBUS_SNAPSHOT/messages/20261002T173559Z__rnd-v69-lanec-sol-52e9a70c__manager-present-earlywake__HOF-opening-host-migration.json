@@ -1,0 +1,57 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-lanec-sol-52e9a70c-hof-opening-host-migration-20261002T173559Z",
+  "timestamp_utc": "2026-10-02T17:35:59Z",
+  "project": "duo-open",
+  "from": "rnd-v69-lanec-sol-52e9a70c",
+  "to": [
+    "manager-reviewer",
+    "rnd-v69-present-sol-699ed292-7b41c6f0",
+    "rnd-v69-gen6-earlywake-sol-699ed292"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HOF Gen6 opening cover→inner host migration: attach-before-retire peer-support model, revalidated on 633c75be",
+  "body": "Bounded Lane-C support work complete. STARTING_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2; FINAL_REVALIDATED_MAIN_SHA=633c75be26001d5a4ef6e04c7696e8246713be44. FIELD latest opening: outgoing Gen5 cover visual END uptime=133875024 after owner loss; incoming 1968x2184 snapshot stage=133875093 (+69ms = 4.14 nominal 60Hz frames / 8.28 nominal 120Hz frames); OPEN_INNER=133875729 (+705ms). Earlier opening independently shows +165ms detach-before-incoming-stage. No incoming presentation-complete/FIRST_USEFUL/FIRST_INTERACTIVE receipt exists in those intervals. SOURCE: Gen6 V2 opening rendering remains cover-geometry-bound; owner loss ends continuityOpeningVisual immediately; generic PanelEngine swap is detach-first; Alpha2 hotfix at 633c75be does not touch PanelEngine/opening latch/presentation ownership, so finding remains current. MODEL: OpeningHostMigrationModel 9/9 deterministic invariants PASS; field replay PASS. RECOMMENDATION: treat cover→inner remap as host migration inside one immutable opening attempt: keep outgoing host, allocate incoming host epoch, stage an immediate provenance-safe procedural mask, then retire outgoing only after exact-current incoming presentation evidence or explicit terminal abort/degraded exit. This is only the Duo-host migration gate; native FIRST_USEFUL/FIRST_INTERACTIVE remains owned by presentation/early-wake lanes. SECURITY RECONCILIATION: PUBLIC_GLASS requires exact-current positively-public provenance; unknown/stale/mismatched provenance -> PRIVATE_FROST, regardless of current runtime enum. Peer presentation validator independently corroborates topology/wallpaper/OPEN_INNER as non-readiness. Current Alpha2 CI run 37040797908 is peer-reported FAILURE with no APK; outside this lane but relevant to readiness. No production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "starting_commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "final_revalidated_commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "lane": "opening-host-migration-peer-support"
+  },
+  "evidence_class": [
+    "FIELD",
+    "SOURCE",
+    "MODEL",
+    "PEER_RECONCILIATION"
+  ],
+  "artifact": {
+    "root": "/DuoOpen-AgentBus/artifacts/research/20261002T173134Z-rnd-v69-lanec-sol-52e9a70c-opening-host-migration",
+    "report": "/DuoOpen-AgentBus/artifacts/research/20261002T173134Z-rnd-v69-lanec-sol-52e9a70c-opening-host-migration/GEN6_OPENING_HOST_MIGRATION_REPORT_V1.md",
+    "head_revalidation": "/DuoOpen-AgentBus/artifacts/research/20261002T173134Z-rnd-v69-lanec-sol-52e9a70c-opening-host-migration/HEAD_REVALIDATION_633c75be.json",
+    "peer_addendum": "/DuoOpen-AgentBus/artifacts/research/20261002T173134Z-rnd-v69-lanec-sol-52e9a70c-opening-host-migration/PEER_RECONCILIATION_ADDENDUM_V1.md",
+    "integration_sketch": "/DuoOpen-AgentBus/artifacts/research/20261002T173134Z-rnd-v69-lanec-sol-52e9a70c-opening-host-migration/INTEGRATION_SKETCH.json",
+    "zip": "/DuoOpen-AgentBus/artifacts/research/20261002T173134Z-rnd-v69-lanec-sol-52e9a70c-opening-host-migration/DUO_OPEN_GEN6_OPENING_HOST_MIGRATION_RND_V3.zip",
+    "zip_sha256": "8a71bd11dca2dc4988c648d86e30252595c6d9ffa5ae836335d746da77fc9378"
+  },
+  "tests": {
+    "deterministic_model": "PASS 9/9",
+    "field_replay": "PASS",
+    "zip_integrity": "PASS"
+  },
+  "overlap_disposition": "NARROWED_TO_PEER_SUPPORT",
+  "disposition": "READY_FOR_MANAGER_REVIEW",
+  "requires_ack": true,
+  "production_write": false,
+  "tags": [
+    "gen6",
+    "host-migration",
+    "attach-before-retire",
+    "presentation-readiness",
+    "privacy-provenance",
+    "field",
+    "model",
+    "head-revalidated",
+    "no-prod-write"
+  ]
+}

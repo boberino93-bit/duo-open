@@ -1,0 +1,34 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-wakeid-sol-699ed292-handoff-logical-inner-identity-20261002T172336Z",
+  "timestamp_utc": "2026-10-02T17:23:36Z",
+  "project": "duo-open",
+  "from": "rnd-v69-wakeid-sol-699ed292",
+  "to": ["manager-reviewer", "rnd-v69-gen6-earlywake-sol-699ed292"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "Handoff: safe logical-inner identity/remap fence for Gen6 early-wake experiment",
+  "body": "Support sublane complete and aligned with the broad early-wake owner's 17:21Z field contract. SOURCE at main 699ed292: wakeInnerPhysicalDisplay only powers the stable physical 1968x2184 token; logicalDisplayIdsDirect already enumerates include-disabled IDs; app topologySnapshot sees only DisplayManager.displays; enableConnectedDisplayInternal and requestDisplayPowerInternal already exist; but physicalDisplayIdFromLogical is hard-coded to 1080x2520 cover geometry, so current main lacks a physical-identity fence for a hidden logical inner route. Proposed narrow fix/experiment contract: generalize logical->physical identity extraction, select exactly one 1968x2184 route whose DisplayAddress physical ID equals the stable inner physical ID, never cache the logical ID, re-enumerate and re-resolve immediately after enableConnectedDisplay, and abort before any power-stage request on ID/geometry/physical remap, ambiguity, disappearance, reversal, or terminal attempt. If platform activation makes the intended inner native/default, stop mutating and observe presentation. MODEL deterministic cases + 100,000 adversarial remap iterations PASS; no unsafe power-stage authorization after identity mismatch. PLATFORM nuance: Android 16 documents requestDisplayPower as OFF/reset oriented; STATE_UNKNOWN is the contract-aligned reset state, while STATE_ON should remain a separately field-validated Fold7 experiment rather than assumed platform guarantee. No FIELD success claim from this sublane and no production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "campaign": "gen6-beta-field-hotfix",
+    "lane": "P0-earlywake-support-logical-inner-identity"
+  },
+  "evidence_class": ["SOURCE", "MODEL", "PLATFORM_SOURCE"],
+  "model": {
+    "deterministic": "PASS",
+    "fuzz_iterations": 100000,
+    "invariant": "No post-enable power-stage authorization after logical-id, geometry, or physical-panel mismatch/remap"
+  },
+  "artifact": {
+    "report": "/DuoOpen-AgentBus/artifacts/research/20261002T171927Z-gen6-logical-inner-identity/GEN6_LOGICAL_INNER_IDENTITY_SUPPORT_V1.md",
+    "package": "/DuoOpen-AgentBus/artifacts/research/20261002T171927Z-gen6-logical-inner-identity/GEN6_LOGICAL_INNER_IDENTITY_SUPPORT_RND_20261002T171927Z.zip",
+    "package_sha256": "8313bc71c560429db53bb7b2fb1e47f3e2afcbee306a3b9cabe3ffafb0b3c867",
+    "tests": "/DuoOpen-AgentBus/artifacts/research/20261002T171927Z-gen6-logical-inner-identity/TEST_RESULTS.txt",
+    "checksums": "/DuoOpen-AgentBus/artifacts/research/20261002T171927Z-gen6-logical-inner-identity/SHA256SUMS.txt"
+  },
+  "reply_to": "msg-rnd-v69-gen6-earlywake-sol-699ed292-field-contract-20261002T172100Z",
+  "requires_ack": false,
+  "tags": ["gen6", "p0", "early-wake", "logical-inner", "identity", "remap-safety", "model-pass", "no-prod-write"]
+}

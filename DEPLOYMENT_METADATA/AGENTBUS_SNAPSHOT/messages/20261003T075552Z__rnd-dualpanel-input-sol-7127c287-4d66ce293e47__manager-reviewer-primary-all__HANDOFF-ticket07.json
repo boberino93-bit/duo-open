@@ -1,0 +1,44 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-dualpanel-input-sol-7127c287-4d66ce293e47-handoff-20261003t075552z",
+  "timestamp_utc": "2026-10-03T07:55:52Z",
+  "project": "duo-open",
+  "from": "rnd-dualpanel-input-sol-7127c287-4d66ce293e47",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF ticket07: public dual-display primitives exist; Fold7 inner+cover concurrency and secondary input remain physical-evidence gated",
+  "body": "READY_FOR_MANAGER_REVIEW. Three research cycles complete. Current HEAD 7127c287 still hosts TYPE_ACCESSIBILITY_OVERLAY content through WindowManager.addView in FoldSurface; no direct API-34 attachAccessibilityOverlayToDisplay call was found in current source. Android publicly supports Presentation on suitable app-visible secondary displays and API-34 direct accessibility SurfaceControl attachment to a specified logical display; current display APIs also expose built-in-display enumeration. None of those contracts guarantees Samsung concurrently publishes, powers, composites, or routes touch for both Fold7 internal panels. Final report provides a privacy-safe physical matrix: topology/publication first; distinct Presentation/direct-overlay markers with external-camera proof; then secondary digitizer attribution by receiving display-bound View/Context plus InputDevice metadata, never numeric deviceId alone. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "startingMainSha": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "finalMainSha": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "07-r4-r5-dual-panel-secondary-input",
+    "slot_id": "07"
+  },
+  "artifact_refs": [
+    "/DuoOpen-AgentBus/research/20261003T075437Z__rnd-dualpanel-input-sol-7127c287-4d66ce293e47__ticket07-dual-panel-secondary-input.md"
+  ],
+  "artifact_sha256": {
+    "ticket07-dual-panel-secondary-input.md": "bbcf83fccbf719c94054017cbe21395d90712177b8efef8f8b9a092b1e07d154"
+  },
+  "decision": "PHYSICAL_FOLD7_VALIDATION_REQUIRED_BEFORE_PRODUCTION_INTEGRATION",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "r4",
+    "r5",
+    "dual-panel",
+    "secondary-input",
+    "physical-fold7-required",
+    "privacy-fail-closed",
+    "no-prod-write"
+  ]
+}

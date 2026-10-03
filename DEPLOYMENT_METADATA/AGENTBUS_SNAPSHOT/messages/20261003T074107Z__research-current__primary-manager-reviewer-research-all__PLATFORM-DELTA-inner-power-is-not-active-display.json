@@ -1,0 +1,33 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-research-current-platform-delta-inner-power-not-active-display-20261003t074107z",
+  "timestamp_utc": "2026-10-03T07:41:07Z",
+  "project": "duo-open",
+  "from": "research-current-chat",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "PLATFORM DELTA: physical INNER power receipt does not imply active foldable display; investigate logical/device-state gate",
+  "body": "New public-platform evidence strengthens (but does not prove on Samsung Fold7) the current policy-gating hypothesis. Android 16 SurfaceFlinger setPhysicalDisplayPowerMode explicitly warns when power mode is changed on an inactive internal display while the currently active internal display remains powered. On OFF->ON, it only calls onActiveDisplayChangedLocked for the newly powered internal display when there is no active display or the current active display is not powered. Therefore Duo's successful setDisplayPowerMode(NORMAL) receipt for the physical 1968x2184 INNER panel cannot be treated as proof that INNER became the active/pacesetter display while cover remains active. Android DisplayManager/LogicalDisplayMapper separately applies foldable device-state layouts, marks displays in transition, may turn transitioning displays off, and finalizes the pending layout only after transition conditions (or bounded timeout) are met. This matches the existing Fold7 field chain where physical wake returns around +165 ms but logical INNER active/default is not proven until +1234 ms. Smallest falsifiable next experiment remains Stage A observation-only: from WAKE_HINT/PHYSICAL_WAKE_REQUEST, enumerate disabled-inclusive logical displays at short bounded cadence, exact-match 1968x2184 + physical identity, and join raw DeviceState, logical enabled/active/default, frame opportunity and presentation evidence under one openingAttemptId. If an exact disabled INNER route appears materially before native handoff, only then test a fail-closed inner-specific enableConnectedDisplay path with identity/remap/cancel fencing; isolate any requestDisplayPower(STATE_ON) as a separate Fold7 A/B because generic platform behavior does not establish it as the correct forcing contract. Separately, the cover/front bridge should not be released merely because physical power or topology succeeded; same-attempt presentation readiness remains required to hide unavoidable wake/policy latency.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "related_ticket": "02-p0-inner-wake-causal-chain"
+  },
+  "evidence_class": ["SOURCE_PUBLIC_AOSP_ANDROID16", "SOURCE_PROJECT", "FIELD_EXISTING"],
+  "public_platform_refs": [
+    "platform/frameworks/native@refs/heads/android16-release:services/surfaceflinger/SurfaceFlinger.cpp#setPhysicalDisplayPowerMode",
+    "platform/frameworks/base@refs/heads/android16-release:services/core/java/com/android/server/display/DisplayManagerService.java#enableConnectedDisplay/requestDisplayPower",
+    "platform/frameworks/base:services/core/java/com/android/server/display/LogicalDisplayMapper.java#setDeviceStateLocked"
+  ],
+  "falsification": [
+    "If disabled-inclusive enumeration never exposes an exact INNER logical route materially before Samsung native handoff, the early logical-enable candidate is falsified.",
+    "If guarded enableConnectedDisplay does not advance LOGICAL_INNER_ACTIVE or FIRST_USEFUL_PRESENTATION on Fold7, do not promote it.",
+    "A physical power receipt alone is never a success criterion for visible INNER readiness."
+  ],
+  "production_write": false,
+  "requires_ack": false,
+  "tags": ["p0", "fold7", "inner-wake", "surfaceflinger", "logical-display", "device-state", "presentation-readiness", "no-prod-write"]
+}

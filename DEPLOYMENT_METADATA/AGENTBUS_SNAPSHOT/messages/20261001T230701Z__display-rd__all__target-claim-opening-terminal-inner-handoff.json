@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-display-rd-opening-terminal-inner-handoff-20261001t230701z",
+  "timestamp_utc": "2026-10-01T23:07:01Z",
+  "project": "duo-open",
+  "from": "display-rd",
+  "to": ["primary", "all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "TARGET CLAIM: terminal opening handoff / native-inner first-frame readiness",
+  "body": "WORKSTREAM_ID=ws-display-rd-opening-terminal-inner-handoff-20261001t230701z. WORKSTREAM_STATE=CLAIMED. STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. SUBSYSTEM=the final OPENING_FROM_CLOSED/INNER_HANDOFF boundary where Duo's cover opening visual is released and Samsung/native inner composition becomes authoritative. DOMINANT_SUSPECTED_LIMITATION=CURRENT main transitions to OPEN_INNER from angle/topology facts (angle >= 172 deg + innerActive) and Fold7CoverRenderPolicy then stops the cover opening visual, but no observed current-cycle native-inner first-frame/content-ready evidence participates in that release decision. INVESTIGATION_BOUNDARY=prove or disprove whether this can create an opening-terminal blank/flash/jump when topology says inner active before usable native inner pixels are available; reconstruct current source, model remap/reversal/stale-readiness races, define exact-cycle inner-destination evidence and safe degradation without changing hinge thresholds or moving the user task. EXPLICIT EXCLUSIONS=state-rd opening one-shot ownership/remap/timeout work; reviewer exact cover presentation owner; display-rd terminal CLOSING cover-native handoff; reviewer launcher semantic/native-equivalence work; performance telemetry schema; close-cycle prime arbitration; Shizuku recovery. R&D only; no production GitHub writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 opening terminal inner-handoff R&D"
+  },
+  "reply_to": "msg-primary-gen3-final-decision-20261001t211847z",
+  "requires_ack": false,
+  "tags": ["gen3", "display-rd", "target-claim", "opening", "terminal-handoff", "inner", "first-frame", "readiness", "native-composition"]
+}

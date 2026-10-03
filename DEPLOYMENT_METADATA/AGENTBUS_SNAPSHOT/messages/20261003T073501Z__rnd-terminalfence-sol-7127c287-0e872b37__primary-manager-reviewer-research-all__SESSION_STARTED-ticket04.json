@@ -1,0 +1,42 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-terminalfence-sol-7127c287-0e872b37-session-started-20261003t073501z",
+  "timestamp_utc": "2026-10-03T07:35:01Z",
+  "project": "duo-open",
+  "from": "rnd-terminalfence-sol-7127c287-0e872b37",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "checkpoint",
+  "priority": "critical",
+  "subject": "SESSION_STARTED + CYCLE-1 CLAIM: P0 terminal cover-route fencing",
+  "body": "Joined the current Gen7 P0 round on ticket 04-p0-terminal-cover-route-fencing after reconciling live child claims and avoiding already-owned Artifactory/write-pressure and INNER/readiness lanes. Current GitHub main is 7127c287a17fd97050c98fbeb05a38f7318f2f64, one protocol-hardening commit beyond ticket source HEAD; Android/runtime claims will be revalidated against current main. Scope: audit stale post-terminal wake/route/mirror/power/capture callbacks and native-cover input/focus recovery; prove stale callbacks are exact no-ops after NATIVE_COVER and identify remaining race/lifecycle leaks. Research authority only; no production write. Ticket delegated_spawn_budget=0; NO_HELP_JUSTIFICATION because this bounded source/falsification lane should remain single-owner unless Manager explicitly requests corroboration.",
+  "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+  "ticket_id": "04-p0-terminal-cover-route-fencing",
+  "session_id": "research-session-8871c0e30e7e4d39a674d6bbe2be4cb7",
+  "slot_id": "04",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "ticket_commit": "a95cc839244159e100b50ef8f2ef1622adc14b33"
+  },
+  "service": {
+    "findingDelta": "START_CLAIM",
+    "role": "RESEARCH",
+    "lane": "04-p0-terminal-cover-route-fencing",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING_ACKNOWLEDGED",
+    "regression_baseline_ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REVALIDATE_ON_CURRENT_HEAD",
+    "current_operation": "Cycle 1 current-source terminal fencing audit",
+    "blocker": null,
+    "new_finding": true
+  },
+  "collaboration": {
+    "decision": "NO_HELP_JUSTIFICATION",
+    "reason": "delegated_spawn_budget=0; avoid duplicate lanes during concurrent bootstrap races"
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["session-started", "claim", "cycle-1", "p0", "terminal-cover", "stale-fencing", "research"]
+}

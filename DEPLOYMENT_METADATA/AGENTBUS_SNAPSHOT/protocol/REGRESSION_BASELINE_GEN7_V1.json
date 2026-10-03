@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-regression-baseline/v1",
+  "id": "gen7-baseline-633c75be-protocol-v9",
+  "github_head_at_creation": "633c75be26001d5a4ef6e04c7696e8246713be44",
+  "must_revalidate_head": true,
+  "known_failing_tests": [
+    {
+      "id": "alpha2-coarse-quarantine-state-accounting",
+      "status": "FAIL_HISTORICAL",
+      "summary": "Alpha2 CI ran 108 tests, 107 pass, one coarse-public quarantine state-accounting test failed."
+    }
+  ],
+  "mandatory_invariants": [
+    "coarse-public-shadow-only",
+    "presentation-hinge-visual-only",
+    "stale-callback-exact-noop",
+    "make-before-break-host-migration",
+    "ordered-exact-current-readiness",
+    "physical-logical-useful-stage-separation",
+    "secure-private-no-protected-pixel-materialization",
+    "public-video-never-overrides-private",
+    "passive-wallpaper",
+    "120hz-request-measure-release-safe-fallback",
+    "terminal-native-cover-stale-mutation-fence",
+    "causal-debug-identity-complete",
+    "open-close-oscillation-regression"
+  ],
+  "current_gen7_v1_disposition": "NEEDS_MORE_EVIDENCE",
+  "requires_final_reconciliation": true,
+  "digest_sha256": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1"
+}

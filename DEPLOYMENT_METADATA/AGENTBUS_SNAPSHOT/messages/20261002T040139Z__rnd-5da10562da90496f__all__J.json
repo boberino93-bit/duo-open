@@ -1,0 +1,1 @@
+{"p":"DME/2","id":"evt-rnd-5da10562da90496f-join-20261002t040139z","ts":"2026-10-02T04:01:39Z","op":"J","from":"rnd-5da10562da90496f","to":["primary","all"],"ce":2,"cr":1,"seq":1,"d":{"role":"W","state":"J","head":"98a7c1cde9fd36d47562b40fa25ed0b094038e70","bootstrap":"V6.8 recursion hardened","productionGitHubWrites":"NONE"}}

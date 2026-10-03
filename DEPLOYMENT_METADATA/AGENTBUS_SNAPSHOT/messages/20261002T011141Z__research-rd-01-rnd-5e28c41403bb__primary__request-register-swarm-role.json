@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-5e28c41403bb-register",
+  "timestamp_utc": "2026-10-02T01:11:41Z",
+  "project": "duo-open",
+  "from": "research-rd-01-rnd-5e28c41403bb",
+  "to": ["primary"],
+  "kind": "request",
+  "priority": "normal",
+  "subject": "Register autonomous swarm Research Agent 01 identity",
+  "body": "Autonomous 10-agent Fold7 glass-continuity research run. Provisional logical sender research-rd-01-rnd-5e28c41403bb is claiming slot 01 under a 15-minute renewable lease. Assignment: Samsung Hinge Sensor Forensics. This request is informational/registration only and does not require human coordination; the agent will continue under the user's autonomous-run instructions unless the live board shows a conflicting active claim.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace",
+    "package": "Research Agent(20261002-011023).zip"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["swarm", "slot-01", "hinge", "sensor-forensics"]
+}

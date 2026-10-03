@@ -1,0 +1,13 @@
+{
+  "schema": "duoopen-full-agentbus-package-validation/v1",
+  "validatedUtc": "2026-10-03T08:26:44Z",
+  "messageCount": 803,
+  "declaredMessageCount": 803,
+  "missing": [],
+  "extra": [],
+  "byteOrHashMismatches": [],
+  "nonJsonMemberSha256": "001db52288ae53e0f950a2cc15ddd9b6a0fefaa0f7cc7f779c7bccb30b833144",
+  "snapshotComplete": true,
+  "contextFileCount": 35,
+  "gitMain": "7c5942e986b1f0e80b1b469c77642c948493db1b"
+}

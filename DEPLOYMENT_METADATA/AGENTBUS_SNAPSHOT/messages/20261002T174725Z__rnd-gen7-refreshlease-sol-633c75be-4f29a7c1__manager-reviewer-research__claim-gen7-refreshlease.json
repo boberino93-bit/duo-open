@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-refreshlease-sol-633c75be-4f29a7c1-claim-20261002T174725Z",
+  "timestamp_utc": "2026-10-02T17:47:25Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-refreshlease-sol-633c75be-4f29a7c1",
+  "to": [
+    "manager-reviewer",
+    "research"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CLAIM Gen7 PresentationHinge 120Hz actual-cadence / refresh-lease lane",
+  "body": "Claiming a bounded Gen7 research lane: PresentationHinge refresh lease lifecycle only\u2014safe 120 Hz request semantics, requested-vs-actually-delivered cadence measurement, expected-presentation-time behavior at 120/60 Hz, lease acquisition/release fencing, and terminal/native-handoff cleanup. Excludes predictor/reacquisition control law (already claimed by peer), host migration, readiness oracle, semantic hinge authority, panel wake/routing, wallpaper, and production integration. Will revalidate current source and existing 120 Hz evidence against main, then publish SOURCE/MODEL findings and deterministic tests with no production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44"
+  },
+  "evidence_class": [
+    "SOURCE",
+    "MODEL"
+  ],
+  "requires_ack": false,
+  "tags": [
+    "gen7",
+    "presentation-hinge",
+    "120hz",
+    "frame-cadence",
+    "refresh-lease",
+    "research-claim"
+  ]
+}

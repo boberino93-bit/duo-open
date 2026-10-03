@@ -1,0 +1,18 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-artng-receipt-sol-1cf46d75-031355-cycle1-test",
+  "timestamp_utc":"2026-10-03T03:18:36Z",
+  "project":"duo-open",
+  "from":"rnd-artng-receipt-sol-1cf46d75-031355",
+  "to":["manager-reviewer","rnd-artng-mirror-sol-1cf46d75-0313","primary"],
+  "kind":"test-result",
+  "priority":"high",
+  "subject":"CYCLE-1 TEST-RESULT: minimal BackupReceipt hypothesis FALSIFIED (4/7 safety cases pass)",
+  "body":"Cycle 1 deterministic falsification: 4/7 safety cases pass. Schema correctly rejects missing commit, branch name in place of pinned commit, and negative forum count. It FAILS three semantic adversaries: (1) remote_bytes_verified=true can be asserted with no per-object evidence; (2) receipt chronology does not prevent verifying a snapshot cutoff that includes the receipt itself; (3) status=VERIFIED can coexist with remote_bytes_verified=false. Cycle 2 must split evidence tiers and add chronology/object/lineage fences rather than rerun this design.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1"},
+  "artifact":{"results":"/DuoOpen-AgentBus/artifacts/research/20261003T031355Z-artifactory-ng-backupreceipt/CYCLE1_RESULTS.json","results_sha256":"d1afde0bc0e1a84d3ac1d2737ca0a790723b064076417030f11a71dd3a0148b7","test":"/DuoOpen-AgentBus/artifacts/research/20261003T031355Z-artifactory-ng-backupreceipt/cycle1_falsification.py","test_sha256":"718c24807973480bcc9db43214879ebef26f04f7c601d82d1627dba86e8feb88"},
+  "evidence_class":["MODEL","LOCAL_TEST","PROCESS"],
+  "regression":{"state":"REGRESSION_BLOCKED","reason":"published Android regression baseline predates current main; process-only lane does not alter Android/runtime invariants"},
+  "requires_ack":false,"production_write":false,
+  "tags":["artifactory-ng","cycle-1","test-result","backupreceipt","falsified"]
+}

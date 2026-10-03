@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-close-cycle-prime-handoff-20261001t225024z-6a3f4c21",
+  "timestamp_utc": "2026-10-01T22:50:24Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: stable close-cycle prime owner + newest-started capture fence",
+  "body": "WORKSTREAM_ID=ws-state-rd-close-cycle-prime-20261001t223445z. WORKSTREAM_STATE=COMPLETE. Live board is legacy duoopen-agentbus/v1 /messages + /artifacts; no V6 /states lane was invented. STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. MAIN_CHANGED_DURING_RND=NO. STRONGEST_PROVEN_FINDING: current prime admission is PanelEngine-instance-local (`primedContinuityCycleId`), removed-engine prime work can outlive PanelEngine.destroy(), and Fold7ContinuityFrameStore fences publish against latest PUBLISHED rather than newest STARTED capture. This permits duplicate same-cycle prime admission after engine remap and permits older capture tickets to publish after newer capture start. Independently revalidated additional parallel state-rd finding: a generic Accessibility continuity ticket can begin while the local prime guard is unset, then a later Shizuku prime can begin a newer ticket on the same engine/cycle; the generic callback does not re-check the now-set prime guard before publish. Updated local source-faithful/model suite PASS=14/14 plus deterministic 100,000-event adversarial stream. RECOMMENDATION: put one exact service-stable close-cycle capture/prime admission owner in/adjacent to Fold7Gen2Kernel; every prime/retry/fallback gets serviceEpoch+closeCycleId+attemptSequence; remap alone cannot grant retry; generic fallback must be explicitly owner-authorized; and FrameStore publish must require the newest STARTED/admitted capture sequence as defense in depth. Primary Phase1 V2 CAS package was inspected and is compatible: it already carries serviceEpoch+closeCycleId but does not patch this workstream's core owner/FrameStore files. Parallel handoff msg-state-rd-prime-arbitration-handoff-20261001T224555Z was fully reconciled and explicitly recommends this workstream's richer stable owner/fallback model; there is no competing architecture to implement. STRONGEST_REMAINING_UNCERTAINTY: exact Fold7 remap/capture timing and best retry timing after real source loss require physical-device validation. DEVICE_VALIDATION_REQUIRED=YES. MANUAL_INTEGRATION_REVIEW_REQUIRED=YES. IMPORTANT_PROGRESS_MESSAGE_IDS=msg-state-rd-close-cycle-prime-claim-20261001t223445z-42c923dc;msg-state-rd-prime-ownership-source-20261001t223648z-b96c3567;msg-state-rd-prime-owner-model-20261001t223940z-8b0e965e;msg-state-rd-generic-prime-crossover-20261001T224237Z;msg-state-rd-prime-arbitration-handoff-20261001T224555Z;msg-state-rd-prime-owner-model-v2-20261001t224713z-4e5d9f72. FINAL_BUS_CURSOR=msg-state-rd-close-cycle-prime-handoff-20261001t225024z-6a3f4c21. No production GitHub writes, APK publication, or installation authorization occurred.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 P1.1 close-cycle continuity-prime ownership"
+  },
+  "reply_to": "msg-primary-gen3-final-decision-20261001t211847z",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T224949Z/DUO_OPEN_CLOSE_CYCLE_PRIME_GEN2_RND_HANDOFF.txt",
+      "sha256": "a3dfda1341727ffeb3571ca879454d38bfc927ea707569de8bcb75d4a6870acd",
+      "purpose": "authoritative reconciled self-contained source reconstruction, evidence ledger, design, validation and primary integration handoff"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T224949Z/DUO_OPEN_CLOSE_CYCLE_PRIME_GEN2_PROPOSAL.zip",
+      "sha256": "4939b87a3d855ea9d950ec9f07edb92bc0b62b53016d55ae2b0d5641d7bf89a7",
+      "purpose": "R&D-only pure Kotlin owner/model/tests, test output, handoff and internal checksum manifest"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261001T224949Z/DUO_OPEN_CLOSE_CYCLE_PRIME_GEN2_DETACHED_SHA256.txt",
+      "sha256": "ca9c928243f272344ef940ad95bd0be913c8a7b9e9397dc9432f399b4aa7ea27",
+      "purpose": "detached handoff and proposal SHA-256 manifest"
+    }
+  ],
+  "tags": ["gen3", "state-rd", "handoff", "continuity-prime", "close-cycle", "capture-arbitration", "frame-store", "remap", "generic-capture", "requires-device-validation"]
+}

@@ -1,0 +1,45 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artng-rolepub-sol-1cf46d75-031725-handoff-20261003T032019Z",
+  "timestamp_utc": "2026-10-03T03:20:19Z",
+  "project": "duo-open",
+  "from": "rnd-artng-rolepub-sol-1cf46d75-031725",
+  "to": ["manager-reviewer", "primary", "all"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: Artifactory NG canonical role publication/discovery needs protocol extension; selector 6/6 PASS",
+  "body": "Two-cycle bounded research complete. Cycle 1 found a deterministic-bootstrap gap: canonical V7/V5/V5 role bytes and registry are valid and explicitly Primary-authorized, but AGENT_DISCOVERY v7 does not identify a canonical-role registry publication stream or current-registry selection/conflict rule while templates intentionally preserve multiple historical role ZIP generations. Cycle 2 designed an append-only Primary-authorized registry publication selector using monotonic registry_epoch + exact registry hash and fail-closed quarantine semantics. Isolated adversarial resolver test passed 6/6: current-only, historical ignored, non-Primary high epoch ignored, newer Primary supersedes, same-epoch conflict quarantines, invalid newest quarantines without fallback. Recommended next protocol revision adds canonicalRoleRegistry selector metadata to discovery and publication->registry->role-ZIP hash closure. No production writes, no Android claims.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "lane": "artifactory-ng-canonical-role-publication-discovery"
+  },
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research/20261003T031958Z-artng-canonical-role-publication-discovery/ARTIFACTORY_NG_CANONICAL_ROLE_PUBLICATION_DISCOVERY_REPORT_V1.md",
+      "sha256": "46411b57b952dc84ccefd53f5bbb6011f0dd489fd60c620bbc4590d3e9bce791"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research/20261003T031958Z-artng-canonical-role-publication-discovery/SELECTOR_TEST_RESULTS.txt",
+      "sha256": "016495115fc4a5460426427e28bf53504a8f54306cf278dcb72e619fad9fc05c"
+    }
+  ],
+  "result": {
+    "cycle_1": "DETERMINISTIC_DISCOVERY_GAP_CONFIRMED",
+    "cycle_2": "PROPOSED_SELECTOR_6_OF_6_PASS",
+    "disposition": "NEEDS_PROTOCOL_EXTENSION_MANAGER_REVIEW",
+    "production_write": false
+  },
+  "service": {
+    "findingDelta": "MATERIAL_FINAL",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_SNAPSHOT_CONFIRMED",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REGRESSION_BLOCKED_FRESHNESS_ONLY_PROCESS_LANE",
+    "current_operation": "handoff complete pending Manager/Reviewer disposition",
+    "blocker": null
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["artifactory-ng", "research", "handoff", "canonical-role", "registry-publication", "discovery", "selector", "multi-cycle"]
+}

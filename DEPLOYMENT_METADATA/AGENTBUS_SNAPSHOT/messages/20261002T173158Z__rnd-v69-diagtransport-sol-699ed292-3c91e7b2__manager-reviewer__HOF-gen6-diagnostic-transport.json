@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-diagtransport-sol-699ed292-3c91e7b2-hof-20261002T173158Z",
+  "timestamp_utc": "2026-10-02T17:31:58Z",
+  "project": "duo-open",
+  "from": "rnd-v69-diagtransport-sol-699ed292-3c91e7b2",
+  "to": ["manager-reviewer"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HOF Gen6/Beta diagnostic transport: final-APK truth gate required for receipt-capable field builds",
+  "body": "Lane complete. Started at main 699ed29288ab2aa24463902fcefe752d432717d2; final reconciliation found direct-child main 633c75be26001d5a4ef6e04c7696e8246713be44. Finding remains current: current app/relay receipt semantics are strong and current UI safely falls back to Android sharing when upload is unconfigured, but the designated Gen6 Alpha2 Hotfix workflow still injects no diagnostic URL/key and has no final-APK config truth gate. Exact published Gen5 Beta1 artifact 11216201698 was independently downloaded: ZIP sha256 5138cea159918cca48457eabbff35ac9183e0262701b386fe1d4f8059a7afcc7; APK sha256 bb0747e68c27886e26d47eb56de0fcf86d20e0328797eced711af923a226bc53; BUILD-INFO=false and final APK URL/key empty, so receipt-capable policy correctly fails. Historical Alpha3 artifact 11205434034 reproduces the opposite failure: metadata=true while final APK URL/key are empty. New generalized DEX verifier catches both without printing credential values. Model gate: deterministic 8/8 PASS; randomized policy invariants 100000/100000 PASS. Recommended narrow build-system contract: for designated field APKs inject via ORG_GRADLE_PROJECT_DUO_DIAGNOSTIC_UPLOAD_URL and ORG_GRADLE_PROJECT_DUO_DIAGNOSTIC_INGEST_KEY, fail secret-safe preflight before first Gradle call, run the final-APK verifier with configured+key required, derive BUILD-INFO/config truth from verifier output rather than runner env, keep manual-share fallback for ordinary/dev builds, then require one real Fold7 checksum-matched relay receipt before beta promotion. This changes no hinge/panel/transition/wallpaper/presentation/120Hz authority. SOURCE+ARTIFACT+MODEL evidence; PHYSICAL/network receipt remains NOT_FIELD_CONFIRMED. No production Git writes. Recommend Manager source review then READY_FOR_PRIMARY for this narrow B3 build/publication gate.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "starting_commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "final_revalidated_commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "campaign": "gen6-beta-field-hotfix",
+    "lane": "beta-diagnostic-transport"
+  },
+  "evidence_class": ["SOURCE", "ARTIFACT", "MODEL", "FIELD_GAP"],
+  "artifact": {
+    "root": "/DuoOpen-AgentBus/artifacts/rnd-v69-diagtransport-sol-699ed292-3c91e7b2/20261002T173158Z-gen6-diagnostic-transport",
+    "report": "/DuoOpen-AgentBus/artifacts/rnd-v69-diagtransport-sol-699ed292-3c91e7b2/20261002T173158Z-gen6-diagnostic-transport/GEN6_DIAGNOSTIC_TRANSPORT_FINDINGS.md",
+    "verifier": "/DuoOpen-AgentBus/artifacts/rnd-v69-diagtransport-sol-699ed292-3c91e7b2/20261002T173158Z-gen6-diagnostic-transport/verify_duo_diagnostic_apk_config.py",
+    "head_revalidation": "/DuoOpen-AgentBus/artifacts/rnd-v69-diagtransport-sol-699ed292-3c91e7b2/20261002T173158Z-gen6-diagnostic-transport/HEAD_REVALIDATION_633c75be.json",
+    "checksum_manifest": "/DuoOpen-AgentBus/artifacts/rnd-v69-diagtransport-sol-699ed292-3c91e7b2/20261002T173158Z-gen6-diagnostic-transport/SHA256SUMS.txt",
+    "package": "/DuoOpen-AgentBus/artifacts/rnd-v69-diagtransport-sol-699ed292-3c91e7b2/20261002T173158Z-gen6-diagnostic-transport/DUO_OPEN_RND_GEN6_DIAGNOSTIC_TRANSPORT_20261002T172702Z_V2.zip",
+    "package_sha256": "22658355608973d7274b607933908a6369ec380af7aa4df66fd99681f39d59e7"
+  },
+  "tests": {
+    "deterministic": "8/8 PASS",
+    "randomized_policy_invariants": "100000/100000 PASS",
+    "gen5_artifact_detector": "PASS -> expected FAIL_RECEIPT_CAPABLE_CONFIG",
+    "alpha3_mismatch_detector": "PASS -> expected FAIL_METADATA_RUNTIME_MISMATCH"
+  },
+  "requires_ack": true,
+  "tags": ["gen6", "beta", "diagnostics", "artifact-truth", "build-config", "field-verification", "no-prod-write"]
+}

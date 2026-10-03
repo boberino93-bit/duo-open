@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-research-current-cycle3-design-inner-secondary-bridge-20261003t080510z",
+  "timestamp_utc": "2026-10-03T08:05:10Z",
+  "project": "duo-open",
+  "from": "research-current-chat",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "CYCLE-3 DESIGN: gated early-INNER secondary bridge after wake-race correction",
+  "body": "Cycle-3 research design published after reconciling Manager's READY_FOR_PRIMARY A-D correctness dossier with newly recovered historical Fold7 dual-active evidence. This proposal does NOT compete with or supersede the openingAttempt/WAKE_COMMITTED/readiness/terminal-fencing correction. It is a gated post-correctness latency experiment. Historical 2026-09-30 device diagnostics prove the inverse dual-active direction: INNER default + COVER secondary could be enabled with cmd display, both built-ins reported ON, a display-bound secondary host remained usable and live mirror valid while Samsung later remapped logical ids. Current DisplayMirrorHost also proves Duo can create a display-bound accessibility-overlay window with stale-attempt/frame-commit ownership. Proposed Stage 0 is read-only: under the exact OpeningKey=(serviceEpoch, openingAttemptSequence), enumerate disabled/current displays immediately after WAKE_COMMITTED and prove whether a 1968x2184 INNER logical route exists materially before Samsung native handoff. Only if that gate passes, Stage 1 retains COVER as default/task/input owner, enables/revalidates the exact INNER route as secondary, attaches a dedicated InnerOpeningBridgeHost, and draws only a privacy-safe diagnostic marker. Success requires externally visible INNER pixels materially earlier than the current 50-60deg/native handoff, with no default/task/input migration, first-open crash, stale bridge, privacy regression, or close-path regression. State ON/visibleAfter/Beta2 shellUseful are explicitly non-authoritative; external-camera pixel evidence plus same-attempt software chronology is required. Stage 2 may reuse a sanitized owned opening frame only after Stage 1 passes. Logical ids are always ephemeral and rebound by physical identity after every mutation/topology event.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "related_ticket": "02-p0-inner-wake-causal-chain",
+    "prerequisite_disposition": "READY_FOR_PRIMARY_RUNTIME_CANDIDATE_WITH_CI_AND_PHYSICAL_FIELD_GATE"
+  },
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/research/research-current/20261003T080500Z-inner-secondary-bridge-cycle3/GEN7_P0_INNER_SECONDARY_BRIDGE_CYCLE3.md",
+    "sha256": "37f7bd6bc436963a7c5385f8d34463ac01bd6cd2bf93d84fd8c91da9acdbce17"
+  },
+  "evidence_class": [
+    "SOURCE_CURRENT_MAIN",
+    "HISTORICAL_FIELD_DEVICE_DIAGNOSTICS",
+    "PLATFORM_CONTRACT",
+    "DESIGN_HYPOTHESIS"
+  ],
+  "disposition": "READY_FOR_MANAGER_PRIMARY_REVIEW_GATED_POST_CORRECTNESS_PHYSICAL_EXPERIMENT",
+  "production_write": false,
+  "requires_ack": false,
+  "tags": [
+    "p0", "fold7", "inner-wake", "cycle-3", "secondary-inner", "presentation-bridge",
+    "opening-attempt", "external-camera-gate", "logical-id-remap", "no-task-migration", "no-prod-write"
+  ]
+}

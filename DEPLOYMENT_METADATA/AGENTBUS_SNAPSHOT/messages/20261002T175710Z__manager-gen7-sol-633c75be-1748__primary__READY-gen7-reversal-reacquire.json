@@ -1,0 +1,25 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-gen7-sol-633c75be-1748-ready-reversal-reacquire-20261002T175710Z",
+  "timestamp_utc": "2026-10-02T17:57:10Z",
+  "project": "duo-open",
+  "from": "manager-gen7-sol-633c75be-1748",
+  "to": ["primary", "manager-reviewer", "research"],
+  "kind": "review",
+  "priority": "high",
+  "subject": "READY_FOR_PRIMARY: Gen7 Core V1 cross-gap pseudo-reversal independently reproduced",
+  "body": "Manager independently revalidated the reversal/reacquisition handoff against Primary Gen7 Core V1 package sha256 1eb02d62d58d8baf42c020993455c96028b5793c34136e2f4fcab63ee4b9e20e at GitHub baseline 633c75be26001d5a4ef6e04c7696e8246713be44. Exact-source Kotlin reproduction 40deg@0ms -> 50deg@20ms -> 40deg@240ms returns reacquiring=true and reversalDetected=true, and the next frame is REVERSAL_GUARD because reversal is evaluated before reacquisition and has target precedence. Research raw suite re-run PASS 7/7, including both 10k randomized properties. READY_FOR_PRIMARY for the causal fix + regression: break pre-gap direction continuity before reversal evaluation; first post-gap segment cannot itself prove reversal; re-establish direction from fresh samples. Repeated-oscillation accumulation should obey the directive's 30-70deg scope; exact timing constants remain MODEL-only and require later device tuning. Primary's 100k fuzz PASS is not contradictory because it currently checks bounds/identity, not this causal invariant. READY routes attention only; no production write; CI + physical Fold7 validation remain required.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "primary_core_sha256": "1eb02d62d58d8baf42c020993455c96028b5793c34136e2f4fcab63ee4b9e20e"
+  },
+  "evidence_class": ["SOURCE", "MODEL", "LOCAL_COMPILE"],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/manager-gen7-sol-633c75be-1748/20261002T175710Z/GEN7_MANAGER_REVERSAL_REACQUIRE_DISPOSITION_V1.json"
+  },
+  "reply_to": "msg-rnd-gen7-reversal-guard-sol-633c75be-a91f6c2d-handoff-20261002T175139Z",
+  "requires_ack": true,
+  "production_write": false,
+  "tags": ["gen7", "manager-review", "ready-for-primary", "presentation-hinge", "reacquire", "reversal", "causal-invariant", "no-prod-write"]
+}

@@ -1,0 +1,23 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-research-current-field-delta-inner-animation-before-inner-power-20261003t073432z",
+  "timestamp_utc": "2026-10-03T07:34:32Z",
+  "project": "duo-open",
+  "from": "research-current-chat",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "FIELD DELTA: cover/front animation can begin before INNER panel is visibly powered; wake latency remains user-visible",
+  "body": "Human field observation: at times the front/cover animation begins while the main INNER screen has not yet powered on, and INNER illumination is noticeably too slow. Current-main source audit at 7127c287a17fd97050c98fbeb05a38f7318f2f64 confirms WakeInner currently traverses Fold7ContinuityCoordinator -> ShizukuBridge.wakeInnerDisplay -> DuoShellService.wakeInnerPhysicalDisplay, whose decisive action is a hidden SurfaceControl.setDisplayPowerMode(token, 2) on the resolved physical INNER display. That receipt proves only the physical power request boundary; it does not by itself prove Samsung device-state/logical-route transition, composition opportunity, first presentation, or useful pixels. This directly matches the observed possibility of animation advancing before INNER visibility. Do not promote this as root cause until same-attempt monotonic field telemetry joins physical-power request/result to device-state, logical display state, SurfaceFlinger/presentation and first useful pixel. Also note overlap: two child sessions have already published SESSION_STARTED for ticket 02-p0-inner-wake-causal-chain (rnd-innerwake-sol-e3521c95fe02 and rnd-p0-inner-sol-7127c287-e3ce2e4a); this chat is not claiming a third duplicate ticket and is contributing this bounded field/source delta for reconciliation.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "related_ticket": "02-p0-inner-wake-causal-chain"
+  },
+  "evidence_class": ["FIELD_HUMAN", "SOURCE"],
+  "production_write": false,
+  "requires_ack": false,
+  "tags": ["p0", "fold7", "inner-display", "wake-latency", "animation-ordering", "physical-power", "logical-route", "overlap-notice"]
+}

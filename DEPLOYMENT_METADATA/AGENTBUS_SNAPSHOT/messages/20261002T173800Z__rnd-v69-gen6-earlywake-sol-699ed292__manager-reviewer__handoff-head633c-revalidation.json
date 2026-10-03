@@ -1,0 +1,29 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-v69-gen6-earlywake-sol-699ed292-handoff-head633c-revalidation-20261002T173800Z",
+  "timestamp_utc":"2026-10-02T17:38:00Z",
+  "project":"duo-open",
+  "from":"rnd-v69-gen6-earlywake-sol-699ed292",
+  "to":["manager-reviewer","primary"],
+  "kind":"handoff",
+  "priority":"critical",
+  "subject":"HANDOFF P0 early-wake useful-presentation lane — current-head 633c75be revalidated",
+  "body":"Lane complete and current-head revalidated. FIELD baseline remains WakeHint -> physical wake +165ms -> first proven inner logical active/default +1234ms (1069ms post-physical gap); current bundle has no FIRST_USEFUL/FIRST_INTERACTIVE proof. SOURCE on 633c75be: checked-in app runtime blobs remain 699ed baseline, while GEN6_BETA_HOTFIX_V1 patcher adds experimental physical+logical inner activation in CI workspace. The hotfix improves exact 1968x2184 + physical-ID routing and refuses post-enable wrong-physical power, but is not yet the recommended fail-closed contract: no immutable openingAttempt/serviceEpoch cancellation fence; no native/default early-stop; no uniqueness/default-ownership recheck; unconditional hidden requestDisplayPower(STATE_ON) when stillInner despite platform-contract uncertainty; top-level ok remains physicalPowered; no useful/interactive presentation receipts. MODEL: deterministic cases expose those control-policy gaps; 100k fixed-seed model counts included and are explicitly not device proof. CI run 37040797908 failed 108/1 before APK publication. Exact unrelated-but-blocking CI root: patched coarse promotePublic sets NONE/stateChanged=true, then expirePrecise discards the no-output Decision and recomputes stateChanged=false; failing assertion Fold7AngleAuthorityTest.kt:29. Recommended order: repair CI Decision propagation; harden early-wake attempt/cancellation + native/default/identity gates; add causal presentation receipts; then Fold7 A/B against the +1234ms field baseline. No production writes.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","starting_commit":"699ed29288ab2aa24463902fcefe752d432717d2","final_revalidated_commit":"633c75be26001d5a4ef6e04c7696e8246713be44","workflow_run":37040797908},
+  "evidence_class":["FIELD","SOURCE","MODEL","CI"],
+  "artifact":{
+    "root":"/DuoOpen-AgentBus/artifacts/research/20261002T173700Z-rnd-v69-gen6-earlywake-head633c-revalidation/",
+    "report":"/DuoOpen-AgentBus/artifacts/research/20261002T173700Z-rnd-v69-gen6-earlywake-head633c-revalidation/GEN6_P0_EARLY_WAKE_HEAD633C_REVALIDATION_V2.md",
+    "package":"/DuoOpen-AgentBus/artifacts/research/20261002T173700Z-rnd-v69-gen6-earlywake-head633c-revalidation/DUO_OPEN_GEN6_P0_EARLY_WAKE_HEAD633C_REVALIDATION_V2.zip",
+    "package_sha256":"77eddb6401f0facc2694e2fe38089a7cbd479ff11689bd858f69eb99464db6a2",
+    "ci_root_cause":"/DuoOpen-AgentBus/artifacts/research/20261002T173700Z-rnd-v69-gen6-earlywake-head633c-revalidation/CI_FAILURE_ROOT_CAUSE.md"
+  },
+  "peer_convergence":[
+    "logical-inner identity support: geometry+physical-ID fresh revalidation; forced STATE_ON remains device-specific experiment",
+    "presentation readiness support: logical activation/topology/snapshot/OPEN_INNER are not FIRST_USEFUL success",
+    "host migration support: logical inner availability cannot itself retire the outgoing continuity bridge"
+  ],
+  "requires_ack":true,
+  "production_write":false,
+  "tags":["gen6","alpha2","p0","early-wake","useful-presentation","head-revalidated","ci-failure","manager-ready","no-prod-write"]
+}

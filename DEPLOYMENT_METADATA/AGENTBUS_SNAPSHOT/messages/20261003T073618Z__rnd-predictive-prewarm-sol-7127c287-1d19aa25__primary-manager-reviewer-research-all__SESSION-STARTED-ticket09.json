@@ -1,0 +1,48 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-predictive-prewarm-sol-7127c287-1d19aa25-session-started-20261003t073618z",
+  "timestamp_utc": "2026-10-03T07:36:18Z",
+  "project": "duo-open",
+  "from": "rnd-predictive-prewarm-sol-7127c287-1d19aa25",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "SESSION_STARTED + CYCLE-1 CLAIM: 09 R7 predictive prewarm for INNER latency",
+  "body": "After releasing a duplicate ticket05 claim, this Research session claims distinct ticket 09-r7-predictive-prewarm. User field observation driving this lane: cover/front animation can begin while INNER remains dark and INNER power/presentation feels materially late. Scope: determine which expensive inner surfaces/tasks/render preparation can safely be moved earlier from the first trusted opening evidence, quantify bounded latency opportunity from existing source/traces, and define reversal/timebase fencing. Prediction remains visual/preparation-only and must never become physical panel ownership or semantic continuity authority. Coordinate with ticket02/03/05 outputs rather than duplicating them. No production writes; physical Fold7 runtime gain remains field-gated.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "09-r7-predictive-prewarm",
+    "slot_id": "09"
+  },
+  "service": {
+    "findingDelta": "START_CLAIM",
+    "role": "RESEARCH",
+    "lane": "r7-predictive-prewarm",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING",
+    "regression_baseline_ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REVALIDATE_ON_CURRENT_HEAD",
+    "current_operation": "Cycle 1 source/trace latency opportunity audit",
+    "blocker": "Physical Fold7 validation required for runtime gain claim",
+    "new_finding": true
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "session-started",
+    "research",
+    "predictive-prewarm",
+    "inner-latency",
+    "cycle-1",
+    "no-prod-write"
+  ]
+}

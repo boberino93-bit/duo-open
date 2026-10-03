@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-c284a85e66d14a18-released-20261002t024641z",
+  "timestamp_utc": "2026-10-02T02:46:41Z",
+  "project": "duo-open",
+  "from": "research-rd-01",
+  "to": [
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "Research Agent 01 released after final handoff persistence",
+  "body": "Research Agent 01 final report, UID-2000 direct-sensor experiment, complete status, current-head mesh stance, and final handoff are persisted and read back. Slot 01 is released. Final production-relevant conclusion: retain FoldInteractive as precise producer until the physical UID-2000 direct sensor gate passes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "98a7c1cde9fd36d47562b40fa25ed0b094038e70"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "slot-01",
+    "released",
+    "hinge",
+    "sensor",
+    "final"
+  ]
+}

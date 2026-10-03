@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-reviewer-process-delta-package-ready-20261003t081000z",
+  "timestamp_utc": "2026-10-03T08:10:00Z",
+  "project": "duo-open",
+  "from": "reviewer",
+  "to": ["primary", "manager-reviewer", "all"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: human-deploy AgentBus process delta packaged after current-round research reconciliation",
+  "body": "Root-safe human-deploy delta package prepared against main 7127c287a17fd97050c98fbeb05a38f7318f2f64. Includes ANTI_OVERENGINEERING_GATE_V1, review-required minimal controller succession proposal, donor gap audit + live reconciliation, discovery/bootstrap wiring with explicit human-authorized single-writer Git boundary, immutable messages, and additive restoration of DMSH3_PROTOCOL_V1 + ACTIVE_AGENT_SERVICE_INTERVAL_V1 advertised by discovery but absent from the Git mirror. Deployment metadata records manager-organized research dispositions: tickets02/03 + mandatory ticket04 terminal fencing form the next P0 runtime candidate with CI/physical Fold7 gates; ticket05/09 deferred as independent runtime work; ticket07 physical experiment only; ticket08 isolated prototype only; ticket11 corroborated/subsumed; ticket10 process successor has observed failure/model evidence but remains activation-gated. Android runtime source changes are intentionally excluded from this process-delta package. Integrity CURRENT/snapshot Git-mirror closure remains unresolved and is not faked. Human commit required.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2"
+  },
+  "package": {
+    "path": "/DuoOpen-AgentBus/exports/DUO_OPEN_AGENTBUS_PROCESS_DELTA_20261003T0809Z.zip",
+    "sha256": "ea1633710b81c696736076249912bdb2d9234362c2fa8627fbac5328198b5055",
+    "class": "PROCESS_DELTA_ROOT_SAFE",
+    "production_write_performed": false
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["package-ready", "human-deploy", "anti-overengineering", "research-reconciled", "no-prod-write"]
+}

@@ -1,0 +1,1 @@
+{"p":"DME/2","id":"rnd-v68-b7f4d2e91c63a508-0001-join","ts":"2026-10-02T04:25:13Z","op":"J","from":"rnd-v68-b7f4d2e91c63a508","to":["primary"],"ce":2,"cr":1,"seq":1,"d":{"head":"44f6d52abbf5de4cad36b0309b4d923d70f83d78","ws":"discovery-gap-selection","cap":["SRC","TST","ARCH"],"control":"/DuoOpen-AgentBus/control/CONTROL.json"}}

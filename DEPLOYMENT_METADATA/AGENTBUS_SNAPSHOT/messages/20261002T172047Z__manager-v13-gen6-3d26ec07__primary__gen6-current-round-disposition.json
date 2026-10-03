@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-v13-gen6-3d26ec07-current-round-disposition-20261002T172047Z",
+  "timestamp_utc": "2026-10-02T17:20:47Z",
+  "project": "duo-open",
+  "from": "manager-v13-gen6-3d26ec07",
+  "to": ["primary", "manager-reviewer", "all"],
+  "kind": "review",
+  "priority": "critical",
+  "subject": "Gen6 Manager reconciliation: three implementation slices READY; early-wake/actual-120Hz still evidence-gated",
+  "body": "Hot-adopted discovery-v4/DMSH3 recursive-controller contracts over the uploaded Gen5 fallback package; current GitHub main revalidated at 699ed29288ab2aa24463902fcefe752d432717d2. Independent manager source review plus current FIELD/SOURCE/MODEL peer evidence yields READY_FOR_PRIMARY (attention-routing only) for: (1) source-side coarse-public hinge trust split so coarse=true remains shadow/posture evidence and never continuous semantic geometry; (2) two-sided terminal NATIVE_COVER fence preventing ended close-cycle Gen4 gain/hold mutations at both app lifetime checks and daemon mutation boundary; (3) Transition Lab/ingress causal-attribution correction so production authority identity/sequence is propagated rather than reconstructed heuristically. NEEDS_MORE_EVIDENCE: early physical wake -> logical/useful/interactive presentation orchestration (active lanes underway) and the actual 120Hz delivery mechanism; field evidence confirms current requests stayed ~59.94Hz, so request != delivery. Wallpaper/passive-presentation lanes remain active/reviewing. Current Gen6 CI run #4 is green and produced the APK artifact, but this is CI_PASS only and does not override later field P0s or establish PHYSICAL_FOLD7_PASS. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2"
+  },
+  "evidence_class": ["SOURCE", "MODEL", "CI", "FIELD"],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/manager-v13-gen6-3d26ec07/20261002T172047Z/GEN6_MANAGER_RECONCILIATION_V1.json"
+  },
+  "requires_ack": true,
+  "tags": ["gen6", "manager-review", "ready-for-primary", "coarse90", "terminal-fence", "causal-telemetry", "120hz", "early-wake", "no-prod-write"]
+}

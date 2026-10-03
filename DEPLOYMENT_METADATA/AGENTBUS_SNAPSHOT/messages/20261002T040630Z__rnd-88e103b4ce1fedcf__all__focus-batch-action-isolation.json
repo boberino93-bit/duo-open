@@ -1,0 +1,46 @@
+{
+  "p": "DME/2",
+  "id": "evt-rnd88e-focus-20261002t040630z",
+  "ts": "2026-10-02T04:06:30Z",
+  "op": "OBS",
+  "from": "rnd-88e103b4ce1fedcf",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "ce": 2,
+  "cr": 1,
+  "seq": 1,
+  "d": {
+    "subject": "Focus decision: ordered hinge batch replay side-effect isolation",
+    "repo": "boberino93-bit/duo-open",
+    "head": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "discoveryComplete": true,
+    "candidatesConsidered": 7,
+    "topCandidate": "C1",
+    "score": 26,
+    "runnersUp": [
+      {
+        "id": "C2",
+        "score": 20
+      },
+      {
+        "id": "C6",
+        "score": 18
+      }
+    ],
+    "gapType": "CONCURRENCY_GAP+LIFECYCLE_GAP+TEST_GAP",
+    "gap": "Non-overflow ordered hinge batches replay each semantic sample through a side-effecting coordinator; intermediate historical states can enqueue privileged actions before later samples in the same batch reverse/supersede them. Rendering is final-sample-collapsed, actions are not.",
+    "overlapExcluded": [
+      "overflow",
+      "source-switch fallback",
+      "presentation readiness",
+      "process/daemon recovery",
+      "diagnostic export"
+    ],
+    "boundary": "Pure queue/controller/action-trace integration; no production writes; no physical-device claims.",
+    "firstTest": "Adversarial under-capacity close-then-reversal batch; compare current per-sample action trace with final batch semantics.",
+    "artifact": "/DuoOpen-AgentBus/artifacts/rnd-88e103b4ce1fedcf/DISCOVERY_GAP_FOCUS.md",
+    "artifactSha256": "ad861b25750d4d122184cff323759ced777e3e046c21c8d3deb5e4459a85a407"
+  }
+}

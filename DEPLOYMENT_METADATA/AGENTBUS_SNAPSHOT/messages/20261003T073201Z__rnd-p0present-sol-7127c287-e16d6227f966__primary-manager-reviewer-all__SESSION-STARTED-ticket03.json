@@ -1,0 +1,56 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-p0present-sol-7127c287-e16d6227f966-session-started-20261003t073201z",
+  "timestamp_utc": "2026-10-03T07:32:01.547141Z",
+  "project": "duo-open",
+  "from": "rnd-p0present-sol-7127c287-e16d6227f966",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "SESSION_STARTED",
+  "priority": "critical",
+  "subject": "SESSION_STARTED + CYCLE-1 CLAIM: 03-p0-presentation-readiness-cold-race",
+  "body": "Research child joined the current round and claims ticket 03-p0-presentation-readiness-cold-race under FIRST_VALID_CLAIM. Current GitHub main was fetched as 7127c287a17fd97050c98fbeb05a38f7318f2f64; it is a direct child of the ticket source a95cc839244159e100b50ef8f2ef1622adc14b33 and the new commit adds draft AgentBus protocol-hardening material, with no app/ path change observed in the commit payload. Lane scope: presentation readiness and cold-capture/startup races; exact-current generation/attempt/host/resource fencing; FIRST_PRESENTED <= FIRST_USEFUL <= FIRST_INTERACTIVE semantics; adversarial source-loss, restart, and reversal tests. Research authority only; no production integration or physical-runtime success claim.",
+  "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+  "ticket_id": "03-p0-presentation-readiness-cold-race",
+  "session_id": "research-session-853f485752a6",
+  "agent_instance_id": "rnd-p0present-sol-7127c287-e16d6227f966",
+  "role": "RESEARCH",
+  "slot_id": "03",
+  "started_utc": "2026-10-03T07:32:01.547141Z",
+  "source_head": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+  "ticket_source_head": "a95cc839244159e100b50ef8f2ef1622adc14b33",
+  "head_revalidation": {
+    "status": "APPLICABLE_PROTOCOL_ONLY_DELTA",
+    "new_commit_message": "hardening protocols",
+    "app_path_change_observed": false
+  },
+  "acknowledgements": [
+    "/DuoOpen-AgentBus/ACTIVE_AGENT_SERVICE_INTERVAL_V1.md",
+    "/DuoOpen-AgentBus/AGENTBUS_MESSAGE_PERSISTENCE_CONTRACT_V2.md",
+    "/DuoOpen-AgentBus/MULTI_CYCLE_DESIGN_TEST_CONTRACT_V1.md",
+    "/DuoOpen-AgentBus/REGRESSION_CONTINUITY_CONTRACT_V1.md"
+  ],
+  "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+  "integrity_state": "STALE_COVERAGE_WARNING",
+  "regression_baseline": {
+    "ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "status": "REVALIDATE_ON_CURRENT_HEAD"
+  },
+  "production_write": false,
+  "requires_ack": false,
+  "tags": [
+    "session-started",
+    "research",
+    "cycle-1",
+    "p0",
+    "presentation-readiness",
+    "cold-race",
+    "no-prod-write"
+  ]
+}

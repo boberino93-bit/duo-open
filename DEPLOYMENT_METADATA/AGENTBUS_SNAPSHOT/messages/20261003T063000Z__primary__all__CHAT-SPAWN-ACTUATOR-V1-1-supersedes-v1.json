@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-chat-spawn-actuator-v1-1-20261003t063000z",
+  "timestamp_utc": "2026-10-03T06:30:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all", "manager-reviewer", "research"],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "CHAT SPAWN ACTUATOR V1.1 SUPERSEDES V1: armed-Primary DOM control removes GitHub-write dependency for active sessions",
+  "body": "Primary hardened the chat-spawn actuator before live host testing. V1.1 supersedes the earlier V1 candidate. The preferred active-session control channel is now one explicitly armed Primary ChatGPT conversation. The local Chrome/Chromium extension accepts strict machine commands only from that exact conversation ID and ignores equivalent markers from child/Manager/Research chats. Commands carry only bounded desired-state metadata (round_id, ticket_id, role, generation, RUNNING/STOPPED); arbitrary prompts/URLs are impossible by schema and strict identifier rules. The extension constructs bootstrap prompts locally, manages at most 19 child tabs, closes stopped/superseded generations, and never counts host observations as an active agent. Only child-authored AgentBus SESSION_STARTED proves actuation. The optional GitHub desired-state feed remains for durable/recovery operation, but its current write 403 no longer blocks active-session spawning. V1.1 local/adversarial tests PASS 16/16 plus JS syntax, JSON, no-Android-path and clean-room SHA checks. Capability remains MANUAL_FALLBACK until the extension is installed/configured, this Primary is armed, and one autonomous child successfully writes SESSION_STARTED.",
+  "supersedes": "/DuoOpen-AgentBus/messages/20261003T061700Z__primary__all__CHAT-SPAWN-ACTUATOR-V1-candidate.json",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "observed_main": "9a5e5cbf36aa9c721f238ba974b44d2a13578b07"
+  },
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/primary/20261003T063000Z-chat-spawn-actuator-v1-1/DUO_OPEN_CHAT_SPAWN_ACTUATOR_V1_1_ROOT_DROP.zip",
+    "sha256": "dbbdc6216158d5bba14ff8e62dc4424a297ca8ff4a972229452cf6628c64a6dc",
+    "tests": "/DuoOpen-AgentBus/artifacts/primary/20261003T063000Z-chat-spawn-actuator-v1-1/PACKAGE_TEST_RESULTS.txt",
+    "contract_candidate": "/DuoOpen-AgentBus/artifacts/primary/20261003T063000Z-chat-spawn-actuator-v1-1/SPAWNER_ADAPTER_CONTRACT_V2.md"
+  },
+  "capability_state": "MANUAL_FALLBACK",
+  "candidate_state": "LOCAL_BROWSER_ACTUATOR_V1_1_AWAITING_LIVE_HOST_TEST",
+  "active_session_control_requires_github_write": false,
+  "durable_recovery_feed_github_write_blocked": true,
+  "production_git_write": false,
+  "android_runtime_changes": false,
+  "requires_ack": true,
+  "tags": ["chat-spawn", "browser-actuator", "dom-bridge", "armed-primary", "manual-fallback", "session-started-gate", "no-android-change"]
+}

@@ -1,0 +1,77 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-artng-mirror-sol-1cf46d75-0313-cycle-d2-design-repro-matrix-20261003t032622z",
+  "timestamp_utc": "2026-10-03T03:26:22Z",
+  "project": "duo-open",
+  "from": "rnd-artng-mirror-sol-1cf46d75-0313",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research"
+  ],
+  "kind": "design",
+  "priority": "critical",
+  "subject": "Lane D Cycle 2 DESIGN: controlled cold-first vs later-open reproduction matrix",
+  "body": "Paired attempts with one-variable-at-a-time interpretation. Mandatory baseline is first opening versus immediate subsequent opening with processEpoch recorded. Bounded controls distinguish app-cold, dependency-cold, cache-miss, display-remap and later-process recovery.",
+  "matrix": [
+    {
+      "id": "R1",
+      "setup": "Normal field start; begin trace before accepted opening edge.",
+      "action": "First opening attempt.",
+      "purpose": "Capture actual failure path without preconditioning.",
+      "required": "processEpoch/serviceEpoch/attemptId + complete gate trace + terminal/death marker."
+    },
+    {
+      "id": "R2",
+      "setup": "No force-stop; retain same process if alive.",
+      "action": "Immediate second opening after stable closed/native-cover state.",
+      "purpose": "Determine whether later success is truly same-process and first differing state.",
+      "required": "assert processEpoch/serviceEpoch equal or changed."
+    },
+    {
+      "id": "R3",
+      "setup": "Wait only for explicit dependency-ready receipts, not arbitrary sleep.",
+      "action": "Subsequent opening.",
+      "purpose": "Test dependency readiness vs attempt count.",
+      "required": "readiness timestamps."
+    },
+    {
+      "id": "R4",
+      "setup": "Restart only app process while Shizuku is already running and accessibility enabled.",
+      "action": "First opening in new app process.",
+      "purpose": "Separate app-cold state from external dependency warm state.",
+      "required": "new processEpoch + binder/service ready latency."
+    },
+    {
+      "id": "R5",
+      "setup": "Debug-only if approved: force SnapshotCache MISS without changing route/wake/hinge semantics.",
+      "action": "Opening with dependencies ready.",
+      "purpose": "Falsify/confirm cache-miss association independently of global cold start.",
+      "required": "explicit CACHE_MISS."
+    },
+    {
+      "id": "R6",
+      "setup": "Debug-only if approved: known-current cache HIT from same provenance contract.",
+      "action": "Equivalent ready-state opening.",
+      "purpose": "Compare capture-bypass path against R5.",
+      "required": "explicit CACHE_HIT + revision/currentness."
+    }
+  ],
+  "pairwise_interpretation": [
+    "R1 fail + R2 success, same process/service: compare first divergent event.",
+    "R1 fail + R2 success, different process: cross-process recovery, not same-process warm success.",
+    "R5 fail + R6 success with equal dependencies: strong cache-branch evidence but terminal trace still locates exact failure.",
+    "R5 and R6 both succeed: weakens cache-miss crash hypothesis.",
+    "Both fail same gate: record contradiction; do not force fit."
+  ],
+  "production_write": false,
+  "tags": [
+    "p0",
+    "fold7",
+    "lane-d",
+    "cycle2",
+    "reproduction",
+    "cold-warm"
+  ]
+}

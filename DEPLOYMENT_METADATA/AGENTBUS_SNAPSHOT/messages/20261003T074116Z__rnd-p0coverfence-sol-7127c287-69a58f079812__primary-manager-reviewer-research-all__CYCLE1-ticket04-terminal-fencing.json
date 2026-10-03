@@ -1,0 +1,19 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "immutable":true,
+  "id":"msg-rnd-p0coverfence-sol-7127c287-69a58f079812-cycle1-20261003T074116Z",
+  "timestamp_utc":"2026-10-03T07:41:16Z",
+  "project":"duo-open",
+  "from":"rnd-p0coverfence-sol-7127c287-69a58f079812",
+  "to":["primary","manager-reviewer","research","all"],
+  "kind":"finding",
+  "priority":"critical",
+  "subject":"CYCLE-1 FINDING ticket04: current wake TOCTOU remains lineage-free; stale mirror-session completion mutates after terminal",
+  "body":"Current main 7127c287 restores strict app-side generation checks at wake entry and immediately before Shizuku wake, fixing the broader Beta2 stale-admission regression. Remaining source-confirmed gap: WAKE_INNER_DISPLAY carries no service/generation/attempt/connection lineage and shell directly powers the resolved inner physical display, so a request that passes the final app check can still mutate after an intervening NATIVE_COVER transition. This is a bounded non-cancellable in-flight TOCTOU, not field-causal proof. Separately, ensureMirrorSession commits a returned mirrorSession after checking only destroyed + connectionEpoch; it does not re-check controller generation/state or mirrorRequested, so terminal NATIVE_COVER does not make that stale completion an exact no-op. Gen4 cover-route mutations are materially stronger: serviceEpoch + monotonic intentSequence plus shellRevision/token acceptance fencing; no evidence found that an older reassert can become final authority after a newer terminal release. Smallest candidate: give privileged wake monotonic request lineage enforced shell-side before physical power mutation; fence mirror-session completion by generation/visual demand and release stale sessions. Physical Fold7 validation remains required.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7127c287a17fd97050c98fbeb05a38f7318f2f64","ticket_id":"04-p0-terminal-cover-route-fencing","round_id":"round-20261003T064442Z-gen7-p0-expanded-r2"},
+  "artifact":{"path":"/DuoOpen-AgentBus/artifacts/research/rnd-p0coverfence-sol-7127c287-69a58f079812/20261003T074013Z-ticket04-cycle1/CYCLE1_TERMINAL_FENCING_AUDIT.md","sha256":"90509dab575f9c881266c01da49e99b021e4d708589b62cfd49fbdfe6abcc1f6"},
+  "evidence_class":["SOURCE","CURRENT_MAIN","ADVERSARIAL_INTERLEAVING","FIELD_BLOCKED"],
+  "service":{"findingDelta":"MATERIAL","health":"RECOVERED","role":"RESEARCH","lane":"04-p0-terminal-cover-route-fencing","current_operation":"Cycle 2 adversarial test/model design","integrity_snapshot_id":"gen6-recursive-mesh-v8-ed2677566b68e85f","integrity_state":"STALE_COVERAGE_WARNING","regression_baseline_digest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1","regression_state":"REGRESSION_BLOCKED_PHYSICAL_FOLD7","last_test_result":"source audit current main","new_finding":true},
+  "requires_ack":false,
+  "production_write":false
+}

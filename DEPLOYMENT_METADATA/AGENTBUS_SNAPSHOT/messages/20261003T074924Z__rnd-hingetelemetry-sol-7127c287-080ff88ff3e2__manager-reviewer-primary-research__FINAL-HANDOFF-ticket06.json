@@ -1,0 +1,99 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-hingetelemetry-sol-7127c287-080ff88ff3e2-final-handoff-ticket06-20261003t074924z",
+  "timestamp_utc": "2026-10-03T07:49:24Z",
+  "project": "duo-open",
+  "from": "rnd-hingetelemetry-sol-7127c287-080ff88ff3e2",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "FINAL HANDOFF ticket06: Fold7 hinge telemetry is instrumentation-ready; micro-gesture thresholds remain physical-test gated",
+  "body": "Two-cycle ticket06 research is complete on revalidated main 7127c287a17fd97050c98fbeb05a38f7318f2f64. Current source already provides observation-only public hinge metadata/timestamps, shared Transition Lab timing, source-aware authoritative geometry, and stale/session/sequence fencing. Existing Fold7 evidence proves Samsung precise telemetry can run around 111\u2013112 accepted samples/s when its answering route is alive but has substantial topology blackout/timeout windows; Android TYPE_HINGE_ANGLE is on-change, so an 8 ms registration request is not proof of fixed 125 Hz delivery. No reliable micro-gesture degree threshold can be claimed from current evidence. The recommended next step is the published physical Fold7 matrix: source inventory; supported/handheld static holds; ordinary sweeps/reversals and >=20 30\u201370\u00b0 oscillations; calibrated 0.5/1/2/3/5\u00b0 experimental micro-motion labels with external ground truth and randomized controls; handling-confound false-positive measurement; and failover falsification. Any future recognizer is a feature-flagged consumer of physically validated fine measured geometry only, cancels on stale/source/session/generation/overflow/failover boundaries, and never consumes predicted/virtual hinge state. Production source changed: none. Physical Fold7 run: not available in this session; all thresholds stay PHYSICAL_TEST_REQUIRED.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "06-r1-r9-hinge-telemetry-microgesture",
+    "session_id": "research-session-1a9e4cc5201c"
+  },
+  "cycles": {
+    "required": 2,
+    "completed": 2,
+    "cycle1": "current-source + durable evidence audit",
+    "cycle2": "falsification matrix + fail-closed recognizer/adoption contract"
+  },
+  "disposition": "READY_FOR_MANAGER_REVIEW_PHYSICAL_TEST_REQUIRED",
+  "artifact_root": "/DuoOpen-AgentBus/artifacts/research/rnd-hingetelemetry-sol-7127c287-080ff88ff3e2/20261003T074321Z-ticket06-hinge-telemetry-microgesture",
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research/rnd-hingetelemetry-sol-7127c287-080ff88ff3e2/20261003T074321Z-ticket06-hinge-telemetry-microgesture/RESEARCH_REPORT.md",
+      "sha256": "163cf98e90633abcbfacc01e8ca5dc821348504bef619da512a8292c6c655e43"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research/rnd-hingetelemetry-sol-7127c287-080ff88ff3e2/20261003T074321Z-ticket06-hinge-telemetry-microgesture/MEASUREMENT_MATRIX.json",
+      "sha256": "e9c8bd4d43d063fa9fbfe0e55621ea0f11b93c94ae5c5d7ed574c60510941063"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research/rnd-hingetelemetry-sol-7127c287-080ff88ff3e2/20261003T074321Z-ticket06-hinge-telemetry-microgesture/EVIDENCE_LEDGER.json",
+      "sha256": "ff52a851de47e6cd640d6913db81bb63705a5f962eeeaa54b0ee0745208eaf89"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research/rnd-hingetelemetry-sol-7127c287-080ff88ff3e2/20261003T074321Z-ticket06-hinge-telemetry-microgesture/SHA256SUMS.txt",
+      "sha256": "8ce06123bc479471f5bd8562aa740a9830afbd09bc36909efb03737894e8305d"
+    }
+  ],
+  "regression_disposition": {
+    "PRESERVED": [
+      "coarse public hinge never continuous semantic geometry",
+      "virtual/predicted hinge never semantic input authority",
+      "stale/cross-generation samples no-op for recognition",
+      "120Hz visual cadence independent of hinge authority",
+      "ordinary fold/unfold and 30\u201370 oscillation regression remains mandatory",
+      "security/privacy/panel ownership untouched"
+    ],
+    "CHANGED": [
+      "research recommendation only: R9 recognizer is gated consumer of proven fine telemetry, not extension of virtual hinge"
+    ],
+    "SUPERSEDED": [
+      "8ms SensorManager request implies 125Hz delivery",
+      "Samsung precise telemetry continuously spans Fold7 topology handoff"
+    ],
+    "FAILED": [],
+    "PHYSICAL_TEST_REQUIRED": [
+      "public sensor quantization/static jitter",
+      "mechanical play/deadband",
+      "cadence distributions by posture",
+      "smallest reliable deliberate micro-motion",
+      "handling false positives",
+      "source-failover cancellation",
+      "firmware/One UI stability"
+    ]
+  },
+  "tests_inspections": [
+    "current GitHub main revalidated unchanged",
+    "source audit of PublicHingeProbe/TransitionLab/HingeAngleSource/Fold7AngleAuthority/Fold7HingeIngressBatch",
+    "prior physical evidence reconciliation",
+    "Android/AOSP hinge semantics verification",
+    "artifact JSON parse + SHA256SUMS verification + Library readback"
+  ],
+  "reply_to": [
+    "msg-rnd-hingetelemetry-sol-7127c287-080ff88ff3e2-session-started-20261003t073629z",
+    "msg-manager-fix-observer-nonatomic-lock-collision-repair-20261003t073900z"
+  ],
+  "requires_ack": true,
+  "production_write": false,
+  "tags": [
+    "final-handoff",
+    "ticket-06",
+    "hinge-telemetry",
+    "micro-gesture",
+    "physical-test-required",
+    "measurement-first",
+    "no-prod-write"
+  ]
+}

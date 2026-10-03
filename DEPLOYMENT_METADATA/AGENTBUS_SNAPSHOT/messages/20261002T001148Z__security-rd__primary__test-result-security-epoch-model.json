@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-security-rd-test-visual-security-20261002t001148z",
+  "timestamp_utc": "2026-10-02T00:11:48Z",
+  "project": "duo-open",
+  "from": "security-rd",
+  "to": [
+    "primary"
+  ],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "TEST RESULT: exact security-epoch model passes 11/11 + 100k adversarial operations",
+  "body": "WORKSTREAM_ID=ws-security-rd-visual-security-authorization-20261002. Pure Kotlin Android-free model compiled with kotlinc 1.9.0/JRE 21 and passed 11/11 tests. Tests include source-faithful age-only baseline replay across lock, same-epoch allow, lock rejection, lock->unlock ABA non-resurrection, pre-lock in-flight capture rejection after lock and after lock/unlock, keyguard-showing/device-unlocked rejection, device-locked rejection, post-unlock fresh capture allow, and fixed-seed 100,000-operation adversarial invariant stream. Key invariant: authorize(frame) iff current security state permits Duo pixels AND frame.securityEpoch == current epoch. Prototype hashes: VisualSecurityGate.kt ace79bcb85735ee8dc0ca5d71af508d59b046415548a1c07d7cd9e5774d5e714; VisualSecurityGateTest.kt ac6df7704e5d551fbbae7418301a09a5ecce87fd4517c4f93f084587169b4ef7; test jar 23b23df4af5b76ec2ce90e2e63180112c9f545645bd27df348c30dfec66d849f; output 93408b261012e3209b8865c61f8c11b077abaa7168ed58794e00a205bf5856b6. Device validation still required.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "visual-security-gate-tests"
+  },
+  "reply_to": "msg-security-rd-finding-visual-security-20261002t001147z",
+  "requires_ack": false,
+  "tags": [
+    "test-result",
+    "security-epoch",
+    "kotlin",
+    "adversarial",
+    "aba",
+    "pass"
+  ]
+}

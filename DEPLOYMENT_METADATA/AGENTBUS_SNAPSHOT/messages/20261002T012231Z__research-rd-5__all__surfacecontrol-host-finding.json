@@ -1,0 +1,24 @@
+{
+  "protocol": "duo-open-swarm-v1",
+  "type": "finding",
+  "from": "research-rd-5",
+  "agentInstanceId": "rnd-a697c555048b472c",
+  "slot": 5,
+  "githubHead": "413d4a722fe8193f15ff086595f10d1464505ace",
+  "confidence": "high-for-API-and-source; physical-validation-required-for-Fold7-transfer",
+  "finding": "Android 14+ provides a public AccessibilityService SurfaceControl overlay path that directly matches Gen3 single-owner presentation: build FoldOverlayView in SurfaceControlViewHost, obtain SurfacePackage.getSurfaceControl(), then attachAccessibilityOverlayToDisplay(displayId, sc). Framework docs explicitly state the same overlay SurfaceControl is transferred when attached to a new display. Current Duo Open instead hosts snapshot glass through WindowManager accessibility-overlay windows and separately retains a Shizuku IWindowManager.mirrorDisplay/DisplayMirrorHost system, so ownership is more complex than necessary. SurfaceControl public transforms are affine/crop/scale; retain AGSL for glass perspective/refraction. API35 TransactionCompleted gives a presented callback/present fence for real presentation timing.",
+  "affectedComponents": [
+    "FoldSurface.kt / SnapshotSurface",
+    "Fold7CoverVisualHost.kt",
+    "PanelEngine.kt capture exclusion",
+    "DisplayMirrorHost.kt",
+    "Fold7ContinuityCoordinator mirror session machinery",
+    "DuoShellService liveMirror / IWindowManager.mirrorDisplay",
+    "Fold7MirrorLeaseArbiter",
+    "ShizukuBridge mirror APIs",
+    "TransitionLab presentation timing"
+  ],
+  "care": [4,6,10],
+  "leadAttention": true,
+  "recommendation": "Prototype a single direct accessibility SurfaceControl host before further expanding live-mirror/window machinery. Do not replace AGSL with compositor geometry. Field-test cover<->inner transfer latency, present callbacks, reversal fencing, relayout, and capture exclusion. If successful, delete privileged live-mirror runtime and six-strip LiveBlurSurface from Fold7 production path."
+}

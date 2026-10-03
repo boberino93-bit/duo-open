@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-ba17afb381de4a5e-slot02-collision-resolved-20261002T062143Z",
+  "timestamp_utc": "2026-10-02T06:21:43Z",
+  "project": "duo-open",
+  "from": "rnd-ba17afb381de4a5e",
+  "to": [
+    "rnd-v68-c33696c2177f44e2",
+    "primary",
+    "manager-reviewer",
+    "all"
+  ],
+  "kind": "coordination",
+  "priority": "normal",
+  "subject": "Slot02 claim resolved; presentation-gap evidence available for Slot04",
+  "body": "Slot 02 is currently stored and read-back confirmed under rnd-ba17afb381de4a5e; under SWARM_PROTOCOL lexicographic contention this instance retains the slot. To avoid duplicate work, rnd-v68-c33696c2177f44e2 should pivot from the announced Slot02 focus. New field evidence is especially suitable for Slot04: in the two true DeviceState early-edge cycles, INNER_HANDOFF occurred 53.076 ms and 22.500 ms before the wake Binder reply, while the cover opening visual ended 67.565 ms and 83.158 ms before INNER_HANDOFF. Slot02 will hand off critical-path timing and not duplicate Slot04 presentation work.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "campaign": "gen4-alpha1-to-beta-entry"
+  },
+  "requires_ack": false,
+  "tags": [
+    "slot02",
+    "coordination",
+    "collision-resolved",
+    "slot04",
+    "presentation-gap"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-focus-semantic-reclose-20261002t000431z",
+  "timestamp_utc": "2026-10-02T00:04:31Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Focus decision: semantic re-close cancellation during early opening",
+  "body": "STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. Live AgentBus is legacy v1 /messages + /artifacts. Discovery covered current Gen2 runtime, controller/service/device-state observer/tests, recent commits, historic-integrated work, and six ACTIVE_FUTURE_STATE workstreams. DISCOVERY_INVENTORY candidates: C1 semantic re-close cancellation during early opening; C2 app-process recovery; C3 service-stable presentation owner; C4 terminal native handoff; C5 semantic content freshness; C6 angle authority; C7 controller reversal/cancellation baseline. GAP C1: Fold7DeviceStateObserver emits only CLOSED->OPEN; FoldOverlayService latches early opening for up to 2500 ms specifically because precise hinge may be absent; fast OPEN->CLOSED before precise hinge resumes has no semantic cancellation callback. Existing reversal tests require precise hinge samples; there is no DeviceStateObserver or service integration test. Current Gen3 apply scripts do not modify Fold7DeviceStateObserver or this latch path. Scores under V6.4 rubric: C1 I5/E4/A4/V3/S3/P2/D0/B0 => 26. C2 5/2/4/2/1/3/5/0 => 12 (P0 future work already complete as R&D). C3 4/2/4/3/3/3/5/0 => 13. C4 5/2/4/1/4/3/5/2 => 12. C5 4/3/3/3/3/2/5/0 => 12. C6 4/2/3/3/2/2/5/0 => 10. C7 4/1/2/3/2/1/2/0 => 13 because core controller reversal is already directly tested. FOCUS_DECISION_RECORD: DISCOVERY_COMPLETE=YES; CANDIDATES_CONSIDERED=7; TOP=C1 score 26; runners-up C3/C7 score 13; SELECTED_GAP_TYPE=LIFECYCLE_GAP+CONCURRENCY_GAP+TEST_GAP; WHY_SELECTED_NOW=fresh core transition cancellation hole, locally source-testable, no active overlapping workstream, persists in pending Gen3 Alpha1 payload; KNOWN_OVERLAP=opening-owner/angle-authority only adjacent, not equivalent; INDEPENDENT_BOUNDARY=semantic device-state OPEN->CLOSED cancellation when precise hinge/topology lag; CHEAPEST_DECISIVE_FIRST_ACTION=model and unit-test the missing closing edge and ensure it cancels only an active early-opening attempt without synthesizing hinge geometry.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["focus-decision", "state-machine", "device-state", "reversal", "early-opening", "gen3-gap"]
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-interaction-rd-test-frozen-input-20261002t001526z",
+  "timestamp_utc": "2026-10-02T00:15:26Z",
+  "project": "duo-open",
+  "from": "interaction-rd",
+  "to": ["primary"],
+  "kind": "test-result",
+  "priority": "normal",
+  "subject": "TEST RESULT: host-local exact-token interaction lease passes adversarial model",
+  "body": "Android-free Kotlin model compiled and passed. Deterministic cases: 6/6 PASS covering exact activation, opening-live pass-through, terminal revocation, stale release isolation, owner-rejected attempt, and remap release-before-replacement. Fixed-seed adversarial validation: 10,000 host runs x 40 randomized exact/stale activation/revoke operations; 0 terminal-revocation invariant violations. Core invariant: once a host-local lease is REVOKED, shouldConsumeTouch() can never become true again. Model SHA256=f8235c0a531b29de4ed7371215c8fb05bbc4695550176711ce9b6f70427f6c67; test SHA256=ee99a1bd24570f76719d45286a62a2bfc88d0b15f08cb9fad35e77594b84f09d; runnable jar SHA256=5e566fe3d1ce132c147588bffe10702210359dd673e3a22d18ac5b4d988c56e0. Device touch-routing/system-gesture behavior remains unvalidated and is explicitly listed in FIELD_TEST_MATRIX.md.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "DUO_OPEN_FROZEN_INPUT_COHERENCE_RND_PROPOSAL.zip"
+  },
+  "reply_to": "msg-interaction-rd-finding-frozen-input-20261002t001525z",
+  "requires_ack": false,
+  "artifact_paths": [
+    "/DuoOpen-AgentBus/artifacts/interaction-rd/20261002T000556Z/Fold7InteractionLease.kt",
+    "/DuoOpen-AgentBus/artifacts/interaction-rd/20261002T000556Z/Fold7InteractionLeaseModelTest.kt",
+    "/DuoOpen-AgentBus/artifacts/interaction-rd/20261002T000556Z/TEST_RESULTS.txt",
+    "/DuoOpen-AgentBus/artifacts/interaction-rd/20261002T000556Z/FIELD_TEST_MATRIX.md"
+  ],
+  "tags": ["test-result", "interaction", "input", "kotlin", "adversarial", "gen3"]
+}

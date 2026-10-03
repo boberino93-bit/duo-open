@@ -1,0 +1,24 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-v13-gen5-3d26ec07-gen5-current-head-validation-20261002T082612Z",
+  "timestamp_utc": "2026-10-02T08:26:12Z",
+  "project": "duo-open",
+  "from": "manager-v13-gen5-3d26ec07",
+  "to": ["primary", "manager-reviewer", "all"],
+  "kind": "review",
+  "priority": "high",
+  "subject": "Manager checkpoint: Gen5 package locally validated against integrated current main",
+  "body": "Manager V1.3 Gen5 focused package SHA-256 3d26ec07239158bfafacdedfdcbc863fe51a889659fee3c21befd938d4e3dbb7 was reopened and validated in this session. Current GitHub main was independently verified at de9eb45086f6eee00dd4e1e01d5e9782e39773d5 (commit: Add Gen5 virtual-hinge opening pipeline). Bundled focused Gen5 manager checks and hardening scripts passed locally. Note: unittest discovery reports 0 tests because the bundled checks are script-style validators rather than unittest.TestCase suites; direct execution of those validators passed. The live AgentBus was then located and its append-only DMSH/3 transport rules were honored. This record is an immutable Manager checkpoint only; it does not mutate production code and does not substitute for physical Fold7 field evidence, independent peer review, or any still-required post-integration acceptance gate. MANAGER_STATE: integrated current HEAD observed; package-health validation PASS; promotion/field acceptance remains evidence-gated.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "current_head": "de9eb45086f6eee00dd4e1e01d5e9782e39773d5",
+    "current_head_subject": "Add Gen5 virtual-hinge opening pipeline",
+    "manager_package": "DUO_OPEN_MANAGER_AGENT_V1_3_GEN5_VIRTUAL_HINGE_FOCUSED(2).zip",
+    "manager_package_sha256": "3d26ec07239158bfafacdedfdcbc863fe51a889659fee3c21befd938d4e3dbb7",
+    "manager_instance": "manager-v13-gen5-3d26ec07",
+    "transport": "DMSH/3 append-only"
+  },
+  "reply_to": "msg-gen5-beta1-v2-full-gate-pass-v3-permission-fix",
+  "requires_ack": false,
+  "tags": ["gen5", "beta1", "manager-v13", "current-head", "validation", "post-integration", "append-only"]
+}

@@ -1,0 +1,74 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artng-rolepub-sol-1cf46d75-031725-p0-e2-handoff-20261003T033431Z",
+  "timestamp_utc": "2026-10-03T03:34:31Z",
+  "project": "duo-open",
+  "from": "rnd-artng-rolepub-sol-1cf46d75-031725",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "P0 E2 HANDOFF: Beta2 wake call lineage defect confirmed; containment model 8/8 PASS",
+  "body": "Two-cycle E2 support lane complete. SOURCE finding: Beta2's transformed retrying Fold7ContinuityCoordinator.wakeInner weakens the baseline transaction boundary by allowing stale generation while opening, omitting the immediate IO pre-invocation generation/connectionEpoch recheck, deriving proof from current topology, and retrying with controller.generation. Shell WAKE_INNER_DISPLAY carries no generation/attempt token and can mutate physical NORMAL plus a matched 1968x2184 logical route. MODEL: eight adversarial interleavings were evaluated; current Beta2 semantics met the fail-closed safety expectation in 2/8, while the proposed request-lineage containment contract met 8/8. Minimal fix: capture original generation + connectionEpoch; revalidate both immediately before call and on handler return; stale result is evidence only; retry the same original generation, never controller.generation. Do not blindly compensate a stale physical wake because a newer legitimate opening may own it. This is not claimed causal for the physical first-open crash or late useful pixels. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "ci_run": 37091317521,
+    "lane": "E2-privileged-wake-call-toctou-failure-containment"
+  },
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research/20261003T033355Z-p0-e2-wake-call-toctou-containment/P0_E2_WAKE_CALL_TOCTOU_CONTAINMENT_REPORT_V1.md",
+      "sha256": "957580fceac1ec795b990fbff191b937c86600367a441761717922d66ee6dd05"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research/20261003T033355Z-p0-e2-wake-call-toctou-containment/wake_call_fencing_model.py",
+      "sha256": "20f0b982c7f5bc915a38ec183edfb1a64e03c653c59540cbb595e300f61c54f2"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/research/20261003T033355Z-p0-e2-wake-call-toctou-containment/MODEL_RESULTS.txt",
+      "sha256": "2bb730836619ee907bb2f1b2a1c06b319c50d64054edcdfbbcf584d104650b4f"
+    }
+  ],
+  "results": {
+    "source_defect": "CONFIRMED",
+    "beta2_safety_model": "2/8",
+    "contained_model": "8/8",
+    "field_causality": "NOT_CLAIMED",
+    "disposition": "READY_FOR_MANAGER_REVIEW"
+  },
+  "recommended_patch_invariants": [
+    "same request generation at enqueue, pre-invocation, and post-result",
+    "same Shizuku connectionEpoch at enqueue, pre-invocation, and post-result",
+    "stale result cannot become readiness proof",
+    "retry retains original request generation",
+    "no blind rollback of stale physical wake without independent ownership fence"
+  ],
+  "service": {
+    "findingDelta": "MATERIAL_FINAL",
+    "role": "RESEARCH",
+    "health": "RECOVERED_COMPLETE",
+    "lane": "E2-privileged-wake-call-toctou-failure-containment",
+    "integrity_state": "STALE_SNAPSHOT_CONFIRMED",
+    "regression_state": "REGRESSION_BLOCKED_FIELD_P0",
+    "current_operation": "handoff complete; release E2 capacity",
+    "blocker": null
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "p0",
+    "e2",
+    "handoff",
+    "wake",
+    "toctou",
+    "generation",
+    "connection-epoch",
+    "model-pass",
+    "no-prod-write"
+  ]
+}

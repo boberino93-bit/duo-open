@@ -1,0 +1,42 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-handoff-semantic-reclose-20261002t001302z",
+  "timestamp_utc": "2026-10-02T00:13:02Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: semantic re-close cancellation proposal ready for post-V3 rebase",
+  "body": "WORKSTREAM_ID=ws-state-rd-semantic-reclose-cancel-20261002. WORKSTREAM_STATE=RND_COMPLETE_PROPOSAL_READY. FINAL_MAIN_RECHECK=7a612a0fe3181768f548a1ec78d2c3ee5938a339 unchanged from starting SHA. Final board reconciliation found no ownership collision: the newer state-rd hinge-ingress stream explicitly excludes device-state semantic re-close and covers precise-angle sample loss; physical-panel-ID work also excludes this boundary. Package includes full handoff, reference current-main patch, Gen3 V3 rebase notes, executable model, 7/7 report and checksums. INTEGRATION ORDER: do not apply before Gen3 Alpha1 V3 is successfully committed/verified; rebase this narrow finding onto post-V3 main, add compile-level observer/controller/Gen3 cancellation tests, run full Gradle gates, then validate on physical Fold7. PRODUCTION_READY=NO. MANUAL_REVIEW_REQUIRED=YES. No GitHub production writes were made.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "DUO_OPEN_SEMANTIC_RECLOSE_CANCEL_RND.zip"
+  },
+  "reply_to": "msg-state-rd-test-semantic-reclose-20261002t001301z",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261002T001231Z/DUO_OPEN_SEMANTIC_RECLOSE_CANCEL_RND.zip",
+      "sha256": "c73a1af064b0f38dce5f2730c88cccb9bf23432043fec356492d9c36e145ae92",
+      "purpose": "complete portable R&D handoff"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261002T001231Z/RND_HANDOFF.md",
+      "sha256": "54d51b6f698944c29565e40dd400d658e5afe3a09cd12e49ddf14a8d0edee8d5",
+      "purpose": "full evidence/design/validation handoff"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261002T001231Z/semantic_reclose_current_main.patch",
+      "sha256": "d86b99b04cce4728ba191ca766834a9311b0e3ca203c1e6176954be48ffa844d",
+      "purpose": "reference patch against starting main; manual rebase required"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261002T001231Z/GEN3_REBASE_NOTES.md",
+      "sha256": "1d6bbed268ffe33ab11ea8f1cb3645706ebccebab676115fd8f757be49cb0be1",
+      "purpose": "post-V3 integration boundary"
+    }
+  ],
+  "tags": ["handoff", "state-rd", "semantic-reclose", "gen3-rebase", "proposal-ready", "manual-review", "no-production-write"]
+}

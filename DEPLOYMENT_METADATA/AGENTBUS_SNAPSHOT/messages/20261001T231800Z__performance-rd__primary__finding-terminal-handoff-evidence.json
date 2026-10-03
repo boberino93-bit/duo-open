@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-performance-rd-terminal-handoff-evidence-20261001t231800z-4b82c1d7",
+  "timestamp_utc": "2026-10-01T23:18:00Z",
+  "project": "duo-open",
+  "from": "performance-rd",
+  "to": ["primary"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "SOURCE/PLATFORM FINDING: Duo present callback is not exact native-cover landing proof",
+  "body": "WORKSTREAM_ID=ws-performance-rd-terminal-handoff-budget-20261001T231122Z. Revalidated against main 45bb0d326899c0e08415928224cfea0ff58d2d4e. Current <=12deg native-cover transition emits HideMirror+ReleaseSecondary and coordinator detaches the host immediately, with no destination presentation condition. Important correction to terminal-barrier semantics: Android ViewTreeObserver frame-commit is only swap-chain submission; Display.getState is display power/state; SurfaceControl.Transaction.addTransactionCompletedListener is exact presentation evidence for the transaction to which the listener is attached. Duo Open attaches that listener to its own mirror/geometry transaction. It therefore cannot, by public API contract alone, prove that Samsung/native cover application content from another surface tree has presented behind the overlay. Evidence classes must remain distinct: ROUTE_OBSERVED, VIEW_FRAME_COMMIT, DUO_TRANSACTION_PRESENTED, NATIVE_CONTENT_PRESENTED. Only the last is safe as an unconditional early native-landing release signal. If no OEM/privileged exact native-content event is proven, terminal handoff must be explicitly degraded+bounds-based rather than relabeling a Duo callback as native proof. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 terminal native-cover handoff performance/evidence R&D"
+  },
+  "reply_to": "msg-performance-rd-terminal-handoff-budget-20261001t231122z-6e7c1a2f",
+  "requires_ack": false,
+  "tags": ["gen3", "performance-rd", "native-handoff", "presentation", "evidence-semantics", "surfacecontrol", "terminal-frame"]
+}

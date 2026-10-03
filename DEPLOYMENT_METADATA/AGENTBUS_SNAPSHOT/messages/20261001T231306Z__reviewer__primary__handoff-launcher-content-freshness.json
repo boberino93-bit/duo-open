@@ -1,0 +1,42 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-reviewer-launcher-content-freshness-handoff-20261001t231306z-b69de87c",
+  "timestamp_utc": "2026-10-01T23:13:06Z",
+  "project": "duo-open",
+  "from": "reviewer",
+  "to": ["primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: semantic content freshness + launcher/native continuity arbitration",
+  "body": "WORKSTREAM_ID=reviewer-launcher-content-continuity-gen2-20261001. WORKSTREAM_STATE=COMPLETE. STARTING_MAIN_SHA=FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e; production main did not move. Reconciled live with Gen3 alpha1 checkpoint: primary already owns stable capture admission/newest-STARTED fencing, exact visual ownership, Shizuku authority revocation, and opening live-content attach. This handoff is additive: exact-cycle provenance still lacks SEMANTIC CONTENT FRESHNESS. Strongest source evidence: FrameStore eligibility is cycle+dimensions+age; coordinator allows frozen frames up to 10s; DisplayMirrorHost chooses eligible frozen content before live mirror; accessibility callback currently does not invalidate content context. Proposed integration: stable ContentContextTracker monotonic revision; capturePurpose PRIME versus VISUAL_REFRESH; current visual frozen eligibility requires current cycle + newest-started sequence + current contextRevision + field-measured freshness policy; semantic dirtiness/newer refresh makes older frozen pixels ineligible immediately; use live SurfaceControl mirror while refresh is unresolved; reject refresh completion if context changed; never revive a known-dirty same-cycle frame after refresh failure. Preserve existing thresholds and all adjacent owner models. Launcher contract: do not automate One UI Home or move the real task; Samsung's documented Z Fold7 Cover screen mirroring is the native layout-sync mechanism and should be validated ON/OFF during field testing. Model passed 15/15 + deterministic 100k events, including correction of an initially missed newest-started fence. V2 artifact supersedes the earlier pre-alpha1-reconciliation handoff/package in the same artifact folder. Device validation and manual primary integration review required; no production GitHub writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 semantic content freshness / launcher continuity V2"
+  },
+  "reply_to": "msg-reviewer-content-freshness-model-20261001t231305z-25ce3418",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T231200Z/DUO_OPEN_LAUNCHER_CONTENT_CONTINUITY_GEN2_RND_HANDOFF_V2.txt",
+      "sha256": "664267d8ff049590901cae1c43cc7e5dbbe8244d2359179cea84155e469abdc9",
+      "purpose": "authoritative reconciled source reconstruction, evidence ledger, design and integration handoff"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T231200Z/DUO_OPEN_LAUNCHER_CONTENT_CONTINUITY_GEN2_PROPOSAL_V2.zip",
+      "sha256": "46fd095bfe84207ea4d34cd5822ecf2e14d24e3320a598b3e0ee90dba7b0f927",
+      "purpose": "proposal bundle with V2 handoff, model, results and checksum manifest"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T231200Z/duoopen_content_freshness_model.py",
+      "sha256": "8adc861f794a22376a130c2dc6019505bdee21bf63a0b9204ce3fab11082bb21",
+      "purpose": "pure source-arbitration model"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/reviewer/20261001T231200Z/duoopen_content_freshness_model_results.txt",
+      "sha256": "297d5ba27b6861deaec6662a8e89a4e0f17ec1aabea030f83057f55a2af0b5c3",
+      "purpose": "execution evidence"
+    }
+  ],
+  "tags": ["gen3", "reviewer", "handoff", "content-freshness", "launcher", "source-arbitration", "visual-refresh", "requires-device-validation"]
+}

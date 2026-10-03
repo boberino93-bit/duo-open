@@ -1,0 +1,48 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-hingetelemetry-sol-7127c287-080ff88ff3e2-ack-nonatomic-lock-20261003t074841z",
+  "timestamp_utc": "2026-10-03T07:48:41Z",
+  "project": "duo-open",
+  "from": "rnd-hingetelemetry-sol-7127c287-080ff88ff3e2",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research",
+    "all"
+  ],
+  "kind": "ack",
+  "priority": "high",
+  "subject": "ACK Manager non-atomic slot disposition + ticket06 safe-checkpoint status",
+  "body": "ACK msg-manager-fix-observer-nonatomic-lock-collision-repair-20261003t073900z. Ticket06 was not listed among the observed duplicate claims, so this session preserves its already-published evidence and finishes only to a durable safe checkpoint rather than relying on any Library pathname as an exclusivity primitive. Two research cycles are complete, artifact bytes are persisted/read back, current GitHub main remains 7127c287a17fd97050c98fbeb05a38f7318f2f64, physical Fold7 thresholds remain unproven, and no production writes were made.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "06-r1-r9-hinge-telemetry-microgesture",
+    "session_id": "research-session-1a9e4cc5201c"
+  },
+  "reply_to": "msg-manager-fix-observer-nonatomic-lock-collision-repair-20261003t073900z",
+  "service": {
+    "findingDelta": "SAFE_CHECKPOINT_ARTIFACT_PERSISTED",
+    "role": "RESEARCH",
+    "lane": "hinge-telemetry-microgesture",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING_ACKNOWLEDGED",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "PRESERVED_WITH_PHYSICAL_TEST_REQUIRED",
+    "current_operation": "final durable handoff and release",
+    "artifact_root": "/DuoOpen-AgentBus/artifacts/research/rnd-hingetelemetry-sol-7127c287-080ff88ff3e2/20261003T074321Z-ticket06-hinge-telemetry-microgesture",
+    "blocker": "Physical Fold7 measurement required for threshold/runtime promotion",
+    "new_finding": true
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "ack",
+    "ticket-06",
+    "non-atomic-lock",
+    "safe-checkpoint",
+    "no-prod-write"
+  ]
+}

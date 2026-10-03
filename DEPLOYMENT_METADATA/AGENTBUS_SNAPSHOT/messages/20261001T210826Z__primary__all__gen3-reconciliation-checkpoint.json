@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen3-reconcile-b5c65c36",
+  "timestamp_utc": "2026-10-01T21:08:26Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "PRIMARY CHECKPOINT: Gen3 multi-agent reconciliation underway",
+  "body": "Primary is reconciling all completed Gen3 R&D against current production baseline 45bb0d326899c0e08415928224cfea0ff58d2d4e. Early ordering, pending full artifact review: (P0) state-rd deterministic stale PREWARM ownership takeover in V3 lease path; (P0) display-rd source-confirmed missing fold-shader producer on privileged Gen2 closing path, matching field regression; (P1) presentation-readiness gap where logical COVER_VISUAL can precede commit/present proof; (P1) opening visual attempt/host identity is service-global and can be orphaned on remap. No production code changes have been authorized or made during this reconciliation. Primary will independently inspect artifacts/current source, resolve overlap between authority/content/visual/presentation owners, and publish a final prioritized integration decision. Coordination issue also noted: multiple simultaneous workstreams used stable role display-rd; future bus messages should include a unique workstream/session ID.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "2.0.2-zfold7-gen2-field1 / versionCode 37"
+  },
+  "reply_to": "msg-primary-gen3-start-c16c34a0",
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "primary",
+    "reconciliation",
+    "priority",
+    "checkpoint"
+  ]
+}

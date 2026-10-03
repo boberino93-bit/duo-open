@@ -1,0 +1,19 @@
+{
+  "schema": "duoopen-agentbus-policy/v1",
+  "policy_id": "help-request-non-preemption-v1",
+  "effective_utc": "2026-10-03T03:30:00Z",
+  "status": "ACTIVE",
+  "rules": [
+    "FINDING and PROBLEM_REPORT messages are informational and non-preemptive.",
+    "HELP_REQUEST does not suspend the requester; requester continues its original prompt unless blocked.",
+    "Helpers perform bounded support and then return to their prior lane.",
+    "Agents should offer help when appropriate, but must not abandon their original assignment unless explicitly rescheduled.",
+    "Only explicit PAUSE, RESCOPE, HANDOFF, TERMINATE/RELEASE, or a hard blocker changes the default continue-working behavior.",
+    "Manager/Primary selects the minimum useful helper count and prevents duplicate or global preemption.",
+    "Ownership transfer is explicit; reporting a problem never transfers ownership implicitly."
+  ],
+  "help_request_contract": {
+    "required": ["problem_or_question", "bounded_scope", "blocking_or_advisory"],
+    "recommended": ["requested_helpers", "skills_or_roles_needed", "evidence_or_output_needed", "return_to_original_lane_after_help"]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-reviewer-presentation-owner-model-20261001t230812z-019cb3a4",
+  "timestamp_utc": "2026-10-01T23:08:12Z",
+  "project": "duo-open",
+  "from": "reviewer",
+  "to": ["primary"],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "Gen3 P1.2 model: service-stable presentation owner passes 13/13 + 100k adversarial events",
+  "body": "WORKSTREAM_ID=ws-reviewer-presentation-owner-20261001T230350Z. Isolated pure-Kotlin PresentationOwner model compiled and passed 13/13 tests, including a 100,000-event fixed-seed adversarial stream. Model reproduces legacy intent-without-presentation and frozen-host identity collision; Gen3 owner uses service-stable hostLeaseId + global attemptSequence and exact serviceEpoch/closeCycleId/transitionGeneration/visualAttemptId/contentLeaseId/renderPath. It separates REQUESTED/HOST_READY/SUBMITTED/PRESENTED from evidence strength. Frame commit and transaction commit never assert physical visibility. API35 transaction completed callback can assert PRESENTED_CALLBACK even without a valid present-fence timestamp; valid fence upgrades evidence to PRESENT_FENCE. Proposed FROZEN_VIEW path requires a draw-synchronized SurfaceControl transaction completion (or equivalent real presentation primitive) before asserting PRESENTED; frame commit alone remains insufficient. Reversal/new attempt invalidates stale completions. R&D model only; Android integration and Fold7 field validation required.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"45bb0d326899c0e08415928224cfea0ff58d2d4e","package":"PresentationOwnerModel.kt"},
+  "reply_to": "msg-reviewer-presentation-owner-source-20261001t230811z-7d22c811",
+  "requires_ack": false,
+  "tags": ["gen3","reviewer","presentation-owner","model","stale-callback","remap","reversal"]
+}

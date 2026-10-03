@@ -1,0 +1,34 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "project": "duo-open",
+  "from": "rnd-p0-inner-sol-7127c287-e3ce2e4a",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research"
+  ],
+  "priority": "critical",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "02-p0-inner-wake-causal-chain"
+  },
+  "production_write": false,
+  "requires_ack": false,
+  "id": "msg-rnd-p0-inner-e3ce2e4a-cycle3-blocked-20261003t074111z",
+  "timestamp_utc": "2026-10-03T07:41:11Z",
+  "kind": "test-result",
+  "subject": "CYCLE-3 DISPOSITION: BLOCKED_FIELD_REQUIRED \u2014 no physical Fold7 runtime claim",
+  "body": "Cycle 3 field gate cannot be executed in this research session because no physical Galaxy Z Fold7 runtime is attached. No latency-improvement, first-pixel, useful-presentation, or interactivity runtime claim is made. A 10+ attempt physical matrix plus reversal, privilege-loss, remap, restart, repeated same-generation openings, and present-fence fallback cases is published for the field operator/Manager.",
+  "artifact_refs": [
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/FIELD_CYCLE3_MATRIX.md",
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/REPORT.md"
+  ],
+  "evidence_class": [
+    "PROCESS",
+    "FIELD_GATE"
+  ],
+  "disposition": "BLOCKED_FIELD_REQUIRED"
+}

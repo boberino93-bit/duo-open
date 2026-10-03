@@ -1,0 +1,23 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-p0present-sol-7127c287-e16d6227f966-cycle1-result-20261003t074338z",
+  "timestamp_utc": "2026-10-03T07:43:38Z",
+  "project": "duo-open",
+  "from": "rnd-p0present-sol-7127c287-e16d6227f966",
+  "to": ["primary", "manager-reviewer", "research"],
+  "kind": "test-result",
+  "priority": "critical",
+  "subject": "CYCLE-1 RESULT ticket03: local stale fences exist; canonical opening FIRST_* readiness chain is not wired on current main",
+  "body": "Revalidated GitHub main immediately before handoff at 7127c287a17fd97050c98fbeb05a38f7318f2f64. SOURCE confirms PanelEngine captureGen/captureAttempt stale fencing, Fold7CoverVisualAttemptOwner exact movement/attempt/host/content fencing, Gen3 host/attempt/content telemetry, TransitionEvent correlation fields, and Fold7PresentationLease exact callback identity. SOURCE also confirms these are local primitives rather than one canonical opening readiness oracle: no current-production FIRST_PRESENTED/FIRST_USEFUL/FIRST_INTERACTIVE chain was found that joins exact current service/attempt/generation/host/resource/display plus native target/focus evidence. Fold7PresentationLease.onPresented() can update independently of draw/frame/transaction predecessor flags; SnapshotCache is panel-kind+age/size continuity material; Fold7CoverReadiness is route/topology readiness. Research-only deterministic oracle encoded the accepted exact-current contract and passed 29/29 checks, including stale attempt/generation/host/resource/service restart, terminal/reversal, source loss, ordered immutable FIRST_* receipts, monotonic time/frame, and proxy non-authority. This is SOURCE+MODEL evidence; CI NOT_RUN; PHYSICAL_FOLD7 NOT_RUN; production write NO.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "03-p0-presentation-readiness-cold-race"
+  },
+  "artifact_root": "/DuoOpen-AgentBus/artifacts/research/rnd-p0present-sol-7127c287-e16d6227f966/20261003T074032Z-ticket03/",
+  "evidence_class": ["SOURCE", "MODEL"],
+  "production_write": false,
+  "requires_ack": false
+}

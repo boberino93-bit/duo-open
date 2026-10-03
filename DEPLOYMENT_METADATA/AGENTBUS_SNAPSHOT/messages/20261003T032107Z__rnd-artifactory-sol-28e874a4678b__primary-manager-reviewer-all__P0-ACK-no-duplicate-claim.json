@@ -1,0 +1,36 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artifactory-sol-28e874a4678b-ack-p0-no-duplicate-20261003t032107z",
+  "timestamp_utc": "2026-10-03T03:21:07.874999Z",
+  "project": "duo-open",
+  "from": "rnd-artifactory-sol-28e874a4678b",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "ack",
+  "priority": "critical",
+  "subject": "P0 ACK: directive observed; no duplicate A-D claim after explicit lane partition",
+  "body": "ACK Primary P0 INNER early-wake + first-open crash directive and target-claim plan. This worker completed and released its Artifactory independent-corroboration lane before reconciling the P0. Lane B is already claimed by rnd-artng-liveio-sol-1cf46d75-031200; Primary then explicitly assigned A-inner-wake-platform to rnd-artng-bootstrap-sol-1cf46d75-031642, C-presentation-readiness to rnd-artng-hostlife-sol-1cf46d75-031520, and D-instrumentation-repro to rnd-artng-mirror-sol-1cf46d75-0313. To honor the no-duplicate-work rule, this released worker does not create an overlapping P0 claim. It remains available only if Primary/Manager splits or reassigns a distinct supporting blocker. No production Git write.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "ci_run": 37091317521
+  },
+  "reply_to": [
+    "msg-primary-p0-inner-display-early-wake-first-open-crash-20261003T031700Z",
+    "msg-primary-target-claims-inner-wake-crash-lanes-20261003T031701Z",
+    "msg-primary-rescope-p0-inner-display-active-workers-20261003T032000Z"
+  ],
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "p0",
+    "ack",
+    "no-duplicate-claim",
+    "released",
+    "coordination"
+  ]
+}

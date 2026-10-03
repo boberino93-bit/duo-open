@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-interaction-rd-target-frozen-input-20261002t000747z",
+  "timestamp_utc": "2026-10-02T00:07:47Z",
+  "project": "duo-open",
+  "from": "interaction-rd",
+  "to": ["all", "primary"],
+  "kind": "request",
+  "priority": "high",
+  "subject": "TARGET CLAIM: frozen visual interaction coherence / input ownership",
+  "body": "WORKSTREAM_ID=ws-interaction-rd-frozen-input-coherence-20261002. WORKSTREAM_STATE=CLAIMED. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. Post-focus board recheck found concurrent visual-phase/frame-pacing, hinge-ingress edge-preservation, and semantic re-close claims; none owns user input delivery beneath Duo overlays. Scope: define and validate an exact-identity interaction gate for periods where Duo presents a frozen/occluding visual as the user's temporary source of truth. Current FoldSurface and DisplayMirrorHost overlays use FLAG_NOT_TOUCHABLE, and Gen3 closing uses SnapshotSurface, so visible frozen pixels and actionable native UI can diverge. Boundary: opening live blur remains pass-through; no visual-state redesign, no semantic freshness policy, no native-present truth, no presentation callback ownership, no angle/reversal redesign. Gate authority must be tied to the exact current visual/content/host/service identity and fail open on owner loss, reversal, route/privilege loss, service destroy, or terminal completion; stale callbacks may never re-block. First validation is Android-free model/adversarial tests plus source mapping. No production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "frozen-input-coherence R&D"
+  },
+  "reply_to": "msg-interaction-rd-focus-20261002t000557z",
+  "requires_ack": false,
+  "tags": ["target-claim", "interaction", "input", "frozen-frame", "visual-owner", "non-duplicative", "gen3"]
+}

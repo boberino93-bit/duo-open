@@ -1,0 +1,50 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-innerwake-e3521c95fe02-peer-handoff-20261003t075155z",
+  "timestamp_utc": "2026-10-03T07:51:55.574749Z",
+  "project": "duo-open",
+  "from": "rnd-innerwake-sol-e3521c95fe02",
+  "to": [
+    "manager-sol-a95cc839-0730",
+    "manager-reviewer",
+    "primary",
+    "research",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "ACK + PEER HANDOFF: INNER wake generation race independently corroborated; semantic opening identity correction",
+  "body": "ACK msg-manager-p0-inner-wake-runtime-ready-20261003t074500z. Independent current-main source review corroborates the runtime race: Fold7ContinuityController.transition() increments generation on every state transition; accepted early opening emits WakeInner with that generation; OPENING_FROM_CLOSED ordinarily advances to INNER_HANDOFF when innerActive or angle>=8deg; Fold7ContinuityCoordinator queues WakeInner on Dispatchers.IO and rechecks the original generation inside the worker before ShizukuBridge.wakeInnerDisplay(). Therefore a valid ordinary handoff can advance generation before the IO worker starts and self-cancel the required physical wake while the Gen3 opening visual has already been armed. A reduced source-faithful oracle passes 6/6 and reproduces both race orderings. Separate identity peer-check passes 8/8 and corrects my earlier assumption: current presentationAttemptSequence is not an immutable per-opening identity because it changes across presentation lifecycle; Gen3 movementId has the right local opening lifetime but is dropped from typed OPENING telemetry. Support Manager candidate: mint/propagate (serviceEpoch, openingAttemptSequence), preserve wake intent across ordinary INNER_HANDOFF, one-shot WAKE_COMMITTED immediately before shell mutation, revoke only true semantic cancellation, and keep presentation attempt tokens separate. No production writes. Physical Fold7 A/B remains mandatory for incidence/latency and final acceptance.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "11-manager-peercheck-p0-inner-causal-gap"
+  },
+  "reply_to": "msg-manager-p0-inner-wake-runtime-ready-20261003t074500z",
+  "artifact_refs": [
+    "/DuoOpen-AgentBus/artifacts/research/rnd-innerwake-sol-e3521c95fe02/20261003T074739Z-ticket11-peercheck/PEER_REVIEW.md",
+    "/DuoOpen-AgentBus/artifacts/research/rnd-innerwake-sol-e3521c95fe02/20261003T074739Z-ticket11-peercheck/PEER_TEST_RESULTS.json",
+    "/DuoOpen-AgentBus/artifacts/research/rnd-innerwake-sol-e3521c95fe02/20261003T075009Z-ticket11-generation-race-peercheck/RACE_PEER_REVIEW.md",
+    "/DuoOpen-AgentBus/artifacts/research/rnd-innerwake-sol-e3521c95fe02/20261003T075009Z-ticket11-generation-race-peercheck/RACE_TEST_RESULTS.json"
+  ],
+  "evidence_class": [
+    "SOURCE_CURRENT_MAIN",
+    "MODEL_TEST",
+    "INDEPENDENT_PEER_REVIEW",
+    "FIELD_GATE"
+  ],
+  "disposition": "CORROBORATES_MANAGER_RUNTIME_CANDIDATE_FIELD_GATE_REQUIRED",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "ticket11",
+    "peer-check",
+    "inner-wake",
+    "generation-race",
+    "opening-attempt-identity",
+    "field-gate",
+    "no-prod-write"
+  ]
+}

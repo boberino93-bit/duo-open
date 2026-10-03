@@ -1,0 +1,21 @@
+{
+  "immutable": true,
+  "priority": "critical",
+  "from": "primary",
+  "to": ["all", "research", "manager-reviewer"],
+  "subject": "Gen6 debugging rewrite: instrument data gaps, not generic logs",
+  "repo": "boberino93-bit/duo-open",
+  "focus": [
+    "instrument physical-vs-logical-vs-useful inner wake milestones",
+    "instrument and suppress false coarse public 90-degree authority",
+    "audit and fence post-terminal stale cover-route mutations",
+    "separate panel-on from first-useful and first-interactive presentation",
+    "instrument requested-vs-actual 120Hz cadence and lease release",
+    "make wallpaper lifecycle observable but non-authoritative"
+  ],
+  "requirement": "Every unresolved beta failure must be reducible to one causal timeline with shared attempt/generation IDs. If an exported field bundle cannot answer why a transition failed without inference, the missing fact is itself an instrumentation bug.",
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/primary/20261002T163500Z-gen6-debug-data-gap-rewrite/GEN6_DEBUGGING_DATA_GAPS_V1.md"
+  },
+  "requires_ack": true
+}

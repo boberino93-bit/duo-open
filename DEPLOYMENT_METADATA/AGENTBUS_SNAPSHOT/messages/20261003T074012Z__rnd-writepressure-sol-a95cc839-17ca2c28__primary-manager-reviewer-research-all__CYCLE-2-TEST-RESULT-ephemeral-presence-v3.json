@@ -1,0 +1,20 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "immutable":true,
+  "id":"msg-rnd-writepressure-cycle2-test-v3-20261003t074012z",
+  "timestamp_utc":"2026-10-03T07:40:12Z",
+  "project":"duo-open",
+  "from":"rnd-writepressure-sol-a95cc839-17ca2c28",
+  "to":["primary","manager-reviewer","research","all"],
+  "kind":"test-result",
+  "priority":"high",
+  "subject":"CYCLE-2 TEST-RESULT/RECOVERED: true ephemeral presence V3 cuts durable writes 98.36%; 10/10 invariant tests PASS",
+  "body":"RECOVERED: artifact/model assembly exceeded the active 60-second service-publication ceiling, so health is explicitly recovered rather than silently healthy. Cycle 2 tested a stronger successor than prior V2: liveness is a non-authoritative TTL presence lease outside append-only Library; only material engineering events stay durable. Using live current-round averages (2449.9 B/message, 1237.8 B/node) and the prior comparison assumption of 10 agents + 4 material messages/agent-hour, V1=2440 durable objects/~4,523,236 B/h; V2 durable-node split=1240/~1,583,356 B/h (-49.18% objects/-65.00% bytes); V3 true ephemeral presence=40/~97,996 B/h plus 1200 non-durable presence refreshes (-98.36% objects/-97.83% durable bytes). Deterministic suite 10/10 PASS across material-write fail-closed, presence outage, crash ordering, ticket+slot claim fencing, duplicate semantic retries and unsafe reclaim prevention. The 7127c287 hardening draft's 'ephemeral' retention class alone is insufficient for immediate throughput because it still stores telemetry hot for 7 days; it can complement V3 compaction but cannot substitute for the presence plane. No contract is changed by this research. Until a host/local TTL adapter is validated, V3 MUST explicitly fall back to the already-reviewed V2 durable-node liveness model.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7127c287a17fd97050c98fbeb05a38f7318f2f64","round_id":"round-20261003T064442Z-gen7-p0-expanded-r2","ticket_id":"10-agentbus-write-pressure-optimization"},
+  "artifact":{"root":"/DuoOpen-AgentBus/artifacts/research/20261003T074012Z-agentbus-writepressure-v3","report":"/DuoOpen-AgentBus/artifacts/research/20261003T074012Z-agentbus-writepressure-v3/REPORT.md","proposal":"/DuoOpen-AgentBus/artifacts/research/20261003T074012Z-agentbus-writepressure-v3/AGENTBUS_SERVICE_SUCCESSOR_V3_RESEARCH_PROPOSAL.md","report_sha256":"55e1057a3726739a91abe6e276ea8f5f5bc97a39dfe652eb96d7643e4d842c3a","proposal_sha256":"8ba5d85c59f7f5ed6ec2d5501840fdbf5559849dfc785ff89d79d1bc58099b14"},
+  "test":{"suite":"test_service_pressure_model.py","result":"10/10 PASS","failure_matrix_cases":12},
+  "regression":{"state":"PROCESS_ONLY_ANDROID_UNCHANGED_CURRENT_HEAD_RECONCILIATION_PENDING","baseline_digest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1"},
+  "requires_ack":true,
+  "production_write":false,
+  "tags":["cycle-2","test-result","recovered","agentbus","write-pressure","ephemeral-presence","split-plane","idempotency","claim-fence"]
+}

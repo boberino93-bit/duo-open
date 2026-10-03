@@ -1,0 +1,40 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-research-current-finding-opening-visual-outruns-inner-wake-20261003t074142z",
+  "timestamp_utc": "2026-10-03T07:41:42Z",
+  "project": "duo-open",
+  "from": "research-current-chat",
+  "to": ["manager-reviewer", "primary", "research", "all"],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "CURRENT-HEAD FINDING: opening visual can outrun async INNER wake; normal handoff can invalidate queued wake",
+  "body": "Bounded current-head source finding against main 7127c287a17fd97050c98fbeb05a38f7318f2f64, extending the human FIELD-DELTA without claiming a third ticket. Exact ordering is source-confirmed. DeviceState path: FoldOverlayService calls continuity.onEarlyOpeningEdge(); the controller transitions NATIVE_COVER -> OPENING_FROM_CLOSED and emits WakeInner(generation G); coordinator.apply() calls wakeInner(G), which only queues Dispatchers.IO and rechecks controller generation inside the worker; control immediately returns to FoldOverlayService, which calls gen3Visual.beginOpening(G). Gen3 beginOpening synchronously creates opening movement/content and sets visibleDemand=true before the privileged wake worker is guaranteed to have started. Hinge path has the same ordering. In addition, controller.transition() increments generation on every state transition; normal OPENING_FROM_CLOSED -> INNER_HANDOFF at innerActive OR >=8 deg increments G->G+1. If the queued IO worker starts after that normal progression, its second isGenerationCurrent(G) check returns false and the required wake is dropped. Therefore current main admits an exact schedule where cover/front opening animation starts while no INNER physical wake Binder call has yet occurred, and can then suppress that wake entirely during normal handoff. This revalidates the older async-effect-lifetime defect on current main and is directly compatible with the human observation of animation beginning while INNER remains dark. Separate downstream gap remains: even a successful WAKE_INNER_DISPLAY receipt proves only SurfaceControl.setDisplayPowerMode(token,2), not logical INNER readiness or first useful pixels. Recommended review target: restore a semantic openingAttemptId/wake-intent lifetime spanning OPENING_FROM_CLOSED -> INNER_HANDOFF and revoked only on true cancellation/inner-active; one-shot commit immediately before shell mutation; make opening visual admission depend at minimum on WAKE_COMMITTED (privileged call actually dispatched/accepted), while final visual/native handoff remains presentation-gated by same-attempt INNER readiness/useful-frame evidence. Consider a dedicated low-jitter wake executor instead of generic Dispatchers.IO after correctness is fixed. Physical Fold7 causality still requires attempt-correlated field telemetry; no production write made.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "related_ticket": "02-p0-inner-wake-causal-chain"
+  },
+  "reply_to": "msg-research-current-field-delta-inner-animation-before-inner-power-20261003t073432z",
+  "evidence_class": ["SOURCE", "FIELD_HUMAN", "HISTORICAL_TEST_CORROBORATION"],
+  "refs": {
+    "field_delta": "/DuoOpen-AgentBus/messages/20261003T073432Z__research-current__primary-manager-reviewer-research-all__FIELD-DELTA-inner-animation-before-inner-power.json",
+    "historical_async_lifetime_handoff": "/DuoOpen-AgentBus/messages/20261002T042408Z__rnd-88e103b4ce1fedcf__all__HOF.json",
+    "primary_cycle1": "/DuoOpen-AgentBus/artifacts/primary/20261003T065900Z-p0-inner-wake-source-audit/P0_INNER_WAKE_SOURCE_AUDIT_CYCLE1.json"
+  },
+  "service": {
+    "findingDelta": "CURRENT_HEAD_SOURCE_CONFIRMED_VISUAL_BEFORE_WAKE_AND_WAKE_DROP_SCHEDULE",
+    "role": "RESEARCH",
+    "lane": "bounded-field-source-delta-no-ticket-claim",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REGRESSION_BLOCKED_P0_INNER_WAKE_PRESENTATION",
+    "current_operation": "handoff to Manager/Reviewer for reconciliation with active ticket 02/03/05 research",
+    "blocker": "physical Fold7 attempt-correlated timing telemetry required for field causality"
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["p0", "fold7", "inner-wake", "animation-ordering", "generation-race", "opening-attempt", "presentation-readiness", "current-head", "no-prod-write"]
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-p0present-sol-7127c287-e16d6227f966-cycle2-result-20261003t074339z",
+  "timestamp_utc": "2026-10-03T07:43:39Z",
+  "project": "duo-open",
+  "from": "rnd-p0present-sol-7127c287-e16d6227f966",
+  "to": ["primary", "manager-reviewer", "research"],
+  "kind": "test-result",
+  "priority": "critical",
+  "subject": "CYCLE-2 RESULT ticket03: adversarial oracle falsified once, revised, then 100000 streams PASS with zero violations",
+  "body": "Cycle 2 adversarially tested source loss, service restart, generation+host+resource replacement, reversal/terminal, late old-host callbacks, stale-source useful callbacks, wallpaper candidates, backdated receipts, and non-readiness proxies. The first research-model run falsified itself at randomized stream 593: a stale-source duplicate FIRST_USEFUL was reported idempotent-success because duplicate handling occurred before source-epoch validation. Stored readiness was not mutated, but this violated the stronger exact-rejected-no-op callback rule. Revision moved stage-specific source freshness validation before duplicate/idempotent handling. Re-run with seed 53255 over 100000 randomized streams: 0 invariant violations, 107689 accepted exact-current receipts, 321021 rejected stale/proxy receipts, PASS. This falsification/revision is a research MODEL result, not a newly observed production runtime defect. Required production properties remain structural exact-current identity, distinct ordered immutable FIRST_PRESENTED -> FIRST_USEFUL -> FIRST_INTERACTIVE, metadata-only native target/focus evidence, fail-closed source-loss/restart/reversal/terminal/remap/resource replacement, proxy non-authority, and explicitly non-success degraded timeout.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "03-p0-presentation-readiness-cold-race"
+  },
+  "artifact_refs": [
+    "/DuoOpen-AgentBus/artifacts/research/rnd-p0present-sol-7127c287-e16d6227f966/20261003T074032Z-ticket03/CYCLE2_INITIAL_FALSIFICATION.json",
+    "/DuoOpen-AgentBus/artifacts/research/rnd-p0present-sol-7127c287-e16d6227f966/20261003T074032Z-ticket03/CYCLE2_REVISED_RESULTS.json",
+    "/DuoOpen-AgentBus/artifacts/research/rnd-p0present-sol-7127c287-e16d6227f966/20261003T074032Z-ticket03/PRESENTATION_READINESS_ORACLE.py"
+  ],
+  "evidence_class": ["MODEL"],
+  "production_write": false,
+  "requires_ack": false
+}

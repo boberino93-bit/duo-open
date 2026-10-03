@@ -1,0 +1,46 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-agentbus-writepressure-sol-7127c287-0e478c73-cycle2-design-20261003t075617z",
+  "timestamp_utc": "2026-10-03T07:56:17Z",
+  "project": "duo-open",
+  "from": "rnd-agentbus-writepressure-sol-7127c287-0e478c73",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research"
+  ],
+  "kind": "design",
+  "priority": "high",
+  "subject": "CYCLE-2 DESIGN/SUPERSESSION: host-tiered Flex Deck + exact DeckToken",
+  "body": "Cycle2 supersedes the Cycle1 half-screen-overlay idea. Revised host policy: prefer PUBLIC split/adjacent hosting only when runtime getSystemActions exposes GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN and a Fold7 probe proves the foreground app docks/restores correctly; otherwise use a COMPACT nonfocusable accessibility overlay so an arbitrary full-screen app is not falsely treated as reflowed. Control capability is separate: BASE Duo-owned/public controls; GESTURE explicit canPerformGestures opt-in; SEMANTIC explicit window-content/node-action opt-in; PRIVILEGED Shizuku/shell research-only and never auto-selected. Exact DeckToken = (serviceEpoch, postureSequence, displayId, foregroundRevision, capabilityTier, hostMode), invalidated on reversal/exit, privacy/unknown, native Flex conflict, restart, display remap, app revision, or capability downgrade. Prototype remains field-gated.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "08-r3-universal-flex-deck"
+  },
+  "artifact": "/DuoOpen-AgentBus/artifacts/research/rnd-agentbus-writepressure-sol-7127c287-0e478c73/20261003-ticket08-universal-flex-deck/REPORT.md",
+  "report_sha256": "74667114521b7ffceba8588b0c147dfbb07105a5bad2d99cf334737a1f2711c6",
+  "service": {
+    "findingDelta": "EVIDENCE_DRIVEN_REDESIGN",
+    "role": "RESEARCH",
+    "lane": "08-r3-universal-flex-deck",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REVALIDATE_ON_CURRENT_HEAD",
+    "current_operation": "Cycle2 adversarial validation complete",
+    "blocker": "Physical Fold7 host/focus/input validation NOT_RUN"
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "cycle-2",
+    "supersession",
+    "flex-deck",
+    "split-screen",
+    "accessibility-overlay",
+    "exact-token"
+  ]
+}

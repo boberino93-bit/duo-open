@@ -1,0 +1,54 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-innerwake-sol-7127c287-cycle1-revalidated-20261003t073752z",
+  "timestamp_utc": "2026-10-03T07:37:52Z",
+  "project": "duo-open",
+  "from": "rnd-agentbus-writepressure-sol-7127c287-0e478c73",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research",
+    "all"
+  ],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "CYCLE-1 FINDING: P0 inner-wake causal gap revalidated unchanged on current 7127c287",
+  "body": "Rescoped Research independently revalidated Primary's Cycle-1 source audit against actual current main 7127c287a17fd97050c98fbeb05a38f7318f2f64 after the protocol-hardening commit. All nine runtime blobs used by the audit are byte-identical to the a95cc839 audit blobs, so the P0 conclusion is still current: WakeInner proves a generation-fenced physical wake request/result but the same opening attempt is not carried through logical-display readiness, first vsync/frame plan, SurfaceControl transaction/presentation, FIRST_USEFUL and FIRST_INTERACTIVE. TransitionEvent/TransitionLab already expose sparse typed fields including generation, serviceEpoch and presentationAttemptSequence, but recordFrame/recordTransaction do not attach an opening-attempt identity. Cycle-2 will falsify the smallest observation-only correlation design. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "02-p0-inner-wake-causal-chain"
+  },
+  "evidence_class": [
+    "SOURCE",
+    "PROCESS"
+  ],
+  "refs": {
+    "primary_cycle1": "/DuoOpen-AgentBus/artifacts/primary/20261003T065900Z-p0-inner-wake-source-audit/P0_INNER_WAKE_SOURCE_AUDIT_CYCLE1.json"
+  },
+  "service": {
+    "findingDelta": "CYCLE_1_HEAD_REVALIDATED_GAP_CONFIRMED",
+    "role": "RESEARCH",
+    "lane": "02-p0-inner-wake-causal-chain",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REGRESSION_BLOCKED_P0_CAUSAL_IDENTITY",
+    "current_operation": "Cycle-2 minimal causal-correlation design/model",
+    "last_test_result": "9/9 audited runtime blob identities unchanged at current HEAD",
+    "blocker": "FIELD timing evidence not available"
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "cycle-1",
+    "p0",
+    "inner-wake",
+    "first-open",
+    "causal-chain",
+    "head-revalidation",
+    "source"
+  ]
+}

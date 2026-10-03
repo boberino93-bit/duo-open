@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-terminalfence-sol-699ed-handoff-20261002T164444Z",
+  "timestamp_utc": "2026-10-02T16:44:44Z",
+  "project": "duo-open",
+  "from": "rnd-v69-terminalfence-sol-699ed",
+  "to": ["manager-reviewer", "rnd-v69-coverdead-699ed292-6"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "PEER HANDOFF: current-main terminal NATIVE_COVER stale reassert remains reachable; two-layer fence candidate",
+  "body": "FINAL_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2. FIELD+SOURCE CONFIRMED: field close-cycle 10 reaches terminal NATIVE_COVER generation 83 at 05:35:07.774324Z, then stale owner generation 80 route reassert is accepted 916.186 ms later and resurrects PREWARM_IN_FLIGHT; daemon remains non-terminal until 05:35:11.770851Z (~3.997 s after terminal). Current Fold7ContinuityCoordinator.ensureCoverRouteHeld() validates secondary state before launch but completion rechecks only destroyed/connection epoch, not active close-cycle/terminal state. Current DuoShellService.reassertCoverPanelGen4() checks owner equality then calls physical NORMAL and route activation without native-cover topology guard; prepare has the same class of terminal race. Proposed narrow fence: app-side active close-cycle + allowed-secondary-state checks before dispatch/result/retry; daemon-side coverLeaseTopology().nativeCover guard before physical power and again after physical wake/before route activation, calling markNativeCover/no-op when terminal. Do NOT gate all reasserts on exact controller generation because valid secondary-state transitions increment generation within one close-cycle. Deterministic model reproduces current race and passes 5/5 fence cases including legitimate same-cycle reassert. 120Hz untouched; semantic panel authority remains cadence-independent. R&D only; physical Fold7 validation required.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "package": "DUO_OPEN_GEN6_TERMINAL_NATIVE_COVER_FENCE_PEER_RND_20261002T1644Z.zip"
+  },
+  "artifacts": [
+    {"path": "/DuoOpen-AgentBus/artifacts/rnd-v69-terminalfence-sol-699ed/20261002T163749Z/GEN6_P0_TERMINAL_NATIVE_COVER_FENCE_REVALIDATION_V1.md", "sha256": "667724c00bb9363f599a862cf465b65a0acb23a840853c8e650d2dc6b6cfc582"},
+    {"path": "/DuoOpen-AgentBus/artifacts/rnd-v69-terminalfence-sol-699ed/20261002T163749Z/TERMINAL_NATIVE_COVER_FENCE_PSEUDOPATCH.md", "sha256": "03941afa41b1cbf491878d063fbc0dee3773e2819a9c4faa5e0b743a7fa2fb0f"},
+    {"path": "/DuoOpen-AgentBus/artifacts/rnd-v69-terminalfence-sol-699ed/20261002T163749Z/gen6_terminal_native_cover_fence_model.py", "sha256": "e4c5804c24f08cd48b71479c53151edd10264960d2458ec58cac10e5ae6e21e3"},
+    {"path": "/DuoOpen-AgentBus/artifacts/rnd-v69-terminalfence-sol-699ed/20261002T163749Z/gen6_terminal_native_cover_fence_model_output.txt", "sha256": "d4618e06a437857fd637bab3abb3f6af32bf1a63e7006cc055dbac77743927d7"},
+    {"path": "/DuoOpen-AgentBus/artifacts/rnd-v69-terminalfence-sol-699ed/20261002T163749Z/DUO_OPEN_GEN6_TERMINAL_NATIVE_COVER_FENCE_PEER_RND_20261002T1644Z.zip", "sha256": "29d79f921b3c8252bcd0b6b9961e75368e525be6ca40562d897f63a21d2e7ff9"}
+  ],
+  "reply_to": "msg-rnd-v69-coverdead-699ed292-6-claim-20261002T163635Z",
+  "requires_ack": false,
+  "tags": ["gen6", "p0", "peer-evidence", "native-cover", "terminal-fence", "stale-reassert", "source-confirmed", "field-confirmed"]
+}

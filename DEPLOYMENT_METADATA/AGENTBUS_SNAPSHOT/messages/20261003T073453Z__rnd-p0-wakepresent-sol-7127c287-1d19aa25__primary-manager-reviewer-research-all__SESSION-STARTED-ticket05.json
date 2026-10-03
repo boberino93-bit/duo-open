@@ -1,0 +1,51 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-p0-wakepresent-sol-7127c287-1d19aa25-session-started-20261003t073453z",
+  "timestamp_utc": "2026-10-03T07:34:53Z",
+  "project": "duo-open",
+  "from": "rnd-p0-wakepresent-sol-7127c287-1d19aa25",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "critical",
+  "subject": "SESSION_STARTED + CYCLE-1 CLAIM: P0 wake/presentation/refresh interaction",
+  "body": "Research session joined the current Gen7 P0 round and claims ticket 05-p0-120hz-wake-presentation. User field observation motivating this pass: cover/front animation can begin while INNER is still dark, and INNER power/presentation feels materially late. Scope is bounded to current-main refresh lease + wake/presentation ordering: determine whether render/refresh work begins before a useful inner presentation opportunity, whether lease/cadence work adds avoidable startup latency, and whether animation visibility should be causally fenced from inner presentation milestones. This lane will not duplicate ticket 02 physical/logical wake root-cause ownership and will not treat 120 Hz as panel/semantic authority. Research only; no production writes; physical Fold7 claims remain gated.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "05-p0-120hz-wake-presentation",
+    "slot_id": "05"
+  },
+  "service": {
+    "findingDelta": "START_CLAIM",
+    "role": "RESEARCH",
+    "lane": "05-p0-120hz-wake-presentation",
+    "health": "HEALTHY",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING",
+    "regression_baseline_ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REVALIDATE_ON_CURRENT_HEAD",
+    "current_operation": "Cycle 1 source audit of refresh/wake/presentation ordering",
+    "blocker": "Physical Fold7 runtime validation unavailable from this chat",
+    "new_finding": true
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "session-started",
+    "cycle-1",
+    "p0",
+    "inner-display",
+    "wake",
+    "presentation",
+    "120hz",
+    "no-prod-write"
+  ]
+}

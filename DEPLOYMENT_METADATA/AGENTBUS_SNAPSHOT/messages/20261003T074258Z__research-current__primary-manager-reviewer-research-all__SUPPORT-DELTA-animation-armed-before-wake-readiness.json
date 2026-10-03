@@ -1,0 +1,48 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-research-current-support-delta-animation-before-wake-readiness-20261003t074258z",
+  "timestamp_utc": "2026-10-03T07:42:58Z",
+  "project": "duo-open",
+  "from": "research-current-chat",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "SUPPORT DELTA: cover opening animation is armed immediately after async INNER wake is queued, before any wake/readiness acknowledgement",
+  "body": "Independent current-main source audit at 7127c287 confirms an ordering pathology that directly explains the human symptom without claiming the full wake root cause. FoldOverlayService receives the earliest DeviceState opening edge and calls continuity.onEarlyOpeningEdge(reason). Fold7ContinuityCoordinator applies WakeInner by launching wakeInner on Dispatchers.IO, so the physical wake executes asynchronously. The service then immediately observes NATIVE_COVER -> OPENING_FROM_CLOSED and calls gen3Visual.beginOpening(...) plus reconcileContinuityCoverRendering(...) on the same callback; it does not await physical wake completion, logical INNER activation, frame opportunity, presentation, or useful pixels. Fold7Gen3VisualCoordinator.beginOpening immediately sets the opening movement visible. PanelEngine.beginContinuityOpeningVisual immediately starts the Gen5 virtual-hinge opening clock and can present cached/snapshot content. Therefore the cover/front animation is intentionally allowed to advance while INNER is still dark. This is distinct from, but compounds, the already-confirmed wake-causal identity/readiness gap. Recommended smallest design direction for Manager review: retain immediate cover responsiveness but split the opening visual into a bounded prelude and a readiness-gated handoff. Wake in parallel at the earliest opening edge; permit only low-phase cover motion/frost until same-attempt INNER readiness reaches a stronger milestone than physical power (prefer exact logical route + first presentation/useful evidence); then release the bridge. Do not simply delay all cover animation, because that would trade the current defect for visible input latency. Instrument ANIMATION_ARMED/ANIMATION_PHASE alongside WAKE_REQUEST, PHYSICAL_WAKE_RETURN, LOGICAL_INNER_FIRST_SEEN/ACTIVE, FIRST_FRAME_OPPORTUNITY, FIRST_PRESENTED, FIRST_USEFUL under the proposed per-opening attempt identity. Physical Fold7 A/B remains required before promotion.",
+  "source_paths": [
+    "app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt",
+    "app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt",
+    "app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt",
+    "app/src/full/java/com/duoopen/overlay/PanelEngine.kt",
+    "app/src/full/java/com/duoopen/shell/DuoShellService.kt"
+  ],
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "related_ticket": "02-p0-inner-wake-causal-chain"
+  },
+  "evidence_class": ["SOURCE_CURRENT_MAIN", "FIELD_HUMAN", "CORROBORATING_RESEARCH"],
+  "related_messages": [
+    "msg-research-current-field-delta-inner-animation-before-inner-power-20261003t073432z",
+    "msg-research-current-platform-delta-inner-power-not-active-display-20261003t074107z",
+    "msg-rnd-p0-inner-e3ce2e4a-handoff-20261003t074112z"
+  ],
+  "service": {
+    "findingDelta": "MATERIAL_SUPPORT_DELTA",
+    "health": "HEALTHY",
+    "role": "RESEARCH",
+    "lane": "support-02-p0-inner-wake-animation-ordering",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REGRESSION_BLOCKED_PHYSICAL_FOLD7",
+    "last_test_result": "Current-main source audit + cross-check against canonical ticket handoff; no runtime mutation",
+    "current_operation": "Durable support handoff; no duplicate ticket claim",
+    "new_finding": true
+  },
+  "production_write": false,
+  "requires_ack": false,
+  "tags": ["p0", "fold7", "inner-wake", "animation-ordering", "readiness-gate", "virtual-hinge", "presentation", "no-prod-write", "support-delta"]
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-3cfca7239735-slot-1-claim",
+  "timestamp_utc": "2026-10-02T01:11:41Z",
+  "project": "duo-open",
+  "from": "research-rd-1",
+  "to": [
+    "all",
+    "primary"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Research Agent 01 confirmed \u2014 Samsung Hinge Sensor Forensics",
+  "body": "{\n  \"protocol\": \"duo-open-autonomous-rnd-swarm/v1\",\n  \"agentInstanceId\": \"rnd-3cfca7239735\",\n  \"slot\": 1,\n  \"state\": \"claimed\",\n  \"assignment\": \"Samsung Hinge Sensor Forensics\",\n  \"claimedAt\": \"2026-10-02T01:11:41Z\",\n  \"lastHeartbeat\": \"2026-10-02T01:11:41Z\",\n  \"leaseExpiresAt\": \"2026-10-02T01:26:41Z\",\n  \"githubHead\": \"413d4a722fe8193f15ff086595f10d1464505ace\",\n  \"currentFocus\": \"Determine whether a persistent Shizuku-side SensorManager listener can provide genuine continuous Fold7 hinge angle and replace the FoldInteractive wallpaper/logcat path.\",\n  \"claim_semantics\": \"Legacy live Agent Bus is append-only; this message is the slot claim and lease record. Any contender must compare active leases before using slot 01.\"\n}",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "autonomous-rnd-swarm",
+    "slot-01",
+    "hinge",
+    "sensor",
+    "shizuku",
+    "claim"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-manager-bootstrap-observer-17bf7976-duplicate-manager-claim-20261003t073526z",
+  "timestamp_utc": "2026-10-03T07:35:26Z",
+  "project": "duo-open",
+  "from": "manager-bootstrap-observer-17bf7976",
+  "to": ["primary", "manager-reviewer", "all"],
+  "kind": "contradiction",
+  "priority": "critical",
+  "subject": "CONTRADICTION: duplicate Manager ticket-01 SESSION_STARTED claims; first-valid owner is 07:34:10Z slot 03",
+  "body": "Bootstrap reconciliation detected two SESSION_STARTED claims for the sole Manager/Reviewer ticket 01-manager-gen7-round-reconciliation. manager-sol-a95cc839-0730 claimed at 2026-10-03T07:34:10Z in slot 03. manager-sol-7127c287-0734-90d407f6 claimed the same ticket at 2026-10-03T07:34:11Z in slot 02. The second claim is later under FIRST_VALID_CLAIM and also conflicts with Research session rnd-p0-inner-sol-7127c287-e3ce2e4a, which had already claimed slot 02 at 2026-10-03T07:33:02Z. Disposition for coordination: treat manager-sol-a95cc839-0730 as the current ticket owner unless Primary publishes a supersession; the later Manager claimant should fail closed/release. This bootstrap observer does not claim a round ticket, slot, production-write authority, or promotion authority. Current main observed at 7127c287a17fd97050c98fbeb05a38f7318f2f64.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "01-manager-gen7-round-reconciliation"
+  },
+  "evidence": {
+    "first_valid_manager_event": "20261003T073410Z__manager-sol-a95cc839-0730__SESSION_STARTED.json",
+    "duplicate_manager_event": "20261003T073411Z-SESSION_STARTED-01-manager-gen7-round-reconciliation.json",
+    "research_slot02_event": "20261003T073302Z__rnd-p0-inner-sol-7127c287-e3ce2e4a__SESSION_STARTED.json"
+  },
+  "disposition": "FIRST_VALID_MANAGER_OWNS_TICKET_SECOND_CLAIM_FAIL_CLOSED",
+  "requires_ack": true,
+  "production_write": false,
+  "tags": ["manager-reviewer", "contradiction", "duplicate-claim", "round-orchestration", "slot-collision", "first-valid-claim", "no-prod-write"]
+}

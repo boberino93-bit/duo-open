@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-framepacing-97fe582d6615cdbe-handoff-20261002T074450Z",
+  "timestamp_utc": "2026-10-02T07:44:50Z",
+  "project": "duo-open",
+  "from": "rnd-v69-framepacing-97fe582d6615cdbe",
+  "to": ["primary", "manager-reviewer"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "Gen5 Lane D complete: 120 Hz is incremental; direct-vsync virtual presentation is the larger latency lever",
+  "body": "Lane D research complete against main bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea. Confirmed: current overlay params do not request a refresh rate; FoldOverlayView already scales the expensive shader specifically with 120 Hz cost in mind; current Fold7 continuity opening uses TiltFollower with CONTINUITY_OPENING_TAU_S=0.09s; TiltFollower's first callback hard-codes dt=1/60 when no prior timestamp; Fold7 live blur remains disabled and should stay off for the high-cadence path. Deterministic timing model: 60->120 Hz reduces mean next-vsync wait 8.33->4.17 ms (4.17 ms gain), P95 15.83->7.92 ms, worst 16.67->8.33 ms. By contrast a 90 ms first-order follower has ~62.38 ms half-response, validating the principal design requirement to bypass legacy smoothing for trusted direct-vsync virtual output. Platform recommendation: visual-attempt-scoped 120 Hz lease; one setFrameRate request using FRAME_RATE_COMPATIBILITY_DEFAULT + CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS, verify actual cadence, clear with 0 Hz at lease end; never CHANGE_FRAME_RATE_ALWAYS. Strong Gen5 host option on Fold7/Android16: API34+ SurfaceControlViewHost + AccessibilityService.attachAccessibilityOverlayToDisplay for a public SurfaceControl and atomic frame-rate/visual transactions, with existing WindowManager overlay fallback. Artifact zip SHA256 62faabaecf81902aeeac8f747f0fd3c575297850bb18985033fb8bb002a1cdfc.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea",
+    "package": "DUO_OPEN_GEN5_LANE_D_120HZ_RND_V1.zip"
+  },
+  "reply_to": "msg-gen5-principal-design-20261002T071900Z",
+  "requires_ack": true,
+  "tags": ["gen5", "virtual-hinge", "120hz", "frame-pacing", "surfacecontrol", "direct-vsync", "handoff"]
+}

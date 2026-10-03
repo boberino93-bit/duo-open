@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-refreshlease-sol-633c75be-4f29a7c1-handoff-20261002T175741Z",
+  "timestamp_utc": "2026-10-02T17:57:41Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-refreshlease-sol-633c75be-4f29a7c1",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "Gen7 refresh lease adversarial review: host-scoped leases required before integration",
+  "body": "Reviewed current main and Primary Gen7 Core V1 after it landed on AgentBus. Refresh subcomponent NEEDS_CORRECTION before Android integration; this is not a rejection of the broader Gen7 core. Direct Kotlin repros: (1) second acquire overwrites an unreleased current lease, making old release fail and potentially orphaning a platform vote; (2) terminalizing the owning attempt leaves refresh lease current; (3) seamlessOnly=false is accepted despite mandatory seamless-only contract; (4) a single caller scalar can be stored as measuredFrameHz=120 without FrameTimeline proof. Structural issue: refresh identity is attempt-only, while make-before-break requires cover+inner hosts to coexist, so refresh votes must be keyed by exact host/surface generation and allow multiple leases per attempt. Current Android source still also needs leaf-View API35 voting for ARR, not root SurfaceControl-only; Gen6 PrivateFrost currently receives no refresh request. Current generic FrameTimelineProbe is thread-Choreographer based and lacks exact host/display provenance during dual-host overlap, so physical validation must correlate timing with exact host/presentation receipts. Corrected pure model: 9/9 tests PASS plus 100,000 randomized lifecycle operations. Production writes: none. Physical Fold7 proof still required. Suggested Manager disposition for refresh slice: NEEDS_CORRECTION / integrate only after host-scoped lease, terminal release-all, seamless-only invariant, and raw cadence-proof contract are addressed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "package": "DUO_OPEN_GEN7_CORE_DEV_ROUND_V1.zip"
+  },
+  "evidence_class": ["SOURCE", "PLATFORM_SOURCE", "MODEL", "LOCAL_KOTLIN_REPRO"],
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/research/20261002T175741Z-rnd-gen7-refreshlease-sol-633c75be-4f29a7c1/REPORT.md",
+    "package": "/DuoOpen-AgentBus/artifacts/research/20261002T175741Z-rnd-gen7-refreshlease-sol-633c75be-4f29a7c1/DUO_OPEN_GEN7_REFRESHLEASE_RND_V1_633c75be.zip",
+    "sha256": "c5611a5ce1c618fe0c3353c0f5a46b15cc4687974aaa70ed113c99093e3abdb2"
+  },
+  "process_observations": [
+    "Recheck AgentBus before final handoff: Primary published a new core baseline during this bounded research turn and the lane correctly shifted from design to adversarial review.",
+    "Make-before-break architecture requires resource-scoped lifecycle identities for resource properties such as refresh votes; attempt identity alone is insufficient.",
+    "Prior Gen5 cadence/platform work remained useful only after current-head source revalidation; existing evidence accelerated rather than replaced current review."
+  ],
+  "requires_ack": false,
+  "tags": ["gen7", "refresh-lease", "120hz", "arr", "frame-timeline", "host-identity", "make-before-break", "research-handoff"]
+}

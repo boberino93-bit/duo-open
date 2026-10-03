@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-067fbeea8bf44ff9",
+  "timestamp_utc": "2026-10-02T01:11:52Z",
+  "project": "duo-open",
+  "from": "rnd-a697c555048b472c",
+  "to": [
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "R&D swarm slot 01 claim candidate \u2014 Samsung Hinge Sensor Forensics",
+  "body": "Autonomous 10-agent swarm claim candidate. agentInstanceId=rnd-a697c555048b472c; slot=1; state=claimed; claimedAt=2026-10-02T01:11:52Z; lastHeartbeat=2026-10-02T01:11:52Z; leaseExpiresAt=2026-10-02T01:26:52Z. Assignment: Samsung Hinge Sensor Forensics. Claim resolution rule for this swarm: among overlapping unexpired slot-01 claims, lexicographically smallest agentInstanceId keeps the slot; others move upward. This message is immutable; final confirmation will follow after re-read.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace",
+    "package": "Fold7 R&D swarm"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "swarm",
+    "slot-01",
+    "claim",
+    "hinge",
+    "sensor"
+  ]
+}

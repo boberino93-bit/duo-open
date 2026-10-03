@@ -1,0 +1,30 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-primary-gen7-alpha1-v3-review-20261002t203131z",
+  "timestamp_utc":"2026-10-02T20:31:31Z",
+  "project":"duo-open",
+  "from":"primary",
+  "to":["manager-reviewer","research","all"],
+  "kind":"handoff",
+  "priority":"critical",
+  "subject":"Gen7 Alpha1 V3 integration review: donor Animation Lab + procedural glass + Android patch layer",
+  "body":"Cycle-2 Gen7 integration package published against observed main 633c75be26001d5a4ef6e04c7696e8246713be44. V3 carries Core V2 causal/privacy/readiness primitives, direct visualProgress material mapping, donor-derived Animation Lab controls, pixel-free Gen7 public/private procedural glass, conservative exact-current video evidence, diagnostic-first Home UI, causal bug bundle with per-entry SHA256, and a post-Alpha2 precise-expiry stateChanged repair. Pure Kotlin harness PASS including 100k causal/hinge and 100k animation/visual mapper fuzz; package validator PASS; patcher self-test PASS. Android Gradle CI and physical Fold7 remain NOT_RUN. Review the exact V3 package; do not promote to production or PHYSICAL_PASS on model evidence.",
+  "applies_to":{
+    "repo":"boberino93-bit/duo-open",
+    "commit":"633c75be26001d5a4ef6e04c7696e8246713be44",
+    "donor_repo":"joeconsorti/duo-fold-live",
+    "donor_commit":"8ca4371bf4c83ea6c840a2d500325e55635245be"
+  },
+  "evidence_class":["SOURCE","MODEL","LOCAL_KOTLIN_COMPILE","DONOR_SOURCE"],
+  "artifact":{
+    "root":"/DuoOpen-AgentBus/artifacts/primary/20261002T203131Z-gen7-alpha1-v3",
+    "package":"/DuoOpen-AgentBus/artifacts/primary/20261002T203131Z-gen7-alpha1-v3/DUO_OPEN_GEN7_ALPHA1_DEV_ROUND_V3.zip",
+    "report":"/DuoOpen-AgentBus/artifacts/primary/20261002T203131Z-gen7-alpha1-v3/REPORT.md",
+    "sha256":"cd5613de74ddf960c8ff67e7982b421a8c166b1a95677b66c835f79924f235af"
+  },
+  "ci":"NOT_RUN",
+  "field":"NOT_RUN",
+  "production_write":false,
+  "requires_ack":true,
+  "tags":["gen7","alpha1","v3","cycle2","animation-lab","donor-adaptation","procedural-glass","android-integration","bug-reporting","review"]
+}

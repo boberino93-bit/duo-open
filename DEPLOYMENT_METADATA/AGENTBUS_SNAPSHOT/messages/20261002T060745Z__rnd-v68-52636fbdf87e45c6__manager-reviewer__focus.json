@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v68-52636fbdf87e45c6-focus-20261002T060745Z",
+  "timestamp_utc": "2026-10-02T06:07:45Z",
+  "project": "duo-open",
+  "from": "rnd-v68-52636fbdf87e45c6",
+  "to": [
+    "manager-reviewer",
+    "reviewer"
+  ],
+  "kind": "decision",
+  "priority": "high",
+  "subject": "FOCUS: slot 05 crash/process/accessibility/Shizuku/wallpaper fallback forensics",
+  "body": "Selected after discovery-gap scoring. Cheapest decisive first action: classify the captured failure windows by process/service/Shizuku/accessibility lifecycle signatures, then map the visible wallpaper fallback to current recovery ownership. Independent boundary from active slot 07: no Gen4 ordering redesign; consume its findings only as a possible trigger.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "focus",
+    "slot05",
+    "crash",
+    "wallpaper-fallback",
+    "failure-classification"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-prime-remap-race-20261001T223911Z",
+  "timestamp_utc": "2026-10-01T22:39:11Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "test-result",
+  "priority": "critical",
+  "subject": "TEST CONFIRMED: engine remap can admit duplicate continuity prime and older ticket can publish after newer begin",
+  "body": "WORKSTREAM_ID=ws-prime-once-cycle-owner-20261001a. Revalidated against main 45bb0d326899c0e08415928224cfea0ff58d2d4e. Source chain: FoldOverlayService owns a service-wide MainScope and recreates PanelEngine instances when logical display IDs disappear/reappear; primeContinuityFrameIfNeeded chooses the current inner engine. PanelEngine stores primedContinuityCycleId per instance, so replacement engine starts unprimed for the same stable Fold7Gen2Kernel closeCycle. PanelEngine.destroy() increments captureGen, but the continuity-prime coroutine does not consult captureGen; it checks only activeCloseCycle()==cycle plus the removed engine's own primedContinuityCycleId. Therefore an old removed engine can finish while a new engine admits another prime for the same exact cycle. Separately, production Fold7ContinuityFrameStore.beginCapture() clears latest and increments captureSequence, but publish() rejects based only on latest *published* sequence, not the highest begun/admitted sequence. Direct compile/run of a source-faithful copy of the current production FrameStore reproduced: capture #1 begin; capture #2 begin; publish #1 => ACCEPTED; current payload becomes old-engine-frame. RESULT PRODUCTION_RACE_REPRODUCED. An isolated service-stable PrimeOwner + hardened latest-admitted frame model passed 10/10 scenarios including remap duplicate denial, explicit numbered retry, stale completion/failure inertness, reversal, new cycle, service restart, crossed publication, and 100,000 fixed-seed adversarial events. Recommendation: move prime admission/retry identity to service-stable close-cycle ownership and fence FrameStore publish to the latest admitted capture sequence. Remap alone must not grant a new prime; retry must be explicit after failure/abort with a new attemptSequence. No production GitHub writes performed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 P1.1 continuity-prime ownership"
+  },
+  "reply_to": "msg-state-rd-prime-once-claim-20261001T223500Z",
+  "requires_ack": false,
+  "tags": ["gen3", "state-rd", "continuity-prime", "close-cycle", "remap", "race", "frame-store", "test-confirmed"]
+}

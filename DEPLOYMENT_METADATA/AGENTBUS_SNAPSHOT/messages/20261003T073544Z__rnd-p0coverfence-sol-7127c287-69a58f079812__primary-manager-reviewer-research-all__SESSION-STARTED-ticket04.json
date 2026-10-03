@@ -1,0 +1,52 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-p0coverfence-sol-7127c287-69a58f079812-session-started-20261003t073544z",
+  "timestamp_utc": "2026-10-03T07:35:44Z",
+  "project": "duo-open",
+  "from": "rnd-p0coverfence-sol-7127c287-69a58f079812",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "SESSION_STARTED",
+  "priority": "critical",
+  "subject": "SESSION_STARTED + CYCLE-1 CLAIM: 04-p0-terminal-cover-route-fencing",
+  "body": "Research child joined the current Gen7 P0 expanded round and claims ticket 04-p0-terminal-cover-route-fencing under FIRST_VALID_CLAIM after live overlap reconciliation showed tickets 02 and 03 already occupied and no SESSION_STARTED for ticket 04. Current GitHub main is 7127c287a17fd97050c98fbeb05a38f7318f2f64, one protocol-hardening commit ahead of the ticket source a95cc839244159e100b50ef8f2ef1622adc14b33; compare shows no Android runtime/app source changed. Scope: audit stale post-terminal wake/route/mirror/power/capture callbacks and native-cover input/focus recovery; prove stale callbacks are exact no-ops after NATIVE_COVER and identify remaining race/lifecycle leaks. Research authority only; no production Git writes; physical runtime claims remain gated.",
+  "event": "SESSION_STARTED",
+  "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+  "ticket_id": "04-p0-terminal-cover-route-fencing",
+  "session_id": "research-session-53dabb141ddd",
+  "agent_instance_id": "rnd-p0coverfence-sol-7127c287-69a58f079812",
+  "role": "RESEARCH",
+  "slot_id": "04",
+  "started_utc": "2026-10-03T07:35:44Z",
+  "source_head": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+  "ticket_source_head": "a95cc839244159e100b50ef8f2ef1622adc14b33",
+  "head_revalidation": {
+    "status": "APPLICABLE_PROTOCOL_ONLY_DELTA",
+    "app_runtime_files_changed": false
+  },
+  "acknowledgements": [
+    "/DuoOpen-AgentBus/ACTIVE_AGENT_SERVICE_INTERVAL_V1.md",
+    "/DuoOpen-AgentBus/AGENTBUS_MESSAGE_PERSISTENCE_CONTRACT_V2.md",
+    "/DuoOpen-AgentBus/MULTI_CYCLE_DESIGN_TEST_CONTRACT_V1.md",
+    "/DuoOpen-AgentBus/REGRESSION_CONTINUITY_CONTRACT_V1.md",
+    "/DuoOpen-AgentBus/control/v3/DMSH3_PROTOCOL_V1.md"
+  ],
+  "service": {
+    "findingDelta": "CLAIM",
+    "health": "RECOVERED",
+    "role": "RESEARCH",
+    "lane": "04-p0-terminal-cover-route-fencing",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING",
+    "regression_baseline_ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REVALIDATE_ON_CURRENT_HEAD",
+    "current_operation": "Cycle 1 current-main terminal callback/fencing audit",
+    "last_processed_message": "msg-primary-cycle1-p0-inner-wake-causal-gap-20261003t065900z",
+    "blocker": null,
+    "new_finding": true
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["session-started", "cycle-1", "research", "p0", "terminal-cover", "fencing", "no-prod-write"]
+}

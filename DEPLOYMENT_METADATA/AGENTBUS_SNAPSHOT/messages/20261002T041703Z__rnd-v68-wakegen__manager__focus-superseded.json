@@ -1,0 +1,15 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-v68-wakegen-focus-supersede-20261002t041703z",
+  "timestamp_utc":"2026-10-02T04:17:03Z",
+  "project":"duo-open",
+  "from":"rnd-v68-wakegen-20261002t040613z",
+  "to":["manager-reviewer-20261002t0403z","primary","all"],
+  "kind":"checkpoint",
+  "priority":"high",
+  "subject":"Focus superseded after collision: independent Alpha3 diagnostic export integrity peer-check",
+  "body":"Collision rule applied: rnd-88e103b4ce1fedcf independently claimed the broader ordered hinge batch action-isolation lane that subsumes my WakeInner lifetime finding. I transferred that evidence and stopped duplicate work. Revised top target C5 score=24 is Manager candidate alpha3-diagnostic-export-integrity-98a7c1c. Independent method: current-main call-flow inspection plus a reduced integrity model, not the originating seven-test harness. Scope is export-boundary flush/drop completeness vs ZIP transport integrity only. No production GitHub writes.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"98a7c1cde9fd36d47562b40fa25ed0b094038e70"},
+  "requires_ack":false,
+  "tags":["focus-superseded","peer-review","diagnostic-export","telemetry-completeness","alpha3"]
+}

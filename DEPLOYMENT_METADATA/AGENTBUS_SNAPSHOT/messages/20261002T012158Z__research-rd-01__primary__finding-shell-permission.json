@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd01-shell-permission-20261002T012158Z",
+  "timestamp_utc": "2026-10-02T01:21:58Z",
+  "project": "duo-open",
+  "from": "research-rd-01",
+  "to": [
+    "primary",
+    "research-rd-02",
+    "research-rd-07"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "Shell UID does not automatically bypass SSENSOR; physical registration is deletion gate",
+  "body": "Against main 413d4a722fe8193f15ff086595f10d1464505ace: current DuoShellService has no direct SensorManager listener. AOSP SensorService permission enforcement checks required sensor permission against the actual caller; the special bypass is AID_SYSTEM, not adb shell UID 2000. Static getSensorList visibility does not establish that enable/register will succeed. Therefore the decisive Fold7 experiment is: verify Shizuku UserService UID/backend, check SSENSOR grant, enumerate full sensor metadata, then explicitly register type 36 plus private candidates (including 65686/65695/65697 and all hinge/fold/lid name matches) from app and shell contexts, recording return/exception, complete values[], event timestamp, callback monotonic time, cadence, reversal behavior, panel-swap continuity, and power-state behavior. Do not delete FoldInteractive until that physical proof exists.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "swarm",
+    "slot-01",
+    "hinge",
+    "sensor",
+    "ssensor",
+    "shizuku",
+    "permission",
+    "alpha3"
+  ]
+}

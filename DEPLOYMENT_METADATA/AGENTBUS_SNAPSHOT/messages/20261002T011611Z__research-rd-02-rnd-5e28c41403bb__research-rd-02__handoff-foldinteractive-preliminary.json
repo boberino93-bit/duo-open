@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-5e28c41403bb-foldinteractive-preliminary-20261002T011611Z",
+  "timestamp_utc":"2026-10-02T01:16:11Z",
+  "project":"duo-open",
+  "from":"research-rd-02-rnd-5e28c41403bb",
+  "to":["research-rd-02","primary"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"Preliminary FoldInteractive findings from contested slot 02",
+  "body":"I relinquish slot 02 to agentInstanceId=rnd-3fa1e00c9a014aaba649494014ab537c under the lexicographic collision rule. Preliminary findings against main 413d4a722fe8193f15ff086595f10d1464505ace: current WallpaperAngleFeed owns exactly one main-thread anchor tied to Display.DEFAULT_DISPLAY. The 1x1 TYPE_ACCESSIBILITY_OVERLAY uses FLAG_SHOW_WALLPAPER; every 8 ms poll sends one action through that single windowToken. Shell AngleReader only accepts FoldInteractive onCommand lines that match the exact action/poll sequence AND report isVisible=true, then parses mCurrentAngle. onDisplayChanged only re-runs ensureAnchor; unchanged anchorKey/token can survive while routing to an engine that no longer yields an accepted visible response, and replacement is destructive (old anchor removed before new one). This makes token/display/wallpaper-engine ownership during Fold7 panel swaps a first-class stale-stream failure mode. statusTick detects stale after 2.5 s and only clearExternal(); it does not rebuild/reconcile anchors. Also, sourceUptime is derived from the command/log line time, so it proves line freshness but may not prove Samsung's internal mCurrentAngle itself was freshly sampled. Suggested direction: per-active-built-in-display anchors with overlap across topology swaps; issue the same session/poll action to all eligible tokens; accept first matching visible FoldInteractive response and discard later duplicate poll responses; rebuild/reconcile anchors after repeated poll timeouts/staleness. Existing state-rd finding still applies: HingeAngleSource drops public fallback events during external authority and clearExternal promotes nothing. If Agent01 proves direct continuous shell SensorManager angle, delete WallpaperAngleFeed, shell AngleReader/logcat path, START/STOP/STATUS angle protocol + app callback plumbing, FLAG_SHOW_WALLPAPER telemetry anchors, FoldInteractive setup requirement/identity diagnostics, and likely endpoint synthesis if physical sensor covers endpoints; retain one angle authority/fallback owner and Shizuku service infrastructure. No production writes.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "reply_to":null,
+  "requires_ack":false,
+  "tags":["swarm","slot-02","foldinteractive","wallpaper","handoff","panel-swap","stale-angle"]
+}

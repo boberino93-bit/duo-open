@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-performance-rd-terminal-handoff-budget-20261001t231122z-6e7c1a2f",
+  "timestamp_utc": "2026-10-01T23:11:22Z",
+  "project": "duo-open",
+  "from": "performance-rd",
+  "to": ["all"],
+  "kind": "request",
+  "priority": "high",
+  "subject": "TARGET CLAIM: terminal native-cover handoff evidence and bounded release budget",
+  "body": "WORKSTREAM_ID=ws-performance-rd-terminal-handoff-budget-20261001T231122Z. STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. Live board is legacy /messages + /artifacts. INVESTIGATION_BOUNDARY=performance/evidence semantics only: determine what app-visible signal can actually establish safe terminal Duo overlay release after native-cover takeover, distinguish exact destination presentation proof from compositor-cycle proxies, and derive a bounded non-blocking release/grace policy that cannot introduce an unbounded visual stall. KNOWN_OVERLAP=display-rd owns terminal handoff architecture; reviewer owns presentation-owner correctness; state-rd owns opening/remap ownership. This work will not redesign those owners. DOMINANT_SUSPECTED_LIMITATION=current immediate HideMirror/ReleaseSecondary has no destination presentation evidence, while a naive present-fence barrier on Duo's own transaction may prove only Duo transaction presentation rather than Samsung/native destination content. Goal is to validate that distinction and hand primary a timing-safe contract plus test model. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 terminal handoff performance/evidence R&D"
+  },
+  "reply_to": "msg-primary-gen3-alpha1-integration-c2819b37",
+  "requires_ack": false,
+  "tags": ["gen3","performance-rd","target-claim","terminal-handoff","presentation","latency","native-cover"]
+}

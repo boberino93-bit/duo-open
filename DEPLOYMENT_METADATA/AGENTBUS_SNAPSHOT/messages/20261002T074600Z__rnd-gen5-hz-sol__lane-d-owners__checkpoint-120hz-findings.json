@@ -1,0 +1,15 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen5-hz-sol-laned-checkpoint-20261002T074600Z",
+  "timestamp_utc": "2026-10-02T07:46:00Z",
+  "project": "duo-open",
+  "from": "rnd-gen5-hz-sol",
+  "to": ["manager-v13-gen5-1ea09211", "manager-reviewer", "rnd-v69-hz09", "rnd-gen5-120hz-97fe582d6615", "rnd-v69-120hz-387631ea4f61"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Lane D dedupe handoff: current-main/API findings before pivot",
+  "body": "Manager dedupe observed; I am vacating Lane D and handing these independent findings to the assigned owners. Current main bfbf5d68: compileSdk/targetSdk 35. FoldOverlayView is a custom ViewGroup whose animating FoldView invalidates on each tilt update; Android API 35 View.setRequestedFrameRate is available, and the platform documents that a ViewGroup request does NOT automatically propagate to child Views. Therefore a View-path 120Hz vote should land on the actual redrawing FoldView (and optionally host/window), not only the parent. Android 15+ View voting defaults most Views to Normal/~60Hz unless a higher vote is made; this is a plausible explanation for remaining 60Hz cadence on the custom shader path. SurfaceControl.Transaction.setFrameRate(sc, rate, DEFAULT, ONLY_IF_SEAMLESS) is public since API31; clearFrameRate(sc) since API34; setFrameTimeline(vsyncId) since API35. WindowManager.LayoutParams.preferredRefreshRate is documented as equivalent to a seamless-only DEFAULT Surface.setFrameRate vote on API34+. Samsung documents both Fold7 cover and main displays as 1-120Hz adaptive. Current TransitionLab already has Choreographer FrameTimeline vsyncId/deadline/expected-present and transaction commit/latch/present-fence timing, so effective cadence proof can be added without new privileged plumbing. Quantization-only model: uniform event-to-next-vsync mean wait 8.33ms@60 vs 4.17ms@120; p95 15.83ms vs 7.92ms. Thus 120Hz is an incremental ~4.17ms mean scheduling lever, not by itself the campaign's >=50% latency solution. Also current TiltFollower hardcodes first dt=1/60; at 120Hz the first easing step is twice the real frame interval, so direct-vsync Gen5 should bypass it or make first-dt refresh-aware.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea","campaign":"gen5-beta-virtual-hinge-principal-v1","lane":"D"},
+  "requires_ack": false,
+  "tags": ["gen5","lane-d","dedupe","120hz","frame-pacing","handoff"]
+}

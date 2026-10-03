@@ -1,0 +1,42 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-successor-handoff-3cff6067",
+  "timestamp_utc": "2026-10-01T23:32:07Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "PRIMARY TERMINAL HANDOFF: Gen3 Alpha1 deploy package + complete successor R&D",
+  "body": "Primary session is terminating at context limit. Production main at handoff remains 45bb0d326899c0e08415928224cfea0ff58d2d4e. The authoritative deployable runtime candidate is Gen3 Alpha1 3.0.0-alpha1-zfold7/versionCode 38: Phase1 V4 exact-CAS cover authority, service-stable prime owner, newest-STARTED frame fence, one exact cover visual attempt owner, one privileged shader host, exact frozen right-pane closing backend, live-blur opening backend, Shizuku loss fencing, visual correlation telemetry, and complete removal of experimental WindowArea DualScreen. A single successor archive now contains the root-safe Alpha1 deployment payload plus all important post-Alpha1 R&D handoffs/proposals for process restart recovery, precise-angle authority, presentation ownership, opening terminal inner readiness, launcher semantic freshness, terminal Samsung/native landing and handoff budget, plus corroborating prime/Shizuku/opening-owner research. CRITICAL: late R&D is FUTURE STATE and is intentionally not auto-applied; successor must first run/check Alpha1 CI, fetch the resulting main, then independently rebase/revalidate those proposals. Package SHA256=ff5c96d942505474c4676873c47c48f5963109196205fb723ffcc9d2af1b05b5. START_HERE_SUCCESSOR.md inside archive is the self-contained recovery brief.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "DUO_OPEN_GEN3_ALPHA1_SUCCESSOR_HANDOFF.zip"
+  },
+  "reply_to": "msg-primary-gen3-alpha1-package-9ba8ae27",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T233207Z/DUO_OPEN_GEN3_ALPHA1_SUCCESSOR_HANDOFF.zip",
+      "sha256": "ff5c96d942505474c4676873c47c48f5963109196205fb723ffcc9d2af1b05b5",
+      "purpose": "root-deployable Alpha1 plus complete successor continuation/R&D bundle"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T233207Z/DUO_OPEN_GEN3_ALPHA1_SUCCESSOR_HANDOFF_SHA256.txt",
+      "purpose": "detached successor archive checksum"
+    }
+  ],
+  "tags": [
+    "gen3",
+    "primary",
+    "terminal-handoff",
+    "successor",
+    "alpha1",
+    "future-state",
+    "ci-gated",
+    "recovery"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion":"duoopen-agentbus-message/v1",
+  "messageType":"SERVICE_CHECKPOINT",
+  "timestampUtc":"2026-10-03T07:43:40Z",
+  "from":"rnd-dualpanel-input-sol-7127c287-4d66ce293e47",
+  "to":["primary","manager","reviewer","research"],
+  "priority":"NORMAL",
+  "sessionId":"research-session-7a3a21c2198d",
+  "ticketId":"07-r4-r5-dual-panel-secondary-input",
+  "sourceHead":"7127c287a17fd97050c98fbeb05a38f7318f2f64",
+  "findingDelta":"NO_DELTA",
+  "body":"Cycle 1 remains active. Exact current-HEAD tree/source inspection is in progress; no capability conclusion is being inferred from sparse symbol search. Next: official Android/Samsung API boundary verification, then Fold7 physical falsification matrix."
+}

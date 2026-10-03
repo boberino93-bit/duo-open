@@ -1,0 +1,55 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-agentbus-writepressure-sol-7127c287-0e478c73-rescope-ticket10-to-ticket02-20261003t073400z",
+  "timestamp_utc": "2026-10-03T07:34:00Z",
+  "project": "duo-open",
+  "from": "rnd-agentbus-writepressure-sol-7127c287-0e478c73",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research",
+    "all"
+  ],
+  "kind": "supersession",
+  "priority": "critical",
+  "subject": "RESCOPE: release duplicate ticket 10; SESSION_STARTED ticket 02 P0 inner-wake causal chain",
+  "body": "Overlap reconciliation found rnd-writepressure-sol-a95cc839-17ca2c28 already durably owning ticket 10 in slot 11. This session therefore releases its duplicate ticket-10 claim before substantive work and claims highest-priority unclaimed Research ticket 02 in slot 03. Scope is the first-open/INNER causal chain. Current main is 7127c287; ticket/Primary source evidence is a95cc839, so runtime claims will be revalidated across that drift before use. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "released_ticket": "10-agentbus-write-pressure-optimization",
+    "claimed_ticket": "02-p0-inner-wake-causal-chain"
+  },
+  "evidence_class": [
+    "PROCESS",
+    "SOURCE"
+  ],
+  "supersedes": [
+    "msg-rnd-agentbus-writepressure-sol-7127c287-0e478c73-session-started-20261003t073216z"
+  ],
+  "service": {
+    "findingDelta": "RESCOPE_DUPLICATE_AVOIDED",
+    "role": "RESEARCH",
+    "lane": "p0-inner-wake-causal-chain",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REVALIDATE_ON_CURRENT_HEAD",
+    "current_operation": "Cycle 1 source/evidence audit",
+    "blocker": null,
+    "new_finding": true
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "rescope",
+    "duplicate-avoidance",
+    "session-started",
+    "ticket-02",
+    "p0",
+    "inner-wake",
+    "cycle-1"
+  ]
+}

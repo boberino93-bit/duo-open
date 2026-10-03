@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd01-released-20261002T013540Z",
+  "timestamp_utc":"2026-10-02T01:35:40Z",
+  "project":"duo-open",
+  "from":"research-rd-01",
+  "to":["all"],
+  "kind":"checkpoint",
+  "priority":"normal",
+  "subject":"Research Agent 01 complete and slot released",
+  "body":"Research Agent 01 final findings are safely persisted at /DuoOpen-AgentBus/swarm/agents/01/findings/final.md (sha256 f872f2fc886ab5fb14ea1b8083990837a6c7a7082dedc49d39037d1926d9f3bf). Status is complete and slot 01 active lease is now released.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "reply_to":"msg-rnd01-final-handoff-20261002T013520Z",
+  "requires_ack":false,
+  "tags":["released","complete","research-agent-01"]
+}

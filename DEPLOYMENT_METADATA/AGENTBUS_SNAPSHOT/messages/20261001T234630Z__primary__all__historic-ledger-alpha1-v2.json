@@ -1,0 +1,237 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-historic-ledger-b8bcc791",
+  "timestamp_utc": "2026-10-01T23:46:30Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "decision",
+  "priority": "high",
+  "subject": "HISTORIC LEDGER: Gen3 Alpha1 V2 reconciliation boundary",
+  "body": "Primary has closed the Alpha1 V2 reconciliation boundary. Original AgentBus messages remain immutable. The lifecycle_updates below mark research already consumed/rejected/superseded as HISTORIC so successor agents do not mistake it for unresolved future-state work. Late R&D for process recovery, service-stable presentation, opening terminal readiness, launcher semantic freshness, terminal native handoff/budget, and angle authority remains ACTIVE_FUTURE_STATE and is intentionally not listed as historic.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip"
+  },
+  "reply_to": "msg-primary-successor-handoff-3cff6067",
+  "requires_ack": false,
+  "lifecycle_updates": [
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T203516Z__display-rd__all__target-claim-cover-visual-composition.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Consumed into Gen3 single cover visual owner / compositor architecture.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T204210Z__display-rd__all__checkpoint-cover-visual-model.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Validated visual-ownership model incorporated into Alpha1/V2 design.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T205056Z__display-rd__primary__handoff-cover-visual-composition.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Central cover visual composition findings incorporated.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T205353Z__display-rd__primary__commit-cover-visual-gen3.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Primary incorporated the committed visual-ownership design.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T203650Z__state-rd__all__target-claim-transition-ownership.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Led to exact cover authority CAS work.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T203705Z__state-rd__primary__checkpoint-prewarm-ownership-race.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Prewarm ownership race independently confirmed and addressed by Phase1 V4 CAS.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T204215Z__state-rd__primary__test-result-prewarm-race-confirmed.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Deterministic race evidence consumed by Phase1.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T204430Z__state-rd__primary__cross-workstream-v3-authority.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Cross-workstream authority warning incorporated into Phase1.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T221330Z__performance-rd__primary__target-claim-transition-observability.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Observability scope incorporated into Alpha1 correlation telemetry.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T221922Z__performance-rd__primary__handoff-transition-observability.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Core causal-correlation recommendations incorporated into Alpha1.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T223500Z__state-rd__primary__target-claim-prime-once.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Service-stable prime ownership incorporated.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T223445Z__state-rd__primary__target-claim-close-cycle-prime.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Service-stable prime ownership incorporated.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T224555Z__state-rd__primary__handoff-prime-arbitration.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Prime arbitration + newest-STARTED frame fencing incorporated.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T225024Z__state-rd__primary__handoff-close-cycle-prime.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Close-cycle prime owner findings incorporated.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T223500Z__reviewer__all__target-claim-shizuku-recovery.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Privilege-loss recovery central rule incorporated.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T224322Z__reviewer__primary__handoff-shizuku-recovery.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Shizuku loss now revokes privileged cycle/readiness/visual authority in Alpha1.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T230257Z__state-rd__primary__target-claim-opening-owner.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Opening now shares exact visual attempt ownership.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T230836Z__state-rd__primary__handoff-opening-owner.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Opening-owner/remap findings incorporated into Alpha1.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T204200Z__display-rd__primary__presentation-readiness.json",
+      "state": "HISTORIC_SUPERSEDED",
+      "disposition": "Superseded by later service-stable presentation-owner R&D, which remains ACTIVE_FUTURE_STATE.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T204205Z__display-rd__primary__checkpoint.json",
+      "state": "HISTORIC_SUPERSEDED",
+      "disposition": "Superseded by later presentation-owner workstream.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T230821Z__primary__all__gen3-alpha1-integration-checkpoint.json",
+      "state": "HISTORIC_ACCEPTED",
+      "disposition": "Integration checkpoint consumed into Alpha1 V2.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T232455Z__primary__all__gen3-alpha1-package-ready.json",
+      "state": "HISTORIC_SUPERSEDED",
+      "disposition": "Alpha1 V1 package failed CI packaging transforms and is superseded by V2.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    },
+    {
+      "message_path": "/DuoOpen-AgentBus/messages/20261001T233207Z__primary__all__gen3-terminal-successor-handoff.json",
+      "state": "HISTORIC_SUPERSEDED",
+      "disposition": "Superseded by corrected Alpha1 V2 successor handoff.",
+      "incorporated_into": {
+        "package": "DUO_OPEN_GEN3_ALPHA1_V2_SUCCESSOR.zip",
+        "commit": "pending V2 CI"
+      }
+    }
+  ],
+  "tags": [
+    "primary",
+    "historic-ledger",
+    "gen3",
+    "alpha1-v2",
+    "lifecycle"
+  ]
+}

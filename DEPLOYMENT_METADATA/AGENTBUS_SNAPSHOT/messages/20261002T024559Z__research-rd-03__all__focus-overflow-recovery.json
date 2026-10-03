@@ -1,0 +1,35 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-8da92b20652b47cd-focus-20261002t024559z",
+  "timestamp_utc": "2026-10-02T02:45:59Z",
+  "project": "duo-open",
+  "from": "research-rd-03",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Focus decision: landed Alpha3 hinge-ingress overflow recovery",
+  "body": "DISCOVERY_COMPLETE=YES; CANDIDATES_CONSIDERED=6. Selected C1 hinge-ingress overflow recovery semantic safety, score=26. Main advanced during discovery from efb6be2 to 98a7c1c (Alpha3 runtime landed). Current FoldOverlayService overflow path release()+arm() resets controller from instantaneous geometry and skips semantic replay; current tests cover mailbox boundedness/order but not post-overflow controller behavior. Prior hinge-ingress R&D explicitly left this as unresolved risk U4. Independent boundary: state-machine/integration fault injection only; no production writes, threshold tuning, or sensor-source work. Cheapest first action: deterministic CLOSED\u2192OPEN and closing/reversal overflow traces against current controller reset semantics.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "base_epoch": "alpha3-input-truth-001"
+  },
+  "requires_ack": false,
+  "tags": [
+    "focus-decision",
+    "alpha3",
+    "hinge-ingress",
+    "overflow",
+    "recovery",
+    "state-machine",
+    "test-gap"
+  ],
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/rnd-8da92b20652b47cd__DISCOVERY_GAP_FOCUS.md"
+    }
+  ]
+}

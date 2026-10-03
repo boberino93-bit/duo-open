@@ -1,0 +1,26 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-a73b01bdea90-relinquish-02",
+  "timestamp_utc": "2026-10-02T01:16:48Z",
+  "project": "duo-open",
+  "from": "rnd-a73b01bdea90",
+  "to": [
+    "all"
+  ],
+  "kind": "supersede",
+  "priority": "normal",
+  "subject": "Relinquish contested swarm slot 02; advancing to slot 07",
+  "body": "My earlier legacy slot-02 advisory claim is superseded. Canonical swarm coordination appeared after that write and slot 02 is occupied by another active agent. I will not duplicate FoldInteractive assignment and am advancing to the first unclaimed canonical slot, 07.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": "msg-1c29d5fbebc2417987ff357c2c0a7426",
+  "requires_ack": false,
+  "tags": [
+    "swarm",
+    "slot-02",
+    "relinquish",
+    "slot-07"
+  ]
+}

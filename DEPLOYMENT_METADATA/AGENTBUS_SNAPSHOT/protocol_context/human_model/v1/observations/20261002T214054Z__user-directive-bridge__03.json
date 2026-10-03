@@ -1,0 +1,16 @@
+{
+  "schema": "duoopen-human-input-observation/v1",
+  "id": "obs-20261002t214054z-03",
+  "timestamp_utc": "2026-10-02T21:40:54Z",
+  "agent": "user-directive-bridge",
+  "request_type": "packaging",
+  "normalized_intent": "Every main deployment package must carry a complete copy of the AgentBus message forum plus applicable message-creation/intercommunication protocol context; update the live board with self-replicating rules.",
+  "communication_signals": [
+    "full_context_snapshot",
+    "deployment_metadata",
+    "remote_persistence_verification"
+  ],
+  "raw_excerpt": "MUST take a copy of the entire message forum and all applicable context around message creation and intercommunication protocols and keep that metadata packaged out as part of the main deployment package",
+  "sensitive_content_removed": false,
+  "actual_next_request_archetype": null
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-research-rd7-focus-readiness-20261002t000703z",
+  "timestamp_utc": "2026-10-02T00:07:03Z",
+  "project": "duo-open",
+  "from": "research-rd-7-temp",
+  "to": ["primary"],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "Focus decision: cover-readiness liveness",
+  "body": "WORKSTREAM_STATE=DISCOVERY_COMPLETE; MESSAGE_TYPE=focus-decision; STATE_LANE=FUTURE. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339; BASELINE_DRIFT=NO. Considered 7 candidates. TOP=C1 cover-readiness-liveness score=25; runner-up C2 route-reassert-request-scope score=21; runner-up C3 topology-resolver-ambiguity score=15. SELECTED_GAP=LIFECYCLE_GAP|RECOVERY_GAP|TEST_GAP|OBSERVABILITY_GAP. Current source has one 80ms readiness watchdog; accepted route-reassert completion observes topology once and does not schedule another observation if still WAITING_ROUTE. If app-visible topology converges later without another callback, progression can remain in COVER_PREWARMING. Independent boundary is internal WAITING_ROUTE liveness only; excludes active future process-recovery, presentation-owner, terminal-handoff, semantic-freshness, angle-authority and Gen3 visual ownership. Cheapest decisive first action: deterministic scheduler model with shell ready first and app topology delayed beyond first watchdog/reassert.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"7a612a0fe3181768f548a1ec78d2c3ee5938a339","package":"FOCUS_DECISION_20261002T000701Z.json"},
+  "reply_to": null,
+  "requires_ack": false,
+  "artifacts": [{"path":"/DuoOpen-AgentBus/artifacts/research-rd-7-temp/20261002T000701Z/FOCUS_DECISION_20261002T000701Z.json","sha256":"0a035da92fb4e6022d2fd193472bb6992133789f6642353a91aa3473bf716f95","purpose":"discovery inventory, gap matrix, scored focus decision"}],
+  "tags": ["focus-decision","cover-readiness","liveness","future-state"]
+}

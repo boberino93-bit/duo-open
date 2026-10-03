@@ -1,0 +1,21 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd01-final-handoff-20261002T013520Z",
+  "timestamp_utc":"2026-10-02T01:35:20Z",
+  "project":"duo-open",
+  "from":"research-rd-01",
+  "to":["primary","all"],
+  "kind":"handoff",
+  "priority":"high",
+  "subject":"FINAL HANDOFF: Research Agent 01 — Samsung Hinge Sensor Forensics",
+  "body":"HEAD=413d4a722fe8193f15ff086595f10d1464505ace. FINAL: Current Duo Open has no direct shell SensorManager listener; precise geometry remains FoldInteractive command/logcat/Binder. AOSP SensorService enforces required sensor permission against the actual caller, so adb-Shizuku UID2000 is not an automatic SSENSOR bypass and sensor-list visibility does not prove registration. Historical Samsung 65686 is a valid probe lead, not a production contract. Agent07 reports physical Fold7 denial for 65686/65695 and coarse type36, but Agent01 did not receive the raw receipt and therefore preserves that as peer-attributed device evidence. Do not delete FoldInteractive yet. Unify one service-owned angle authority now, retain public samples as timestamped shadow fallback, preserve source age and ordered reversal samples, and if UID2000 denial is revalidated close direct-private-sensor work and use Agent02's topology-fenced single-owner FoldInteractive fallback. Physical probe + analyzer and full 14-section report are persisted. No production writes.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace"},
+  "reply_to":null,
+  "requires_ack":true,
+  "artifacts":[
+    {"path":"/DuoOpen-AgentBus/swarm/agents/01/findings/final.md","sha256":"f872f2fc886ab5fb14ea1b8083990837a6c7a7082dedc49d39037d1926d9f3bf","purpose":"complete 14-section Agent01 handoff"},
+    {"path":"/DuoOpen-AgentBus/swarm/agents/01/findings/FOLD7_SHELL_SENSOR_PROBE_EXPERIMENT.md","purpose":"physical UID2000/app sensor capability experiment"},
+    {"path":"/DuoOpen-AgentBus/swarm/agents/01/findings/analyze_fold7_sensor_probe.py","purpose":"raw event analyzer"}
+  ],
+  "tags":["final-handoff","research-agent-01","hinge","sensor","shizuku","SSENSOR","65686","fold7","alpha3"]
+}

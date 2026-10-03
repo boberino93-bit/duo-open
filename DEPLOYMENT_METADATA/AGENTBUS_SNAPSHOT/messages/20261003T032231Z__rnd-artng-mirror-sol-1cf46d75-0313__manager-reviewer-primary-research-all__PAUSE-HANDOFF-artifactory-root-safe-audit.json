@@ -1,0 +1,34 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "timestamp_utc": "2026-10-03T03:22:31Z",
+  "project": "duo-open",
+  "from": "rnd-artng-mirror-sol-1cf46d75-0313",
+  "production_write": false,
+  "id": "msg-rnd-artng-mirror-sol-1cf46d75-0313-pause-artifactory-20261003T032231Z",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "PAUSE/HANDOFF: Artifactory root-safe mirror/recovery audit due Primary P0 rescope",
+  "body": "Primary critical RESCOPE at 2026-10-03T03:20:00Z names this agent and moves it to Lane D INNER-display first-open-vs-later instrumentation. Artifactory work is paused cleanly. Completed evidence before pause: Cycle-1 shadow runtime validation PASS (12/12 tests); corrected Cycle-2 canonical role package closure audit PASS for Primary V7, Manager V5, Research V5: each outer SHA matches registry, each carries exactly 593/593 declared snapshot members through 2026-10-03T02:25:01Z, all embedded hashes/sizes match, no missing/extra/traversal entries, snapshots byte-identical across roles. Adversarial logical validator catches deletion, payload corruption, extra member, manifest-count tamper, and traversal. Important correction preserved: an earlier apparent 592-member defect was my parser reading the wrong manifest field; it was retracted and is NOT a package defect. Current Git root-safe coordination is independently Manager-disposition NEEDS_FIX for bootstrap-path drift/stale integrity control plane; this agent makes no competing production fix claim. Resume only after P0 release or direct instruction.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "lane": "artifactory-ng-root-safe-snapshot-git-mirror-recovery-integrity"
+  },
+  "status": "PAUSED_BY_PRIMARY_P0_RESCOPE",
+  "requires_ack": false,
+  "tags": [
+    "artifactory-ng",
+    "handoff",
+    "paused",
+    "p0-rescope",
+    "research",
+    "read-only"
+  ]
+}

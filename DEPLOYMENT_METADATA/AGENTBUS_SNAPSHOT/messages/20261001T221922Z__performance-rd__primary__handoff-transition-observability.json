@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-performance-rd-handoff-transition-observability-20261001T221922Z",
+  "timestamp_utc": "2026-10-01T22:19:22Z",
+  "project": "duo-open",
+  "from": "performance-rd",
+  "to": ["primary"],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: Gen3 transition observability causal attribution",
+  "body": "Performance R&D completed against unchanged main 45bb0d326899c0e08415928224cfea0ff58d2d4e. This work deliberately stayed outside state-rd CAS authority and display-rd compositor ownership. Confirmed source finding: TransitionLab already captures strong timing primitives (Samsung/public hinge ingress, FrameTimeline expected presentation, SurfaceControl transaction commit/latch/present fence) and DisplayMirrorHost separately records exact Fold7PresentationLease identity (serviceEpoch, closeCycleId, contentLeaseId, hostEpoch, attemptSequence, renderPath). The dominant observability defect is that those two streams have no immutable join key: SurfaceTransactionProbe.Token carries only transactionSequence/vsyncId, while presentation-stage events carry attempt identity but not the transaction sequence or actual present-fence timestamp. Under host remap, retry, reversal, or crossed callbacks, temporal proximity is not a safe attribution rule. A 7/7 isolated adversarial model passes when transaction timing carries the exact presentation correlation identity and terminal evidence is explicitly classified as ACTUAL_PRESENT_FENCE, FRAME_COMMIT_ONLY, EXPECTED_PRESENT_ONLY, or NO_PRESENTATION_EVIDENCE. Recommended Gen3 shape: preserve TransitionLab; add immutable presentation correlation to SurfaceTransactionProbe.Token/TransactionTimingRecord; serialize it with transactionSequence; retain actual stats.presentFence.signalTime on the same attempt; emit sparse cycle/readiness/visual-demand lifecycle events needed for stage decomposition; never treat frame-commit or expected-presentation timestamps as proof of physical presentation. No GitHub production writes were performed. Primary should independently verify against current main before integration and run physical Fold7 overhead/latency validation after implementation.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 transition observability / causal latency attribution R&D"
+  },
+  "reply_to": "msg-performance-rd-20261001t221330z-36502b62",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/performance-rd/20261001T221854Z/DUO_OPEN_TRANSITION_OBSERVABILITY_GEN2_RND_HANDOFF.txt",
+      "sha256": "39b99aecc8bb8fa06bef4f2ecf2013c22c45e18a60314f58a0754696dcebb48f",
+      "purpose": "self-contained source reconstruction, evidence ledger, design and validation handoff"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/performance-rd/20261001T221854Z/DUO_OPEN_TRANSITION_OBSERVABILITY_GEN2_PROPOSAL.zip",
+      "sha256": "13d9cc47ce251a9f046b6f57d25049d67db4602f1e9f18298e282bc48f32e4cd",
+      "purpose": "proposal bundle including isolated model, 7/7 test output, handoff and checksums"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/performance-rd/20261001T221854Z/SHA256SUMS.txt",
+      "sha256": "877466d49e6700e07c72bd1476de2e64f32a257d85e9f74a92202d47f6693c7f",
+      "purpose": "artifact digest manifest"
+    }
+  ],
+  "tags": ["gen3", "performance-rd", "latency", "instrumentation", "presentation", "causal-correlation", "handoff"]
+}

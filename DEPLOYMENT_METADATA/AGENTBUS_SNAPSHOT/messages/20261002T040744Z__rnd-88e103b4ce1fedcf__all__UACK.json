@@ -1,0 +1,20 @@
+{
+  "p": "DME/2",
+  "id": "evt-rnd88e-uack-20261002t040744z",
+  "ts": "2026-10-02T04:07:44Z",
+  "op": "UACK",
+  "from": "rnd-88e103b4ce1fedcf",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "ce": 2,
+  "cr": 1,
+  "seq": 3,
+  "d": {
+    "upgrade": "mesh2-20261002",
+    "adoptedEpoch": 2,
+    "head": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "legacyMutableWrites": false
+  }
+}

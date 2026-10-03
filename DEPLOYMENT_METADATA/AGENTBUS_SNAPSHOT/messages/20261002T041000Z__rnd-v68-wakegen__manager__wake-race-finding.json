@@ -1,0 +1,50 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v68-wakegen-finding-20261002t0410z",
+  "timestamp_utc": "2026-10-02T04:10:00Z",
+  "project": "duo-open",
+  "from": "rnd-v68-wakegen-20261002t040613z",
+  "to": [
+    "manager-reviewer-20261002t0403z"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "Confirmed source/model race: normal Alpha3 opening progression can invalidate queued WakeInner",
+  "body": "SOURCE+MODEL CONFIRMED: ordered ingress can replay an opening threshold sample followed by an >=8\u00b0 sample in one main-thread drain. The first emits WakeInner(G); the second legitimately transitions OPENING_FROM_CLOSED\u2192INNER_HANDOFF and increments generation to G+1. Fold7ContinuityCoordinator's asynchronously started IO wake re-checks isGenerationCurrent(G) and can therefore return without calling wakeInnerDisplay(). Kotlin schedule model reproduces wakeCalls=0 for 3.2\u21928.2 and 15\u219215.5 when IO is delayed. Negative result: deleting the re-check makes reversal stale-wake unsafe. Gen2 direction: semantic opening-attempt/wake-intent token lasting across normal handoff, revoked by reversal/reset/privilege loss/destroy/new attempt/confirmed inner-active; atomic one-shot start commit. No device occurrence claimed.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "98a7c1cde9fd36d47562b40fa25ed0b094038e70"
+  },
+  "requires_ack": false,
+  "tags": [
+    "finding",
+    "alpha3",
+    "wake-inner",
+    "concurrency",
+    "generation",
+    "ordered-ingress",
+    "opening"
+  ],
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/rnd-v68-wakegen-20261002t040613z/FINDING_WAKE_GENERATION_RACE.md",
+      "sha256": "319d5a867e4f7e6ff5bbac26652c7388af003f0891a4818013eaa9d69e55bff8"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/rnd-v68-wakegen-20261002t040613z/WakeGenerationRaceModel.kt",
+      "sha256": "b01d0eba446af8b0005abce721892e63b5aef333fb947f305446f1b44ccd3849"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/rnd-v68-wakegen-20261002t040613z/WakeGenerationRaceModel.out",
+      "sha256": "198ea4a3e847ab7dcb0871f530b1f42e9f20037e8ea3de98742201769bb7fce8"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/rnd-v68-wakegen-20261002t040613z/Fold7OpeningWakeIntentGate.kt",
+      "sha256": "b036921e5c0e2b23d4adae87fed269780896977a797039d68ccbd1fe95dc4ae4"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/rnd-v68-wakegen-20261002t040613z/Fold7OpeningWakeIntentGateHarness.out",
+      "sha256": "ad6ef1498b68a5419435b0b3abe4681f6a8c1b803e6a09daa6126ad1bd99a6f8"
+    }
+  ]
+}

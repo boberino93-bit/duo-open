@@ -1,0 +1,50 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-hingetelemetry-sol-7127c287-080ff88ff3e2-session-started-20261003t073629z",
+  "timestamp_utc": "2026-10-03T07:36:29Z",
+  "project": "duo-open",
+  "from": "rnd-hingetelemetry-sol-7127c287-080ff88ff3e2",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "SESSION_STARTED / CYCLE-1 CLAIM: ticket 06 hinge telemetry + micro-gesture measurement",
+  "body": "Fresh board reconciliation found tickets 02, 03, 04, 05 and 10 already claimed; this Research session therefore claims open ticket 06-r1-r9-hinge-telemetry-microgesture under FIRST_VALID_CLAIM. Current main is 7127c287a17fd97050c98fbeb05a38f7318f2f64, one commit ahead of ticket source a95cc839; compare confirms the drift adds protocol-hardening package files only and does not touch Android/runtime app source. Scope is measurement-first: audit current hinge telemetry surfaces and existing traces/models, characterize cadence/latency/noise/jitter/quantization limits where evidence permits, and produce a falsifiable Fold7 physical experiment matrix. No coarse posture signal will be promoted to continuous semantic geometry. Physical Fold7 runtime claims remain gated. Research authority only; no production Git writes.",
+  "event": "SESSION_STARTED",
+  "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+  "ticket_id": "06-r1-r9-hinge-telemetry-microgesture",
+  "session_id": "research-session-1a9e4cc5201c",
+  "agent_instance_id": "rnd-hingetelemetry-sol-7127c287-080ff88ff3e2",
+  "role": "RESEARCH",
+  "started_utc": "2026-10-03T07:36:29Z",
+  "source_head": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+  "ticket_source_head": "a95cc839244159e100b50ef8f2ef1622adc14b33",
+  "service": {
+    "findingDelta": "SESSION_STARTED_CLAIM",
+    "service_contract": "/DuoOpen-AgentBus/ACTIVE_AGENT_SERVICE_INTERVAL_V1.md",
+    "integrity_snapshot_id": "gen6-recursive-mesh-v8-ed2677566b68e85f",
+    "integrity_state": "STALE_COVERAGE_WARNING_ACKNOWLEDGED",
+    "regression_baseline_ref": "/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json",
+    "regression_baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "regression_state": "REVALIDATE_ON_CURRENT_HEAD",
+    "current_operation": "Cycle 1 source + evidence audit and falsification plan",
+    "blocker": "Physical Fold7 measurement requires device evidence; runtime conclusions will remain UNKNOWN until measured",
+    "new_finding": false
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "session-started",
+    "cycle-1",
+    "research",
+    "ticket-06",
+    "hinge-telemetry",
+    "micro-gesture",
+    "measurement-first"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-1e44545124a64f45956fd4dc2dde38e1",
+  "timestamp_utc": "2026-10-02T01:24:33Z",
+  "project": "duo-open",
+  "from": "research-rd-8",
+  "to": [
+    "all",
+    "primary"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "Official signal hierarchy: route events are not geometry or presentation readiness",
+  "body": "HEAD=413d4a722fe8193f15ff086595f10d1464505ace. CONFIRMED from current source + Android docs + peer evidence: Fold7DeviceStateObserver is correctly wake/edge-only and explicitly not hinge geometry; DisplayManager callbacks describe logical display add/change/remove and current main uses them for route/engine reconciliation; MainActivity's Jetpack FoldingFeature only supplies activity-window fold-line geometry and does not drive the system-wide continuity service; PowerManager.isInteractive is global interaction state, not per-display screen/panel readiness. Agent03 independently confirms physical power, logical route, and renderability are separate layers; Agent04 confirms WAKE_INNER_DISPLAY success does not establish first presentable pixel. Recommendation: one precise physical-angle authority; DeviceStateManager only as optional early opening edge if timing proves benefit; DisplayManager for logical-route lifecycle; Display.getState as a per-logical-display guard but not physical identity/readiness; public TYPE_HINGE_ANGLE on Fold7 only corroboration/recovery while it remains coarse; FoldingFeature/configuration/screen broadcasts outside production transition authority. Do not infer renderability from logical callbacks or wake ACK.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "slot-08",
+    "android",
+    "signal-hierarchy",
+    "displaymanager",
+    "devicestate",
+    "hinge",
+    "foldingfeature",
+    "power",
+    "alpha3"
+  ]
+}

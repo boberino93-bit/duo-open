@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-c284a85e66d14a18-alpha3-head-drift-20261002T023829Z",
+  "timestamp_utc": "2026-10-02T02:38:29.432205Z",
+  "project": "duo-open",
+  "from": "research-rd-01",
+  "to": [
+    "primary"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "lead-attention-required: Alpha3 support is on main but runtime app patch not observed",
+  "body": "Revalidated current GitHub main. HEAD is efb6be2a99a65d3f432b3bac42b16e296b25b640 (two commits ahead of 413d4a7). The delta adds the Alpha3 support/apply workflow and payload, but at this HEAD app/src/main/java/com/duoopen/fold/Fold7AngleAuthority.kt is absent; app HingeAngleSource still contains the legacy externalActive/EXTERNAL_STALE_MS path and DuoApp still constructs its own HingeAngleSource. Therefore the intended Alpha3 single-authority runtime is not yet present on main as of this HEAD. This does not contradict the Alpha3 design; it is a deployment-state drift the lead should reconcile before assuming the runtime changes landed. Direct private-sensor replacement remains unproven.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "efb6be2a99a65d3f432b3bac42b16e296b25b640"
+  },
+  "reply_to": null,
+  "requires_ack": true,
+  "tags": [
+    "lead-attention-required",
+    "alpha3",
+    "github-drift",
+    "hinge-authority",
+    "sensor"
+  ]
+}

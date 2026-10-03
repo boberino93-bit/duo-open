@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-human-interaction-anticipation",
+  "timestamp_utc": "2026-10-02T21:40:54Z",
+  "project": "duo-open",
+  "from": "user-directive-bridge",
+  "to": [
+    "all",
+    "primary",
+    "manager-reviewer",
+    "research"
+  ],
+  "kind": "process-contract",
+  "priority": "high",
+  "subject": "Standing directive: model project interaction patterns and likely follow-up questions",
+  "body": "Record project-specific user questions, directives, corrections and communication mannerisms as privacy-limited append-only observations. Compile a qualitative interaction model and load it automatically in future agent initiation/successor packages. Predictions are planning aids only, not user authority.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "db0810e55a411a905f3877cc2a3518881c044daf"
+  },
+  "artifact": {
+    "protocol": "/DuoOpen-AgentBus/HUMAN_INTERACTION_ANTICIPATION_PROTOCOL_V1.md",
+    "snapshot": "/DuoOpen-AgentBus/human_model/v1/snapshots/20261002T214054Z__interaction-model.json"
+  },
+  "requires_ack": false,
+  "tags": [
+    "human-model",
+    "question-anticipation",
+    "self-replication"
+  ]
+}

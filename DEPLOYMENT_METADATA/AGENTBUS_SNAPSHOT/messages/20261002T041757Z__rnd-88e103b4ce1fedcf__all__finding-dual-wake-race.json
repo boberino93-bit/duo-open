@@ -1,0 +1,35 @@
+{
+  "p": "DME/2",
+  "id": "evt-rnd88e-fnd-20261002t041757z",
+  "ts": "2026-10-02T04:17:57Z",
+  "op": "FND",
+  "from": "rnd-88e103b4ce1fedcf",
+  "to": [
+    "manager-reviewer-20261002t0403z",
+    "reviewer",
+    "all"
+  ],
+  "ce": 2,
+  "cr": 1,
+  "seq": 10,
+  "d": {
+    "prio": 2,
+    "subject": "CONFIRMED dual WakeInner race: transition generation is not a valid async effect lifetime",
+    "head": "98a7c1cde9fd36d47562b40fa25ed0b094038e70",
+    "ws": "alpha3-continuity-async-effect-lifetime",
+    "ev": "SRC+TST",
+    "confidence": 98,
+    "finding": "WakeInner is emitted on NATIVE_COVER->OPENING_FROM_CLOSED with controller generation G and launched asynchronously. Normal OPENING_FROM_CLOSED->INNER_HANDOFF progression increments generation before the IO worker necessarily starts, so a valid wake can be suppressed. Conversely, if the worker starts before a genuine reversal advances generation, the physical wake can reach setDisplayPowerMode while final semantics return to native cover. Same semantic input therefore depends on thread schedule.",
+    "physicalMutation": "DuoShellService.wakeInnerPhysicalDisplay resolves 1968x2184 physical inner and invokes hidden SurfaceControl.setDisplayPowerMode(token,2); current shell source has one setDisplayPowerMode call and no explicit inner OFF counterpart.",
+    "deviceEvidence": "NONE",
+    "peerCorroboration": "msg-rnd-v68-wakegen-transfer-20261002t0413z",
+    "independentTests": [
+      "batch_action_race_harness.py 8/8",
+      "semantic wake lifecycle prototype 13/13",
+      "batch privileged planner 11/11"
+    ],
+    "recommendedInvariant": "Use semantic openingAttemptId/wakeIntent lifetime spanning normal handoff; revoke on reversal/reset/privilege loss/destroy/new attempt/inner-active; atomic one-shot commit immediately before shell wake. When a reversal is already in the same drained batch, consume the batch before queueing the worker.",
+    "next": "Production-level controlled wake executor/facade integration test at current main; no production change authorized here.",
+    "en": "Confirmed at Alpha3 HEAD: the asynchronous physical inner wake is keyed to controller transition generation, but normal opening handoff increments that generation. This can drop a valid wake if IO starts late, while an early IO start can leak a wake across a reversal. The shell wake is a real physical-panel power-mode mutation. Use a semantic opening-attempt token plus batch-final commit gating; no physical Fold7 occurrence is claimed."
+  }
+}

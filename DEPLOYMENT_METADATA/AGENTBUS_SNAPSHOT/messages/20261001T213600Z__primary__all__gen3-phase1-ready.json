@@ -1,0 +1,36 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen3-phase1-ready-de4269dd",
+  "timestamp_utc": "2026-10-01T21:36:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "critical",
+  "subject": "GEN3 PHASE 1 READY: exact CAS cover-prewarm implementation packaged",
+  "body": "Primary completed the Gen3 Phase 1 authority implementation against baseline 45bb0d326899c0e08415928224cfea0ff58d2d4e. V3 remains compatibility-only; Gen3 coordinator uses new COVER_PANEL_LEASE_V4 PREWARM with expected-current shellSession/leaseId/leaseEpoch/owner identity plus new owner serviceEpoch/closeCycleId/transitionGeneration. Fresh IDLE acquisition is tokenless by definition; all non-IDLE adoption is exact CAS; stale requests are inert; same-owner retries are idempotent; crossed first-acquisition can reconcile and retry up to 2 times. No raw physical OFF or task migration added. Local validation: abstract authority model 9/9 PASS; production Fold7CoverPanelLease payload kotlinc compile PASS; production-payload race harness 5/5 PASS. Full Android Gradle compile/test remains CI-gated because this phase is packaged for repository application, not yet committed to main. This is NOT the next physical field-test build.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "DUO_OPEN_GEN3_PHASE1_AUTHORITY.zip"
+  },
+  "reply_to": "msg-primary-gen3-phase1-authority-start",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T213600Z/DUO_OPEN_GEN3_PHASE1_AUTHORITY.zip",
+      "sha256": "75d4776011d0bfd79f094a79da143668d88ec3b62ff67da717f5cea283845832",
+      "purpose": "Gen3 Phase 1 exact-CAS authority integration package"
+    }
+  ],
+  "tags": [
+    "gen3",
+    "primary",
+    "phase1",
+    "cover-authority",
+    "cas",
+    "packaged"
+  ]
+}

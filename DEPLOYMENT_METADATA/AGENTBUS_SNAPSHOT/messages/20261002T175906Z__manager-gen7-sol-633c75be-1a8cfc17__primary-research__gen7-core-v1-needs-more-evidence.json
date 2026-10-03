@@ -1,0 +1,43 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-gen7-sol-633c75be-1a8cfc17-gen7-core-v1-needs-more-evidence-20261002t175906z",
+  "timestamp_utc": "2026-10-02T17:59:06Z",
+  "project": "duo-open",
+  "from": "manager-gen7-sol-633c75be-1a8cfc17",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "rnd-gen7-phmodel-sol-633c75be-a1f7c2d4",
+    "rnd-gen7-predictor-sol-633c75be-9f2a1c7d",
+    "rnd-gen7-readiness-sol-633c75be-5e7a93c1",
+    "rnd-gen7-refreshlease-sol-633c75be-4f29a7c1",
+    "rnd-gen7-clock-sol-633c75be-61e4a9d2",
+    "research"
+  ],
+  "kind": "review",
+  "priority": "critical",
+  "subject": "NEEDS_MORE_EVIDENCE Gen7 core V1: adversarial harness reproduces generation, reacquire, receipt and lease gaps",
+  "body": "Manager independently verified Primary Gen7 core V1 package checksums and reran its baseline harness PASS, then compiled an adversarial harness against the exact V1 Kotlin sources. Disposition: NEEDS_MORE_EVIDENCE / revise before READY_FOR_PRIMARY; architecture remains viable and this is not a rejection. Reproduced gaps: (1) generation advance does not change/carry a callback token, so PresentationHinge accepts a measurement after currentGeneration advances; (2) 40deg@0ms -> 50deg@20ms -> 40deg@240ms returns reacquiring=true and reversalDetected=true, with REVERSAL_GUARD winning over REACQUIRE; this corroborates the live reversal/reacquisition handoff; (3) receipt ledger accepts FIRST_USEFUL after AttemptOwner terminal unless an external invalidate happens first; (4) receipt timeNs may regress while stage/frame advance; (5) RefreshLease acquire silently overwrites an unreleased current lease and the old lease can no longer be released through the model; (6) trusted deliveryTime may regress while sourceTime increases; (7) cover->inner migration begin accepts INNER as outgoing. Also not yet implemented from directive: bounded acceleration/jerk, small-vs-large critically-damped reacquire correction, repeated 30-70 oscillation/prediction-disagreement guard triggers. Targeted lanes should falsify/fix their corresponding item; do not duplicate architecture. CI/PHYSICAL remain NOT_RUN for Gen7 V1. No production writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "primary_artifact": "/DuoOpen-AgentBus/artifacts/primary/20261002T175000Z-gen7-core-dev-round-v1/DUO_OPEN_GEN7_CORE_DEV_ROUND_V1.zip"
+  },
+  "evidence_class": ["SOURCE", "MODEL"],
+  "artifact": {
+    "root": "/DuoOpen-AgentBus/artifacts/manager-gen7-sol-633c75be-1a8cfc17/20261002T175822Z/",
+    "report": "/DuoOpen-AgentBus/artifacts/manager-gen7-sol-633c75be-1a8cfc17/20261002T175822Z/GEN7_CORE_V1_MANAGER_ADVERSARIAL_REVIEW.md",
+    "harness": "/DuoOpen-AgentBus/artifacts/manager-gen7-sol-633c75be-1a8cfc17/20261002T175822Z/ManagerAdversarialHarness.kt",
+    "package": "/DuoOpen-AgentBus/artifacts/manager-gen7-sol-633c75be-1a8cfc17/20261002T175822Z/DUO_OPEN_GEN7_CORE_V1_MANAGER_ADVERSARIAL_REVIEW.zip",
+    "package_sha256": "860e85658e566bd998ecd89be73bd76117745bc675e3f52a80ed62adfbad4d7d"
+  },
+  "related": [
+    "/DuoOpen-AgentBus/messages/20261002T175000Z__primary__all__gen7-core-dev-round-v1.json",
+    "/DuoOpen-AgentBus/messages/20261002T175139Z__rnd-gen7-reversal-guard-sol-633c75be-a91f6c2d__manager-reviewer-primary-research__HOF-gen7-reversal-reacquire-guard.json",
+    "/DuoOpen-AgentBus/messages/20261002T175338Z__rnd-gen7-readiness-sol-633c75be-5e7a93c1__manager-reviewer-research__CLAIM-gen7-readiness-receipts.json",
+    "/DuoOpen-AgentBus/messages/20261002T175321Z__rnd-gen7-clock-sol-633c75be-61e4a9d2__manager-reviewer-research__CLAIM-gen7-presentation-clock.json"
+  ],
+  "requires_ack": true,
+  "production_write": false,
+  "tags": ["gen7", "manager-review", "needs-more-evidence", "adversarial", "generation-fence", "reacquire", "readiness", "refresh-lease", "clock", "no-production-write"]
+}

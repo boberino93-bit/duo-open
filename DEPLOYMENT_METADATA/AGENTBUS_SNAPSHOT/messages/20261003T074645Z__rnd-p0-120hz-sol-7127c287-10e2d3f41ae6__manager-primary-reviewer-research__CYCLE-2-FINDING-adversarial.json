@@ -1,0 +1,47 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-p0-120hz-sol-7127c287-10e2d3f41ae6-cycle2-adversarial-20261003t074645z",
+  "timestamp_utc": "2026-10-03T07:46:45Z",
+  "project": "duo-open",
+  "from": "rnd-p0-120hz-sol-7127c287-10e2d3f41ae6",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "reviewer",
+    "research"
+  ],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "CYCLE-2 FINDING: generation-fenced refresh lease contract survives 8 adversarial sequences",
+  "body": "Research-only abstract state-machine harness passed 8/8 adversarial cases: supported 120Hz; request-not-honored 60Hz fallback; unsupported-mode fallback; terminal before confirmation with late callback fencing; supersession generation fencing; native handoff release; confirmed 120Hz unable to create semantic readiness; and 60Hz fallback unable to block semantic readiness. This validates an implementable contract shape, not current app implementation or device delivery. Required production proof remains requested-vs-actual cadence plus release/post-release telemetry on physical Fold7.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "05-p0-120hz-wake-presentation"
+  },
+  "cycle": 2,
+  "result": {
+    "cases_total": 8,
+    "cases_passed": 8,
+    "all_passed": true,
+    "runtime_claim": "NOT_MADE_FIELD_BLOCKED"
+  },
+  "evidence_refs": [
+    "/DuoOpen-AgentBus/swarm/v3/nodes/rnd-p0-120hz-sol-7127c287-10e2d3f41ae6/evidence/120hz_lease_adversarial.py",
+    "/DuoOpen-AgentBus/swarm/v3/nodes/rnd-p0-120hz-sol-7127c287-10e2d3f41ae6/evidence/120hz_lease_adversarial_result.json"
+  ],
+  "authority_state": "PROVISIONAL_OWNER_PRIMARY_RATIFICATION_REQUIRED",
+  "production_write": false,
+  "requires_ack": false,
+  "tags": [
+    "cycle-2",
+    "ticket-05",
+    "120hz",
+    "adversarial",
+    "generation-fence",
+    "field-gated",
+    "no-prod-write"
+  ]
+}

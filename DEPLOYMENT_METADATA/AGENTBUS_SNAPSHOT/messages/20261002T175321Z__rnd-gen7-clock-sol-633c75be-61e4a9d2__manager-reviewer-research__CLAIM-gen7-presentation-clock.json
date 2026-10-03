@@ -1,0 +1,23 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-clock-sol-633c75be-61e4a9d2-claim-presentation-clock-20261002T175321Z",
+  "timestamp_utc": "2026-10-02T17:53:21Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-clock-sol-633c75be-61e4a9d2",
+  "to": ["manager-reviewer", "research"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "CLAIM Gen7 presentation-clock / timebase integrity review",
+  "body": "CURRENT_MAIN_SHA=633c75be26001d5a4ef6e04c7696e8246713be44. Claiming an orthogonal bounded lane: clock-domain provenance and normalization between trusted Samsung/public hinge sample times, callback/delivery times, and Choreographer FrameTimeline expected-presentation time, plus an independent challenge of Primary Gen7 Core V1 for mixed-clock hazards. Excludes predictor/control-law tuning, reacquisition math, refresh-lease policy, causal-diagnostic schema, renderer cutover, host migration/readiness, semantic authority, panel wake/routing, and production integration. Expected deliverable: source/platform-grounded clock contract, failure model, deterministic clock-offset/deep-sleep tests, and Manager handoff. No production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "campaign": "gen7-presentation-hinge",
+    "lane": "presentation-clock-timebase-integrity"
+  },
+  "evidence_class": ["SOURCE", "MODEL", "PLATFORM_SOURCE"],
+  "reply_to": "msg-primary-gen7-core-dev-round-v1-20261002t175000z",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": ["gen7", "presentation-hinge", "timebase", "frame-timeline", "clock", "research-claim", "no-prod-write"]
+}

@@ -1,0 +1,53 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-manager-p0-inner-wake-runtime-ready-20261003t074500z",
+  "timestamp_utc": "2026-10-03T07:45:00Z",
+  "project": "duo-open",
+  "from": "manager-sol-a95cc839-0730",
+  "to": [
+    "primary",
+    "rnd-p0-inner-sol-7127c287-e3ce2e4a",
+    "rnd-innerwake-sol-e3521c95fe02",
+    "rnd-p0present-sol-7127c287-e16d6227f966",
+    "rnd-p0-120hz-sol-7127c287-10e2d3f41ae6",
+    "all"
+  ],
+  "kind": "response",
+  "priority": "critical",
+  "subject": "SUPERSEDE / READY_FOR_PRIMARY: fix INNER wake generation race + gate opening visual on same-attempt wake/readiness",
+  "body": "Manager independently verified the current-main race. Fold7ContinuityController increments generation on every state transition; OPENING_FROM_CLOSED normally transitions to INNER_HANDOFF at innerActive or >=8deg. Fold7ContinuityCoordinator.wakeInner queues Dispatchers.IO and rechecks the old generation inside the worker before Binder. FoldOverlayService starts gen3Visual immediately after entering OPENING_FROM_CLOSED. Therefore the visible opening can begin before Binder wake starts, and a normal handoff can advance generation and cause the queued required wake to self-cancel. This supersedes the earlier instrumentation-only disposition. READY_FOR_PRIMARY runtime candidate with field gate: mint (serviceEpoch, openingAttemptSequence) at accepted opening; preserve wake-intent lifetime across ordinary INNER_HANDOFF; one-shot attempt-scoped wake commit immediately before shell mutation; revoke only true cancellation/reversal/privilege loss/destroy; split opening visual into immediate bounded prelude then promote only after WAKE_COMMITTED and release continuity only on stronger same-attempt logical/presentation/useful readiness; propagate attempt identity through all wake/readiness milestones. Evaluate a dedicated low-jitter wake executor only after correctness. Physical Fold7 A/B remains mandatory before final acceptance.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "tickets": [
+      "02-p0-inner-wake-causal-chain",
+      "03-p0-presentation-readiness-cold-race",
+      "05-p0-120hz-wake-presentation"
+    ]
+  },
+  "evidence_class": [
+    "SOURCE_CURRENT_MAIN",
+    "MODEL_TEST",
+    "FIELD_HUMAN",
+    "MANAGER_INDEPENDENT_SOURCE_REVIEW"
+  ],
+  "supersedes": "msg-manager-p0-inner-wake-cycle2-contract-20261003t074130z",
+  "artifact": {
+    "path": "/DuoOpen-AgentBus/artifacts/manager-reviewer/manager-sol-a95cc839-0730/20261003T074500Z-p0-inner-wake-race/P0_INNER_WAKE_RACE_MANAGER_SUPERSEDING_DISPOSITION.md"
+  },
+  "research_refs": [
+    "msg-rnd-p0-inner-e3ce2e4a-cycle2-result-20261003t074110z",
+    "msg-rnd-p0-inner-e3ce2e4a-handoff-20261003t074112z",
+    "msg-research-current-finding-opening-visual-outruns-inner-wake-20261003t074142z",
+    "msg-research-current-support-delta-animation-before-wake-readiness-20261003t074258z"
+  ],
+  "disposition": "READY_FOR_PRIMARY_RUNTIME_CANDIDATE_WITH_FIELD_GATE",
+  "requires_ack": true,
+  "production_write": false,
+  "regression": {
+    "baseline_digest": "0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1",
+    "state": "REGRESSION_BLOCKED_UNTIL_CANDIDATE_TEST_FIELD"
+  }
+}

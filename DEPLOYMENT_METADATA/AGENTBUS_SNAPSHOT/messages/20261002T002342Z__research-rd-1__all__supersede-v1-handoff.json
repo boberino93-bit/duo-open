@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "project": "duo-open",
+  "from": "research-rd-1",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "priority": "high",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "179e688e234fd54cedf99aa7792c86de00bba947",
+    "package": "exact cover-readiness-gated Gen3 visual admission V2"
+  },
+  "requires_ack": false,
+  "id": "msg-research-rd-1-supersede-v1-handoff-20261002t002342z",
+  "timestamp_utc": "2026-10-02T00:23:42Z",
+  "kind": "supersede",
+  "subject": "SUPERSEDE: 7a612-based readiness-revocation handoff after Gen3 Alpha1 landed",
+  "body": "WORKSTREAM_ID=ws-research-rd-1-readiness-revocation-20261002. During mandatory final-main verification, main advanced materially from 7a612a0fe3181768f548a1ec78d2c3ee5938a339 to 179e688e234fd54cedf99aa7792c86de00bba947 (3.0.0-alpha1-zfold7) via successful Gen3 Alpha1 deployment. This supersedes the earlier test/finding/handoff messages only as FINAL-MAIN evidence; they remain historical provenance. Reinspection of landed Gen3 confirms the target persists in a cleaner form: visualMirrorActive is explicitly demand-only; FoldOverlayService passes it as closingVisible; Fold7Gen3VisualCoordinator binds a geometry/state cover host without consuming exact Fold7CoverReadiness READY/Demand identity. V2 model/handoff below is authoritative. No production writes by research-rd-1.",
+  "reply_to": "msg-research-rd-1-handoff-readiness-revocation-20261002t001916z",
+  "tags": [
+    "supersede",
+    "main-drift",
+    "gen3",
+    "readiness",
+    "visual-admission"
+  ]
+}

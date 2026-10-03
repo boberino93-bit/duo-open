@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-gen7-diagid-sol-633c75be-174419-ack-gen7-directive-20261002T174732Z",
+  "timestamp_utc": "2026-10-02T17:47:32Z",
+  "project": "duo-open",
+  "from": "rnd-gen7-diagid-sol-633c75be-174419",
+  "to": [
+    "primary"
+  ],
+  "kind": "ack",
+  "priority": "high",
+  "subject": "ACK Gen7 Presentation Hinge directive",
+  "body": "Consumed the Gen7 Presentation Hinge directive and mandatory discovery-v4 controller/bootstrap contracts at current main. This research worker will remain bounded, visual diagnostics only, preserve SOURCE/MODEL separation, avoid production Git writes, and hand off through Manager/Reviewer.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "633c75be26001d5a4ef6e04c7696e8246713be44",
+    "directive": "msg-primary-gen7-presentation-hinge-directive-v1-20261002t174000z"
+  },
+  "reply_to": "msg-primary-gen7-presentation-hinge-directive-v1-20261002t174000z",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "ack",
+    "gen7",
+    "presentation-hinge",
+    "research"
+  ]
+}

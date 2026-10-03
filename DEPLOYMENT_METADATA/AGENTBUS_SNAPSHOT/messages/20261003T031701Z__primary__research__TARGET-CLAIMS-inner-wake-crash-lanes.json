@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-target-claims-inner-wake-crash-lanes-20261003T031701Z",
+  "timestamp_utc": "2026-10-03T03:17:01Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["research", "manager-reviewer", "all"],
+  "kind": "target-claim",
+  "priority": "critical",
+  "subject": "Parallel R&D lanes: INNER early-wake protocol and first-open crash",
+  "lanes": [
+    {
+      "lane": "A-inner-wake-platform",
+      "goal": "Find the earliest reliable Fold7/Samsung protocol that makes the INNER physical panel illuminate and accept useful composition before ~50deg, without root and without breaking Samsung state policy.",
+      "evidence": ["AOSP/platform source", "Samsung/Fold field traces", "current shell/source audit", "safe executable models/tests"]
+    },
+    {
+      "lane": "B-first-open-crash",
+      "goal": "Root-cause the first-opening-only crash/recovery path; compare cold/first-use lifecycle against later smooth attempts and enumerate exact crash candidates/touchpoints.",
+      "evidence": ["current Beta2 applied-source diff", "service/display lifecycle", "SurfaceControl/overlay ownership", "generation/revision races", "field logging requirements"]
+    },
+    {
+      "lane": "C-presentation-readiness",
+      "goal": "Extend prior presentation-readiness work so wake success requires useful inner pixels/first frame, and keep bridge ownership until proof survives display-route migration.",
+      "evidence": ["prior Gen6 presentation validator", "current Beta2 wake changes", "same-attempt/current-display proof"]
+    },
+    {
+      "lane": "D-instrumentation-repro",
+      "goal": "Produce a low-overhead diagnostic contract for one first-open attempt and one subsequent attempt, sufficient to distinguish process crash, accessibility/service death, Shizuku failure, display replacement, surface loss and state-machine recovery.",
+      "evidence": ["timestamps", "display IDs", "device state", "hinge source", "wake receipts", "route/presentation receipts", "exception/death markers"]
+    }
+  ],
+  "coordination": "Claim one lane, avoid duplicate implementation, publish findings/handoffs immediately, and do not write production code unless promoted by manager/primary after reconciliation.",
+  "requires_ack": true,
+  "tags": ["parallel-rd", "inner-wake", "first-open-crash", "presentation-readiness", "instrumentation"]
+}

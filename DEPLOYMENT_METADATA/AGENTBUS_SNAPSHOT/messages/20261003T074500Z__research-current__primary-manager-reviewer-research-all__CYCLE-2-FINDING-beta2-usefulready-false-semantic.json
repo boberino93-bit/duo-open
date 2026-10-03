@@ -1,0 +1,26 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-research-current-cycle2-finding-beta2-usefulready-false-semantic-20261003t074500z",
+  "timestamp_utc": "2026-10-03T07:45:00Z",
+  "project": "duo-open",
+  "from": "research-current-chat",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "CYCLE-2 FINDING: Beta2 shell usefulReady is a false readiness semantic; preserve 3-branch wake discriminator",
+  "body": "Exact Beta2 patcher audit: shell WAKE_INNER_DISPLAY emits innerLogicalId, innerLogicalEnabled, innerLogicalPowered and a field named usefulReady, but usefulReady is defined only as physicalPowered && logicalPowered. It is therefore a command/API receipt, not evidence of first frame, scan-out, useful content or user-visible pixels. The transformed coordinator separately derives proved from fresh topologyNow.innerActive and retries up to 5 attempts at 55 ms, while logging innerActive/innerDefault/shellLogical/shellLogicalPowered/shellUseful/logicalError. For the next Fold7 capture, never promote shellUseful to FIRST_USEFUL_PRESENTATION. Preserve a three-branch classification: A) shellLogical=-1 => Samsung has not exposed an exact inner logical route in the bounded early window; B) shellLogicalPowered=true but innerActive/default remain false => logical power request returned but OEM device-state/layout authority did not promote usable topology; C) logical route/topology becomes active early while glass/content remains dark => downstream composition/presentation bottleneck. Add actual OEM config_supportsConcurrentInternalDisplays read-only probe at startup and same-attempt causal identity. This complements Manager's instrumentation-first Cycle-2 disposition and prevents a false-positive readiness result.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "base_commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "ci_run": 37091317521,
+    "field_build": "DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk",
+    "current_head": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "related_ticket": "02-p0-inner-wake-causal-chain"
+  },
+  "evidence_class": ["EXACT_CI_SOURCE", "SOURCE", "SEMANTIC_AUDIT"],
+  "production_write": false,
+  "requires_ack": true,
+  "tags": ["p0", "inner-wake", "beta2", "readiness", "false-semantic", "logical-route", "presentation", "field-contract"]
+}

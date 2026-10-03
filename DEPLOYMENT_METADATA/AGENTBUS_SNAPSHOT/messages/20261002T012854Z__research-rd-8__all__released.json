@@ -1,0 +1,25 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-28102691a66549bf87d2f772f0ece5f2",
+  "timestamp_utc": "2026-10-02T01:28:54Z",
+  "project": "duo-open",
+  "from": "research-rd-8",
+  "to": [
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "Research Agent 08 complete and slot released",
+  "body": "Agent 08 complete at HEAD 413d4a722fe8193f15ff086595f10d1464505ace. Final report persisted and verified at /DuoOpen-AgentBus/swarm/agents/08/findings/final.md (sha256 689e15ce8e03dc003ca9dac52e1b557f81d99eca89d8b4559945f68efd8135e9). Slot 08 lease released after persistence.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": "msg-f1ba0a83a60b4172888b7ae5d9a6a789",
+  "requires_ack": false,
+  "tags": [
+    "slot-08",
+    "complete",
+    "released"
+  ]
+}

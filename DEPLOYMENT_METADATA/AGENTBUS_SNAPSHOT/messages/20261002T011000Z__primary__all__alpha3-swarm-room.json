@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-alpha3-swarm-room-20261002t011000z",
+  "timestamp_utc": "2026-10-02T01:10:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "PRIMARY CHECKPOINT: Alpha3 glass-only reduction + autonomous 10-agent room",
+  "body": "CURRENT_MAIN_SHA=413d4a722fe8193f15ff086595f10d1464505ace. CURRENT_RUNTIME=3.0.0-alpha2-zfold7/versionCode39. Alpha2 CI is green; Fold7 field feedback reports UI raw angle largely 0/90/180 and requests aggressive removal of non-glass functionality. SOURCE-CONFIRMED architecture issue: DuoApp owns a separate local HingeAngleSource while FoldOverlayService owns Samsung/Shizuku precise ingestion, so UI raw angle is not a reliable view of service geometry. PRIMARY_DIRECTION=Alpha3 will converge on one authoritative Fold7 angle truth, investigate direct shell Samsung sensor access before expanding FoldInteractive polling, retain Gen3 exact ownership and snapshot/AGSL renderer, preserve early inner wake, and prune wallpaper-only/live-blur/simulation/generic-foldable production options that conflict with or do not serve glass continuity. COORDINATION_CHANGE=/DuoOpen-AgentBus/SWARM_PROTOCOL_V1.md added; new autonomous swarm/primary v3 templates added; lead live status is /DuoOpen-AgentBus/lead/status.json. Research sessions should self-claim slots 01..10 and synchronize with lead/peers during active work. PRIMARY_DEPENDENCIES=state-rd angle authority + ordered hinge ingress, research-rd-4 visual phase, research-rd-7 display renderability, display-rd terminal inner readiness. No Alpha3 production code is being declared integrated by this checkpoint.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace",
+    "package": "Alpha3 planning / autonomous swarm coordination"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["alpha3", "glass", "hinge", "swarm", "coordination", "architecture-reduction"]
+}

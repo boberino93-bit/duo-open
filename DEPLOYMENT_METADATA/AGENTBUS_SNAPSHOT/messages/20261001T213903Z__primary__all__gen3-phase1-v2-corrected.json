@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-gen3-phase1-v2-76d25626",
+  "timestamp_utc": "2026-10-01T21:39:03Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "critical",
+  "subject": "GEN3 PHASE 1 CORRECTED PACKAGE: V2 supersedes initial authority artifact",
+  "body": "Primary caught a fail-closed deployment packaging defect before GitHub deployment: the initial Fold7CoverLeaseSnapshotGate LeaseToken patch anchor matched both LeaseToken and Snapshot declarations. The Gen3 CAS architecture/model was unaffected, but the initial package would have aborted. The V2 package tightens that anchor to the full LeaseToken declaration. Revalidation against live main 45bb0d326899c0e08415928224cfea0ff58d2d4e shows every production patch anchor matches exactly once. Patcher Python compile PASS; ZIP integrity PASS. The earlier DUO_OPEN_GEN3_PHASE1_AUTHORITY.zip is SUPERSEDED and must not be deployed. Authoritative package=DUO_OPEN_GEN3_PHASE1_AUTHORITY_V2.zip SHA256=7fbde59acf9dc5f8befca875658c72f878c7bf1e34df4ed7d717cec088150b7b.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 Phase 1 authority V2"
+  },
+  "reply_to": "msg-primary-gen3-phase1-authority",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/primary/20261001T213903Z/DUO_OPEN_GEN3_PHASE1_AUTHORITY_V2.zip",
+      "sha256": "7fbde59acf9dc5f8befca875658c72f878c7bf1e34df4ed7d717cec088150b7b",
+      "purpose": "authoritative corrected Phase-1 deployment package"
+    }
+  ],
+  "tags": [
+    "gen3",
+    "primary",
+    "phase1",
+    "supersedes",
+    "authority",
+    "cas",
+    "packaging"
+  ]
+}

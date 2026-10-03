@@ -1,0 +1,55 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-research-current-consolidated-inner-wake-race-handoff-20261003t075352z",
+  "timestamp_utc": "2026-10-03T07:53:52Z",
+  "project": "duo-open",
+  "from": "research-current-chat",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "handoff",
+  "priority": "critical",
+  "subject": "CONSOLIDATED HANDOFF: intermittent INNER-dark opening is source-explained by async wake lifetime race plus readiness/animation decoupling",
+  "body": "Consolidated research result requested by the human for durable publication. Applies to audited main 7127c287a17fd97050c98fbeb05a38f7318f2f64. Source-confirmed defect: on accepted opening, WakeInner is emitted under controller generation G, but Fold7ContinuityCoordinator queues the privileged work onto Dispatchers.IO. FoldOverlayService then immediately starts Gen3/Gen5 cover opening visuals without waiting for the wake worker to begin, for the physical wake to complete, for logical INNER activation, or for first useful presentation. Normal opening can then advance OPENING_FROM_CLOSED -> INNER_HANDOFF at innerActive or about 8 degrees, which increments the controller generation to G+1. If the queued IO wake worker has not yet crossed its generation re-check, it rejects generation G as stale and aborts before issuing the privileged Binder wake. This admits an exact intermittent schedule matching the human field symptom: cover/front animation has begun while INNER remains dark, and Duo's intended early INNER wake may be delayed or skipped entirely. Separate downstream gap: even when WAKE_INNER_DISPLAY succeeds, the shell result proves only the physical SurfaceControl.setDisplayPowerMode(token, POWER_MODE_NORMAL) request against the 1968x2184 panel. It does not prove Samsung logical-display activation, active-internal-display ownership, composition opportunity, first presented frame, FIRST_USEFUL, or FIRST_INTERACTIVE. Historical reconciliation: the qualitative near-instant Gen3 reference does not map to a lost privileged wake primitive; later Gen4 retained the primitive. A stronger regression boundary is the newer independent cover-render/opening-visual pipeline, which can progress ahead of INNER readiness. Recommended correction order: (1) fix wake-intent lifetime using a per-opening openingAttemptId/sequence rather than transient controller generation; keep the wake valid through OPENING_FROM_CLOSED -> INNER_HANDOFF and revoke only on true cancellation/reversal, privilege/service termination, or proof INNER is already active; (2) introduce a one-shot WAKE_COMMITTED milestone immediately before the privileged mutation; (3) keep immediate low-phase cover responsiveness, but gate substantial bridge progression on same-attempt wake commitment and gate final handoff on stronger same-attempt INNER readiness/presentation evidence; (4) propagate the attempt identity through Binder/physical wake, logical display discovery/state, frame/transaction/expected-present, FIRST_USEFUL and FIRST_INTERACTIVE; (5) only after this correctness fix measure scheduler latency and consider a dedicated low-jitter display-control executor; (6) then test whether Samsung logical-display/device-state policy is the residual bottleneck. If an exact disabled 1968x2184 logical route exists materially before native handoff, evaluate a tightly fenced inner-specific logical activation experiment. If no route exists, treat OEM device-state policy as the gate rather than blindly forcing ownership. Preserve the current smooth closing behavior. Physical Fold7 attempt-correlated validation remains required before claiming end-to-end latency improvement.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "related_ticket": "02-p0-inner-wake-causal-chain"
+  },
+  "evidence_class": [
+    "SOURCE_CURRENT_MAIN",
+    "FIELD_HUMAN",
+    "HISTORICAL_SOURCE_ARCHAEOLOGY",
+    "PLATFORM_SOURCE",
+    "CORROBORATING_RESEARCH"
+  ],
+  "related_messages": [
+    "msg-research-current-field-delta-inner-animation-before-inner-power-20261003t073432z",
+    "msg-research-current-cycle1-inner-wake-active-display-gap-20261003t073710z",
+    "msg-research-current-finding-opening-visual-outruns-inner-wake-20261003t074142z",
+    "msg-research-current-support-delta-animation-before-wake-readiness-20261003t074258z",
+    "msg-research-current-historical-delta-wake-primitive-retained-animation-boundary-20261003t074543z",
+    "msg-rnd-p0-inner-e3ce2e4a-handoff-20261003t074112z",
+    "msg-manager-p0-inner-wake-cycle2-contract-20261003t074130z"
+  ],
+  "production_write": false,
+  "requires_ack": false,
+  "tags": [
+    "p0",
+    "fold7",
+    "inner-wake",
+    "generation-race",
+    "async-lifetime",
+    "animation-ordering",
+    "presentation-readiness",
+    "opening-attempt",
+    "historical-regression",
+    "physical-validation-required",
+    "no-prod-write"
+  ]
+}

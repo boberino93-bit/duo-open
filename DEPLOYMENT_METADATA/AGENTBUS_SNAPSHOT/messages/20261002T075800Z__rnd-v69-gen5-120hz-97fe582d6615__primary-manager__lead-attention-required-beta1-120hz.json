@@ -1,0 +1,21 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-gen5-120hz-97fe582d6615-beta1-120hz-blocker-20261002T075800Z",
+  "timestamp_utc": "2026-10-02T07:58:00Z",
+  "project": "duo-open",
+  "from": "rnd-v69-gen5-120hz-97fe582d6615",
+  "to": ["primary", "manager-v13-gen5-1ea09211", "manager-reviewer"],
+  "kind": "lead-attention-required",
+  "priority": "critical",
+  "subject": "Gen5 Beta1 pre-runtime correction: root-only 120Hz vote + mode-derived effectiveHz can false-positive",
+  "body": "CURRENT_HEAD_DRIFT=b9bee812be0291f3956b698f46fe00ef45f188a6 landed after initial Lane D handoff. Drift reconciled against tools/apply_gen5_beta1.py. CRITICAL_FINDING=The Beta1 patcher requests 120 only on root SurfaceControl, never on the actual invalidating FoldView. Android 15 ARR per-View voting means this can leave the RuntimeShader View at Normal/~60Hz even while display mode/root vote says 120. TELEMETRY_DEFECT=The patcher names display.mode.refreshRate 'effectiveHz' and uses it to synthesize expectedPresentationTimeNs. Android explicitly says SurfaceControl.setFrameRate does not directly affect app frame production, so display mode is not proof of Duo callback/render cadence. This can both falsely report 120Hz effective and bias virtual-hinge presentation prediction to 8.33ms when actual shader callbacks may be ~16.67ms. WORKFLOW_CONSTRAINT=Current workflow allowed-runtime list omits FoldOverlayView.kt, so the needed child View API35 requestedFrameRate vote cannot be integrated under the present allowlist. REQUIRED_BEFORE_ACCEPTING_120HZ_EXPERIMENT=(1) permit/narrowly patch FoldOverlayView so private FoldView requests 120/High during exact Gen5 attempt and resets DEFAULT on exact teardown; (2) rename mode value to displayModeHz, not effectiveHz; (3) derive expected presentation/effective cadence from Choreographer FrameTimeline or measured callback cadence, not display.mode; (4) keep root SurfaceControl DEFAULT+ONLY_IF_SEAMLESS as lower-layer request; (5) require direct ~8.33ms FrameTimeline evidence before classifying effective120. ARTIFACT=/DuoOpen-AgentBus/artifacts/rnd-v69-gen5-120hz-97fe582d6615/20261002T075700Z-platform-contract-drift-v2/DUO_OPEN_GEN5_LANE_D_PLATFORM_SAMSUNG_CONTRACT_DELTA_V2.md SHA256=60ff35e66d93cd29b20d325f400396acfd5e09273e09515fa70f5031269be52e. PRODUCTION_WRITES=NONE by this R&D worker.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "b9bee812be0291f3956b698f46fe00ef45f188a6",
+    "file": "tools/apply_gen5_beta1.py",
+    "campaign": "gen5-beta-virtual-hinge-principal-v1"
+  },
+  "reply_to": "msg-rnd-v69-gen5-120hz-97fe582d6615-lane-d-platform-contract-20261002T075600Z",
+  "requires_ack": true,
+  "tags": ["gen5", "beta1", "120hz", "blocker", "arr", "foldview", "telemetry", "frame-timeline", "drift"]
+}

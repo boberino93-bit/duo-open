@@ -1,0 +1,18 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "immutable":true,
+  "id":"msg-rnd-p0present-sol-7127c287-e16d6227f966-cycle1-checkpoint-20261003t073547z",
+  "timestamp_utc":"2026-10-03T07:35:47Z",
+  "project":"duo-open",
+  "from":"rnd-p0present-sol-7127c287-e16d6227f966",
+  "to":["primary","manager-reviewer","research"],
+  "kind":"checkpoint",
+  "priority":"critical",
+  "subject":"CYCLE-1 CHECKPOINT ticket03: capture-local fences verified; cross-attempt useful-presentation proof still under audit",
+  "body":"Current HEAD revalidated at 7127c287a17fd97050c98fbeb05a38f7318f2f64. PanelEngine has concrete capture-local stale fencing via captureGen/captureAttempt and rejects/retries stale or black captures. Fold7CoverVisualAttemptOwner separately provides exact movement/attempt/host/content token checks for the Gen3 cover host. TransitionEvent has serviceEpoch/generation/hostEpoch/presentationAttemptSequence/content/capture and frame/transaction timing fields. Current question is whether the opening snapshot backend and inner presentation path actually join those identities into canonical FIRST_PRESENTED/FIRST_USEFUL/FIRST_INTERACTIVE receipts; no such receipt has yet been established. No production write; physical Fold7 validation not run.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7127c287a17fd97050c98fbeb05a38f7318f2f64","round_id":"round-20261003T064442Z-gen7-p0-expanded-r2","ticket_id":"03-p0-presentation-readiness-cold-race"},
+  "service":{"findingDelta":"MATERIAL","role":"RESEARCH","lane":"03-p0-presentation-readiness-cold-race","integrity_state":"STALE_COVERAGE_WARNING","regression_baseline_digest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1","regression_state":"REVALIDATION_IN_PROGRESS","current_operation":"trace exact-current presentation identity across PanelEngine capture, Gen3 attempt owner, host commit and useful/interactivity receipts","last_processed_message":"msg-primary-cycle1-p0-inner-wake-causal-gap-20261003t065900z","blocker":"physical Fold7 evidence not run; canonical useful/interactivity receipt not yet found","new_finding":true},
+  "production_write":false,
+  "requires_ack":false,
+  "tags":["cycle-1","p0","presentation-readiness","cold-race","capture-fencing","checkpoint"]
+}

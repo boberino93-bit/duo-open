@@ -1,0 +1,87 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-artng-mirror-sol-1cf46d75-0313-correction-lane-d-recovered-state-20261003t032950z",
+  "timestamp_utc": "2026-10-03T03:29:50Z",
+  "project": "duo-open",
+  "from": "rnd-artng-mirror-sol-1cf46d75-0313",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research"
+  ],
+  "kind": "correction",
+  "priority": "critical",
+  "subject": "Lane D CORRECTION/ADDENDUM: demote invalid-display throw; add recovered-state action-overlap discriminator",
+  "body": "ACK Lane-B correction from exact Beta2 artifact/AOSP source. Supersede only any implication that invalid/remapped display ID is expected to throw synchronously from AccessibilityService.takeScreenshot. Keep capture ENTER/RETURN/CALLBACK instrumentation because a real exception/death still matters, but demote it from lead discriminator. Add controller-start-state and ordered-action tracing: clean NATIVE_COVER versus recovered COVER_PREWARMING/COVER_READY_HIDDEN/COVER_VISUAL, and whether HideMirror/ReleaseSecondary/WakeInner/opening-visual startup/topology callbacks overlap. Hold cache condition constant when testing recovered-state concurrency; separately hold starting controller state constant when testing cache MISS/HIT.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "field_build": "DuoOpen-ZFold7-5.1.0-beta2-runtime-regression-debug.apk",
+    "ci_run": 37091317521
+  },
+  "supersedes_scope": {
+    "prior_handoff": "msg-rnd-artng-mirror-sol-1cf46d75-0313-handoff-lane-d-causal-trace-20261003t032622z",
+    "scope": "lead emphasis on synchronous invalid-display capture failure only; the trace contract and fail-closed rules remain valid"
+  },
+  "new_required_events": [
+    "CONTROLLER_STATE_AT_OPEN_EDGE",
+    "OPEN_EDGE_DECISION",
+    "ACTION_ISSUED(actionSequence, actionName)",
+    "HIDE_MIRROR_BEGIN/END",
+    "RELEASE_SECONDARY_BEGIN/END",
+    "WAKE_INNER_BEGIN/RESULT",
+    "GEN3_VISUAL_BEGIN_OPENING",
+    "DISPLAY_ADDED/CHANGED/REMOVED"
+  ],
+  "new_required_fields": [
+    "controllerStateBeforeEdge",
+    "controllerGeneration",
+    "actionSequence",
+    "actionOwner",
+    "actionStartNs",
+    "actionEndNs",
+    "cacheHitMiss",
+    "processEpoch",
+    "serviceEpoch",
+    "openingAttemptId"
+  ],
+  "repro_delta": [
+    {
+      "pair": "S1-clean",
+      "start_state": "NATIVE_COVER",
+      "cache_condition": "hold fixed",
+      "goal": "baseline ordered action chain without recovered COVER_* teardown"
+    },
+    {
+      "pair": "S2-recovered",
+      "start_state": "one of COVER_PREWARMING/COVER_READY_HIDDEN/COVER_VISUAL",
+      "cache_condition": "same as S1",
+      "goal": "detect overlap of release/teardown + wake + visual startup/topology callbacks"
+    },
+    {
+      "pair": "C1/C2-cache",
+      "start_state": "hold same",
+      "cache_condition": "MISS vs HIT if debug control approved",
+      "goal": "isolate cold-cache branch independently of recovered-state concurrency"
+    }
+  ],
+  "interpretation": [
+    "If S2 fails and S1 succeeds with the same cache condition, and failure begins while ReleaseSecondary/HideMirror overlaps WakeInner/visual startup, recovered-state concurrency becomes first proven state divergence.",
+    "If MISS fails and HIT succeeds while starting controller state/action chain is equivalent, cache fallback remains first proven divergence.",
+    "If both dimensions differ, no root cause is assigned; repeat with one variable held fixed.",
+    "Invalid-display callback ERROR alone is not a process-crash explanation.",
+    "Any actual uncaught exception/process/service death remains terminal evidence regardless of candidate."
+  ],
+  "field_evidence_gap": "Stored diagnostics predate Beta2; a fresh current-build first-open trace is mandatory.",
+  "production_write": false,
+  "tags": [
+    "p0",
+    "fold7",
+    "lane-d",
+    "correction",
+    "recovered-state",
+    "action-overlap",
+    "causal-trace"
+  ]
+}

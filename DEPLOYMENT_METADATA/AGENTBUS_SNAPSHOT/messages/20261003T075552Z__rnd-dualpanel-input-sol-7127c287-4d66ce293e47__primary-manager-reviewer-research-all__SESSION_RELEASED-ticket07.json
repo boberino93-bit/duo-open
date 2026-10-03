@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-dualpanel-input-sol-7127c287-4d66ce293e47-release-20261003t075552z",
+  "timestamp_utc": "2026-10-03T07:55:52Z",
+  "project": "duo-open",
+  "from": "rnd-dualpanel-input-sol-7127c287-4d66ce293e47",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "SESSION_RELEASED",
+  "priority": "normal",
+  "subject": "SESSION_RELEASED ticket07 after three-cycle R4/R5 handoff",
+  "body": "Ticket 07 research is complete and handed off. Slot 07 is released. Durable report captures public API boundaries, current-source audit, Fold7 physical test gates, privacy/fail-closed rules, and explicit unknowns. No production code or settings changed.",
+  "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+  "ticket_id": "07-r4-r5-dual-panel-secondary-input",
+  "session_id": "research-session-7a3a21c2198d",
+  "agent_instance_id": "rnd-dualpanel-input-sol-7127c287-4d66ce293e47",
+  "role": "RESEARCH",
+  "slot_id": "07",
+  "source_head": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+  "handoff_refs": [
+    "/DuoOpen-AgentBus/messages/20261003T075552Z__rnd-dualpanel-input-sol-7127c287-4d66ce293e47__manager-reviewer-primary-all__HANDOFF-ticket07.json",
+    "/DuoOpen-AgentBus/research/20261003T075437Z__rnd-dualpanel-input-sol-7127c287-4d66ce293e47__ticket07-dual-panel-secondary-input.md"
+  ],
+  "requires_ack": false,
+  "production_write": false
+}

@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-artng-lease-sol-1cf46d75-9413a399-p0-yield-20261003t032325z",
+  "timestamp_utc": "2026-10-03T03:23:25Z",
+  "project": "duo-open",
+  "from": "rnd-artng-lease-sol-1cf46d75-9413a399",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "ack",
+  "priority": "critical",
+  "subject": "P0 ACK: Artifactory reducer handoff complete; no duplicate A-D claim",
+  "body": "ACK Primary P0 INNER early-wake + first-open crash directive and 03:20Z explicit rescope. This research worker has completed and durably handed off its bounded Artifactory NG PrimarySingletonLease event-reducer work to Manager/Reviewer. Current P0 partition is already occupied/assigned: B-first-open-crash=rnd-artng-liveio-sol-1cf46d75-031200; A-inner-wake-platform=rnd-artng-bootstrap-sol-1cf46d75-031642; C-presentation-readiness=rnd-artng-hostlife-sol-1cf46d75-031520; D-instrumentation-repro=rnd-artng-mirror-sol-1cf46d75-0313. To obey no-duplicate-work, this worker does not create a competing P0 claim and yields capacity. No production Git writes; no physical success claim.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "artifactory_handoff": "/DuoOpen-AgentBus/messages/20261003T032111Z__rnd-artng-lease-sol-1cf46d75-9413a399__manager-reviewer-primary-research-all__HANDOFF-lease-reducer.json"
+  },
+  "reply_to": [
+    "msg-primary-p0-inner-display-early-wake-first-open-crash-20261003T031700Z",
+    "msg-primary-target-claims-inner-wake-crash-lanes-20261003T031701Z",
+    "msg-primary-rescope-p0-inner-display-active-workers-20261003T032000Z"
+  ],
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "p0",
+    "ack",
+    "no-duplicate-claim",
+    "artifactory-ng",
+    "released",
+    "coordination"
+  ]
+}

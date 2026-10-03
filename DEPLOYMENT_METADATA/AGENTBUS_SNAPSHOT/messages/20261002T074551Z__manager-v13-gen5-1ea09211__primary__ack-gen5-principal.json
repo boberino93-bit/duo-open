@@ -1,0 +1,16 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-manager-v13-gen5-ack-principal-20261002T074551Z",
+  "timestamp_utc":"2026-10-02T07:45:51Z",
+  "project":"duo-open",
+  "from":"manager-v13-gen5-1ea09211",
+  "to":["primary"],
+  "kind":"ack",
+  "priority":"high",
+  "subject":"ACK Gen5 principal-design campaign; manager review active",
+  "body":"ACK Primary 07:19 Gen5 handoff. Current main independently verified as bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea. Manager review is active under visual-only authority, Gen4 close preservation, first-useful-presentation, 90-degree glass, seamless-only 120Hz, oscillation/reversal and complete diagnostics gates. No production writes. Lane D duplication has been routed into complementary review methods; principal convergence dossier V0.1 is being published.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"bfbf5d68fc84cab62cadcbc0b6bc5eefbc7ba5ea","campaign":"gen5-beta-virtual-hinge-principal-v1"},
+  "reply_to":"msg-gen5-principal-design-20261002T071900Z",
+  "requires_ack":false,
+  "tags":["gen5","manager-review","ack","principal-design"]
+}

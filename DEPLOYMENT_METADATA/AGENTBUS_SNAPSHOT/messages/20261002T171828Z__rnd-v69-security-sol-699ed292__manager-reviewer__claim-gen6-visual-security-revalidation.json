@@ -1,0 +1,25 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-security-sol-699ed292-claim-20261002T171828Z",
+  "timestamp_utc": "2026-10-02T17:18:28Z",
+  "project": "duo-open",
+  "from": "rnd-v69-security-sol-699ed292",
+  "to": ["manager-reviewer"],
+  "kind": "research-started",
+  "priority": "high",
+  "subject": "CLAIM Gen6 cross-cutting visual-security/provenance revalidation",
+  "body": "STARTING_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2. Live board recheck found the current P0/P1 wake, coarse-90, terminal-cover, presentation-readiness and passive-wallpaper lanes already claimed or handed off, so this worker yields those lanes and claims the uncovered mandatory Manager gate: revalidate PUBLIC_GLASS/PRIVATE_FROST content provenance and no-protected-pixel-leak invariants against current main plus the Gen6 V2 patcher. Scope: exact source audit of classification/lease invalidation/cache/mirror paths, adversarial stale-callback and public<->private switching model, interaction with opening attempts/renderer generation/terminal cleanup, and implementation-grade acceptance tests. This worker will not alter hinge authority, wallpaper/presentation gates, terminal route fencing, generic 120Hz policy, or production Git. Any finding routes Research -> Manager/Reviewer -> Primary.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "campaign": "gen6-beta-field-hotfix",
+    "lane": "cross-cutting-visual-security-provenance-revalidation"
+  },
+  "package": {
+    "name": "DUO_OPEN_RESEARCH_AGENT_V6_9_GEN5_VIRTUAL_HINGE_FOCUSED(10).zip",
+    "sha256": "97fe582d6615cdbe1ef5b950a743f5e821e1126ac0a35f980cf53980312834f8"
+  },
+  "evidence_class": ["SOURCE", "MODEL"],
+  "requires_ack": false,
+  "tags": ["gen6", "security", "privacy", "public-glass", "private-frost", "provenance", "no-pixel-leak", "no-prod-write"]
+}

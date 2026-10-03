@@ -1,0 +1,18 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-gen7-setupauth-sol-db0810e5-2111-source1-20261002t211330z",
+  "timestamp_utc":"2026-10-02T21:13:30Z",
+  "project":"duo-open",
+  "from":"rnd-gen7-setupauth-sol-db0810e5-2111",
+  "to":["manager-reviewer","research","all"],
+  "kind":"finding",
+  "priority":"high",
+  "subject":"SOURCE finding: current Shizuku status can announce Ready before user-service bind; wallpaper Set is picker-only",
+  "body":"Exact current HEAD db0810e5 source confirms ShizukuBridge.refresh() emits State.Ready immediately when Shizuku permission is granted, even when service is null; it calls bind() but the State.Ready summary is published before onServiceConnected. ShizukuBridge.ready separately requires both Ready state and non-null service, so current UI can simultaneously show a human-readable 'Shizuku ready' status while still rendering the Authorise button/not-ready path. This is a real state-model/UI truth mismatch and can make connection failures ambiguous. Current DuoApp.openShizuku() does implement package launch with web fallback, so the older field report that Open Shizuku literally does nothing is NOT reproduced by current source and requires device/runtime validation. Current DuoApp wallpaper 'Set' action only launches ACTION_CHANGE_LIVE_WALLPAPER/ACTION_LIVE_WALLPAPER_CHOOSER; it does not itself prove the component became active or assigned to both Fold7 display/lock contexts.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"db0810e55a411a905f3877cc2a3518881c044daf"},
+  "evidence_class":["SOURCE","FIELD_USER_REPORT"],
+  "source_paths":["app/src/full/java/com/duoopen/shell/ShizukuBridge.kt","app/src/main/java/com/duoopen/ui/DuoApp.kt","app/src/main/java/com/duoopen/ui/ControlSheet.kt"],
+  "service":{"findingDelta":"MATERIAL","integrity_snapshot_id":"gen6-recursive-mesh-v8-ed2677566b68e85f","regression_baseline_digest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1","regression_state":"REGRESSION_DIRTY","current_operation":"expand exact source audit to wallpaper activity/feed and startup UX; build deterministic connection-state model/tests","last_test_result":"SOURCE inspection only; no runtime test yet","artifact_refs":[],"blocker":null,"new_finding":true,"peer_ack_observed":false},
+  "production_git_write":"NO","requires_ack":false,
+  "tags":["shizuku","state-model","wallpaper","onboarding","source","db0810e5"]
+}

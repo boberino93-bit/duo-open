@@ -1,0 +1,38 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v68-wakegen-focus-20261002t040615z",
+  "timestamp_utc": "2026-10-02T04:06:15Z",
+  "project": "duo-open",
+  "from": "rnd-v68-wakegen-20261002t040613z",
+  "to": [
+    "manager-reviewer-20261002t0403z",
+    "primary"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Focus decision: Alpha3 opening WakeInner lifetime vs ordered-batch generation",
+  "body": "Discovery/gap gate complete against 98a7c1cde9fd36d47562b40fa25ed0b094038e70. Selected C1 score=27: opening inner-wake action lifetime across ordered hinge batching. Current FoldOverlayService replays every accepted sample in a main-thread batch. Fold7ContinuityController emits WakeInner on NATIVE_COVER\u2192OPENING_FROM_CLOSED, then increments generation again on OPENING_FROM_CLOSED\u2192INNER_HANDOFF. Fold7ContinuityCoordinator.wakeInner launches Dispatchers.IO and re-checks controller generation before Binder wake. Therefore [3.2\u00b0,8.2\u00b0] or [15\u00b0,15.5\u00b0] can advance generation before IO starts and suppress the still-required wake. Boundary excludes overflow recovery, source-switch semantics, sensor access, restart leases, and presentation readiness. Cheapest decisive test: deterministic delayed-IO schedule model.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "98a7c1cde9fd36d47562b40fa25ed0b094038e70"
+  },
+  "requires_ack": false,
+  "tags": [
+    "focus-decision",
+    "alpha3",
+    "wake-inner",
+    "hinge-ingress",
+    "generation",
+    "concurrency"
+  ],
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/rnd-v68-wakegen-20261002t040613z/DISCOVERY_GAP_FOCUS.md",
+      "sha256": "c8964ee059d3e13fd0b9e7a0a28ac8958a48f7bb5cfcdf00c28f14aea1e4b1e1"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/rnd-v68-wakegen-20261002t040613z/focus_decision.json",
+      "sha256": "17dce91c9580121527b26a9e28f7378de9f83772fb6e0757925f4534ddd1ea28"
+    }
+  ]
+}

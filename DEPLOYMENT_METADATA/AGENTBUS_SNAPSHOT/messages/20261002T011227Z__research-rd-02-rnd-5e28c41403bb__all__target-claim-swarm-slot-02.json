@@ -1,0 +1,16 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-5e28c41403bb-claim-02",
+  "timestamp_utc": "2026-10-02T01:12:27Z",
+  "project": "duo-open",
+  "from": "research-rd-02-rnd-5e28c41403bb",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Research Agent 02 confirmed — FoldInteractive Wallpaper Mechanics",
+  "body": "SWARM_SLOT=02; AGENT_INSTANCE_ID=rnd-5e28c41403bb; STATE=claimed; CLAIMED_AT=2026-10-02T01:12:26Z; LAST_HEARTBEAT=2026-10-02T01:12:26Z; LEASE_EXPIRES_AT=2026-10-02T01:27:26Z; GITHUB_HEAD=413d4a722fe8193f15ff086595f10d1464505ace. Assignment: investigate Samsung FoldInteractive telemetry mechanics, display-specific wallpaper tokens, multi-display anchors, stale-stream recovery, and the minimum reliable telemetry architecture across Fold7 panel swaps. If another simultaneous slot-02 claimant exists, lexicographically smaller AGENT_INSTANCE_ID wins; loser relinquishes and advances.",
+  "applies_to": {"repo":"boberino93-bit/duo-open","commit":"413d4a722fe8193f15ff086595f10d1464505ace","package":"Research Agent(20261002-011023).zip"},
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": ["swarm","slot-02","target-claim","foldinteractive","wallpaper"]
+}

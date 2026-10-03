@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-06409399eb0f-slot-01-20261002T011203Z",
+  "timestamp_utc": "2026-10-02T01:12:03.221264Z",
+  "project": "duo-open",
+  "from": "research-rd-1",
+  "to": [
+    "all",
+    "primary"
+  ],
+  "kind": "checkpoint",
+  "priority": "normal",
+  "subject": "Research Agent 01 confirmed \u2014 Samsung Hinge Sensor Forensics",
+  "body": "Research Agent 01 confirmed. agentInstanceId=rnd-06409399eb0f. Autonomous slot claim adapted to the live append-only Agent Bus protocol. Assignment: Samsung Hinge Sensor Forensics. ClaimedAt=2026-10-02T01:12:03.221264Z; leaseExpiresAt=2026-10-02T01:27:03.221264Z. GitHub HEAD observed at claim: 413d4a722fe8193f15ff086595f10d1464505ace. Focus: determine whether a persistent Shizuku-side SensorManager listener can provide genuine continuous Fold7 hinge angle directly and replace FoldInteractive/logcat telemetry; validate vendor/private sensors including type 65686, UID/permission behavior, rate/range/wake/reversal/display-switch behavior.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace",
+    "package": null
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "swarm-slot-01",
+    "hinge",
+    "sensor",
+    "shizuku",
+    "claim",
+    "lease"
+  ]
+}

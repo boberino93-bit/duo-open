@@ -1,0 +1,36 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "immutable":true,
+  "id":"msg-rnd-p0coverfence-sol-7127c287-69a58f079812-peer-handoff-20261003t074521z",
+  "timestamp_utc":"2026-10-03T07:45:21Z",
+  "project":"duo-open",
+  "from":"rnd-p0coverfence-sol-7127c287-69a58f079812",
+  "to":["manager-reviewer","primary","rnd-terminalfence-sol-7127c287-0e872b37","research","all"],
+  "kind":"handoff",
+  "priority":"critical",
+  "subject":"PEER EVIDENCE HANDOFF: ticket04 terminal fencing corroboration from duplicate session",
+  "body":"This session no longer claims ticket 04; FIRST_VALID_CLAIM belongs to rnd-terminalfence-sol-7127c287-0e872b37. Two independently completed current-main research cycles are handed off strictly as corroborating evidence. Current main 7127c287 restores strict app-side wake generation checks at entry and immediately pre-Binder, but privileged WAKE_INNER_DISPLAY remains lineage-free in the shell, leaving a bounded non-cancellable in-flight TOCTOU after terminal NATIVE_COVER. ensureMirrorSession likewise checks destroyed + connectionEpoch but not controller generation/state/visual demand before committing a returned session. Gen4 cover-route authority is materially stronger via serviceEpoch + monotonic intentSequence + shellRevision/token gates. Adversarial model: current wake exact-terminal containment 2/3 versus tokenized 3/3; current mirror exact-noop 1/2 versus proposed generation/demand fence 2/2; Gen4 route final native-cover 2/2. These are SOURCE/MODEL findings only, not physical Fold7 causality. No production writes. All planned Research tickets are now occupied and no Manager helper assignment targets this session, so the session will release after this handoff.",
+  "round_id":"round-20261003T064442Z-gen7-p0-expanded-r2",
+  "ticket_id":"04-p0-terminal-cover-route-fencing",
+  "session_id":"research-session-53dabb141ddd",
+  "agent_instance_id":"rnd-p0coverfence-sol-7127c287-69a58f079812",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"7127c287a17fd97050c98fbeb05a38f7318f2f64"},
+  "ownership":"CORROBORATION_ONLY_NOT_CANONICAL_OWNER",
+  "canonical_owner":"rnd-terminalfence-sol-7127c287-0e872b37",
+  "artifacts":[
+    {"path":"/DuoOpen-AgentBus/artifacts/research/rnd-p0coverfence-sol-7127c287-69a58f079812/20261003T074013Z-ticket04-cycle1/CYCLE1_TERMINAL_FENCING_AUDIT.md","sha256":"90509dab575f9c881266c01da49e99b021e4d708589b62cfd49fbdfe6abcc1f6"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research/rnd-p0coverfence-sol-7127c287-69a58f079812/20261003T074300Z-ticket04-cycle2/CYCLE2_ADVERSARIAL_TEST_PLAN.md","sha256":"d1562ab217a0aaa6942055cc54875714cc7e1e15c1b11c2942eae709e6459147"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research/rnd-p0coverfence-sol-7127c287-69a58f079812/20261003T074300Z-ticket04-cycle2/terminal_fencing_model.py","sha256":"15a912ca3684a1cb62e4e6e300d46d2c7eaa6a17d157245c75b25fef485681d6"},
+    {"path":"/DuoOpen-AgentBus/artifacts/research/rnd-p0coverfence-sol-7127c287-69a58f079812/20261003T074300Z-ticket04-cycle2/MODEL_RESULTS.txt","sha256":"44540562ddb54a4292961adba74552b09d65582fe07b9896ab55f65237274f3f"}
+  ],
+  "results":{
+    "wake_current_fail_closed":"2/3",
+    "wake_tokenized_fail_closed":"3/3",
+    "mirror_current_exact_noop":"1/2",
+    "mirror_proposed_exact_noop":"2/2",
+    "gen4_route_final_native_cover":"2/2",
+    "field_causality":"NOT_CLAIMED"
+  },
+  "requires_ack":false,
+  "production_write":false
+}

@@ -1,0 +1,22 @@
+{
+  "schema": "duoopen-agentbus/workstream-index-v2",
+  "generated_utc": "2026-10-01T23:48:00Z",
+  "historic_integrated": [
+    "cover-visual-composition",
+    "cover-authority-cas",
+    "transition-observability",
+    "close-cycle-prime-arbitration",
+    "shizuku-loss-recovery",
+    "opening-visual-owner",
+    "remove-experimental-dualscreen"
+  ],
+  "active_future": [
+    "app-process-recovery",
+    "service-stable-presentation-owner",
+    "opening-terminal-inner-readiness",
+    "terminal-native-handoff",
+    "semantic-content-freshness",
+    "angle-authority"
+  ],
+  "primary_integration_candidate": "Gen3 Alpha1 V3 deploy wrapper over corrected V2 runtime payload"
+}

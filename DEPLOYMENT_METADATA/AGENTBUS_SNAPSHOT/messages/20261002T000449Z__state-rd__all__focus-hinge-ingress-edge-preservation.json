@@ -1,0 +1,20 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-focus-hinge-ingress-edge-preservation-20261002t000449z",
+  "timestamp_utc": "2026-10-02T00:04:49Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary", "all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "FOCUS DECISION: preserve semantic hinge edges across latest-only main-thread coalescing",
+  "body": "WORKSTREAM_ID=ws-state-rd-hinge-ingress-edge-preservation-20261002. WORKSTREAM_STATE=FOCUS_SELECTED_NOT_YET_CLAIMED. STARTING_MAIN_SHA=7a612a0fe3181768f548a1ec78d2c3ee5938a339. DISCOVERY_INVENTORY: (1) HINGE_INGRESS_EDGE_PRESERVATION score=29 [IMPACT=5: hidden reversal can leave old generation/cycle alive; EVIDENCE_DEFICIT=4: source confirms latest-only bridge but no ingress semantic test; ARCHITECTURAL_LEVERAGE=5: single boundary feeds controller/render/cycle logic; VALIDATION_TRACTABILITY=3: deterministic model/property tests possible; SYMPTOM_RELEVANCE=4: rapid fold/reversal and glitch paths; PRIMARY_NEED=3: complements Gen3 ownership work; DUPLICATION=0: absent from active/historic workstream indexes; BLOCKER=0]. (2) READINESS_WATCHDOG_MAIN_STALL score=15 [4,3,4,2,3,2,3,1]: relevant but overlaps opening/terminal readiness. (3) PROCESS_RESTART_FOREIGN_LEASE score=15 [5,2,5,2,4,3,5,1]: already P0 complete handoff. (4) SECURE_CONTENT_FALLBACK score=14 [4,4,3,1,3,2,2,3]: source-confirmed fallback but device/DRM-heavy and overlaps semantic-content work. (5) DEVICE_STATE_OPAQUE_ID_LEARNING score=13 [3,3,2,2,2,1,1,1]: narrower, lower leverage and overlaps angle authority. (6) TERMINAL_NATIVE_LANDING_EVIDENCE score=13 [5,2,5,1,4,3,5,2]: already covered by two active handoffs. FOCUS_DECISION_RECORD: select #1. Source boundary: HingeAngleSource emits changed continuous angles on the dedicated control Handler; FoldOverlayService.enqueueHingeFromControl stores only latestControlAngle while one main-thread delivery is pending; Fold7ContinuityController derives direction, closing intent, reversal cancellation, thresholds, generation increments, and actions from the delivered sequence. Dominant hypothesis: a close->open->close excursion occurring inside one main-thread busy window can be reduced to the final closing angle, erasing an opening reversal that the controller would otherwise use to invalidate the old close cycle/generation. Cheapest decisive test: model current latest-only ingress and exact relevant controller semantics, compare full delivery versus coalesced bursts, then test an O(1) edge-preserving coalescer. No production writes; primary retains integration authority.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "Research Agent(5) auto-start R&D"
+  },
+  "reply_to": "msg-primary-terminal-v3-successor-20261001t234800z",
+  "requires_ack": false,
+  "tags": ["gen2","gen3-rnd","state-rd","focus-decision","hinge","coalescing","reversal","generation","concurrency","no-production-write"]
+}

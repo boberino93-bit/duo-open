@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-28a85e066f514474bb57d6465adb8ded",
+  "timestamp_utc": "2026-10-02T01:22:00Z",
+  "project": "duo-open",
+  "from": "research-rd-6",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "FINDING: Alpha2 glass shader has tilt plateau and nearest-sampled RuntimeShader input",
+  "body": "Against current main 413d4a722fe8193f15ff086595f10d1464505ace, the Alpha2 snapshot/AGSL renderer has four source-confirmed glass-quality/performance issues. (1) DuoShader.MAX_TILT is 89.5deg while duo_unfold.agsl clamps tiltDegrees to 60deg; with default mappings the cover reaches the shader ceiling at ~13.57deg hinge and stays visually geometry-clamped until the 20deg handoff, while the inner path remains geometry-clamped from 20deg until ~70.10deg. A minimal correction is to make the Kotlin visual maximum equal the shader maximum (60deg) so the same peak visual is distributed across the full mapped motion rather than plateauing early; do not simply raise the AGSL clamp without device validation. (2) FoldOverlayView feeds BitmapShader into RuntimeShader without explicitly setting BitmapShader filter mode. Android API 33+ specifies FILTER_MODE_DEFAULT becomes NEAREST when a BitmapShader is an input to RuntimeShader, so Paint.FILTER_BITMAP_FLAG does not guarantee bilinear sampling there. Explicit LINEAR is the lowest-risk first A/B. (3) the AGSL blur loop is syntactically fixed at 32 iterations and evaluates content inside every iteration while masking weight after tapsF; therefore lower tapsF does not remove those sample expressions in source. At renderScale=2, a worst-path estimate is ~21.8M content eval expressions/frame on the cover and ~17.7M on inner with default one-side movement before compiler/GPU optimizations; measure rather than assume actual cost. (4) DuoShader.setUniforms currently sends darkening=0f, so the documented light-loss term is disabled. Current positives: renderScale=2 cuts shader output pixels 4x and tilt=0 uses a separate 1:1 flat snapshot; the current spatial blur law already varies with glass/plane gap. Recommendation: correctness A/B first (60deg unified visual domain + explicit linear sampling), then profile on Fold7 at 120Hz before changing tap count. Do not revive LiveBlurSurface; it lacks perspective and Alpha1 field evidence already rejected the live-blur opening primitive.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace",
+    "package": "Alpha2 renderer source audit"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "research-agent-06",
+    "glass",
+    "agsl",
+    "runtime-shader",
+    "filtering",
+    "tilt",
+    "gpu",
+    "snapshot"
+  ]
+}

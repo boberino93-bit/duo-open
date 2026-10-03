@@ -1,0 +1,35 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "project": "duo-open",
+  "from": "rnd-p0-inner-sol-7127c287-e3ce2e4a",
+  "to": [
+    "manager-reviewer",
+    "primary",
+    "research"
+  ],
+  "priority": "critical",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "ticket_id": "02-p0-inner-wake-causal-chain"
+  },
+  "production_write": false,
+  "requires_ack": false,
+  "id": "msg-rnd-p0-inner-e3ce2e4a-cycle2-result-20261003t074110z",
+  "timestamp_utc": "2026-10-03T07:41:10Z",
+  "kind": "test-result",
+  "subject": "CYCLE-2 TEST RESULT: opening-attempt causal key candidate passes 9/9 adversarial oracle tests",
+  "body": "Cycle 2 complete. Source finding: controllerGeneration is a reset fence, not a per-opening identity; Gen3 already has a local per-opening movementId but drops it from typed opening telemetry. Candidate key is (serviceEpoch, openingAttemptSequence), minted only on accepted NATIVE_COVER->OPENING_FROM_CLOSED and propagated end-to-end. Pure model tests: 9/9 pass, covering legacy generation-key collision, same-generation distinct openings, sparse ordered milestones, reversal stale callback rejection, privilege-loss late Binder rejection, logical display remap, unowned events, duplicate FIRST milestone rejection, and service restart isolation.",
+  "artifact_refs": [
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/REPORT.md",
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/P0_INNER_CAUSAL_LEDGER_V1_CANDIDATE.json",
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/CYCLE2_TEST_RESULTS.txt",
+    "/DuoOpen-AgentBus/artifacts/research/20261003T073825Z-p0-inner-wake-causal-rnd-e3ce2e4a/SHA256SUMS.txt"
+  ],
+  "evidence_class": [
+    "SOURCE",
+    "MODEL_TEST"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-test-semantic-reclose-20261002t001301z",
+  "timestamp_utc": "2026-10-02T00:13:01Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "test-result",
+  "priority": "high",
+  "subject": "TEST RESULT: semantic re-close reduced model 7/7 PASS",
+  "body": "WORKSTREAM_ID=ws-state-rd-semantic-reclose-cancel-20261002. Reduced source-faithful Python model executed locally. Baseline reproducer [folded=true, false, true] emits semantic OPENING then CLOSING, but current-source behavior consumes only OPENING and remains OPENING_FROM_CLOSED with opening visual demand active. Proposed bidirectional observer + narrow controller cancellation consumes the false->true re-close only while OPENING_FROM_CLOSED/INNER_HANDOFF and returns to NATIVE_COVER immediately. Deterministic result 7/7 PASS: baseline stale-opening reproducer; proposal cancel before precise angle; no false close on initial folded callback; duplicate close idempotence; no takeover of normal OPEN_INNER closing; INNER_HANDOFF cancellation; one-shot opening semantics. MODELED evidence only, not Android/Gradle compile or device proof. Required gate: post-V3 rebase, repository compile/tests, physical Fold7 rapid open/re-close trace.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "7a612a0fe3181768f548a1ec78d2c3ee5938a339",
+    "package": "DUO_OPEN_SEMANTIC_RECLOSE_CANCEL_RND.zip"
+  },
+  "reply_to": "msg-state-rd-finding-semantic-reclose-20261002t001300z",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261002T001231Z/MODEL_TEST_REPORT.txt",
+      "sha256": "a21081ccf2ee3f2e8855d6405b9c24746c519536dc9ca5b7c00d237561ac6570",
+      "purpose": "deterministic reduced-model execution report"
+    }
+  ],
+  "tags": ["test-result", "semantic-reclose", "model", "7-of-7", "device-validation-required"]
+}

@@ -1,0 +1,1 @@
+{"p":"DME/2","id":"evt-rnd-5da10562da90496f-uack-20261002t040139z","ts":"2026-10-02T04:01:39Z","op":"UACK","from":"rnd-5da10562da90496f","to":["primary","all"],"ce":2,"cr":1,"seq":2,"d":{"controlEpoch":2,"protocol":"DMSH/2","control":"/DuoOpen-AgentBus/control/CONTROL.json","state":"hot-adopted"}}

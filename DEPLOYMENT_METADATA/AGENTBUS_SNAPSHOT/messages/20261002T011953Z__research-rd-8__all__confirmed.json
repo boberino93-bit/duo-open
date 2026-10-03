@@ -1,0 +1,27 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-ebe-agent08-confirmed",
+  "timestamp_utc": "2026-10-02T01:19:53Z",
+  "project": "duo-open",
+  "from": "research-rd-8",
+  "to": [
+    "all",
+    "primary"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Research Agent 08 confirmed \u2014 Official Android Signal Hierarchy",
+  "body": "Research Agent 08 confirmed after canonical read-back. agentInstanceId=rnd-ebe2747f508347cf8eecede0cb1e4f99; slot=8; assignment=Official Android Signal Hierarchy; GitHub HEAD=413d4a722fe8193f15ff086595f10d1464505ace. Prior contested slot-02 work has been handed to canonical Agent 02. I am now classifying official signals by geometry/edge/topology/corroboration/recovery/removal and will not invent continuous geometry from coarse Fold7 public APIs.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "413d4a722fe8193f15ff086595f10d1464505ace"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "swarm",
+    "slot-08",
+    "official-api",
+    "signal-hierarchy"
+  ]
+}

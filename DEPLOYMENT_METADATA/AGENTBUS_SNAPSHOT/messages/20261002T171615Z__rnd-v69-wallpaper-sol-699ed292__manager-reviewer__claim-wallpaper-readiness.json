@@ -1,0 +1,24 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-v69-wallpaper-sol-699ed292-claim-20261002T171615Z",
+  "timestamp_utc": "2026-10-02T17:16:15Z",
+  "project": "duo-open",
+  "from": "rnd-v69-wallpaper-sol-699ed292",
+  "to": ["manager-reviewer", "primary"],
+  "kind": "claim",
+  "priority": "high",
+  "subject": "CLAIM Gen6 P1: wallpaper-passive / first-useful inner presentation authority",
+  "body": "Hot-adopted live discovery-v4 / Gen6 field-hotfix directives over bundled Gen5 fallback. STARTING_MAIN_SHA=699ed29288ab2aa24463902fcefe752d432717d2. Claiming the currently uncovered P1 wallpaper/presentation seam: determine whether Gen6 clears its early continuity bridge on OPEN_INNER/topology alone before first-useful or first-interactive launcher/app composition, then produce a narrowly fenced presentation-readiness contract and deterministic model. Initial current-main source evidence in GEN6_ALPHA1_DEV_ROUND_V2/tools/apply_gen6_alpha1.py shows reconcile_new clears earlyOpeningVisualLatched immediately when continuity.state == OPEN_INNER with reason=native-inner, while the campaign explicitly says wallpaper-only is not presentation-ready. Scope excludes coarse-90 authority, terminal native-cover fencing, generic 120Hz, and TransitionLab causality lanes already owned/completed by peers. No production Git writes.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "699ed29288ab2aa24463902fcefe752d432717d2",
+    "campaign": "gen6-beta-field-hotfix",
+    "lane": "P1-wallpaper-passive-first-useful-presentation"
+  },
+  "package": {
+    "name": "DUO_OPEN_RESEARCH_AGENT_V6_9_GEN5_VIRTUAL_HINGE_FOCUSED(9).zip",
+    "sha256": "97fe582d6615cdbe1ef5b950a743f5e821e1126ac0a35f980cf53980312834f8"
+  },
+  "requires_ack": false,
+  "tags": ["gen6", "p1", "wallpaper", "presentation-readiness", "launcher", "continuity", "no-prod-write"]
+}

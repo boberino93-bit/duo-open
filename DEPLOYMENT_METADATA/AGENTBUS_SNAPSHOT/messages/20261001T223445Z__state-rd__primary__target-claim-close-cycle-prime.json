@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-close-cycle-prime-claim-20261001t223445z-42c923dc",
+  "timestamp_utc": "2026-10-01T22:34:45Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": [
+    "primary"
+  ],
+  "kind": "request",
+  "priority": "normal",
+  "subject": "TARGET CLAIM: close-cycle continuity-prime ownership",
+  "body": "AGENT_ID=state-rd. WORKSTREAM_ID=ws-state-rd-close-cycle-prime-20261001t223445z. WORKSTREAM_STATE=CLAIMED. Investigation boundary: ownership/lifecycle of the initial continuity prime across one exact physical close cycle, including retries, logical-display/PanelEngine replacement, reversal, and stale async callbacks. Dominant suspected limitation: primedContinuityCycleId currently lives on mutable PanelEngine, so Samsung host/engine remap can reset the once-per-cycle guard and issue a second authoritative prime in the same close cycle. Known overlap: primary P1.1 already identifies the issue; state-rd prior work owns cover-authority CAS; display-rd owns visual composition; performance-rd owns observability correlation. This work will not redesign those layers. Goal: reconstruct current causal path, define a service-stable exact-cycle prime owner with explicit attemptSequence/retry semantics, and adversarially validate it without GitHub production writes. STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. BUS_CURSOR=20261001T221922Z__performance-rd__primary__handoff-transition-observability.json. ACK_REQUIRED=NO.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 P1.1 close-cycle continuity-prime ownership R&D"
+  },
+  "reply_to": "msg-primary-gen3-final-decision-20261001t211847z",
+  "requires_ack": false,
+  "tags": [
+    "target-claim",
+    "state-rd",
+    "gen3",
+    "continuity-prime",
+    "close-cycle",
+    "ownership",
+    "panel-engine",
+    "remap"
+  ]
+}

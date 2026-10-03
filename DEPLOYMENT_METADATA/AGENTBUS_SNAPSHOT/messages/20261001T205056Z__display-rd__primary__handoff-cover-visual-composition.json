@@ -1,0 +1,55 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-display-rd-cover-visual-handoff-205056",
+  "timestamp_utc": "2026-10-01T20:50:56Z",
+  "project": "duo-open",
+  "from": "display-rd",
+  "to": [
+    "primary"
+  ],
+  "kind": "handoff",
+  "priority": "high",
+  "subject": "HANDOFF: exact cover visual lease + closing shader composition R&D",
+  "body": "Final subsystem: Fold7 cover visual composition/fold-effect ownership. STARTING_MAIN_SHA=FINAL_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e; main did not change during this R&D. Strongest proven finding: privileged V9 intentionally suppresses autonomous cover PanelEngine rendering in all closing states, while DisplayMirrorHost only presents a right-pane bitmap crop/live SurfaceControl mirror and does not invoke DuoShader/FoldOverlayView/TiltFollower; therefore the current Gen2 closing path has no fold-shader producer. Opening remains a separate PanelEngine one-shot and uses service-global earlyOpeningVisualStarted, creating a source-level host-remap ownership risk. Proposed architecture separates cover authority/content from exact visual intent via serviceEpoch+movementId+attemptSequence+direction+contentLeaseId+hostEpoch and explicit hidden readiness vs visible demand. Final pure Kotlin model passed 34/34 tests including a 100,000-event fixed-seed adversarial stream. Initial prototype flaw (shader could activate while hidden-ready) was found and fixed by adding explicit visualDemand/READY_HIDDEN. Android production app NOT compiled in this silo: direct git clone failed DNS; current source was inspected through GitHub connector at exact SHA. Exact Fold7 projection/shader performance remains field-unverified. Manual integration review required; preserve V9 early inner wake, early exact-cycle capture, current cover lease/readiness/frame provenance/presentation owners, geometry, and thresholds.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "2.0.2-zfold7-gen2-field1 / versionCode 37"
+  },
+  "reply_to": "msg-display-rd-cover-visual-composition-203516",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/display-rd/20261001T205056Z/DUO_OPEN_COVER_VISUAL_COMPOSITION_GEN2_RND_HANDOFF.txt",
+      "sha256": "f6bdd7d58f9593aea89a9d85fd26102114e485d78ea24f3e535411e517f8b128",
+      "purpose": "self-contained R&D handoff"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/display-rd/20261001T205056Z/DUO_OPEN_COVER_VISUAL_COMPOSITION_GEN2_PROPOSAL.zip",
+      "sha256": "fd39552d7b9aec3234c1dd9d04e8b1612f960476a8dd3f29e3cb2db6f889843e",
+      "purpose": "R&D-only pure model/test proposal package"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/display-rd/20261001T205056Z/DUO_OPEN_COVER_VISUAL_COMPOSITION_GEN2_FINAL_SHA256.txt",
+      "purpose": "detached final artifact digest manifest"
+    }
+  ],
+  "device_validation_required": [
+    "closing projected shader path at existing 135-degree reveal",
+    "opening visual host remap/recreation behavior",
+    "reversal stale-callback behavior",
+    "GPU upload/draw/frame-commit/presentation timing",
+    "secure-content/degraded fallback",
+    "Shizuku loss/recovery"
+  ],
+  "manual_integration_review_required": true,
+  "tags": [
+    "display",
+    "cover",
+    "rendering",
+    "shader",
+    "visual-lease",
+    "gen3",
+    "handoff"
+  ]
+}

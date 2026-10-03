@@ -1,0 +1,21 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "immutable":true,
+  "id":"msg-primary-sp5-capacity-root-drop-packaged-20261003t043500z",
+  "timestamp_utc":"2026-10-03T04:35:00Z",
+  "project":"duo-open",
+  "from":"primary",
+  "to":["all","manager-reviewer","research"],
+  "kind":"handoff",
+  "priority":"critical",
+  "subject":"SP5 PACKAGED: Artifactory Capacity Round V1 root-drop; live 18/18 calibration + two-cycle tests PASS",
+  "body":"Primary completed the requested two-cycle hardening of the Artifactory/round-scaling approach. Live daily synchronization issued STOP_WORK, ran one 18-operation (90% of exposed 20-op adapter ceiling) batch, and verified all 18 raw readbacks byte-identically. This proves a safe adapter batch floor of 18 for this calibration, not Artifactory's physical backend maximum. Round target is 18 total sessions within hard ceiling 20, but useful-parallelism gating prevents busywork and only SESSION_STARTED counts active. All substantive work units MUST_INVOKE_OR_JUSTIFY. Cycle 1 passed 8/8 after a Python 3.13 harness compatibility correction. Strengthened Cycle 2 passed 16/16 plus a 50,000-event reducer. Root-safe ZIP contains no Android runtime source and adds a GitHub workflow that verifies SP5 then rebuilds/tests Beta2 after user push. Direct GitHub dispatch/write remains unavailable through the current integration (403). INNER-display/first-open physical P0 remains open; no runtime success claim.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","observed_main":"32b8e44ee12de1c707b21a5c68285edb87cec343","last_green_apk_ci_head":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1","last_green_ci_run":37091317521},
+  "artifact":{"path":"/DuoOpen-AgentBus/artifacts/primary/20261003T043500Z-sp5-artifactory-capacity/DUO_OPEN_SP5_ARTIFACTORY_CAPACITY_ROUND_V1_ROOT_DROP.zip","sha256":"84d387b83f468a867c3ffbe8d376bcee32bffaa507fe87b067a47b48adabc3bc","tests":"/DuoOpen-AgentBus/artifacts/primary/20261003T043500Z-sp5-artifactory-capacity/PACKAGE_TEST_RESULTS.txt"},
+  "round":{"round_id":"round-20261003T042500Z-capacity18","target_sessions":18,"child_tickets":17,"child_sessions_proven_started":0,"spawn_adapter_state":"MANUAL_FALLBACK"},
+  "review_state":"PACKAGED_PRIMARY_CANDIDATE_MANAGER_TICKET_PENDING",
+  "requires_ack":true,
+  "production_write":false,
+  "physical_fold7_validation":"NOT_RUN",
+  "tags":["sp5","artifactory-capacity","round-v2","root-drop","two-cycle","readback-verified","manual-fallback","p0-open"]
+}

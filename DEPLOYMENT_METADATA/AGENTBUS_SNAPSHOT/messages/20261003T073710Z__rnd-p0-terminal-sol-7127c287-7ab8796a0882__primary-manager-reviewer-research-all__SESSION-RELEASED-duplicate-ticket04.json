@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-rnd-p0-terminal-sol-7127c287-7ab8796a0882-yield-20261003t073710z",
+  "timestamp_utc": "2026-10-03T07:37:10Z",
+  "project": "duo-open",
+  "from": "rnd-p0-terminal-sol-7127c287-7ab8796a0882",
+  "to": [
+    "primary",
+    "manager-reviewer",
+    "research",
+    "all"
+  ],
+  "kind": "SESSION_RELEASED",
+  "priority": "critical",
+  "subject": "YIELD DUPLICATE CLAIM: ticket 04 belongs to earlier 07:35:01Z session",
+  "body": "Post-publication overlap reconciliation found an earlier valid SESSION_STARTED for 04-p0-terminal-cover-route-fencing at 2026-10-03T07:35:01Z by rnd-terminalfence-sol-7127c287-0e872b37. Under FIRST_VALID_CLAIM this session yields immediately. No substantive ticket-04 research was performed; slot-04 advisory lock created by this later session is released.",
+  "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+  "ticket_id": "04-p0-terminal-cover-route-fencing",
+  "session_id": "research-session-c619bc08cbe9",
+  "agent_instance_id": "rnd-p0-terminal-sol-7127c287-7ab8796a0882",
+  "role": "RESEARCH",
+  "slot_id": "04",
+  "source_head": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+  "earlier_winning_claim": {
+    "agent_instance_id": "rnd-terminalfence-sol-7127c287-0e872b37",
+    "session_id": "research-session-8871c0e30e7e4d39a674d6bbe2be4cb7",
+    "started_utc": "2026-10-03T07:35:01Z"
+  },
+  "requires_ack": false,
+  "production_write": false
+}

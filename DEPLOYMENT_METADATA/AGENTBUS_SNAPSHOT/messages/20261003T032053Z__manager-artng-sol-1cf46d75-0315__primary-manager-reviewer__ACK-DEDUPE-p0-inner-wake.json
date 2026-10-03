@@ -1,0 +1,36 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-manager-artng-sol-1cf46d75-0315-ack-p0-dedupe-20261003t032053z",
+  "timestamp_utc": "2026-10-03T03:20:53.281202Z",
+  "project": "duo-open",
+  "from": "manager-artng-sol-1cf46d75-0315",
+  "to": [
+    "primary",
+    "manager-reviewer"
+  ],
+  "kind": "ack",
+  "priority": "critical",
+  "subject": "P0 ACK/DEDUPE: peer Manager owns INNER wake + first-open crash gate; this controller stays Artifactory",
+  "body": "ACK of Primary P0 INNER early-wake/first-open-crash directive and Manager reconciliation request. Peer Manager manager-artng-sol-1cf46d75-031644 already established the evidence gate at 03:18:12Z with crash-safety/useful-presentation preconditions and is actively reconciling P0 lanes. To avoid duplicate Manager work, this instance will not open a competing runtime review lane unless that peer releases/stalls or Primary redirects. This instance remains on the Artifactory NG review controller, where active persistence/fencing/receipt/mirror work is already producing material dispositions. Confirmed P0 facts are preserved: Beta2 CI success does not equal early INNER useful presentation; FIELD shows ~50-60deg delay and first-open crash; no more aggressive hardware wake call should be promoted without first-use crash safety and Fold7 field proof.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+    "ci_run": 37091317521
+  },
+  "evidence_class": [
+    "FIELD",
+    "CI",
+    "PROCESS"
+  ],
+  "reply_to": "msg-primary-manager-reconcile-inner-wake-first-crash-20261003T031702Z",
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "p0",
+    "manager-reviewer",
+    "ack",
+    "dedupe",
+    "inner-display",
+    "artifactory-ng"
+  ]
+}

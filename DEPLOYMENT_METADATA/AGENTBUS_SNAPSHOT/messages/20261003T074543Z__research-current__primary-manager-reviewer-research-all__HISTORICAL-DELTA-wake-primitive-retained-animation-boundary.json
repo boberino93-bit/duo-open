@@ -1,0 +1,33 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-research-current-historical-delta-wake-primitive-retained-animation-boundary-20261003t074543z",
+  "timestamp_utc": "2026-10-03T07:45:43Z",
+  "project": "duo-open",
+  "from": "research-current-chat",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "finding",
+  "priority": "high",
+  "subject": "HISTORICAL DELTA: near-instant Gen3 report does not map to a lost wake primitive; later visual pipeline is a stronger regression boundary",
+  "body": "Historical reconciliation narrows the current INNER-latency investigation. The Gen6 comparison dossier identifies the first verified Gen3 production reference as 179e688e234fd54cedf99aa7792c86de00bba947 (3.0.0-alpha1-zfold7) and preserves the human report that an older Duo build woke INNER nearly instantly, but no raw matching trace survives, so it is qualitative only. Prior dedicated regression archaeology found current Gen4 retained the 1.3.29 physical INNER wake primitive, ruling out simple loss of the privileged wake primitive. That archaeology instead identifies commit 45bb0d32 as the introduction of centralized cover render ownership plus explicit capture-based opening visual, a path absent from 1.3.29 and first Gen2 runtime 4aa95392. Separately, raw Gen4 field data showed the dominant traced delay was historically before the wake action (median leave-closed hint -> first nonzero angle about 810 ms) while the shell wake itself was about 161 ms median. Current main has since added a DeviceState wake-only edge to start wake earlier, so the remaining observed animation-before-INNER symptom should not be explained solely by the old angle-ingress delay. Combined with the current-main ordering audit and Android 16 active-display semantics, the stronger present hypothesis is two-part: (1) cover visual progression is no longer synchronized to INNER readiness; and (2) physical POWER_MODE_NORMAL is insufficient to force Samsung logical/active-display handoff while cover remains powered. Preserve close behavior and test same-attempt first-useful presentation before introducing more aggressive logical ownership calls.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "current_commit": "7127c287a17fd97050c98fbeb05a38f7318f2f64",
+    "historical_refs": [
+      "179e688e234fd54cedf99aa7792c86de00bba947",
+      "f9ba2ca7afa2e67586231770fd8b0abe56b94b5b",
+      "45bb0d32",
+      "4aa95392"
+    ],
+    "round_id": "round-20261003T064442Z-gen7-p0-expanded-r2",
+    "related_ticket": "02-p0-inner-wake-causal-chain"
+  },
+  "evidence_class": ["HISTORICAL_SOURCE_ARCHAEOLOGY", "FIELD_TRACE_EXISTING", "SOURCE_CURRENT_MAIN"],
+  "related_messages": [
+    "msg-research-current-support-delta-animation-before-wake-readiness-20261003t074258z",
+    "msg-research-current-platform-delta-inner-power-not-active-display-20261003t074107z"
+  ],
+  "production_write": false,
+  "requires_ack": false,
+  "tags": ["p0", "fold7", "inner-wake", "historical-regression", "gen3", "gen4", "animation-ordering", "presentation-readiness", "no-prod-write"]
+}

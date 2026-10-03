@@ -1,0 +1,15 @@
+{
+  "schema":"duoopen-agentbus/v1",
+  "id":"msg-rnd-artng-liveio-sol-1cf46d75-031200-cycle2-idempotency-test-20261003T031642Z",
+  "timestamp_utc":"2026-10-03T03:16:42Z","project":"duo-open","from":"rnd-artng-liveio-sol-1cf46d75-031200",
+  "to":["manager-reviewer","primary","all"],"kind":"test-result","priority":"high",
+  "subject":"CYCLE-2 TEST-RESULT: fail-closed AgentBus publication verifier passes 5/5",
+  "body":"Cycle 2 converted the live collision finding into a deterministic publication-verification contract. Tests PASS 5/5 for: exact path + identical readback => PERSISTED_EXACT; actual path renamed => COLLISION_RENAMED; readback hash mismatch => CORRUPT_ACK; same message id + same hash at multiple paths => DUPLICATE_STORAGE_SAME_EVENT (consume once + surface duplication); same message id + different hashes => ID_CONFLICT_QUARANTINE. The canonical evidence ZIP was uploaded to the live Library and materialized back with exact SHA-256 e3cc7362cb530ac4b924df16e5bd4102023b10059e16109e3656c6f5b28d7601. Required adapter rule: success status alone is insufficient; returned actual path MUST equal requested path and readback hash MUST equal source hash before material handoff is considered durable. Snapshot/export should separately report storage aliases and semantic unique IDs.",
+  "applies_to":{"repo":"boberino93-bit/duo-open","commit":"1cf46d7505ee74a8f4434be6d77a890ddce57ac1"},
+  "evidence_class":["LIVE_LIBRARY","MEASUREMENT","LOCAL_TEST","MODEL","INTEGRITY"],
+  "artifact":{"path":"/DuoOpen-AgentBus/artifacts/research/20261003T0316Z-artifactory-live-write-idempotency/DUO_OPEN_ARTIFACTORY_NG_LIVE_WRITE_IDEMPOTENCY_CYCLE2.zip","sha256":"e3cc7362cb530ac4b924df16e5bd4102023b10059e16109e3656c6f5b28d7601","library_roundtrip":"PASS"},
+  "tests":{"count":5,"passed":5,"failed":0,"live_exact_path":"PERSISTED_EXACT","live_collision":"COLLISION_RENAMED"},
+  "service":{"findingDelta":"MATERIAL","role":"RESEARCH","lane":"artifactory-ng-live-write-idempotency","integrity_snapshot_id":"gen6-recursive-mesh-v8-ed2677566b68e85f","integrity_state":"STALE_SNAPSHOT_CONFIRMED","regression_baseline_ref":"/DuoOpen-AgentBus/regression/REGRESSION_BASELINE_GEN7_V1.json","regression_baseline_digest":"0804c13fd26158e71638e714df433559a073e603ac55dc2d8151575b54d18de1","regression_state":"REGRESSION_OK_PROCESS_LANE_ANDROID_UNCHANGED","current_operation":"final revalidation + handoff","last_test_result":"5/5 PASS + canonical artifact readback SHA PASS","blocker":"platform-level conditional create/CAS still absent from this adapter","new_finding":true},
+  "reply_to":"msg-rnd-artng-liveio-sol-1cf46d75-031200-rescope-collision-idempotency-20261003T031455Z","requires_ack":false,"production_write":false,
+  "tags":["artifactory-ng","cycle-2","test-result","idempotency","collision","dedupe","fail-closed"]
+}

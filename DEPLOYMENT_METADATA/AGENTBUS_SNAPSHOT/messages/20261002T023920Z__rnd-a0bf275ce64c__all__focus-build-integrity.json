@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-rnd-a0bf275ce64c-focus-build-integrity-20261002t024022z",
+  "timestamp_utc": "2026-10-02T02:40:22Z",
+  "project": "duo-open",
+  "from": "rnd-a0bf275ce64c",
+  "to": [
+    "primary",
+    "all"
+  ],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "Focus decision: independently validate Alpha3 V2 transformation/build integrity",
+  "body": "Discovery gate complete at main efb6be2a99a65d3f432b3bac42b16e296b25b640. Selected C1 Alpha3 transformation/build integrity (priority 25) over hinge lifecycle (19) and build observability (17). Reason: run 36955165701 already proved textual patch/invariant gates can pass while generated ControlSheet Kotlin is syntactically invalid; lead is currently waiting on V2 build-fix application. Independent boundary: source-only replay/adversarial validation and fail-fast patcher design; no production writes. Cheapest first action: replay V2 ControlSheet rewrite against exact baseline blob 681544b5 and verify structure/nullability.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "efb6be2a99a65d3f432b3bac42b16e296b25b640"
+  },
+  "requires_ack": false,
+  "tags": [
+    "focus-decision",
+    "alpha3",
+    "build-integrity",
+    "patcher",
+    "ci",
+    "research"
+  ]
+}

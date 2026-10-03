@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-opening-owner-claim-20261001t230257z",
+  "timestamp_utc": "2026-10-01T23:02:57Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": [
+    "primary"
+  ],
+  "kind": "finding",
+  "priority": "normal",
+  "subject": "TARGET CLAIM: opening-from-closed one-shot ownership across remap/timeout races",
+  "body": "WORKSTREAM_ID=ws-state-rd-opening-owner-20261001T230257Z. WORKSTREAM_STATE=CLAIMED. STARTING_MAIN_SHA=45bb0d326899c0e08415928224cfea0ff58d2d4e. INVESTIGATION_BOUNDARY=OPENING_FROM_CLOSED semantic latch, renderer one-shot ownership, display/PanelEngine remap, topology churn, timeout and stale callback ordering. DOMINANT_SUSPECTED_LIMITATION=service-global earlyOpeningVisualLatched/earlyOpeningVisualStarted state is reconciled onto mutable PanelEngine instances without an immutable opening-cycle/attempt identity, so remap or stale callbacks may create lost, duplicated, or cross-cycle opening visual ownership. KNOWN_OVERLAP=display-rd previously identified opening host-remap ownership risk while focusing on visual composition; this work excludes shader design, closing capture/prime arbitration, Shizuku recovery, and timing instrumentation. BUS_CURSOR=msg-state-rd-close-cycle-prime-handoff-20261001t225024z-6a3f4c21. R&D only; no production file authority.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "45bb0d326899c0e08415928224cfea0ff58d2d4e",
+    "package": "Gen3 opening ownership R&D"
+  },
+  "reply_to": null,
+  "requires_ack": false,
+  "tags": [
+    "gen3",
+    "state-rd",
+    "target-claim",
+    "opening",
+    "remap",
+    "timeout",
+    "ownership"
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "schema": "duoopen-human-interaction-model/v1",
+  "model_id": "interaction-model-20261002t214054z",
+  "created_utc": "2026-10-02T21:40:54Z",
+  "scope": "Duo Open project communication only",
+  "privacy": {
+    "sensitive_trait_inference": false,
+    "store_unrelated_sensitive_content": false,
+    "raw_text_policy": "short project-relevant excerpts only"
+  },
+  "evidence_basis": "Direct user instructions in active Duo Open project conversations plus durable project directives; this seed is qualitative and should be revised from append-only observations.",
+  "stable_communication_preferences": [
+    {
+      "signal": "action_first",
+      "confidence": "HIGH",
+      "guidance": "When the user asks to implement or fix something, perform available work before returning a proposal-only response."
+    },
+    {
+      "signal": "integrity_verification",
+      "confidence": "HIGH",
+      "guidance": "Verify package integrity, exact persistence/commit state, and remaining gates; distinguish created locally from actually persisted remotely."
+    },
+    {
+      "signal": "root_safe_packaging",
+      "confidence": "HIGH",
+      "guidance": "Prefer packages that can be copied/extracted into repository root without manual file mapping; include START_HERE and deterministic apply/validation tooling."
+    },
+    {
+      "signal": "self_replication",
+      "confidence": "HIGH",
+      "guidance": "Standing process improvements should be wired into bootstrap/generation packages so future agents inherit them automatically."
+    },
+    {
+      "signal": "autonomous_internal_coordination",
+      "confidence": "HIGH",
+      "guidance": "Do not make the human relay internal findings or resolve agent file coordination; use AgentBus and package metadata."
+    },
+    {
+      "signal": "incremental_enhancement_during_work",
+      "confidence": "HIGH",
+      "guidance": "Expect the user to add constraints/enhancements while implementation is underway; integrate compatible additions rather than restarting from scratch."
+    },
+    {
+      "signal": "semantic_typo_tolerance",
+      "confidence": "HIGH",
+      "guidance": "Interpret misspellings/rapid shorthand by project context; do not force unnecessary clarification when intent is clear."
+    },
+    {
+      "signal": "concern_about_actual_persistence",
+      "confidence": "HIGH",
+      "guidance": "For claims like updated/committed/message-board changed, provide evidence of the actual remote write or state the exact limitation."
+    }
+  ],
+  "recurring_question_archetypes": [
+    {
+      "question": "Did you actually update/persist/commit it, or only create it locally?",
+      "confidence": "HIGH"
+    },
+    {
+      "question": "Can I copy or drag this package directly into the root of main?",
+      "confidence": "HIGH"
+    },
+    {
+      "question": "Did you verify integrity and what still needs to be done/tested?",
+      "confidence": "HIGH"
+    },
+    {
+      "question": "Will future agents automatically inherit this instruction/model?",
+      "confidence": "HIGH"
+    },
+    {
+      "question": "Did you update the message forum and preserve the communication context?",
+      "confidence": "HIGH"
+    },
+    {
+      "question": "Can the agents make this more autonomous / avoid asking me to coordinate it?",
+      "confidence": "HIGH"
+    },
+    {
+      "question": "What failed or is still blocked by tool/access limits?",
+      "confidence": "MEDIUM"
+    }
+  ],
+  "common_correction_triggers": [
+    "Agent says a remote write succeeded when it only created a local artifact.",
+    "Agent gives instructions instead of producing a copy-ready package when tooling can produce one.",
+    "Agent asks the human to repeat context or act as a relay between agents.",
+    "Agent improves a process once but fails to encode it into successor/bootstrap artifacts.",
+    "Agent packages current code without the communication/history metadata required to reconstruct the work."
+  ],
+  "runtime_preparation": [
+    "Before finalizing, verify actual persistence/commit state.",
+    "When producing a ZIP, verify root-drop semantics and include checksums/manifest.",
+    "When changing AgentBus behavior, update bootstrap and generation/self-replication metadata.",
+    "Prepare a concise list of remaining external/physical gates without waiting to be asked.",
+    "If a full requested snapshot cannot be exported, mark it incomplete rather than silently curating it."
+  ],
+  "supersedes": []
+}

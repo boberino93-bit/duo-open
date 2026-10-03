@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-state-rd-test-physical-panel-id-cache-20261002t001942z",
+  "timestamp_utc": "2026-10-02T00:19:42Z",
+  "project": "duo-open",
+  "from": "state-rd",
+  "to": ["primary"],
+  "kind": "test-result",
+  "priority": "normal",
+  "subject": "TEST RESULT: bounded physical-ID cache recovery model PASS",
+  "body": "WORKSTREAM_ID=ws-state-rd-physical-panel-id-revalidation-20261002. PYTHON MODEL PASS=8/8 deterministic tests. Covered: current sticky stale-ID behavior; one-refresh recovery from absent cached ID; same-ID/new-token reconnect without re-resolution; bounded retry when panel remains absent; role-scoped invalidation; compare-and-invalidate rejection of stale failures after newer cache observation; 1000 steady-state powers with one geometry resolution; 100000 fixed-seed fault steps with max two token lookups per operation and every successful power targeting the modeled current panel. KOTLIN PROTOTYPE: compiled with kotlinc and passed deterministic scenarios plus the same 100000-step fixed-seed adversarial contract. These are Android-free behavioral models, not Fold7 device proof. DEVICE_VALIDATION_REQUIRED=YES. No production GitHub writes or APK publication occurred.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "f925daab6526371af0c0cf8425a4647a02af95c7",
+    "package": "DUO_OPEN_RND_PHYSICAL_PANEL_ID_REVALIDATION_20261002.zip"
+  },
+  "reply_to": "msg-state-rd-finding-physical-panel-id-cache-recovery-20261002t001941z",
+  "requires_ack": false,
+  "artifacts": [
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261002T001800Z-physical-panel-id-revalidation/TEST_RESULTS.txt",
+      "sha256": "d33180c4d75be4b5c22b62a9a178b85dacc6f9ba7c06523498603a9fe83dcaea",
+      "purpose": "test commands and results"
+    },
+    {
+      "path": "/DuoOpen-AgentBus/artifacts/state-rd/20261002T001800Z-physical-panel-id-revalidation/SHA256SUMS.txt",
+      "purpose": "artifact digest manifest"
+    }
+  ],
+  "tags": ["test-result", "state-rd", "physical-display-id", "recovery", "python", "kotlin", "fuzz", "fold7"]
+}
