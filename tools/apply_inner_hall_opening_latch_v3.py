@@ -25,10 +25,8 @@ def transform_controller(text: str) -> str:
         text,
         "    private var closingFloorAngle = Float.NaN\n",
         "    private var closingFloorAngle = Float.NaN\n\n"
-        "    // INNER_HALL_OPENING_LATCH_V3: an accepted binary opening edge is\n"
-        "    // authoritative evidence that the handset has left the magnetic fully-closed rest.\n"
-        "    // Samsung may continue reporting native-cover/0deg for a while; that stale\n"
-        "    // topology must not cancel the opening attempt before precise angle returns.\n"
+        "    // INNER_HALL_OPENING_LATCH_V3: accepted binary opening evidence\n"
+        "    // survives Samsung's stale native-cover/0deg intermediate posture.\n"
         "    private var earlyOpeningLatched = false\n",
         "opening latch field",
     )
@@ -47,28 +45,104 @@ def transform_controller(text: str) -> str:
         "latch accepted early opening",
     )
 
-    anchor = '''        return decision(\n            listOf(\n                Action.WakeInner(\n                    generation\n                )\n            )\n        )\n    }\n\n    fun onPrewarmResult(\n'''
-    insert = '''        return decision(\n            listOf(\n                Action.WakeInner(\n                    generation\n                )\n            )\n        )\n    }\n\n    /**\n     * Authoritative binary close edge from SW_LID/Hall.\n     *\n     * This is the symmetric cancellation for [onEarlyOpeningEdge]. It clears\n     * the opening latch immediately. If Samsung already reports native cover,\n     * collapse to NATIVE_COVER now; otherwise the next topology/hinge sample\n     * will do so normally.\n     */\n    fun onEarlyClosingEdge(\n        nowMs: Long,\n        topology: Topology,\n    ): Decision {\n        earlyOpeningLatched = false\n        lastSampleMs = nowMs\n\n        if (\n            topology.nativeCover &&\n            state in OPENING_STATES\n        ) {\n            direction = Direction.STEADY\n            val angle =\n                lastAngle\n                    .takeIf { it.isFinite() }\n                    ?: 0f\n\n            transition(\n                to = State.NATIVE_COVER,\n                angle = angle,\n                reason = "lid-closed-authoritative",\n                topology = topology,\n            )\n        }\n\n        return decision()\n    }\n\n    fun onPrewarmResult(\n'''
-    text = replace_once(text, anchor, insert, "early closing edge method")
+    method = '''    /**
+     * Authoritative binary close edge from SW_LID/Hall.
+     * Clears the early-opening latch immediately. If Samsung already reports
+     * native cover, collapse to NATIVE_COVER now; otherwise normal topology
+     * reconciliation will finish the close.
+     */
+    fun onEarlyClosingEdge(
+        nowMs: Long,
+        topology: Topology,
+    ): Decision {
+        earlyOpeningLatched = false
+        lastSampleMs = nowMs
+
+        if (
+            topology.nativeCover &&
+            state in OPENING_STATES
+        ) {
+            direction = Direction.STEADY
+            val angle =
+                lastAngle
+                    .takeIf { it.isFinite() }
+                    ?: 0f
+
+            transition(
+                to = State.NATIVE_COVER,
+                angle = angle,
+                reason = "lid-closed-authoritative",
+                topology = topology,
+            )
+        }
+
+        return decision()
+    }
+
+'''
+    text = replace_once(
+        text,
+        "    fun onPrewarmResult(\n",
+        method + "    fun onPrewarmResult(\n",
+        "early closing edge method",
+    )
 
     text = replace_once(
         text,
-        '''        val openingAwayFromNativeCover =\n            state in OPENING_STATES &&\n                angle >= INNER_WAKE_MIN_DEG &&\n                direction != Direction.CLOSING\n''',
-        '''        val openingAwayFromNativeCover =\n            state in OPENING_STATES &&\n                (earlyOpeningLatched || angle >= INNER_WAKE_MIN_DEG) &&\n                direction != Direction.CLOSING\n''',
+        '''        val openingAwayFromNativeCover =
+            state in OPENING_STATES &&
+                angle >= INNER_WAKE_MIN_DEG &&
+                direction != Direction.CLOSING
+''',
+        '''        val openingAwayFromNativeCover =
+            state in OPENING_STATES &&
+                (earlyOpeningLatched || angle >= INNER_WAKE_MIN_DEG) &&
+                direction != Direction.CLOSING
+''',
         "native cover opening protection",
     )
 
     text = replace_once(
         text,
-        '''            activePrewarmGeneration = -1L\n            resetIntent()\n\n            return decision(actions)\n        }\n\n        // Stable fully-open endpoint.\n''',
-        '''            earlyOpeningLatched = false\n            activePrewarmGeneration = -1L\n            resetIntent()\n\n            return decision(actions)\n        }\n\n        // Stable fully-open endpoint.\n''',
+        '''            activePrewarmGeneration = -1L
+            resetIntent()
+
+            return decision(actions)
+        }
+
+        // Stable fully-open endpoint.
+''',
+        '''            earlyOpeningLatched = false
+            activePrewarmGeneration = -1L
+            resetIntent()
+
+            return decision(actions)
+        }
+
+        // Stable fully-open endpoint.
+''',
         "clear latch on native-cover authority",
     )
 
     text = replace_once(
         text,
-        '''            activePrewarmGeneration = -1L\n            resetIntent()\n\n            return decision(actions)\n        }\n\n        when (state) {\n''',
-        '''            earlyOpeningLatched = false\n            activePrewarmGeneration = -1L\n            resetIntent()\n\n            return decision(actions)\n        }\n\n        when (state) {\n''',
+        '''            activePrewarmGeneration = -1L
+            resetIntent()
+
+            return decision(actions)
+        }
+
+        when (state) {
+''',
+        '''            earlyOpeningLatched = false
+            activePrewarmGeneration = -1L
+            resetIntent()
+
+            return decision(actions)
+        }
+
+        when (state) {
+''',
         "clear latch at open-inner",
     )
 
@@ -79,8 +153,38 @@ def transform_coordinator(text: str) -> str:
     if MARKER in text:
         return text
 
-    old = '''        apply(decision)\n    }\n\n    fun onTopologyFastLane(reason: String) {\n'''
-    new = '''        apply(decision)\n    }\n\n    // INNER_HALL_OPENING_LATCH_V3: SW_LID close is the authoritative\n    // cancellation edge for a Hall-latched opening attempt.\n    fun onEarlyClosingEdge(\n        reason: String,\n    ) {\n        if (!renderOwnershipArmed) return\n\n        val decision =\n            controller.onEarlyClosingEdge(\n                nowMs = SystemClock.uptimeMillis(),\n                topology = topology(),\n            )\n\n        DuoDiagnostics.event(\n            "early-wake",\n            "closing edge reason=$reason state=${controller.state} " +\n                "generation=${decision.generation} precise=${currentHingeAngle()}",\n        )\n\n        apply(decision)\n    }\n\n    fun onTopologyFastLane(reason: String) {\n'''
+    old = '''        apply(decision)
+    }
+
+    fun onTopologyFastLane(reason: String) {
+'''
+    new = '''        apply(decision)
+    }
+
+    // INNER_HALL_OPENING_LATCH_V3: SW_LID close is the authoritative
+    // cancellation edge for a Hall-latched opening attempt.
+    fun onEarlyClosingEdge(
+        reason: String,
+    ) {
+        if (!renderOwnershipArmed) return
+
+        val decision =
+            controller.onEarlyClosingEdge(
+                nowMs = SystemClock.uptimeMillis(),
+                topology = topology(),
+            )
+
+        DuoDiagnostics.event(
+            "early-wake",
+            "closing edge reason=$reason state=${controller.state} " +
+                "generation=${decision.generation} precise=${currentHingeAngle()}",
+        )
+
+        apply(decision)
+    }
+
+    fun onTopologyFastLane(reason: String) {
+'''
     return replace_once(text, old, new, "coordinator closing edge")
 
 
@@ -88,8 +192,45 @@ def transform_service(text: str) -> str:
     if MARKER in text:
         return text
 
-    old = '''                    if (closed) {\n                        scope.launch(Dispatchers.IO) {\n                            ShizukuBridge\n                                .forceReleaseInnerPhysicalBridge(\n                                    "lid-closed"\n                                )\n                        }\n                    } else {\n                        handleEarlyOpeningEdge(\n                            "lid-switch-open"\n                        )\n                    }\n'''
-    new = '''                    if (closed) {\n                        // INNER_HALL_OPENING_LATCH_V3: a real Hall close cancels\n                        // the opening latch immediately; Samsung's intermediate\n                        // DeviceState values are no longer allowed to do that.\n                        continuity.onEarlyClosingEdge(\n                            "lid-switch-closed"\n                        )\n                        setEarlyOpeningVisualLatched(\n                            value = false,\n                            reason = "lid-switch-closed",\n                        )\n                        scope.launch(Dispatchers.IO) {\n                            ShizukuBridge\n                                .forceReleaseInnerPhysicalBridge(\n                                    "lid-closed"\n                                )\n                        }\n                        reconcileContinuityCoverRendering(\n                            "lid-switch-closed"\n                        )\n                    } else {\n                        handleEarlyOpeningEdge(\n                            "lid-switch-open"\n                        )\n                    }\n'''
+    old = '''                    if (closed) {
+                        scope.launch(Dispatchers.IO) {
+                            ShizukuBridge
+                                .forceReleaseInnerPhysicalBridge(
+                                    "lid-closed"
+                                )
+                        }
+                    } else {
+                        handleEarlyOpeningEdge(
+                            "lid-switch-open"
+                        )
+                    }
+'''
+    new = '''                    if (closed) {
+                        // INNER_HALL_OPENING_LATCH_V3: only a real Hall close,
+                        // actual reversal, or later native takeover may cancel
+                        // the accepted Hall opening.
+                        continuity.onEarlyClosingEdge(
+                            "lid-switch-closed"
+                        )
+                        setEarlyOpeningVisualLatched(
+                            value = false,
+                            reason = "lid-switch-closed",
+                        )
+                        scope.launch(Dispatchers.IO) {
+                            ShizukuBridge
+                                .forceReleaseInnerPhysicalBridge(
+                                    "lid-closed"
+                                )
+                        }
+                        reconcileContinuityCoverRendering(
+                            "lid-switch-closed"
+                        )
+                    } else {
+                        handleEarlyOpeningEdge(
+                            "lid-switch-open"
+                        )
+                    }
+'''
     return replace_once(text, old, new, "Hall close cancellation")
 
 
@@ -99,17 +240,17 @@ def apply(repo: Path, check: bool) -> None:
         COORDINATOR: transform_coordinator,
         SERVICE: transform_service,
     }
-    changed = []
+
+    transformed = {}
     for rel, fn in paths.items():
         path = repo / rel
         if not path.exists():
             raise RuntimeError(f"missing {rel}")
         before = path.read_text(encoding="utf-8")
         after = fn(before)
+        transformed[rel] = after
         if MARKER not in after:
             raise RuntimeError(f"{rel}: V3 marker missing")
-        if after != before:
-            changed.append(str(rel))
         if not check:
             path.write_text(after, encoding="utf-8")
 
@@ -124,10 +265,7 @@ def apply(repo: Path, check: bool) -> None:
         SERVICE: ["continuity.onEarlyClosingEdge(", 'reason = "lid-switch-closed"'],
     }
     for rel, needles in required.items():
-        rendered = (repo / rel).read_text(encoding="utf-8") if check else (repo / rel).read_text(encoding="utf-8")
-        # In --check mode transformations are not written, so validate transformed text directly.
-        if check:
-            rendered = paths[rel](rendered)
+        rendered = transformed[rel]
         for needle in needles:
             if needle not in rendered:
                 raise RuntimeError(f"{rel}: missing invariant {needle}")
@@ -136,8 +274,36 @@ def apply(repo: Path, check: bool) -> None:
 
 
 def self_test() -> None:
-    sample = '''    private var closingFloorAngle = Float.NaN\n    fun reset(\n        angle: Float,\n        nowMs: Long,\n        topology: Topology,\n    ): Decision {\n        generation++\n        activePrewarmGeneration = -1L\n        prewarmRetryAfterMs = 0L\n        resetIntent()\n        direction =\n            Direction.OPENING\n\n        lastSampleMs =\n            nowMs\n        return decision(\n            listOf(\n                Action.WakeInner(\n                    generation\n                )\n            )\n        )\n    }\n\n    fun onPrewarmResult(\n        val openingAwayFromNativeCover =\n            state in OPENING_STATES &&\n                angle >= INNER_WAKE_MIN_DEG &&\n                direction != Direction.CLOSING\n            activePrewarmGeneration = -1L\n            resetIntent()\n\n            return decision(actions)\n        }\n\n        // Stable fully-open endpoint.\n            activePrewarmGeneration = -1L\n            resetIntent()\n\n            return decision(actions)\n        }\n\n        when (state) {\n'''
-    out = transform_controller(sample)
+    source = """    private var closingFloorAngle = Float.NaN
+        activePrewarmGeneration = -1L
+        prewarmRetryAfterMs = 0L
+        resetIntent()
+        direction =
+            Direction.OPENING
+
+        lastSampleMs =
+            nowMs
+    fun onPrewarmResult(
+        val openingAwayFromNativeCover =
+            state in OPENING_STATES &&
+                angle >= INNER_WAKE_MIN_DEG &&
+                direction != Direction.CLOSING
+            activePrewarmGeneration = -1L
+            resetIntent()
+
+            return decision(actions)
+        }
+
+        // Stable fully-open endpoint.
+            activePrewarmGeneration = -1L
+            resetIntent()
+
+            return decision(actions)
+        }
+
+        when (state) {
+"""
+    out = transform_controller(source)
     assert "earlyOpeningLatched || angle >= INNER_WAKE_MIN_DEG" in out
     assert "fun onEarlyClosingEdge(" in out
     print("inner Hall opening latch v3 model: PASS")
