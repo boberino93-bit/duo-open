@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
-set -eu
-python3 ./APPLY_AFTER_COPY.py --check
-python3 ./APPLY_AFTER_COPY.py
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+python3 "$ROOT/APPLY_AFTER_COPY.py"

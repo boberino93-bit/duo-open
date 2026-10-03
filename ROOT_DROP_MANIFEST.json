@@ -1,25 +1,12 @@
 {
-  "schema": "duoopen-root-drop-service-pack/v3",
-  "name": "DUO_OPEN_GEN7_ROOT_DROP_SP3_DEPLOYABLE_CI",
-  "target_repo": "boberino93-bit/duo-open",
-  "baseline_main_sha": "db0810e55a411a905f3877cc2a3518881c044daf",
-  "copy_semantics": "extract archive contents directly into repository root, then run APPLY_AFTER_COPY",
-  "features": [
-    "Shizuku truthful readiness + bind watchdog/retry",
-    "wallpaper onboarding clarification",
-    "project-local append-only user interaction model",
-    "likely-next-question predictions",
-    "successor/initiation ZIP self-replication hook",
-    "AgentBus import payload",
-    "GitHub Actions deployable APK workflow with automatic push trigger and artifact evidence"
-  ],
-  "privacy_guardrails": [
-    "no sensitive-trait inference",
-    "no credentials/secrets/private account identifiers",
-    "predictions are advisory only",
-    "explicit current user instructions always win"
-  ],
-  "observed_main_sha_at_packaging": "9c04f3d44c6e8af8bdb3a7da4698cb5b8e5c679d",
-  "ci_workflow": ".github/workflows/build-gen7-service-pack.yml",
-  "ci_artifact": "DuoOpen-ZFold7-Gen7-ServicePack-Shizuku-Onboarding"
+  "package": "DUO_OPEN_GEN7_ROOT_DROP_SP4_RUNTIME_REGRESSION_BETA2",
+  "root_safe": true,
+  "copy_destination": "repository root",
+  "baseline_main_sha": "41c6f20c817226b233eb4cbfb402e879c5e3e3ea",
+  "workflow": ".github/workflows/build-gen7-runtime-regression-beta2.yml",
+  "patcher": "tools/apply_gen7_runtime_regression_beta2.py",
+  "predecessor_required": "service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py",
+  "artifact_name": "DuoOpen-ZFold7-5.1.0-beta2-runtime-regression",
+  "target_version": "5.1.0-beta2-zfold7",
+  "target_version_code": 43
 }

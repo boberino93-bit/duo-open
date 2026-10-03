@@ -1,3 +1,3 @@
 $ErrorActionPreference = "Stop"
-python .\APPLY_AFTER_COPY.py --check
-python .\APPLY_AFTER_COPY.py
+$Root = Split-Path -Parent $MyInvocation.MyCommand.Path
+python "$Root/APPLY_AFTER_COPY.py"

@@ -1,0 +1,26 @@
+{
+  "id": "DUO_OPEN_GEN7_SP4_RUNTIME_REGRESSION_BETA2",
+  "baseline_main_sha": "41c6f20c817226b233eb4cbfb402e879c5e3e3ea",
+  "target_version_code": 43,
+  "target_version_name": "5.1.0-beta2-zfold7",
+  "target_device": "Samsung Galaxy Z Fold7",
+  "field_inputs": [
+    {
+      "name": "duoopen-debug-1790985668521.zip",
+      "sha256": "7a445279df035f00382d1eefdaabcc2a81823fe3c6e16946e502d063b05afe12"
+    },
+    {
+      "name": "duoopen-debug-1790983443791(1).zip",
+      "sha256": "9cc850b9f6988f339d9d26ba552a4526c8cbb2cfc7b2b057ff9e406ae183c38a"
+    }
+  ],
+  "runtime_targets": [
+    "verified inner wake/readiness",
+    "measured first-open geometry",
+    "live changing content during fold",
+    "rotation-safe rendering at 0/90/180/270",
+    "angle-driven cover power and brightness"
+  ],
+  "physical_validation": "NOT_RUN",
+  "android_gradle_validation": "DELEGATED_TO_GITHUB_ACTIONS"
+}
