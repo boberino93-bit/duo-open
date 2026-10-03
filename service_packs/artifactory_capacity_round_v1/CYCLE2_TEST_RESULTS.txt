@@ -2,12 +2,16 @@ test_17_sibling_lanes_support_target (__main__.CapacityControllerCycle2Tests.tes
 test_calibration_pass_is_adapter_only (__main__.CapacityControllerCycle2Tests.test_calibration_pass_is_adapter_only) ... ok
 test_calibration_path_alias_fails_closed (__main__.CapacityControllerCycle2Tests.test_calibration_path_alias_fails_closed) ... ok
 test_calibration_wrong_size_invalid (__main__.CapacityControllerCycle2Tests.test_calibration_wrong_size_invalid) ... ok
+test_cleanup_delete_error_blocks (__main__.CapacityControllerCycle2Tests.test_cleanup_delete_error_blocks) ... ok
+test_cleanup_residual_blocks (__main__.CapacityControllerCycle2Tests.test_cleanup_residual_blocks) ... ok
+test_cleanup_zero_residual_passes (__main__.CapacityControllerCycle2Tests.test_cleanup_zero_residual_passes) ... ok
 test_hard_ceiling (__main__.CapacityControllerCycle2Tests.test_hard_ceiling) ... ok
 test_hash_mismatch_fails_ack (__main__.CapacityControllerCycle2Tests.test_hash_mismatch_fails_ack) ... ok
 test_invoke_or_justify (__main__.CapacityControllerCycle2Tests.test_invoke_or_justify) ... ok
 test_pending_ticket_never_counts_active (__main__.CapacityControllerCycle2Tests.test_pending_ticket_never_counts_active) ... ok
 test_publication_ack_rejects_auto_rename (__main__.CapacityControllerCycle2Tests.test_publication_ack_rejects_auto_rename) ... ok
 test_randomized_session_reducer_never_overflows (__main__.CapacityControllerCycle2Tests.test_randomized_session_reducer_never_overflows) ... ok
+test_resume_requires_measurement_and_cleanup (__main__.CapacityControllerCycle2Tests.test_resume_requires_measurement_and_cleanup) ... ok
 test_split_plane_no_delta (__main__.CapacityControllerCycle2Tests.test_split_plane_no_delta) ... ok
 test_started_and_released (__main__.CapacityControllerCycle2Tests.test_started_and_released) ... ok
 test_stop_barrier (__main__.CapacityControllerCycle2Tests.test_stop_barrier) ... ok
@@ -16,6 +20,8 @@ test_ticket_double_claim_fails (__main__.CapacityControllerCycle2Tests.test_tick
 test_useful_parallelism_prevents_busywork (__main__.CapacityControllerCycle2Tests.test_useful_parallelism_prevents_busywork) ... ok
 
 ----------------------------------------------------------------------
-Ran 16 tests in 0.075s
+Ran 20 tests in 0.064s
 
 OK
+
+SP5.1 retention: zero-residual scratch cleanup + resume gate tests included.

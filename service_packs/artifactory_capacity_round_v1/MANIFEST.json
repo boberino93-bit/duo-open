@@ -1,46 +1,55 @@
 {
-  "schema": "duoopen-service-pack/v1",
-  "service_pack": "SP5_ARTIFACTORY_CAPACITY_ROUND_V1",
-  "created_utc": "2026-10-03T04:31:00Z",
-  "observed_main": "32b8e44ee12de1c707b21a5c68285edb87cec343",
-  "observed_app_ci_head": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+  "activation": {
+    "primary_singleton_cas": "BLOCKED_UNPROVEN",
+    "round_orchestration_v2": "ACTIVE_ON_APPLY",
+    "split_plane_service_publication": "ACTIVE_ON_APPLY"
+  },
   "android_runtime_source_modified": false,
-  "physical_fold7_success_claim": false,
+  "created_utc": "2026-10-03T04:31:00Z",
   "github_direct_dispatch_attempt": {
-    "status": "FAILED",
     "http_status": 403,
-    "reason": "Resource not accessible by integration"
+    "reason": "Resource not accessible by integration",
+    "status": "FAILED"
   },
   "live_capacity_calibration": {
     "adapter_declared_operation_ceiling": 20,
-    "probe_writes": 18,
-    "write_success": 18,
-    "readback_hash_match": 18,
+    "backend_physical_ceiling": "UNPROVEN",
     "payload_bytes": 21681,
-    "backend_physical_ceiling": "UNPROVEN"
-  },
-  "round": {
-    "round_id": "round-20261003T042500Z-capacity18",
-    "hard_session_ceiling": 20,
-    "nominal_target": 18,
-    "logical_child_tickets": 17,
-    "actual_child_sessions_claimed_by_this_pack": 0,
-    "spawn_adapter_state": "MANUAL_FALLBACK"
-  },
-  "tests": {
-    "cycle1": "8/8 PASS after harness compatibility fix",
-    "cycle2": "16/16 PASS including 50,000-event randomized reducer",
-    "package_verifier": "PASS",
-    "workflow_yaml_parse": "PASS",
-    "no_android_source_in_pack": "PASS"
-  },
-  "activation": {
-    "round_orchestration_v2": "ACTIVE_ON_APPLY",
-    "split_plane_service_publication": "ACTIVE_ON_APPLY",
-    "primary_singleton_cas": "BLOCKED_UNPROVEN"
+    "probe_writes": 18,
+    "readback_hash_match": 18,
+    "write_success": 18
   },
   "notes": [
     "90% is a target, not permission to exceed safety ceilings or create duplicate work.",
-    "Adapter write capacity, agent concurrency, and physical backend throughput are intentionally separate."
-  ]
+    "Adapter write capacity, agent concurrency, and physical backend throughput are intentionally separate.",
+    "Raw calibration probes are scratch; cleanup must reach zero residual before RESUME_WORK."
+  ],
+  "observed_app_ci_head": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+  "observed_main": "32b8e44ee12de1c707b21a5c68285edb87cec343",
+  "physical_fold7_success_claim": false,
+  "retention_hardening": {
+    "post_test_current_scratch_purge": "REQUIRED",
+    "pre_test_stale_scratch_purge": "REQUIRED",
+    "purpose": "probabilistic capacity expectations for project/product agent planning",
+    "raw_probe_objects": "EPHEMERAL_DELETE_ALWAYS",
+    "resume_requires_zero_residual_raw_objects": true,
+    "retained_history": "COMPACT_AGGREGATE_PLANNING_SAMPLES_ONLY"
+  },
+  "round": {
+    "actual_child_sessions_claimed_by_this_pack": 0,
+    "hard_session_ceiling": 20,
+    "logical_child_tickets": 17,
+    "nominal_target": 18,
+    "round_id": "round-20261003T042500Z-capacity18",
+    "spawn_adapter_state": "MANUAL_FALLBACK"
+  },
+  "schema": "duoopen-service-pack/v1",
+  "service_pack": "SP5_1_ARTIFACTORY_CAPACITY_RETENTION_HARDENING",
+  "tests": {
+    "cycle1": "8/8 PASS after harness compatibility fix",
+    "cycle2": "20/20 PASS including cleanup/resume-gate tests plus 50,000-event randomized reducer",
+    "no_android_source_in_pack": "PASS",
+    "package_verifier": "PASS",
+    "workflow_yaml_parse": "PASS"
+  }
 }

@@ -42,6 +42,53 @@ class CalibrationResult:
     proven_safe_batch_floor: int
     backend_physical_ceiling: str = "UNPROVEN"
 
+
+
+@dataclass(frozen=True)
+class CalibrationCleanupResult:
+    raw_probe_files_created: int
+    raw_probe_files_deleted: int
+    residual_raw_probe_files: int
+    delete_errors: int
+    status: str
+
+
+def evaluate_calibration_cleanup(raw_probe_files_created: int,
+                                 raw_probe_files_deleted: int,
+                                 residual_raw_probe_files: int,
+                                 delete_errors: int = 0) -> CalibrationCleanupResult:
+    """Fail closed unless a calibration run leaves zero raw scratch objects.
+
+    Synthetic load-test objects are temporary. Longitudinal learning retains compact
+    aggregate samples, not raw probes or duplicate aliases.
+    """
+    vals = (raw_probe_files_created, raw_probe_files_deleted, residual_raw_probe_files, delete_errors)
+    if any(v < 0 for v in vals):
+        raise ValueError("cleanup counts must be non-negative")
+    clean = (delete_errors == 0 and residual_raw_probe_files == 0
+             and raw_probe_files_deleted >= raw_probe_files_created)
+    return CalibrationCleanupResult(
+        raw_probe_files_created=raw_probe_files_created,
+        raw_probe_files_deleted=raw_probe_files_deleted,
+        residual_raw_probe_files=residual_raw_probe_files,
+        delete_errors=delete_errors,
+        status="PASS_ZERO_RESIDUAL" if clean else "CALIBRATION_CLEANUP_BLOCKED",
+    )
+
+
+def calibration_sample_accepted(measurement: CalibrationResult,
+                                cleanup: CalibrationCleanupResult) -> bool:
+    """A planning sample is accepted only after measurement AND scratch cleanup pass."""
+    return (measurement.status == "PASS_ADAPTER_BATCH_TARGET"
+            and cleanup.status == "PASS_ZERO_RESIDUAL")
+
+
+def resume_after_calibration(measurement: CalibrationResult,
+                             cleanup: CalibrationCleanupResult) -> bool:
+    """RESUME_WORK gate for Primary daily calibration."""
+    return calibration_sample_accepted(measurement, cleanup)
+
+
 @dataclass
 class RoundState:
     hard_ceiling: int = HARD_SESSION_CEILING

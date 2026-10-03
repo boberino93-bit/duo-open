@@ -37,6 +37,10 @@ def main() -> int:
     assert cap['status']=='PASS_ADAPTER_BATCH_TARGET'
     assert cap['attempted']==cap['succeeded']==cap['readback_hash_matches']==18
     assert cap['backend_physical_ceiling']=='UNPROVEN'
+    assert 'probes' not in cap
+    assert cap['retention']['cleanup_status']=='PASS_ZERO_RESIDUAL'
+    assert cap['retention']['residual_raw_probe_files']==0
+    assert cap['retention']['raw_probe_files_created']==cap['retention']['raw_probe_files_deleted']==18
     schema=json.loads((root/'DuoOpen-AgentBus/control/round_orchestration/v2/ROUND_ORCHESTRATION_SCHEMAS_V2.json').read_text())
     assert schema['max_concurrent_sessions']==20
     assert schema['target_concurrent_sessions']==18

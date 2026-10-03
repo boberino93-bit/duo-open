@@ -4,11 +4,11 @@ This is a **root-drop control-plane service pack** pinned to observed GitHub `ma
 
 ## What it changes
 - Adds Round Orchestration V2 with a 20-session hard ceiling, nominal 18-session target and useful-parallelism guard.
-- Adds the daily STOP_WORK -> one 90% adapter calibration -> RESUME protocol.
+- Adds the daily STOP_WORK -> pre-test scratch purge -> one 90% adapter calibration -> compact result -> post-test zero-residual purge -> RESUME protocol.
 - Adds `MUST_INVOKE_OR_JUSTIFY` so every substantive work unit either requests bounded help or explains why more parallelism would be harmful/duplicative.
 - Activates split-plane service publication: DMSH for high-frequency liveness; immutable general messages for material transitions/required ACKs.
 - Preserves fail-closed exact-path + readback-hash publication semantics and keeps singleton-Primary CAS blocked.
-- Carries the live round-open/ticket records and capacity evidence into the Git recovery mirror.
+- Carries only compact capacity evidence into the Git recovery mirror; synthetic calibration probe files are explicitly non-retained scratch data.
 - Adds a GitHub workflow which, once this pack is committed/pushed, verifies SP5 and then rebuilds/tests the existing Beta2 APK.
 
 ## What it does NOT change
@@ -22,6 +22,9 @@ No Android runtime source is changed by this service pack. It does not claim the
 - raw materialized readback SHA-256: 18/18 byte-identical
 - total probe payload: 21,681 bytes
 - disposition: `PASS_ADAPTER_BATCH_TARGET`; backend physical ceiling remains `UNPROVEN`
+- raw calibration probes deleted after verification: 18/18
+- residual raw probe objects: 0
+- retained capacity evidence: compact aggregate only
 
 ## Apply
 Extract this ZIP directly into the repository root. It contains root-relative paths and does not replace the project root README or existing `APPLY_AFTER_COPY.py`.

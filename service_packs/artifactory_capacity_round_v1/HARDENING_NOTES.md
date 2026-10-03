@@ -14,3 +14,11 @@ V2 therefore separates batch and session capacity, gates allocation by useful in
 
 ## Cycle 2
 The strengthened model adds deterministic failure-mode tests plus a 50,000-operation randomized session reducer. Packaging verification separately checks required files, JSON validity and SHA-256 manifest integrity.
+
+
+## SP5.1 — calibration retention hardening
+- Synthetic Artifactory load-test objects are EPHEMERAL, not engineering evidence.
+- Primary purges stale calibration scratch before a run.
+- Primary compacts measurement data, then deletes the entire run scratch directory.
+- `RESUME_WORK` requires a zero-residual post-delete inventory.
+- Longitudinal probabilistic planning retains aggregate samples, never raw probe payloads.

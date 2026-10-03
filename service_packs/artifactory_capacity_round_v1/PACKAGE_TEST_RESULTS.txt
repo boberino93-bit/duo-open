@@ -26,7 +26,7 @@ HARDENING
 - changed all-agent scaling rule to MUST_INVOKE_OR_JUSTIFY
 
 CYCLE 2
-- deterministic/adversarial tests: 16/16 PASS
+- deterministic/adversarial tests: 20/20 PASS
 - randomized session reducer: 50,000 operations PASS; never exceeded hard ceiling 20
 - workflow YAML parse: PASS
 - root-drop contains no Android source: PASS
@@ -35,3 +35,12 @@ CYCLE 2
 PHYSICAL FOLD7
 - NOT RUN by this control-plane service pack
 - current INNER-display / first-open crash P0 remains open
+
+
+SP5.1 RETENTION HARDENING
+- live prior scratch calibration folder deleted: PASS
+- raw probe files deleted: 18/18
+- residual raw probes after cleanup: 0
+- compact CAPACITY_RESULT contains no raw probe list: PASS
+- cleanup failure blocks RESUME_WORK: PASS
+- stale scratch cleanup required before new run: PASS

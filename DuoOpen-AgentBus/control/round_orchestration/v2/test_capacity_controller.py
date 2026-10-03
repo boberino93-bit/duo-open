@@ -91,6 +91,26 @@ class CapacityControllerCycle2Tests(unittest.TestCase):
         self.assertTrue(M.stop_barrier_satisfied(["STOPPED", "SAFE_CHECKPOINT", "STALE", "RELEASED"]))
         self.assertFalse(M.stop_barrier_satisfied([]))
 
+
+    def test_cleanup_zero_residual_passes(self):
+        c = M.evaluate_calibration_cleanup(18, 18, 0, 0)
+        self.assertEqual(c.status, "PASS_ZERO_RESIDUAL")
+
+    def test_cleanup_residual_blocks(self):
+        c = M.evaluate_calibration_cleanup(18, 17, 1, 0)
+        self.assertEqual(c.status, "CALIBRATION_CLEANUP_BLOCKED")
+
+    def test_cleanup_delete_error_blocks(self):
+        c = M.evaluate_calibration_cleanup(18, 18, 0, 1)
+        self.assertEqual(c.status, "CALIBRATION_CLEANUP_BLOCKED")
+
+    def test_resume_requires_measurement_and_cleanup(self):
+        m = M.evaluate_calibration(20, 18, 18, 0, 18, 18)
+        clean = M.evaluate_calibration_cleanup(18, 18, 0, 0)
+        dirty = M.evaluate_calibration_cleanup(18, 17, 1, 0)
+        self.assertTrue(M.resume_after_calibration(m, clean))
+        self.assertFalse(M.resume_after_calibration(m, dirty))
+
     def test_randomized_session_reducer_never_overflows(self):
         rnd = random.Random(0xD00F07)
         r = M.RoundState()

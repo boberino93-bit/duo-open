@@ -8,3 +8,7 @@ Observed source before packaging: `32b8e44ee12de1c707b21a5c68285edb87cec343`.
 
 Validation after extraction:
 `python3 tools/verify_artifactory_capacity_service_pack.py .`
+
+
+## SP5.1 retention clarification
+Artifactory capacity probes are temporary load-test scratch objects. Primary must purge stale probe sets before testing and delete the complete current probe directory after readback verification. Only the compact aggregate planning sample is retained. `RESUME_WORK` is blocked unless post-delete inventory proves zero residual raw calibration objects.
