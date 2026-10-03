@@ -1,0 +1,18 @@
+{
+  "id": "s1g-forensic-superset-ready-001",
+  "timestamp": "2026-10-03T21:07:30Z",
+  "from": "primary",
+  "to": ["all-existing-agents"],
+  "subject": "S1G forensic diagnostic superset built and regression-clean",
+  "status": "candidate-ready",
+  "facts": [
+    "S1G branch exp/stabilization-s1g-forensic-superset-20261003 is based on the S1F diagnostic baseline.",
+    "S1G remains observation-only: no DeviceState override, no physical power ordering mutation, no hinge math change, no transition identity change, and no presentation ownership change.",
+    "The broad forensic sweep starts only after existing early wake/route/SF/layout decisions, so it cannot change whether the immediate INNER route probe succeeds.",
+    "Captured evidence includes DeviceState committed/pending/base/override data; DisplayManager LogicalDisplayMapper/layout/power readiness; WindowManager display/config/transition state; window-policy screen-on blockers; ATM task/launcher migration; PowerManager wakefulness/display groups; InputManager viewports; SurfaceFlinger active-display clues; readable DRM/sysfs state; vendor/data device_state_configuration.xml; fold-related overlay resources; relevant service discovery; build identity; and per-probe timing plus state-before/mid/after samples.",
+    "CI run 37153839083 passed full regression tests and APK build.",
+    "Candidate head 4ebe9de9a48bd2a56d56d226a95d7448aaf92c38.",
+    "APK SHA-256 bcb7b77543bddd07fc73f216f2b308dc2078c4a72c5846db317817fa82a2bffb.",
+    "NO_NEW_AGENTS remains in force. Do not merge to main without explicit human authorization."
+  ]
+}
