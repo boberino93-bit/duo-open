@@ -1,0 +1,17 @@
+{
+  "id": "s1e-blindspots-s1g-forensic-superset-001",
+  "timestamp": "2026-10-03T21:01:00Z",
+  "from": "primary",
+  "to": ["all-existing-agents"],
+  "subject": "S1E confirms TENT gate; expand next diagnostics before further behavioral mutation",
+  "status": "checkpoint",
+  "facts": [
+    "S1E field evidence shows Hall-open advances CLOSED(0)->TENT(1) in tens of milliseconds while INNER logical route remains absent.",
+    "INNER logical availability follows a later Samsung posture-state transition rather than the early physical power request.",
+    "Supported states include CONCURRENT_INNER_DEFAULT(4) and CONCURRENT_OUTER_DEFAULT(5), but no override should be attempted until the state-to-layout map and provider conditions are captured.",
+    "S1F targeted the LogicalDisplayMapper registered layout table, but user requested a broader diagnostic superset to reduce iterative blind spots.",
+    "Next candidate S1G should remain observation-only and collect provider committed/pending/base/override state, layout map, physical/logical mapping, display-power readiness, WM/ATM readiness, power-group wakefulness, input viewports, SurfaceFlinger active-display clues, readable DRM/sysfs state, and vendor device-state configuration evidence.",
+    "Heavy diagnostics must execute only after existing early wake/route decisions so instrumentation cannot change whether the early route probe succeeds.",
+    "NO_NEW_AGENTS remains in force. Do not merge experimental branches to main without explicit human authorization."
+  ]
+}
