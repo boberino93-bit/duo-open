@@ -30,6 +30,7 @@ EXPECTED_BLOBS = {
     "app/src/full/java/com/duoopen/shell/DuoShellService.kt": "e19469eebaa967cbce10f5bcf85eef795e1d6b7d",
     "app/src/main/java/com/duoopen/fold/Fold7VirtualHingeGen5.kt": "fe44ee237198b467033f5dec33be8c0904a1076b",
     "app/src/test/java/com/duoopen/fold/Fold7VirtualHingeGen5Test.kt": "7728a57e210dce4be876363277c15fbac3385a36",
+    "app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt": "287a4e52146307ac2e6c349f99ecbd2711423a92",
 }
 
 NEW_FILES = {
@@ -263,6 +264,73 @@ def transform_virtual_hinge_test(text: str) -> str:
             "virtual hinge test",
         )
     return text
+
+
+
+def transform_continuity_controller_test(text: str) -> str:
+    if "GEN7_RUNTIME_REGRESSION_BETA2_175_PREWARM_TEST" in text:
+        return text
+
+    old = r'''    @Test
+    fun deliberateClosePrewarmsEarlyButStaysHiddenUntil135() {
+        val c = Fold7ContinuityController()
+        c.reset(179f, 0L, openTopology)
+
+        c.onHinge(177.8f, 100L, openTopology)
+        c.onHinge(176.3f, 150L, openTopology)
+        c.onHinge(174.8f, 200L, openTopology)
+
+        assertEquals(
+            Fold7ContinuityController.State.CLOSING_INTENT,
+            c.state,
+        )
+
+        val prewarm =
+            c.onHinge(
+                173.8f,
+                220L,
+                openTopology,
+            )
+
+        val request =
+            prewarm.actions.single()
+                as Fold7ContinuityController.Action.BeginPrewarm
+'''
+    new = r'''    @Test
+    fun deliberateClosePrewarmsAt175ButStaysHiddenUntil135() {
+        val c = Fold7ContinuityController()
+        c.reset(179f, 0L, openTopology)
+
+        c.onHinge(177.8f, 100L, openTopology)
+        c.onHinge(176.3f, 150L, openTopology)
+
+        // GEN7_RUNTIME_REGRESSION_BETA2_175_PREWARM_TEST
+        // The cover presentation policy now wakes/prewarms at 175 degrees.
+        // The third deliberate-close sample crosses both the intent and
+        // prewarm thresholds, so the controller intentionally takes the
+        // fast-close path directly into COVER_PREWARMING.
+        val prewarm =
+            c.onHinge(
+                174.8f,
+                200L,
+                openTopology,
+            )
+
+        assertEquals(
+            Fold7ContinuityController.State.COVER_PREWARMING,
+            c.state,
+        )
+
+        val request =
+            prewarm.actions.single()
+                as Fold7ContinuityController.Action.BeginPrewarm
+'''
+    return replace_once(
+        text,
+        old,
+        new,
+        "175-degree prewarm unit test alignment",
+    )
 
 
 def transform_right_pane_composer(text: str) -> str:
@@ -1999,6 +2067,7 @@ TRANSFORMS = {
     "app/src/full/java/com/duoopen/shell/DuoShellService.kt": transform_shell_service,
     "app/src/main/java/com/duoopen/fold/Fold7VirtualHingeGen5.kt": transform_virtual_hinge,
     "app/src/test/java/com/duoopen/fold/Fold7VirtualHingeGen5Test.kt": transform_virtual_hinge_test,
+    "app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt": transform_continuity_controller_test,
 }
 
 # FoldOverlayService was not in the initial guard map above in early draft.
@@ -2062,6 +2131,11 @@ def validate_postconditions(repo: Path) -> None:
         "app/src/main/java/com/duoopen/fold/Fold7VirtualHingeGen5.kt": [
             "AWAIT_PRECISE",
             "Never manufacture opening geometry",
+        ],
+        "app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt": [
+            "GEN7_RUNTIME_REGRESSION_BETA2_175_PREWARM_TEST",
+            "State.COVER_PREWARMING",
+            "deliberateClosePrewarmsAt175ButStaysHiddenUntil135",
         ],
     }
     for rel, needles in checks.items():
@@ -2152,6 +2226,37 @@ def self_test() -> None:
     assert "private val scope: kotlinx.coroutines.CoroutineScope" in gen3_out
     assert "private val innerCaptureExclusions: () -> List<android.view.SurfaceControl>" in gen3_out
     assert "scope =\n                    scope" in gen3_out
+
+    controller_test = """    @Test
+    fun deliberateClosePrewarmsEarlyButStaysHiddenUntil135() {
+        val c = Fold7ContinuityController()
+        c.reset(179f, 0L, openTopology)
+
+        c.onHinge(177.8f, 100L, openTopology)
+        c.onHinge(176.3f, 150L, openTopology)
+        c.onHinge(174.8f, 200L, openTopology)
+
+        assertEquals(
+            Fold7ContinuityController.State.CLOSING_INTENT,
+            c.state,
+        )
+
+        val prewarm =
+            c.onHinge(
+                173.8f,
+                220L,
+                openTopology,
+            )
+
+        val request =
+            prewarm.actions.single()
+                as Fold7ContinuityController.Action.BeginPrewarm
+"""
+    controller_test_out = transform_continuity_controller_test(controller_test)
+    assert "GEN7_RUNTIME_REGRESSION_BETA2_175_PREWARM_TEST" in controller_test_out
+    assert "State.COVER_PREWARMING" in controller_test_out
+    assert "174.8f" in controller_test_out
+    assert "173.8f" not in controller_test_out
 
     sc = '''    private fun setPhysicalPowerNormal(\n        physicalId: Long,\n    ): Pair<Boolean, String?> {\n        if (physicalId < 0L) {\n            return false to "physical display id unavailable"\n        }\n\n        return runCatching {\n            org.lsposed.hiddenapibypass.HiddenApiBypass\n                .addHiddenApiExemptions(\n                    "Landroid/view/SurfaceControl;"\n                )\n\n            val token =\n                SurfaceControl::class.java\n                    .getDeclaredMethod(\n                        "getPhysicalDisplayToken",\n                        java.lang.Long.TYPE,\n                    )\n                    .invoke(null, physicalId) as? IBinder\n                    ?: throw IllegalStateException(\n                        "no SurfaceControl token for physical display $physicalId"\n                    )\n\n            SurfaceControl::class.java\n                .getDeclaredMethod(\n                    "setDisplayPowerMode",\n                    IBinder::class.java,\n                    Integer.TYPE,\n                )\n                .invoke(null, token, 2)\n\n            true to null\n        }.getOrElse { error ->\n            false to\n                "${error.javaClass.simpleName}: ${error.message}"\n        }\n    }'''
     assert "setPhysicalBrightness" in transform_shell_service(

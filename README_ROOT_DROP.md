@@ -1,63 +1,65 @@
-# Duo Open Gen7 SP4.1 — Runtime Regression Beta2 Scope Wiring Hotfix
+# Duo Open Gen7 SP4.2 — Runtime Regression Beta2 Test-Alignment Hotfix
 
-Target baseline: `main` app source from commit `41c6f20c817226b233eb4cbfb402e879c5e3e3ea`
+Target production app-source baseline: `41c6f20c817226b233eb4cbfb402e879c5e3e3ea`
 
 Target test build:
 
 - versionCode `43`
 - versionName `5.1.0-beta2-zfold7`
 
-## SP4.1 compiler hotfix
+## SP4.2 CI hotfix
 
-The first Beta2 CI run reached Kotlin compilation and exposed one integration error:
-`Fold7Gen3VisualCoordinator` passed `scope` into the new live-content host without owning a scope.
-SP4.1 wires the existing accessibility-service `CoroutineScope` into the coordinator and adds a regression self-test/postcondition for that dependency. No independent coroutine lifetime is introduced.
+SP4.1 fixed the missing `CoroutineScope` wiring and Beta2 now compiles and assembles successfully. GitHub Actions run `37083408602` then reached the full unit-test suite and exposed one stale test expectation:
+
+`Fold7ContinuityControllerTest.deliberateClosePrewarmsEarlyButStaysHiddenUntil135`
+
+The test still expected the legacy `174°` prewarm policy. Beta2 intentionally moves cover prewarm/power-on to `175°`, so the third deliberate-close sample at `174.8°` now correctly takes the controller's existing fast-close path directly into `COVER_PREWARMING` and emits `BeginPrewarm` on that same sample.
+
+SP4.2 updates that regression test to the new 175° contract rather than weakening the runtime behavior. The pack also adds a patcher self-test/postcondition for this exact alignment and makes the workflow upload diagnostic test reports/source diffs whenever CI fails.
 
 ## Deployment
 
 This archive is root-safe. Extract/copy its contents directly into the root of
-`boberino93-bit/duo-open`, allowing it to overwrite the SP4 files already there,
+`boberino93-bit/duo-open`, allowing it to overwrite the existing SP4/SP4.1 files,
 and commit the changed files to `main`.
 
-The new workflow `.github/workflows/build-gen7-runtime-regression-beta2.yml`
-will trigger from that commit. It reapplies the already-validated
-Shizuku/onboarding predecessor in the CI workspace, applies this Beta2 runtime
-pack, runs `testFullDebugUnitTest`, builds `assembleFullDebug`, and uploads the
-APK plus the exact applied source diff.
+The workflow `.github/workflows/build-gen7-runtime-regression-beta2.yml` watches
+the updated patcher/workflow paths and will run automatically. It:
 
-The workflow does **not** commit generated Android source changes back to main.
-This keeps the next device test isolated. Once field behavior is accepted, the
-same patch can be promoted into a production commit.
+1. verifies the production source baseline;
+2. reapplies the validated Shizuku/onboarding predecessor;
+3. validates and applies Beta2 in the CI workspace;
+4. runs `testFullDebugUnitTest`;
+5. runs `assembleFullDebug`;
+6. uploads a tested APK plus SHA-256/build/source-diff evidence on success;
+7. uploads failure diagnostics automatically if any later compile/test gate fails.
 
-## Runtime corrections in this pass
+The workflow does **not** commit transformed Android sources back to production
+`main`; the APK remains an isolated service-pack test build until Fold7 field
+validation is accepted.
 
-1. Recover a real DeviceState opening edge even when the semantic controller is
-   still stuck in a closing/prewarm/cover-visual state, but only with confirmed
-   closed-endpoint topology/geometry.
-2. Retry inner wake on a bounded cadence and, after physical power, attempt the
-   matching 1968×2184 logical route enable + `STATE_ON` sequence. Physical
-   `setDisplayPowerMode()` success alone is no longer treated as useful-pixels
-   proof.
-3. Stop Gen5 blind-bootstrap geometry. Opening visuals hold the closed seed
-   until measured geometry arrives.
-4. Restore live Shizuku recapture while Fold7 snapshot overlays are active.
-5. During closing, continuously recapture the live inner display and compose
-   its physical right pane onto the cover instead of holding one frozen frame.
-   The inner Duo overlay layer is explicitly excluded from that cross-display
-   capture so the fold effect is not recursively applied twice.
-6. Add rotation-aware physical-coordinate transforms for 0/90/180/270 degrees,
-   including right-pane crop, fold axis and cover hinge edge.
-7. Cache portrait and landscape snapshots separately and center-crop stale
-   bridges rather than non-uniformly stretching them after rotation.
-8. Add serialized physical cover power/brightness presentation:
-   - open endpoint: cover off;
-   - closing at 175°: cover on at minimum usable brightness;
-   - 175° -> 90°: eased brightness ramp toward the unfolded inner reference;
-   - <=90°: cover matches the captured inner reference;
-   - opening at 177°: cover off, providing endpoint hysteresis.
+## Runtime corrections covered by Beta2
 
-## Physical-device status
+1. Recover a real DeviceState opening edge even when semantic continuity is
+   still stuck in a closing/prewarm/cover-visual state, constrained to confirmed
+   closed-endpoint evidence.
+2. Retry inner wake and verify physical plus matching logical 1968×2184 route
+   activation rather than treating physical power success as useful-pixels proof.
+3. Remove blind first-opening geometry; hold until measured hinge data arrives.
+4. Restore live Shizuku recapture during Fold7 animation.
+5. Continuously recompose the live physical right pane during closing while
+   excluding Duo Open's own overlay from recursive capture.
+6. Render through rotation-aware physical coordinates for 0/90/180/270°.
+7. Isolate portrait/landscape snapshot caches and avoid stretched stale frames.
+8. Cover presentation policy: off at open endpoint; closing power-on/prewarm at
+   175° at minimum brightness; eased ramp to inner-reference brightness by 90°;
+   opening power-off at 177° for hysteresis.
 
-Android compile/unit/build validation is delegated to GitHub Actions after the
-root drop is committed. Physical Galaxy Z Fold7 validation remains NOT_RUN
-until the resulting APK is installed and exercised on device.
+## Validation status before deployment
+
+- SP4.1 scope-wiring compiler regression: resolved; Beta2 Kotlin compilation and
+  `assembleFullDebug` completed in run `37083408602`.
+- Remaining run failure: one outdated unit-test expectation, corrected by SP4.2.
+- SP4.2 Python patcher self-test: PASS.
+- Workflow YAML parse: PASS.
+- Physical Galaxy Z Fold7 validation: NOT_RUN until a fully passing CI APK is installed.

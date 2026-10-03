@@ -1,5 +1,5 @@
 {
-  "package": "DUO_OPEN_GEN7_ROOT_DROP_SP4_1_RUNTIME_REGRESSION_BETA2_SCOPE_HOTFIX",
+  "package": "DUO_OPEN_GEN7_ROOT_DROP_SP4_2_RUNTIME_REGRESSION_BETA2_TEST_ALIGNMENT",
   "root_safe": true,
   "copy_destination": "repository root",
   "workflow": ".github/workflows/build-gen7-runtime-regression-beta2.yml",
@@ -8,8 +8,9 @@
   "artifact_name": "DuoOpen-ZFold7-5.1.0-beta2-runtime-regression",
   "target_version": "5.1.0-beta2-zfold7",
   "target_version_code": 43,
-  "repository_package_head_before_hotfix": "83121aebac0c892307b0f84eb4253bb845b6c760",
+  "repository_package_head_before_hotfix": "8768521406ac3f74f989504c4105d81d109240d6",
   "app_source_baseline_sha": "41c6f20c817226b233eb4cbfb402e879c5e3e3ea",
-  "hotfix": "wire service-owned CoroutineScope through Fold7Gen3VisualCoordinator to Fold7CoverVisualHost",
-  "failed_ci_run": 37082713549
+  "previous_scope_failure_run": 37082713549,
+  "unit_test_alignment_failure_run": 37083408602,
+  "hotfix": "align Fold7 continuity unit test with intentional 175-degree cover prewarm contract and upload CI failure diagnostics"
 }

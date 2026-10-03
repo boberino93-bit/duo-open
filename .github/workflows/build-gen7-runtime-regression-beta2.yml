@@ -73,6 +73,7 @@ jobs:
           grep -F 'innerCaptureExclusions' app/src/full/java/com/duoopen/overlay/Fold7CoverVisualHost.kt
           grep -F 'COVER_PRESENTATION_V1' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
           grep -F 'setDisplayBrightness' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'GEN7_RUNTIME_REGRESSION_BETA2_175_PREWARM_TEST' app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt
 
       - name: Set up Java 17
         uses: actions/setup-java@v5
@@ -87,6 +88,35 @@ jobs:
           set -euo pipefail
           chmod +x gradlew
           ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p beta2-failure
+          if [ -d app/build/reports/tests/testFullDebugUnitTest ]; then
+            cp -R app/build/reports/tests/testFullDebugUnitTest beta2-failure/test-report
+          fi
+          if [ -d app/build/test-results/testFullDebugUnitTest ]; then
+            cp -R app/build/test-results/testFullDebugUnitTest beta2-failure/test-results
+          fi
+          git diff -- app > beta2-failure/APPLIED-SOURCE.diff || true
+          {
+            echo "workflowRun=${{ github.run_id }}"
+            echo "sourceHead=${{ github.sha }}"
+            echo "status=CI_FAILED_BEFORE_TESTED_ARTIFACT"
+            echo "physicalFold7Validation=NOT_RUN"
+          } > beta2-failure/FAILURE-INFO.txt
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.1.0-beta2-failure-diagnostics
+          path: beta2-failure/
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Package test artifact
         shell: bash
