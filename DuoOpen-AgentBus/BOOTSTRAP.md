@@ -6,6 +6,17 @@ Before any other bootstrap rule, read `/DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md` an
 
 Effective 2026-10-03, **do not spawn, start, invite, fork, initialize, replicate into, or hand work off to any new agent or new agent/session**. Existing agents/sessions that were already active when the directive was issued may finish/reconcile their current work, but they may not expand the population or create successors. This rule supersedes older recursive-mesh, succession, replication, initiation, deployment, and self-replication language wherever those rules would otherwise create another agent/session. Every deployment/successor/initiation package must carry `NO_NEW_AGENTS_V1.md`, the freeze message, and `agentSpawnPolicy=FROZEN_USER_DIRECTIVE_20261003`. Only a later explicit human instruction may revoke this freeze.
 
+## PROJECT IDENTITY LOCK — MANDATORY BEFORE PROJECT WORK
+
+Before reading any project-specific queue, handoff, forum state, artifact, or recent-agent state as actionable work, read `/DuoOpen-AgentBus/PROJECT_SCOPE_SELECTION_GATE_V1.md` and `/DuoOpen-AgentBus/REPOSITORY_IDENTITY_LOCK.json` and verify all of the following:
+
+- current intended project is `duo-open` / Duo Open / Duo Screen;
+- writable repository is exactly `boberino93-bit/duo-open`;
+- writable AgentBus namespace is exactly `/DuoOpen-AgentBus/`;
+- the user's current instruction is compatible with Duo Open scope.
+
+This check is mandatory on bootstrap, recovery after a hung/lost session, Primary takeover, Manager takeover, and any cross-project context switch. Recent chat history, memory, another project's handoff, or whichever project was touched most recently MUST NOT override this binding. If any identity value conflicts or the intended project is ambiguous, fail closed and do not write to any project until the user selects the project. Cross-project repositories remain read-only unless an explicit named transfer is authorized.
+
 Use the remaining instruction only within already-active participating agent/session instances:
 
 > You are participating in the Duo Open shared agent bus. Your stable agent ID is `<AGENT_ID>`. Before substantive work, read `/DuoOpen-AgentBus/AGENT_DISCOVERY.json`, verify the current integrity snapshot, read every file in the discovery `bootstrapOrder`, then read `/DuoOpen-AgentBus/PROTOCOL.md` and `/DuoOpen-AgentBus/REGISTRY.md` and inspect `/DuoOpen-AgentBus/messages` for new messages addressed to `<AGENT_ID>`, `all`, or your role. During work, use the board as the durable coordination channel. Before finishing any work unit, publish significant findings, blockers, requests, test results, or handoff information as a new immutable JSON message. Do not edit another agent's message. Re-check the board before finalizing decisions affected by peer work. Technical findings must identify the exact repo commit/HEAD they apply to.
@@ -16,7 +27,7 @@ After that one-time bootstrap, the user should not need to manually copy finding
 
 Primary and Manager/Reviewer are active mesh controllers during an executing work unit. They MUST repeatedly consume and reconcile newly arriving board evidence while useful work remains. Primary integrates; Manager/Reviewer reviews/promotes. Research agents are bounded evidence workers and use defined coordination checkpoints rather than continuously polling the whole room. This section does not authorize creating or replacing any agent/session.
 
-All passive Primary/Manager successor, bootstrap, or replication artifacts MUST propagate the current mandatory controller contracts, including `/DuoOpen-AgentBus/PRIMARY_MANAGER_RECURSIVE_MESH_V1.md`, `/DuoOpen-AgentBus/FINAL_RECONCILIATION_GATE_V1.md`, `/DuoOpen-AgentBus/MESH_CONTROLLER_ADOPTION_V1.md`, the current debugging/data-gap contract, the current 120 Hz contract, and `/DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md`. Such artifacts are context only while the freeze is active and MUST NOT instantiate a successor.
+All passive Primary/Manager successor, bootstrap, or replication artifacts MUST propagate the current mandatory controller contracts, including `/DuoOpen-AgentBus/PRIMARY_MANAGER_RECURSIVE_MESH_V1.md`, `/DuoOpen-AgentBus/FINAL_RECONCILIATION_GATE_V1.md`, `/DuoOpen-AgentBus/MESH_CONTROLLER_ADOPTION_V1.md`, the current debugging/data-gap contract, the current 120 Hz contract, `/DuoOpen-AgentBus/PROJECT_SCOPE_SELECTION_GATE_V1.md`, `/DuoOpen-AgentBus/REPOSITORY_IDENTITY_LOCK.json`, and `/DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md`. Such artifacts are context only while the freeze is active and MUST NOT instantiate a successor.
 
 Before Primary builds a final root-safe commit ZIP, it MUST reconcile every completed/closed current-round research lane and Manager disposition, then run the final cross-cutting optimization/audit defined in `FINAL_RECONCILIATION_GATE_V1.md`. No closed research work may be silently omitted.
 
@@ -87,4 +98,4 @@ Before substantive work, read `/DuoOpen-AgentBus/COMMUNICATION_MODEL_AUTONOMY_V1
 
 The human's prior standing authorization for communication-model improvements remains valid only inside already-active sessions. It does not authorize self-replication, successor creation, or any new agent/session while `NO_NEW_AGENTS_V1.md` is active.
 
-Every passive successor/initiation/main-deployment package MUST include the full AgentBus message forum snapshot and applicable communication context under `DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/` according to the current deployment snapshot contract, plus `NO_NEW_AGENTS_V1.md` and the active freeze message. Passive successor material MUST NOT be used to instantiate a successor while the freeze is active.
+Every passive successor/initiation/main-deployment package MUST include the full AgentBus message forum snapshot and applicable communication context under `DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/` according to the current deployment snapshot contract, plus `PROJECT_SCOPE_SELECTION_GATE_V1.md`, `REPOSITORY_IDENTITY_LOCK.json`, `NO_NEW_AGENTS_V1.md`, and the active freeze message. Passive successor material MUST NOT be used to instantiate a successor while the freeze is active.
