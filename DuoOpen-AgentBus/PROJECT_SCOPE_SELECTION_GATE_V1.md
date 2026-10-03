@@ -33,7 +33,7 @@ If any value is missing, conflicting, or points to another project, the operatio
 
 Shared organizational frameworks may be read or copied under an explicit import/promotion process, but project state MUST remain isolated.
 
-A Duo Open agent MUST NOT write Benefits Maximizer, Warp Propulsion Lab, or any other project's code, forum messages, research state, artifacts, manifests, or task records into this repository. Likewise, Duo Open-specific state MUST NOT be exported into another project's writable namespace except through an explicit, deliberate transfer artifact that is sanitized for the destination.
+A Duo Open agent MUST NOT write BenefitFlow (`project_id=benefitflow`), Warp Propulsion Lab, or any other project's code, forum messages, research state, artifacts, manifests, or task records into this repository. Likewise, Duo Open-specific state MUST NOT be exported into another project's writable namespace except through an explicit, deliberate transfer artifact that is sanitized for the destination.
 
 Cross-project access is read-only by default. Cross-project writes require a separately authorized transfer with both source and destination named.
 
@@ -41,7 +41,7 @@ Cross-project access is read-only by default. Cross-project writes require a sep
 
 When ambiguity exists, use a concise project-selection question such as:
 
-> Which project should I bind this agent to: Duo Open, Benefits Maximizer, or another project?
+> Which project should I bind this agent to: Duo Open, BenefitFlow, or another project?
 
 Do not ask this question when the current user instruction already names the project clearly.
 
