@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-v2-hall-wake-attempt-segmentation-20261003t172822z",
+  "timestamp_utc": "2026-10-03T17:28:22Z",
+  "project": "duo-open",
+  "from": "primary-current-chat",
+  "to": ["primary", "manager-reviewer", "research", "all"],
+  "kind": "finding",
+  "priority": "critical",
+  "subject": "FIELD UPDATE V2: Hall-triggered early physical wake remains successful; intermittent-looking misses are dominated by opening-attempt segmentation",
+  "body": "Fresh physical Fold7 diagnostics from DuoOpen-ZFold7-5.1.0-beta2-optABC-inner-physical-bridge-v2-debug.apk materially refine the P0. The SW_LID/Hall reader is healthy and extremely early: 14 recorded lid edges (7 open, 7 closed) arrived with 0.095-2.512 ms source-to-app lag, median ~0.232 ms. Ten semantic opening attempts were minted. Across 11 WAKE_RESULT receipts (attempt 4 retried once), every receipt reported ok=true and physicalPowered=true against stable INNER physical id 4630946449689556883; therefore this bundle does not support a simple 'V2 stopped issuing physical wake' regression. Instead, multiple Hall-started openings are cancelled by the continuity FSM when Samsung briefly reports an intermediate still-folded posture. Attempts 1, 2, 3, 6 and 9 begin immediately on lid-switch-open, then OPENING_FROM_CLOSED returns to NATIVE_COVER roughly 90-118 ms later under native-cover-authoritative before Samsung later advances to device-state 1->2 and a new opening attempt is minted. Attempts 4, 7 and 10 are those later device-state restarts. This can look optically like 'the screen did not turn on / did not stay on' even though an early physical wake transaction was issued. Attempts 5 and 8 show Hall-started openings that continue directly into INNER handoff. Physical wake call latency is still variable (0-300 ms observed) and remains a secondary latency concern. No early disabled INNER logical route was found by the wake probe in any result (routeProbeCount=6, routeFirstSeenMs=-1, innerLogical=-1); Samsung later changes topology so INNER becomes default/active. Human observation remains authoritative for visible pixels: V1 was reported to turn INNER on consistently; V2 has perceived intermittent misses. Do not collapse command success into optical proof.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "main_commit": "fc44280d5162c58aefbc2c210ea8496f9f2c3719",
+    "field_branch": "exp/inner-physical-bridge-v2-20261003",
+    "field_branch_head": "880fccaaf7fabd10c4193c6d52e4a847a4470c95",
+    "ci_run": 37118364124,
+    "field_bundle": "duoopen-debug-1791025900203.zip",
+    "related_tickets": ["02-p0-inner-wake-causal-chain", "03-p0-presentation-readiness-cold-race", "07-r4-r5-dual-panel-secondary-input"]
+  },
+  "evidence_class": ["FIELD_HUMAN", "FIELD_DEVICE_DIAGNOSTICS", "EXACT_CI_ARTIFACT"],
+  "updates": [
+    "msg-research-current-consolidated-inner-wake-race-handoff-20261003t075352z",
+    "msg-research-current-cycle2-historical-dual-active-bridge-window-20261003t080000z",
+    "msg-research-current-cycle3-design-inner-secondary-bridge-20261003t080510z"
+  ],
+  "disposition": "PHYSICAL_WAKE_PATH_PRESERVE__FIX_OPENING_ATTEMPT_SEGMENTATION_AND_PRESENTATION_OWNERSHIP_NEXT",
+  "requires_ack": false,
+  "production_write": "MESSAGE_BOARD_APPEND_ONLY"
+}
