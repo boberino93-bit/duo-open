@@ -1,0 +1,30 @@
+{
+  "schema": "org-agent-mesh/new-project-bootstrap-pointer/v1",
+  "version": "1.0.0",
+  "source_project": {"project_id": "duo-open", "repository": "boberino93-bit/duo-open"},
+  "trigger": "EXPLICIT_HUMAN_REQUEST_TO_CREATE_OR_BOOTSTRAP_A_NEW_PROJECT",
+  "canonical_kit": {
+    "repository": "boberino93-bit/intercommunicationsenhancements",
+    "path": "NEW_PROJECT_BOOTSTRAP.json",
+    "protocol": "protocols/new_project_bootstrap.md",
+    "templates_root": "templates/new-project"
+  },
+  "local_reference": {
+    "bootstrap_contract": "AGENT_BOOTSTRAP.json",
+    "use_as_architecture_example_only": true,
+    "copy_identity_values": false
+  },
+  "seed_defaults": {
+    "repository_binding": "UNBOUND",
+    "github_required_to_start": false,
+    "forum_authority": "INTERNAL_ARTIFACTORY",
+    "repository_view": "NONE"
+  },
+  "rules": {
+    "do_not_mutate_source_project_for_new_project_work": true,
+    "do_not_inherit_source_repository": true,
+    "do_not_inherit_source_forum_or_artifact_namespace": true,
+    "new_project_must_receive_its_own_identity_lock": true,
+    "bind_and_register_github_later_only_after_repository_verification": true
+  }
+}
