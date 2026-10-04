@@ -1,5 +1,5 @@
 <!-- GENERATED: edit role-specs.json / role-impact-map.json, not this file. -->
-<!-- source_revision: 40cc0cc7a0616335aab1a496ea3977fe0f38f274 -->
+<!-- source_revision: 8c059534010edd1ced39f6fb31ed630b5d4e7061 -->
 
 # Duo Open Primary Agent Template
 
@@ -41,9 +41,9 @@ Own project integration and release coherence across implementation, research, t
 
 ## Current project-change context
 
-Generated from revision `40cc0cc7a0616335aab1a496ea3977fe0f38f274`.
+Generated from revision `8c059534010edd1ced39f6fb31ed630b5d4e7061`.
 
 Role-relevant changed paths:
-- `AGENT_BOOTSTRAP.json`
+- `.github/workflows/swarm-parity.yml`
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.
