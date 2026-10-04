@@ -1,0 +1,55 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1s-beta-convergence-green-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T09:16:00Z",
+  "type": "BETA_CONVERGENCE_CANDIDATE_READY",
+  "subject": "S1S integrates original beta-entry blockers on top of S1R and is green end-to-end",
+  "body": {
+    "branch": "fix/s1s-beta-convergence-v1-20261004",
+    "candidate_head": "edc9ea650e4aabdb583c1d6f7fafa022226bc346",
+    "baseline_s1r_head": "121e40a561a853a4e2e351189a1f9db9ececa87a",
+    "version_name": "5.1.0-beta2-zfold7-s1s",
+    "version_code": 53,
+    "ci_run": 37185438716,
+    "ci_result": "SUCCESS",
+    "artifact_id": 11296153936,
+    "artifact_zip_sha256": "649c65f8006e0a5f66e852f5070b88241122420ba1f7eef19d709a8ead680007",
+    "apk_sha256": "381830804a6b74117915c7f3f069ebafaf17cf04103fa6195a2e7d5678690e93",
+    "artifact_class": "PHYSICAL_FOLD7_BETA_CONVERGENCE_CANDIDATE_NOT_PRODUCTION",
+    "original_beta_problem_status": {
+      "authoritative_hinge_truth": "HARDENED_IN_S1S: coarse public midpoint samples are suppressed; only canonical endpoint rest may be promoted when precise authority is absent. S1R reader reacquisition remains in place.",
+      "ordered_reversal_ingress": "ALREADY_PRESENT_AND_PRESERVED: bounded ordered hinge ingress remains; S1S does not reintroduce latest-only coalescing.",
+      "renderability_vs_topology": "HARDENED_IN_S1S: native inner proxy handoff now requires default + STATE_ON stable for 160ms, bounded by 500ms fail-safe; cover readiness also requires presentation-ready truth.",
+      "terminal_fencing": "HARDENED_IN_S1S: daemon Fold7PanelAuthorityGen4 rejects late secondary-route prepare after terminal NATIVE_COVER; completePrepare is phase fenced.",
+      "wallpaper_continuity": "PRESERVED: S1P/S1Q proxy and right-pane registration remain; no new wallpaper authority rewrite in S1S.",
+      "refresh_rate_truth": "HARDENED_IN_S1S: active visual uses SurfaceControl seamless 120Hz hint plus WindowManager preferredRefreshRate lease; Choreographer cadence is measured/classified and lease is restored on teardown. Physical field validation still required because CI cannot prove Samsung will honor 120Hz.",
+      "crash_black_screen_recovery": "HARDENED_BY_PRIOR_STACK_AND_S1S: S1R hinge reader reacquisition, Hall reversal handling, S1N safe prewake, S1O protocol uniqueness, S1S terminal fence and bounded presentation handoff are all preserved. Sustained physical-cycle validation remains required.",
+      "diagnostic_transport": "EXTERNAL_GATE_REMAINS: final APK verifier proves no HTTPS relay or ingest key is compiled in this artifact. Upload remains intentionally unconfigured rather than falsely enabled. Manual export continues to work."
+    },
+    "s1s_behavior_changes": [
+      "Suppress coarse public midpoint geometry (e.g. false 90 degree) from taking semantic angle authority; coarse fallback is endpoint-only.",
+      "Hold optical/native inner handoff until inner is DEFAULT + STATE_ON continuously for 160ms, with a 500ms bounded timeout.",
+      "Require cover presentation readiness in closing readiness rather than topology existence alone.",
+      "Reject daemon-side late secondary route preparation after terminal NATIVE_COVER.",
+      "Apply refresh lease through both SurfaceControl setFrameRate and WindowManager preferredRefreshRate and classify measured Choreographer cadence.",
+      "Verify diagnostic configuration from final classes*.dex in the built APK, without exposing secrets."
+    ],
+    "explicitly_not_changed": [
+      "No DeviceState state-5 override.",
+      "No logical route override.",
+      "No rewrite of the successful close controller.",
+      "S1P optical proxy preserved.",
+      "S1Q animation coherence preserved.",
+      "S1R hinge reacquisition preserved.",
+      "Production merge not authorized."
+    ],
+    "next_field_gate": "Install S1S on physical Fold7 and run repeated slow/normal/fast close-open cycles, reversals, first-open after process restart, and sustained cycling. Evaluate hinge reacquisition, absence of false 90 jumps, proxy-to-native handoff, cover recovery, black-screen stability, and measured refresh classification in exported bundle.",
+    "diagnostic_compiled_https": false,
+    "diagnostic_compiled_key": false,
+    "diagnostic_receipt_capable": false,
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
