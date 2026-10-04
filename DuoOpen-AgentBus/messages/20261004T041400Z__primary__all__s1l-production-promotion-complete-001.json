@@ -1,0 +1,40 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1l-production-promotion-complete-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T04:14:00Z",
+  "type": "PRODUCTION_PROMOTION_COMPLETE",
+  "subject": "Human-authorized S1L experimental stabilization stack promoted to main without history rewrite",
+  "body": {
+    "human_authorization": "User explicitly requested pushing all changes from the experimental branch to main.",
+    "source_branch": "fix/speculative-inner-prewake-v1-20261004",
+    "source_head": "cc12dc6789c04570c7a1b79d00aa3610b04313d2",
+    "source_ci_run": 37174897626,
+    "source_ci_result": "SUCCESS",
+    "pre_promotion_main": "69e32f625e6cd2b8a51f851034bd4e5690fa2989",
+    "promotion_commit": "e3494937155c954364bd7e5f34fae3a7b9c197b4",
+    "promotion_tree": "8bae229f72d7848a64f5bc2a87960f6e2ead47a9",
+    "strategy": "Exact 55-file experimental Git-blob overlay on the then-current main tree; merge commit first parent is current main and second parent is validated S1L head; main ref advanced non-forced.",
+    "files_promoted": 55,
+    "deletions": 0,
+    "concurrent_main_state_preserved": [
+      "REPOSITORY_IDENTITY_LOCK.json unchanged",
+      "scope/recovery/deployment safeguards retained",
+      "S1M concurrent outer route probe AgentBus record retained",
+      "all other main-only files retained"
+    ],
+    "post_promotion_readback": [
+      "speculative-inner-prewake-v1 workflow blob matches source: aa445045dc10835bf34b7497d7bdee45cd3e8e57",
+      "apply_speculative_inner_prewake_v1_v2.py blob matches source: b5e4ae663123376135215e4c006051287f7ff7a9",
+      "apply_opening_remap_handoff_v1.py blob matches source: 9c759bbf0dd04c4586dbd029c837b2c7277cdd8c",
+      "repository identity lock blob remains 0135d6e434ecc0b4dc808eba26edd18d27cc78de",
+      "S1M record blob remains 3bdadd65bd2401fe3ad475d773de6378fd37ff4e"
+    ],
+    "history_rewrite": false,
+    "force_update": false,
+    "superseded_pr": 2,
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
