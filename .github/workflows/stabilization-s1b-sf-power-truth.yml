@@ -1,0 +1,202 @@
+name: Stabilization S1B SurfaceFlinger Power Truth
+# S1B is readback-only: preserve the S1/V4 runtime and ask SurfaceFlinger what
+# physical power/active-display state exists after the first INNER wake command.
+
+on:
+  push:
+    branches:
+      - exp/stabilization-s1b-sf-power-truth-20261003
+    paths:
+      - ".github/workflows/stabilization-s1b-sf-power-truth.yml"
+      - "tools/apply_stabilization_s1b_sf_power_truth.py"
+      - "tools/apply_stabilization_s1_ingress_telemetry.py"
+      - "tools/apply_inner_physical_bridge_v1.py"
+      - "tools/apply_inner_physical_bridge_v1_fixups.py"
+      - "tools/apply_inner_physical_bridge_v1_protocol_compat.py"
+      - "tools/prepare_inner_physical_bridge_v1_transformer.py"
+      - "tools/apply_inner_physical_bridge_v1_service_fixups.py"
+      - "tools/apply_inner_physical_bridge_v2.py"
+      - "tools/apply_inner_physical_bridge_v4.py"
+      - "tools/apply_fold7_display_status_v3.py"
+      - "tools/apply_hall_open_latch_v3.py"
+      - "tools/apply_inner_wake_probe_v1.py"
+      - "tools/apply_gen7_runtime_regression_beta2.py"
+      - "tools/apply_runtime_optimization_cycle_a.py"
+      - "tools/apply_runtime_optimization_cycle_b.py"
+      - "tools/apply_runtime_optimization_cycle_c.py"
+      - "app/src/main/java/com/duoopen/overlay/Fold7DisplayStatus.kt"
+      - "app/src/full/java/com/duoopen/overlay/Fold7OpeningWakeAttemptGate.kt"
+      - "DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md"
+      - "DuoOpen-AgentBus/messages/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stabilization-s1b-sf-power-truth-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct deployed Beta2 runtime
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+
+      - name: Reapply validated optimization cycles A B C
+        run: |
+          set -euo pipefail
+          python3 tools/apply_runtime_optimization_cycle_a.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_b.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_c.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo .
+
+      - name: Reapply validated exact-attempt wake probe
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_wake_probe_v1.py --self-test
+          python3 tools/apply_inner_wake_probe_v1.py --repo . --check
+          python3 tools/apply_inner_wake_probe_v1.py --repo .
+
+      - name: Reapply physical bridge V1 and V2 handoff
+        run: |
+          set -euo pipefail
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --self-test
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo . --check
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase pre
+          python3 tools/apply_inner_physical_bridge_v1.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase post
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v2.py --self-test
+          python3 tools/apply_inner_physical_bridge_v2.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v2.py --repo .
+
+      - name: Reapply display status and Hall-open latch V3
+        run: |
+          set -euo pipefail
+          python3 tools/apply_fold7_display_status_v3.py --self-test
+          python3 tools/apply_fold7_display_status_v3.py --repo . --check
+          python3 tools/apply_fold7_display_status_v3.py --repo .
+          python3 tools/apply_hall_open_latch_v3.py --self-test
+          python3 tools/apply_hall_open_latch_v3.py --repo . --check
+          python3 tools/apply_hall_open_latch_v3.py --repo .
+
+      - name: Reapply V4 non-occluding bridge correction
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_physical_bridge_v4.py --self-test
+          python3 tools/apply_inner_physical_bridge_v4.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v4.py --repo .
+
+      - name: Reapply S1 ingress timing telemetry
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --self-test
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo . --check
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo .
+
+      - name: Apply S1B SurfaceFlinger truth readback only
+        run: |
+          set -euo pipefail
+          # The real reconstructed runtime is the authoritative source-shape test.
+          # (The transformer's synthetic fixture is intentionally not used here.)
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo .
+          git diff --check
+
+          # Preserve all prior behavior invariants.
+          grep -F 'tx.setAlpha(layer, 0.0f)' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'tx.setLayer(layer, Int.MIN_VALUE + 64)' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'physicalOpeningLatched || angle >= INNER_WAKE_MIN_DEG' app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          grep -F 'physicalEdge = reason == "lid-switch-open"' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'acceptedNs=${SystemClock.elapsedRealtimeNanos()}' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+
+          # S1B readback invariants: no power-order mutation, only SF dumps/readback.
+          grep -F 'dumpsys SurfaceFlinger --displays' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'dumpsys SurfaceFlinger --hwclayers' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'sfInnerPowerMode' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'sfActivePhysicalDisplayId' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'sfActivePhysical=' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+
+      - name: Capture S1B candidate diff and deployment metadata
+        run: |
+          set -euo pipefail
+          OUT=stabilization-s1b-sf-power-truth
+          mkdir -p "$OUT/DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT"
+          git diff -- app > "$OUT/APPLIED-ANDROID-SOURCE.diff"
+          git diff --stat -- app > "$OUT/APPLIED-ANDROID-SOURCE.stat"
+          sha256sum "$OUT/APPLIED-ANDROID-SOURCE.diff" > "$OUT/APPLIED-ANDROID-SOURCE-SHA256.txt"
+          cp -a DuoOpen-AgentBus/. "$OUT/DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/"
+          {
+            echo "sourceHead=${GITHUB_SHA}"
+            echo "baselineS1Head=25d786dd2dbe7846e15611dc58d5479477ecbd6c"
+            echo "runtime=V4 + S1 ingress telemetry + S1B SurfaceFlinger truth readback"
+            echo "stabilizationPhase=S1B_PHYSICAL_POWER_TRUTH"
+            echo "behaviorChange=NONE"
+            echo "instrumentationOnly=one SurfaceFlinger --displays/--hwclayers readback per semantic opening"
+            echo "fieldEvidencePrior=Hall accepted in ~1-5ms; setDisplayPowerMode returned but INNER logical route remained absent"
+            echo "physicalPowerSemantics=COMMAND_ACCEPTED_NOT_PANEL_PROOF"
+            echo "s1bQuestion=Does SurfaceFlinger report INNER powered, and which physical display remains active?"
+            echo "renderAngleMathChanges=NONE"
+            echo "transitionIdentityChanges=NONE"
+            echo "powerOrderingChanges=NONE"
+            echo "wallpaperWidgetChanges=NONE"
+            echo "presentationOwnershipChanges=NONE"
+            echo "agentSpawnPolicy=FROZEN_USER_DIRECTIVE_20261003"
+            echo "agentSpawnPolicyContract=DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md"
+            echo "agentBusSnapshot=DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT"
+            echo "physicalFold7Validation=REQUIRED"
+          } > "$OUT/BUILD-INFO.txt"
+          printf '%s\n' 'agentSpawnPolicy=FROZEN_USER_DIRECTIVE_20261003' > "$OUT/DEPLOYMENT_METADATA/AGENT-SPAWN-POLICY.txt"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Full regression tests and APK build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package APK and hashes
+        run: |
+          set -euo pipefail
+          OUT=stabilization-s1b-sf-power-truth
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" "$OUT/DuoOpen-ZFold7-5.1.0-beta2-v4-stabilization-s1b-sf-power-truth-debug.apk"
+          sha256sum "$OUT/DuoOpen-ZFold7-5.1.0-beta2-v4-stabilization-s1b-sf-power-truth-debug.apk" > "$OUT/APK-SHA256.txt"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-Stabilization-S1B-SF-Power-Truth
+          path: stabilization-s1b-sf-power-truth/
+          if-no-files-found: error
+          retention-days: 30

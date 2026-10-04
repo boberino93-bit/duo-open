@@ -1,0 +1,104 @@
+name: Runtime Optimization Cycle C
+
+on:
+  push:
+    branches:
+      - opt/runtime-cycle-c-20261003
+    paths:
+      - ".github/workflows/runtime-optimization-cycle-c.yml"
+      - "tools/apply_runtime_optimization_cycle_a.py"
+      - "tools/apply_runtime_optimization_cycle_b.py"
+      - "tools/apply_runtime_optimization_cycle_c.py"
+      - "service_packs/runtime_optimization_cycle_a_v1/**"
+      - "service_packs/runtime_optimization_cycle_b_v1/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-optimization-cycle-c-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct deployed Beta2 runtime
+        run: |
+          set -euo pipefail
+          grep -F 'versionCode = 42' app/build.gradle.kts
+          grep -F 'versionName = "5.0.0-beta1-zfold7"' app/build.gradle.kts
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+
+      - name: Apply validated Cycle A
+        run: |
+          set -euo pipefail
+          python3 tools/apply_runtime_optimization_cycle_a.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo .
+
+      - name: Apply validated Cycle B
+        run: |
+          set -euo pipefail
+          python3 tools/apply_runtime_optimization_cycle_b.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo .
+
+      - name: Validate and apply Cycle C
+        run: |
+          set -euo pipefail
+          python3 tools/apply_runtime_optimization_cycle_c.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo .
+          git diff --check
+
+      - name: Capture applied optimization diff
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-opt-c
+          git diff -- app > runtime-opt-c/APPLIED-ANDROID-SOURCE.diff
+          git diff --stat -- app > runtime-opt-c/APPLIED-ANDROID-SOURCE.stat
+          sha256sum runtime-opt-c/APPLIED-ANDROID-SOURCE.diff > runtime-opt-c/APPLIED-ANDROID-SOURCE-SHA256.txt
+          {
+            echo "sourceHead=${GITHUB_SHA}"
+            echo "cycles=runtime-optimization-cycle-a-v1,runtime-optimization-cycle-b-v1,runtime-optimization-cycle-c-v1"
+            echo "behavioralFreeze=true"
+            echo "wallpaperOptimization=stop hidden follower animation while overlay owns rendering"
+            echo "innerWakeCorrectnessChanges=NONE"
+            echo "physicalFold7Validation=NOT_RUN"
+          } > runtime-opt-c/BUILD-INFO.txt
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Full regression tests and APK build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package APK and hashes
+        run: |
+          set -euo pipefail
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" runtime-opt-c/DuoOpen-ZFold7-5.1.0-beta2-runtime-opt-cycle-c-debug.apk
+          sha256sum runtime-opt-c/DuoOpen-ZFold7-5.1.0-beta2-runtime-opt-cycle-c-debug.apk > runtime-opt-c/APK-SHA256.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-Runtime-Optimization-Cycle-C
+          path: runtime-opt-c/
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,173 @@
+name: Stabilization S1F Layout Map Truth
+
+on:
+  push:
+    branches:
+      - exp/stabilization-s1f-layout-map-truth-20261003
+    paths:
+      - ".github/workflows/stabilization-s1f-layout-map-truth.yml"
+      - "tools/apply_stabilization_s1f_layout_map_truth.py"
+      - "tools/apply_stabilization_s1e_logical_layout_truth.py"
+      - "tools/apply_stabilization_s1b_sf_power_truth.py"
+      - "tools/apply_stabilization_s1_ingress_telemetry.py"
+      - "tools/**"
+      - "DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md"
+      - "DuoOpen-AgentBus/messages/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stabilization-s1f-layout-map-truth-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct deployed Beta2 runtime
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+
+      - name: Reapply validated optimization cycles A B C
+        run: |
+          set -euo pipefail
+          python3 tools/apply_runtime_optimization_cycle_a.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_a.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_b.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_b.py --repo .
+          python3 tools/apply_runtime_optimization_cycle_c.py --self-test
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo . --check
+          python3 tools/apply_runtime_optimization_cycle_c.py --repo .
+
+      - name: Reapply validated exact-attempt wake probe
+        run: |
+          set -euo pipefail
+          python3 tools/apply_inner_wake_probe_v1.py --self-test
+          python3 tools/apply_inner_wake_probe_v1.py --repo . --check
+          python3 tools/apply_inner_wake_probe_v1.py --repo .
+
+      - name: Reapply physical bridge V1 and V2 handoff
+        run: |
+          set -euo pipefail
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --self-test
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo . --check
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase pre
+          python3 tools/apply_inner_physical_bridge_v1.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase post
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v2.py --self-test
+          python3 tools/apply_inner_physical_bridge_v2.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v2.py --repo .
+
+      - name: Reapply display status, Hall latch, and V4 bridge
+        run: |
+          set -euo pipefail
+          python3 tools/apply_fold7_display_status_v3.py --self-test
+          python3 tools/apply_fold7_display_status_v3.py --repo . --check
+          python3 tools/apply_fold7_display_status_v3.py --repo .
+          python3 tools/apply_hall_open_latch_v3.py --self-test
+          python3 tools/apply_hall_open_latch_v3.py --repo . --check
+          python3 tools/apply_hall_open_latch_v3.py --repo .
+          python3 tools/apply_inner_physical_bridge_v4.py --self-test
+          python3 tools/apply_inner_physical_bridge_v4.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v4.py --repo .
+
+      - name: Reapply S1 through S1E diagnostics
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --self-test
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo . --check
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo .
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo .
+          python3 tools/apply_stabilization_s1e_logical_layout_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1e_logical_layout_truth.py --repo .
+
+      - name: Apply S1F targeted layout-map truth only
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1f_layout_map_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1f_layout_map_truth.py --repo .
+          git diff --check
+          grep -F 'STABILIZATION_S1F_LAYOUT_MAP_TRUTH_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'DeviceStateToLayoutMap:' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'Registered Layouts:' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'layoutProbed=' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          ! grep -F 'STABILIZATION_S1C_ACTIVE_TRANSFER_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          ! grep -F 'STABILIZATION_S1D_REAL_INNER_EDGE_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          ! grep -F 'cmd device_state state 4' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+
+      - name: Capture S1F candidate diff and deployment metadata
+        run: |
+          set -euo pipefail
+          OUT=stabilization-s1f-layout-map-truth
+          mkdir -p "$OUT/DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT"
+          git diff -- app > "$OUT/APPLIED-ANDROID-SOURCE.diff"
+          git diff --stat -- app > "$OUT/APPLIED-ANDROID-SOURCE.stat"
+          sha256sum "$OUT/APPLIED-ANDROID-SOURCE.diff" > "$OUT/APPLIED-ANDROID-SOURCE-SHA256.txt"
+          cp -a DuoOpen-AgentBus/. "$OUT/DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/"
+          {
+            echo "sourceHead=${GITHUB_SHA}"
+            echo "baselineS1EHead=bcab83081cc8a307d23cc8f4d3a4e976e5dfa3ea"
+            echo "runtime=V4 + S1/S1B/S1E diagnostics + S1F targeted LogicalDisplayMapper layout-map excerpt"
+            echo "stabilizationPhase=S1F_LAYOUT_MAP_TRUTH"
+            echo "behaviorChange=NONE"
+            echo "instrumentationOnly=target existing dumpsys display capture at LogicalDisplayMapper and DeviceStateToLayoutMap sections"
+            echo "fieldEvidencePrior=clean Hall openings commit TENT state 1 within 33-57ms; INNER logical route remains absent until HALF_OPENED state 2"
+            echo "s1fQuestion=What physical/logical display mappings and enabled/default flags are registered for states 0-5, especially TENT and CONCURRENT_INNER_DEFAULT?"
+            echo "deviceStateOverrideChanges=NONE"
+            echo "powerOrderingChanges=NONE"
+            echo "agentSpawnPolicy=FROZEN_USER_DIRECTIVE_20261003"
+            echo "agentSpawnPolicyContract=DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md"
+            echo "agentBusSnapshot=DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT"
+            echo "physicalFold7Validation=REQUIRED"
+          } > "$OUT/BUILD-INFO.txt"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Full regression tests and APK build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package APK and hashes
+        run: |
+          set -euo pipefail
+          OUT=stabilization-s1f-layout-map-truth
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" "$OUT/DuoOpen-ZFold7-5.1.0-beta2-v4-stabilization-s1f-layout-map-truth-debug.apk"
+          sha256sum "$OUT/DuoOpen-ZFold7-5.1.0-beta2-v4-stabilization-s1f-layout-map-truth-debug.apk" > "$OUT/APK-SHA256.txt"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-Stabilization-S1F-Layout-Map-Truth
+          path: stabilization-s1f-layout-map-truth/
+          if-no-files-found: error
+          retention-days: 30
