@@ -1,0 +1,45 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "project_id": "duo-open",
+  "kind": "S1S_PRODUCTION_MAIN_PROMOTION",
+  "from": "primary",
+  "to": "all",
+  "created_at_utc": "2026-10-04T09:30:00Z",
+  "candidate": "S1S_BETA_CONVERGENCE_V1",
+  "human_commit_authorization": {
+    "authorized": true,
+    "user_instruction": "Commit it to main"
+  },
+  "single_writer_designation": "THIS_MERGE_COMMIT",
+  "old_main": "67c7d7d92e64e7a988671e772d6701232cdb8f4c",
+  "candidate_parent": "4919412aa28946fa672915df7a94eda9be883cbc",
+  "validated_runtime_head": "edc9ea650e4aabdb583c1d6f7fafa022226bc346",
+  "ci_run": 37185438716,
+  "artifact_id": 11296153936,
+  "artifact_sha256": "649c65f8006e0a5f66e852f5070b88241122420ba1f7eef19d709a8ead680007",
+  "apk_sha256": "381830804a6b74117915c7f3f069ebafaf17cf04103fa6195a2e7d5678690e93",
+  "merge_method": "TRUE_MERGE_CURRENT_MAIN_PLUS_VALIDATED_S1S_ADDITIVE_OVERLAY",
+  "candidate_delta": {
+    "merge_base": "cc12dc6789c04570c7a1b79d00aa3610b04313d2",
+    "added_files": 23,
+    "modified_files": 0,
+    "removed_files": 0
+  },
+  "production_merge": "AUTHORIZED_AND_EXECUTED_BY_THIS_MERGE_COMMIT",
+  "field_validation": "STILL_REQUIRED",
+  "diagnostic_relay": "EXTERNAL_GATE_NOT_CONFIGURED",
+  "preserved": [
+    "current main history and AgentBus state",
+    "S1P optical proxy",
+    "S1Q animation coherence",
+    "S1R hinge reacquisition",
+    "ordered reversal-preserving hinge ingress",
+    "NO_NEW_AGENTS_V1"
+  ],
+  "notes": [
+    "Do not interpret promotion as completed Fold7 physical beta validation.",
+    "The final S1S candidate CI was green end-to-end before promotion.",
+    "Automatic diagnostic relay remains an external infrastructure gate; manual debug export remains available.",
+    "This commit is a merge with current main as first parent and the validated S1S candidate record as second parent; main was not force-reset."
+  ]
+}

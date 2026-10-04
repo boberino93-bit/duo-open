@@ -1,0 +1,180 @@
+name: S1Q Animation Coherence V2
+
+on:
+  push:
+    branches:
+      - fix/s1q-animation-coherence-v1-20261004
+    paths:
+      - ".github/workflows/s1q-animation-coherence-v2.yml"
+      - "tools/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: s1q-animation-coherence-v2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct Beta2 through validated wake stack
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+          for x in a b c; do
+            python3 tools/apply_runtime_optimization_cycle_${x}.py --self-test
+            python3 tools/apply_runtime_optimization_cycle_${x}.py --repo . --check
+            python3 tools/apply_runtime_optimization_cycle_${x}.py --repo .
+          done
+          python3 tools/apply_inner_wake_probe_v1.py --self-test
+          python3 tools/apply_inner_wake_probe_v1.py --repo . --check
+          python3 tools/apply_inner_wake_probe_v1.py --repo .
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --self-test
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo . --check
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase pre
+          python3 tools/apply_inner_physical_bridge_v1.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase post
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v2.py --self-test
+          python3 tools/apply_inner_physical_bridge_v2.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v2.py --repo .
+          python3 tools/apply_fold7_display_status_v3.py --self-test
+          python3 tools/apply_fold7_display_status_v3.py --repo . --check
+          python3 tools/apply_fold7_display_status_v3.py --repo .
+          python3 tools/apply_hall_open_latch_v3.py --self-test
+          python3 tools/apply_hall_open_latch_v3.py --repo . --check
+          python3 tools/apply_hall_open_latch_v3.py --repo .
+          python3 tools/apply_inner_physical_bridge_v4.py --self-test
+          python3 tools/apply_inner_physical_bridge_v4.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v4.py --repo .
+
+      - name: Reapply S1 through S1P
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --self-test
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo . --check
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo .
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo .
+          python3 tools/apply_stabilization_s1e_logical_layout_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1e_logical_layout_truth.py --repo .
+          python3 tools/apply_stabilization_s1f_layout_map_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1f_layout_map_truth.py --repo .
+          python3 tools/apply_stabilization_s1g_forensic_superset.py --repo . --check
+          python3 tools/apply_stabilization_s1g_forensic_superset.py --repo .
+          python3 tools/apply_stabilization_s1h_visual_forensics.py --self-test
+          python3 tools/apply_stabilization_s1h_visual_forensics.py --repo . --check
+          python3 tools/apply_stabilization_s1h_visual_forensics.py --repo .
+          python3 tools/apply_stabilization_s1i_correlated_forensics_v3.py --self-test
+          python3 tools/apply_stabilization_s1i_correlated_forensics_v3.py --repo . --check
+          python3 tools/apply_stabilization_s1i_correlated_forensics_v3.py --repo .
+          python3 tools/apply_stabilization_s1j_opening_handoff_truth.py --self-test
+          python3 tools/apply_stabilization_s1j_opening_handoff_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1j_opening_handoff_truth.py --repo .
+          python3 tools/apply_opening_remap_handoff_v1.py --self-test
+          python3 tools/apply_opening_remap_handoff_v1.py --repo . --check
+          python3 tools/apply_opening_remap_handoff_v1.py --repo .
+          python3 tools/apply_speculative_inner_prewake_v1_v2.py --self-test
+          python3 tools/apply_speculative_inner_prewake_v1_v2.py --repo . --check
+          python3 tools/apply_speculative_inner_prewake_v1_v2.py --repo .
+          python3 tools/apply_s1n_safe_prewake_v2.py --self-test
+          python3 tools/apply_s1n_safe_prewake_v2.py --repo . --check
+          python3 tools/apply_s1n_safe_prewake_v2.py --repo .
+          python3 tools/apply_s1o_hall_prewake_protocol_v1.py --self-test
+          python3 tools/apply_s1o_hall_prewake_protocol_v1.py --repo . --check
+          python3 tools/apply_s1o_hall_prewake_protocol_v1.py --repo .
+          python3 tools/apply_s1p_hall_optical_proxy_v1.py --self-test
+          python3 tools/apply_s1p_hall_optical_proxy_v1.py --repo . --check
+          python3 tools/apply_s1p_hall_optical_proxy_v1.py --repo .
+
+      - name: Apply S1Q animation coherence
+        run: |
+          set -euo pipefail
+          python3 tools/apply_s1q_animation_coherence_v2.py --self-test
+          python3 tools/apply_s1q_animation_coherence_v2.py --repo . --check
+          python3 tools/apply_s1q_animation_coherence_v2.py --repo .
+          git diff --check
+          grep -F 'S1Q_ANIMATION_COHERENCE_V1' app/src/main/java/com/duoopen/fold/Fold7VirtualHingeGen5.kt
+          grep -F 'MAX_VISUAL_ACCEL_DPS2 = 24_000f' app/src/main/java/com/duoopen/fold/Fold7VirtualHingeGen5.kt
+          grep -F 'S1Q_VSYNC_PHASE_LOCK' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'clock=vsync-calibrated' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'S1Q_CANONICAL_PROXY_REGISTRATION' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'Rect(984, 0, 1920, 2184)' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'animationCoherence=S1Q_ANIMATION_COHERENCE_V1' app/src/main/java/com/duoopen/debug/DebugBundleExporter.kt
+          grep -F 'versionCode = 51' app/build.gradle.kts
+          grep -F 'versionName = "5.1.0-beta2-zfold7-s1q"' app/build.gradle.kts
+          ! grep -R -F 'cmd device_state state 5' app/src || true
+
+      - name: Capture S1Q metadata
+        run: |
+          set -euo pipefail
+          OUT=s1q-animation-coherence-v1
+          mkdir -p "$OUT"
+          git diff -- app > "$OUT/APPLIED-ANDROID-SOURCE.diff"
+          git diff --stat -- app > "$OUT/APPLIED-ANDROID-SOURCE.stat"
+          sha256sum "$OUT/APPLIED-ANDROID-SOURCE.diff" > "$OUT/APPLIED-ANDROID-SOURCE-SHA256.txt"
+          {
+            echo "sourceHead=${GITHUB_SHA}"
+            echo "baselineS1PHead=6f7b508b0cb1cfae3dc9e6d49577fc1eeb7ae473"
+            echo "artifactClass=PHYSICAL_FOLD7_ANIMATION_QUALITY_TEST_BUILD_NOT_PRODUCTION"
+            echo "phase=S1Q_ANIMATION_COHERENCE_V1"
+            echo "versionCode=51"
+            echo "versionName=5.1.0-beta2-zfold7-s1q"
+            echo "frameClock=VSYNC_CALIBRATED_NANOSECOND"
+            echo "motionIntegrator=C1_ACCELERATION_LIMITED"
+            echo "maxVisualSpeedDps=720"
+            echo "maxVisualAccelDps2=24000"
+            echo "proxyRegistration=CANONICAL_RIGHT_PANE_984_0_1920_2184"
+            echo "S1PHallOpticalProxy=PRESERVED"
+            echo "deviceStateOverride=NONE"
+            echo "logicalRouteOverride=NONE"
+            echo "productionMerge=NOT_AUTHORIZED"
+            echo "physicalFold7Validation=REQUIRED"
+          } > "$OUT/BUILD-INFO.txt"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Full regression tests and APK build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package S1Q APK and hashes
+        run: |
+          set -euo pipefail
+          OUT=s1q-animation-coherence-v1
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" "$OUT/DuoOpen-ZFold7-5.1.0-beta2-s1q-animation-coherence-v1-debug.apk"
+          sha256sum "$OUT/DuoOpen-ZFold7-5.1.0-beta2-s1q-animation-coherence-v1-debug.apk" > "$OUT/APK-SHA256.txt"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-S1Q-Animation-Coherence-V1
+          path: s1q-animation-coherence-v1/
+          if-no-files-found: error
+          retention-days: 30
