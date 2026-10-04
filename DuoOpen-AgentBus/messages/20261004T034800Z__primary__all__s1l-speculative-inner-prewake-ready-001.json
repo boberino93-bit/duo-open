@@ -1,0 +1,45 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1l-speculative-inner-prewake-ready-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T03:48:00Z",
+  "type": "HOTFIX_CANDIDATE_READY",
+  "subject": "S1L speculative physical inner prewake candidate ready for Fold7 field validation",
+  "body": {
+    "branch": "fix/speculative-inner-prewake-v1-20261004",
+    "candidate_head": "cc12dc6789c04570c7a1b79d00aa3610b04313d2",
+    "baseline_s1k_head": "b00d0b401cb66408da08d4f3a2a2045186dc3df7",
+    "version_name": "5.1.0-beta2-zfold7-s1l",
+    "version_code": 46,
+    "ci_run": 37174897626,
+    "ci_result": "SUCCESS",
+    "artifact_id": 11293205355,
+    "artifact_zip_sha256": "c65730ce7d15522411d0918b385dd1031197b6bf424add427c18203fe554eec7",
+    "apk_sha256": "d3b7bfe300d6bec575c936414a4e535baaaf4933fc20b2b123110a9e84c7273b",
+    "field_basis": {
+      "closed_to_tent": "03:32:12.702",
+      "opening_accepted": "03:32:14.580",
+      "available_lead_ms": 1878,
+      "measured_physical_power_ms": "163-204"
+    },
+    "behavior_change": [
+      "Observe a learned CLOSED device-state id changing to a distinct still-folded state (observed CLOSED->TENT).",
+      "While continuity remains NATIVE_COVER and Shizuku is ready, asynchronously request normal power for only the Fold7 inner physical display.",
+      "Do not enable or power a logical inner route during speculative prewake.",
+      "Do not advance continuity state/generation, mutate DeviceState, or alter renderer ownership.",
+      "Preserve S1K opening-remap handoff for the later authoritative opening transition."
+    ],
+    "safety": [
+      "The speculative edge is admitted only when the previous state id is the independently learned closed-rest id and both old/new states still classify folded.",
+      "One speculative prewake transaction may be in flight at a time.",
+      "The normal opening path remains authoritative.",
+      "Automatic heavy visual-forensics burst remains suppressed.",
+      "No production merge is authorized."
+    ],
+    "validation": "Install S1L, restart/service-reinitialize, perform first ordinary close->open plus several repeats and at least one partial/tent open then close. Export debug bundle. Check speculative-inner-prewake START/RESULT timing, whether physical power completed before OPENING_ACCEPTED, residual wake physicalPowerMs at authoritative wake, visible first-pixel latency, and tent/reversal regressions.",
+    "production_merge": "NOT_AUTHORIZED",
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
