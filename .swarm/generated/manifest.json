@@ -4,17 +4,40 @@
     "PRIMARY"
   ],
   "changed_files": [
-    "DuoOpen-AgentBus/messages/20261004T092200Z__primary__all__s1s-beta-convergence-commit-authorized-001.json"
+    ".github/workflows/s1n-safe-prewake-v2.yml",
+    ".github/workflows/s1o-hall-prewake-protocol-v1.yml",
+    ".github/workflows/s1p-hall-optical-proxy-v1.yml",
+    ".github/workflows/s1q-animation-coherence-v1.yml",
+    ".github/workflows/s1q-animation-coherence-v2.yml",
+    ".github/workflows/s1q-animation-coherence-v3.yml",
+    ".github/workflows/s1r-hinge-reacquisition-v1.yml",
+    ".github/workflows/s1s-beta-convergence-v1.yml",
+    ".github/workflows/s1s-beta-convergence-v2.yml",
+    "DuoOpen-AgentBus/messages/20261004T093000Z__primary__all__s1s-production-main-promotion-001.json",
+    "app/src/main/java/com/duoopen/overlay/Fold7SpeculativePrewakePolicy.kt",
+    "app/src/test/java/com/duoopen/overlay/Fold7SpeculativePrewakePolicyTest.kt",
+    "docs/beta/S1S_BETA_CONVERGENCE_V1.md",
+    "tools/apply_s1n_safe_prewake_v2.py",
+    "tools/apply_s1o_hall_prewake_protocol_v1.py",
+    "tools/apply_s1p_hall_optical_proxy_v1.py",
+    "tools/apply_s1q_animation_coherence_v1.py",
+    "tools/apply_s1q_animation_coherence_v2.py",
+    "tools/apply_s1q_animation_coherence_v3.py",
+    "tools/apply_s1r_hinge_reacquisition_v1.py",
+    "tools/apply_s1s_beta_convergence_v1.py",
+    "tools/apply_s1s_beta_convergence_v2.py",
+    "tools/apply_s1s_beta_convergence_v3.py",
+    "tools/verify_duo_diagnostic_apk_config.py"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "3bde06f73821980ecd1e5793e808ea206ea0e9a84c67686aaaca15171f606925",
-    "PRIMARY_PROMPT.md": "855d0191768627c39214292b99e97e5bbb6d77b1cf3a95deacf7a499e06129fe",
-    "RESEARCHER_PROMPT.md": "6755416b335314be0ea6298fc1c1bf742204977bd4c00e3cc9b9f7f907526af5"
+    "MANAGER_PROMPT.md": "46ae47ca57a98a4a4f8a06c01a992ce067138f48030b9fcb24d33ff1099afc09",
+    "PRIMARY_PROMPT.md": "6d36d606d921ca6e301401621f17cf0e2ec2a61df573f7e21230af39bd6f9d97",
+    "RESEARCHER_PROMPT.md": "21db33d51265a4a66fd72f3d8bb129f7e0ebf4ad38fc7e26ca118d67ae3e9e36"
   },
   "schema": "duo-open/generated-role-prompts/v1",
   "source_hashes": {
     "role-impact-map.json": "35808db8c827ed624f785496639b34e2e5095bd1ca94599a50a73167d4575b72",
     "role-specs.json": "de62f5e628daa122ed6ff476f5d915bf2f9a3082265318d9b829d6cd744c46b7"
   },
-  "source_revision": "a7b23e5b5846ea5f95a2c2f07d10f31c799210ea"
+  "source_revision": "39d3408f9e697e81735cbf1d8804f1bcfa0579ac"
 }
