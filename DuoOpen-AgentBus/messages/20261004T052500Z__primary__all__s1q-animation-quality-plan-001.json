@@ -1,0 +1,30 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1q-animation-quality-plan-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T05:25:00Z",
+  "type": "IMPLEMENTATION_PLAN",
+  "subject": "S1Q animation-quality pass isolates temporal smoothness and geometric registration above S1P",
+  "body": {
+    "baseline": "S1P Hall Optical Proxy V1",
+    "baseline_head": "6f7b508b0cb1cfae3dc9e6d49577fc1eeb7ae473",
+    "intent": "Improve perceived fold animation smoothness and keep rendered content spatially registered through cover, proxy and native-inner handoff without reopening DeviceState/power-routing experiments.",
+    "planned_changes": [
+      "Replace per-frame millisecond-quantized Gen5 render clock with a Choreographer-vsync-derived nanosecond timeline calibrated once into the uptime timebase.",
+      "Make Gen5 visual motion C1-continuous with velocity/acceleration-limited integration rather than position-only per-frame slew clipping.",
+      "Align the S1P optical proxy to the exact canonical Fold7 right-pane transform (1080x2520 cover -> inner x=984..1920, y=0..2184) instead of stretching the cover across the full 1968x2184 inner panel.",
+      "Retain S1P Hall trigger, physical wake, private optical stack and native stack restoration unchanged.",
+      "Add regression tests for no overshoot, bounded acceleration and cross-refresh-rate convergence."
+    ],
+    "explicit_non_goals": [
+      "No DeviceState override.",
+      "No logical route forcing.",
+      "No panel-power policy change.",
+      "No new agents.",
+      "No production merge without human authorization."
+    ],
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
