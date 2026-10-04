@@ -1,24 +1,10 @@
 {
-  "schema": "duoopen-role-template-release/v1",
+  "schema": "duoopen-role-package-release/v1",
   "project": "duo-open",
-  "version": "1.0.0",
-  "status": "ENFORCED + TESTED",
-  "internal_namespace": "/DuoOpen-AgentBus/templates/role-template-system-v1",
-  "github": {
-    "repository": "boberino93-bit/duo-open",
-    "role_template_generated_commit": "1708cc57b3edf950b98ef7f67e4a7c1bc7bd8ef1",
-    "release_backup_commit": "c07d68f4f4cb5a46b5ec0560c3e93d95494946cf"
-  },
+  "release_version": "1.0.0",
   "bootstrap_contract_version": "1.4.0",
-  "package_assessment": {
-    "role_prompt_generation": "ENFORCED + TESTED",
-    "deployment_zip_rebuild": "ENFORCED + TESTED",
-    "package_validation": "ENFORCED + TESTED"
-  },
-  "canonical_registry": {
-    "path": "/DuoOpen-AgentBus/templates/CANONICAL_ROLE_PACKAGE_REGISTRY_20261004_ROLE_TEMPLATE_SYNC.json",
-    "sha256": "4432a92605762767e7f5b4a3228992564b74255b1115504cd7eb142fa75a8839"
-  },
+  "role_template_source_revision": "a83160978df428cc981d9e230d455057981e7352",
+  "role_template_generated_commit": "1708cc57b3edf950b98ef7f67e4a7c1bc7bd8ef1",
   "packages": [
     {
       "role": "PRIMARY",
@@ -68,18 +54,5 @@
       "startup_template_hook": "PASS",
       "foreign_project_filename_scan": "PASS"
     }
-  ],
-  "tests": [
-    "ZIP central-directory integrity",
-    "full PACKAGE_SHA256_MANIFEST hash/size verification",
-    "role binding",
-    "START_HERE role-template hook",
-    "role-specific prompt identity",
-    "DuoOpen AgentBus binding",
-    "foreign-project filename scan"
-  ],
-  "notes": [
-    "No Android runtime/application code changed; physical Fold7 validation is not applicable to this process/package-only change.",
-    "Historical canonical packages are preserved for lineage and superseded by exact-hash Primary publication."
   ]
 }

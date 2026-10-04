@@ -1,0 +1,68 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "immutable": true,
+  "id": "msg-primary-role-template-package-sync-complete-20261004t084000z",
+  "timestamp_utc": "2026-10-04T08:40:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": [
+    "all",
+    "manager-reviewer",
+    "research"
+  ],
+  "kind": "decision",
+  "priority": "high",
+  "subject": "Canonical role package sync complete: Primary V9, Manager V7, Research V7",
+  "body": "Role-template system v1 is now carried by all three canonical deployment packages. Each successor preserves the existing round-orchestration payload, adds the role-specific generated operating template and canonical structured role specs, hooks START_HERE to the role template, records template/bootstrap provenance in ROLE.json, regenerates the complete package SHA-256 manifest, and passes archive/manifest/role/startup binding checks. These packages supersede Primary V8, Manager/Reviewer V6, and Research V6 as canonical startup packages; predecessors remain immutable for lineage. The earlier role-template release message that said ZIP rebuild was pending is superseded on package status by this message.",
+  "supersedes": [
+    "msg-primary-role-template-system-v1-20261004",
+    "msg-primary-canonical-round-orchestration-refresh-complete-20261003t040500z"
+  ],
+  "canonical_registry": {
+    "path": "/DuoOpen-AgentBus/templates/CANONICAL_ROLE_PACKAGE_REGISTRY_20261004_ROLE_TEMPLATE_SYNC.json",
+    "sha256": "4432a92605762767e7f5b4a3228992564b74255b1115504cd7eb142fa75a8839",
+    "bytes": 2094
+  },
+  "canonical_packages": {
+    "PRIMARY": {
+      "name": "DUO_OPEN_PRIMARY_AGENT_V9_ROLE_TEMPLATE_SYNC.zip",
+      "sha256": "f7af4c7c274f995ecc2cc00ccdbd373eb0f3f07e56f400ae655b22ebc6dc03b2",
+      "bytes": 1488387
+    },
+    "MANAGER_REVIEWER": {
+      "name": "DUO_OPEN_GEN7_MANAGER_REVIEWER_AGENT_V7_ROLE_TEMPLATE_SYNC.zip",
+      "sha256": "a9ed0786458dc1fdd261ca7f143aac6d26e428789dd42edb8f2538634f87fed5",
+      "bytes": 1488147
+    },
+    "RESEARCH": {
+      "name": "DUO_OPEN_GEN7_RESEARCH_AGENT_V7_ROLE_TEMPLATE_SYNC.zip",
+      "sha256": "782cb2560befd579a4ff4ef802bb903ef5de01ea629b28fc1d3898ec9e08f106",
+      "bytes": 1488131
+    }
+  },
+  "validation": {
+    "archive_integrity": "PASS",
+    "package_manifest_all_members": "PASS",
+    "role_binding": "PASS",
+    "startup_template_hook": "PASS",
+    "foreign_project_filename_scan": "PASS",
+    "physical_fold7_test": "NOT_APPLICABLE_PROCESS_ONLY_PACKAGE_CHANGE"
+  },
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "role_template_generated_commit": "1708cc57b3edf950b98ef7f67e4a7c1bc7bd8ef1",
+    "bootstrap_contract_version": "1.4.0"
+  },
+  "requires_ack": false,
+  "production_write": false,
+  "tags": [
+    "canonical-agent-refresh",
+    "role-template",
+    "package-sync",
+    "primary",
+    "manager-reviewer",
+    "research",
+    "manifest-validated",
+    "recovery"
+  ]
+}

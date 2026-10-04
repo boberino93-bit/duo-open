@@ -1,0 +1,42 @@
+{
+  "schema": "duoopen-canonical-role-package-registry/v2",
+  "created_utc": "2026-10-04T08:40:00Z",
+  "release_id": "role-template-system-v1-package-sync",
+  "app_source_commit": "1cf46d7505ee74a8f4434be6d77a890ddce57ac1",
+  "role_template_source_revision": "a83160978df428cc981d9e230d455057981e7352",
+  "role_template_generated_commit": "1708cc57b3edf950b98ef7f67e4a7c1bc7bd8ef1",
+  "bootstrap_contract_version": "1.4.0",
+  "round_orchestration": "v1",
+  "max_concurrent_sessions": 20,
+  "spawn_adapter_state": "MANUAL_FALLBACK",
+  "supersedes": {
+    "path": "/DuoOpen-AgentBus/templates/CANONICAL_ROLE_PACKAGE_REGISTRY_20261003_ROUND_ORCHESTRATION.json",
+    "sha256": "0b1df43f241f9297106b82def93a3d7b846e15804802674db37651777fbbce14"
+  },
+  "packages": {
+    "PRIMARY": {
+      "path": "/DuoOpen-AgentBus/templates/DUO_OPEN_PRIMARY_AGENT_V9_ROLE_TEMPLATE_SYNC.zip",
+      "sha256": "f7af4c7c274f995ecc2cc00ccdbd373eb0f3f07e56f400ae655b22ebc6dc03b2",
+      "bytes": 1488387,
+      "canonical": true,
+      "parent_package": "DUO_OPEN_PRIMARY_AGENT_V8_ROUND_ORCHESTRATION.zip",
+      "parent_package_sha256": "f26e5cf9385146206b924bd2308b4ad305e479ba554cc7c18aac1566ec4165a3"
+    },
+    "MANAGER_REVIEWER": {
+      "path": "/DuoOpen-AgentBus/templates/DUO_OPEN_GEN7_MANAGER_REVIEWER_AGENT_V7_ROLE_TEMPLATE_SYNC.zip",
+      "sha256": "a9ed0786458dc1fdd261ca7f143aac6d26e428789dd42edb8f2538634f87fed5",
+      "bytes": 1488147,
+      "canonical": true,
+      "parent_package": "DUO_OPEN_GEN7_MANAGER_REVIEWER_AGENT_V6_ROUND_ORCHESTRATION.zip",
+      "parent_package_sha256": "4e435094fa64be2575ad54452d0923f0327f67ebe85d0bf728646b614dd1035f"
+    },
+    "RESEARCH": {
+      "path": "/DuoOpen-AgentBus/templates/DUO_OPEN_GEN7_RESEARCH_AGENT_V7_ROLE_TEMPLATE_SYNC.zip",
+      "sha256": "782cb2560befd579a4ff4ef802bb903ef5de01ea629b28fc1d3898ec9e08f106",
+      "bytes": 1488131,
+      "canonical": true,
+      "parent_package": "DUO_OPEN_GEN7_RESEARCH_AGENT_V6_ROUND_ORCHESTRATION.zip",
+      "parent_package_sha256": "de185dc630d4ee6865111abeaf7554c72af85451ac1287418d228ae156a55978"
+    }
+  }
+}
