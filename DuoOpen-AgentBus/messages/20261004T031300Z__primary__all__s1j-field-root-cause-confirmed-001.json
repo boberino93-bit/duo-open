@@ -1,0 +1,29 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1j-field-root-cause-confirmed-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T03:13:00Z",
+  "type": "FIELD_FINDING",
+  "subject": "S1J proves opening renderer ownership is dropped on cover-to-inner logical geometry remap",
+  "body": {
+    "field_bundle": "duoopen-debug-1791083435200.zip",
+    "build": "5.1.0-beta2-zfold7-s1j",
+    "visual_forensic_sessions": 2,
+    "confirmed": [
+      "S1J DeviceState/hinge opening trigger works; visual forensic sessions are present.",
+      "S1G broad forensic sweep is absent from the wake-critical path in S1J.",
+      "First opening generation 4 entered OPENING_FROM_CLOSED with Gen3 demand true and cover renderer ownership active.",
+      "At 2026-10-04T03:10:08.747Z controller entered INNER_HANDOFF while opening demand remained true.",
+      "At 2026-10-04T03:10:08.750Z logical display 0 had remapped from 1080x2520 cover geometry to 1968x2184 inner geometry while the same PanelEngine still had coverOwned=true/openingVisual=true.",
+      "reconcileContinuityCoverRendering immediately set coverOwned=false solely because isFold7CoverGeometryNow() became false; PanelEngine then ended the opening visual with owner-released:gen3:fast:display-changed:1.",
+      "After release, Gen3 opening demand remained true but host was null and no continuity opening surface existed; the generic inner engine became SHOWING only later, leaving a visible ownership gap.",
+      "Generation 12 reproduced the same geometry-remap ownership loss: active opening visual was ended on display-changed while Gen3 demand remained true."
+    ],
+    "timing_note": "Physical screencap calls in S1J still cause nominal visual sample offsets to drift substantially; those screenshots are useful for pixel/content truth but not sub-100ms timing. The app-side handoff trace is low-perturbation and is authoritative for the ownership-loss sequence.",
+    "root_cause_status": "CONFIRMED_FOR_OPENING_RENDERER_GAP",
+    "next_action": "Build an experimental behavior hotfix that transfers the active opening visual from cover semantics to inner rendering when the same logical display remaps to inner geometry. Do not merge to production without explicit authorization. Suppress automatic heavy visual-forensics burst during behavior validation; retain cheap handoff telemetry.",
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
