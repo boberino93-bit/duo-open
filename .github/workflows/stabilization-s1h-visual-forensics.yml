@@ -6,9 +6,15 @@ on:
       - exp/stabilization-s1h-visual-forensics-20261003
     paths:
       - ".github/workflows/stabilization-s1h-visual-forensics.yml"
+      - "tools/apply_stabilization_s1h_visual_metadata.py"
+      - "tools/apply_stabilization_s1h_visual_runtime.py"
+      - "app/src/full/java/com/duoopen/overlay/Fold7VisualForensics.kt"
+      - "tools/apply_stabilization_s1g_forensic_superset.py"
+      - "tools/apply_stabilization_s1f_layout_map_truth.py"
+      - "tools/apply_stabilization_s1e_logical_layout_truth.py"
+      - "tools/apply_stabilization_s1b_sf_power_truth.py"
+      - "tools/apply_stabilization_s1_ingress_telemetry.py"
       - "tools/**"
-      - "app/src/full/java/com/duoopen/debug/VisualForensics.kt"
-      - "app/src/main/java/com/duoopen/debug/DebugBundleExporter.kt"
       - "DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md"
       - "DuoOpen-AgentBus/messages/**"
   workflow_dispatch:
@@ -49,16 +55,12 @@ jobs:
           python3 tools/apply_runtime_optimization_cycle_c.py --repo . --check
           python3 tools/apply_runtime_optimization_cycle_c.py --repo .
 
-      - name: Reapply validated exact-attempt wake probe
+      - name: Reapply wake, bridge, display status, and V4 baseline
         run: |
           set -euo pipefail
           python3 tools/apply_inner_wake_probe_v1.py --self-test
           python3 tools/apply_inner_wake_probe_v1.py --repo . --check
           python3 tools/apply_inner_wake_probe_v1.py --repo .
-
-      - name: Reapply physical bridge V1 and V2 handoff
-        run: |
-          set -euo pipefail
           python3 tools/prepare_inner_physical_bridge_v1_transformer.py --self-test
           python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo . --check
           python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo .
@@ -77,10 +79,6 @@ jobs:
           python3 tools/apply_inner_physical_bridge_v2.py --self-test
           python3 tools/apply_inner_physical_bridge_v2.py --repo . --check
           python3 tools/apply_inner_physical_bridge_v2.py --repo .
-
-      - name: Reapply display status, Hall latch, and V4 bridge
-        run: |
-          set -euo pipefail
           python3 tools/apply_fold7_display_status_v3.py --self-test
           python3 tools/apply_fold7_display_status_v3.py --repo . --check
           python3 tools/apply_fold7_display_status_v3.py --repo .
@@ -91,7 +89,7 @@ jobs:
           python3 tools/apply_inner_physical_bridge_v4.py --repo . --check
           python3 tools/apply_inner_physical_bridge_v4.py --repo .
 
-      - name: Reapply S1 through S1F diagnostics
+      - name: Reapply S1 through S1G diagnostics
         run: |
           set -euo pipefail
           python3 tools/apply_stabilization_s1_ingress_telemetry.py --self-test
@@ -103,32 +101,30 @@ jobs:
           python3 tools/apply_stabilization_s1e_logical_layout_truth.py --repo .
           python3 tools/apply_stabilization_s1f_layout_map_truth.py --repo . --check
           python3 tools/apply_stabilization_s1f_layout_map_truth.py --repo .
-
-      - name: Reapply S1G forensic diagnostic superset
-        run: |
-          set -euo pipefail
           python3 tools/apply_stabilization_s1g_forensic_superset.py --repo . --check
           python3 tools/apply_stabilization_s1g_forensic_superset.py --repo .
 
       - name: Apply S1H visual forensics only
         run: |
           set -euo pipefail
-          python3 tools/apply_stabilization_s1h_visual_forensics.py --self-test
-          python3 tools/apply_stabilization_s1h_visual_forensics.py --repo . --check
-          python3 tools/apply_stabilization_s1h_visual_forensics.py --repo .
+          python3 tools/apply_stabilization_s1h_visual_metadata.py --repo . --check
+          python3 tools/apply_stabilization_s1h_visual_metadata.py --repo .
+          python3 tools/apply_stabilization_s1h_visual_runtime.py --repo . --check
+          python3 tools/apply_stabilization_s1h_visual_runtime.py --repo .
           git diff --check
 
-          grep -F 'STABILIZATION_S1H_VISUAL_FORENSICS_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
-          grep -F 'CAPTURE_PHYSICAL_FORENSIC = 19' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
-          grep -F 'fun captureForensics(' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
-          grep -F 'fun capturePhysicalForensics(' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
-          grep -F '"/system/bin/screencap"' app/src/full/java/com/duoopen/shell/DuoShellService.kt
-          grep -F 'device_policy_capture' app/src/full/java/com/duoopen/shell/DuoShellService.kt
-          grep -F 'secure_windows' app/src/full/java/com/duoopen/shell/DuoShellService.kt
-          grep -F 'VisualForensics.beginOpeningBurst(' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
-          grep -F 'WORK_PROFILE_SCREEN_CAPTURE_POLICY_BLOCKED' app/src/full/java/com/duoopen/debug/VisualForensics.kt
-          grep -F 'ROUTE_ABSENT_NOT_CAPTURE_FAILURE' app/src/full/java/com/duoopen/debug/VisualForensics.kt
-          grep -F 'visualForensicSessions' app/src/main/java/com/duoopen/debug/DebugBundleExporter.kt
+          grep -F 'STABILIZATION_S1H_VISUAL_METADATA_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'const val VISUAL_FORENSICS = 19' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+          grep -F 'fun visualForensicsProbe(): Bundle?' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+          grep -F 'visualForensics.startOpeningBurst(' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'diagnosticExcludedLayers' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'MANAGED_PROFILE_SCREEN_CAPTURE_POLICY' app/src/full/java/com/duoopen/overlay/Fold7VisualForensics.kt
+          grep -F 'FLAG_SECURE_OR_SECURE_WINDOW' app/src/full/java/com/duoopen/overlay/Fold7VisualForensics.kt
+          grep -F 'ERROR_TAKE_SCREENSHOT_SECURE_WINDOW' app/src/full/java/com/duoopen/overlay/Fold7VisualForensics.kt
+          grep -F 'visualForensicsMayContainScreenPixels=true' app/src/main/java/com/duoopen/debug/DebugBundleExporter.kt
+          grep -F 'dumpsys wallpaper' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'dumpsys appwidget' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'dumpsys device_policy' app/src/full/java/com/duoopen/shell/DuoShellService.kt
 
           ! grep -F 'STABILIZATION_S1C_ACTIVE_TRANSFER_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
           ! grep -F 'STABILIZATION_S1D_REAL_INNER_EDGE_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
@@ -147,20 +143,20 @@ jobs:
           {
             echo "sourceHead=${GITHUB_SHA}"
             echo "baselineS1GHead=4ebe9de9a48bd2a56d56d226a95d7448aaf92c38"
-            echo "runtime=V4 + S1/S1B/S1E/S1F/S1G diagnostics + S1H visual forensic screenshot burst"
+            echo "runtime=V4 + S1/S1B/S1E/S1F/S1G diagnostics + S1H visual forensics"
             echo "stabilizationPhase=S1H_VISUAL_FORENSICS"
-            echo "behaviorChange=NONE"
-            echo "visualSamplesMs=0,500,1200,2500"
-            echo "logicalCapture=IWindowManager capture with Duo Open exclusion layers where a logical route exists"
-            echo "physicalCapture=AOSP screencap -d physical-display-id through Binder-passed file descriptor"
-            echo "captureLimitations=logical-route dependency; 400ms hidden-capture timeout; FLAG_SECURE/protected content; device/work-profile policy; inactive-panel/low-information ambiguity"
-            echo "failureClassification=route absent vs backend timeout/error vs secure/protected content vs device policy vs managed-work-profile policy vs captured low-information vs usable frame"
-            echo "secureLogicalPixelsPersisted=NO"
+            echo "behaviorChange=NONE_TO_FOLD_POLICY_OR_PANEL_POWER"
+            echo "visualCapture=10 timestamped samples from 100ms to 6000ms; cover+inner routes attempted independently"
+            echo "visualEncoding=WEBP_LOSSY_0.35_SCALE_Q88"
+            echo "overlayExclusion=uses existing PanelEngine SurfaceControl exclusion when available"
+            echo "renderingMetadata=wallpaper engine; appwidget hosts/providers; WindowManager visibility; SurfaceFlinger layers/security; top activity"
+            echo "captureFailureClassification=route absent; Shizuku failure cross-checked with AccessibilityService result; FLAG_SECURE/secure-window; managed-profile/device-policy capture restriction; invalid display; accessibility access; rate-limited classifier; protected-layer evidence; encoding failure"
+            echo "securePersistence=FAIL_CLOSED_NO_FALLBACK_ACCESSIBILITY_PIXELS_WRITTEN; existing Shizuku secure path remains fail-closed"
+            echo "platformBasis=FLAG_SECURE and DevicePolicyManager screen-capture policy can legitimately suppress captures"
             echo "deviceStateOverrideChanges=NONE"
             echo "powerOrderingChanges=NONE"
             echo "renderAngleMathChanges=NONE"
             echo "transitionIdentityChanges=NONE"
-            echo "presentationOwnershipChanges=NONE"
             echo "agentSpawnPolicy=FROZEN_USER_DIRECTIVE_20261003"
             echo "agentSpawnPolicyContract=DuoOpen-AgentBus/NO_NEW_AGENTS_V1.md"
             echo "agentBusSnapshot=DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT"
