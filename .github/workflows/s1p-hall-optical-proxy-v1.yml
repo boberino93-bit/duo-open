@@ -3,7 +3,7 @@ name: S1P Hall Optical Proxy V1
 on:
   push:
     branches:
-      - fix/s1o-hall-prewake-protocol-v1-20261004
+      - fix/s1p-hall-optical-proxy-v1-20261004
     paths:
       - ".github/workflows/s1p-hall-optical-proxy-v1.yml"
       - "tools/apply_s1p_hall_optical_proxy_v1.py"
