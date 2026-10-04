@@ -18,18 +18,15 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 
 def transform_protocol(text: str) -> str:
-    if "const val VISUAL_FORENSICS = 19" in text:
+    if "const val VISUAL_FORENSICS = 23" in text:
         return text
     return replace_once(
         text,
-        '''    const val COVER_PANEL_GEN4 = 18
-
-    const val CB_ANGLE = 1
+        '''    const val CB_ANGLE = 1
 ''',
-        '''    const val COVER_PANEL_GEN4 = 18
-
-    // S1H read-only wallpaper/widget/compositor/policy evidence.
-    const val VISUAL_FORENSICS = 19
+        '''    // S1H read-only wallpaper/widget/compositor/policy evidence.
+    // Codes 19-22 are occupied by the isolated physical-bridge/Beta2 stack.
+    const val VISUAL_FORENSICS = 23
 
     const val CB_ANGLE = 1
 ''',
@@ -192,7 +189,7 @@ def apply(repo: Path, check_only: bool) -> None:
     }
 
     checks = (
-        (outputs[PROTOCOL], 'const val VISUAL_FORENSICS = 19'),
+        (outputs[PROTOCOL], 'const val VISUAL_FORENSICS = 23'),
         (outputs[BRIDGE], 'fun visualForensicsProbe(): Bundle?'),
         (outputs[SHELL], MARKER),
         (outputs[SHELL], '"wallpaper"'),
