@@ -5,17 +5,17 @@
     "RESEARCHER"
   ],
   "changed_files": [
-    "DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/messages/20261004T083000Z__primary__all__role-template-system-v1.json"
+    ".swarm/releases/role-template-system-v1.json"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "d7dedfc16cfad7d6de526db10b7b84868357d5654e8cc721923513c98fdd7172",
-    "PRIMARY_PROMPT.md": "fccfcf31db99fa28fd9b80bed5fd49373811a7f9ccb871f9028a8757132bdda1",
-    "RESEARCHER_PROMPT.md": "7980113d07d11b32690d4b5335c692e227e1a059bc1a873e524f74d00cb1bb59"
+    "MANAGER_PROMPT.md": "13456b1afa0f5f1e15efe9b412672b6e78d07a7efbe4b07835967a6d1de888b4",
+    "PRIMARY_PROMPT.md": "4d66672eb289c800528ce9902c3cc6cc3f2ce0b092887b53104d8cecb7765e6e",
+    "RESEARCHER_PROMPT.md": "c94e5c6ec8c453ba0d2d1c69d3cf01654f6785016eeb5baa455bba606b07a0e0"
   },
   "schema": "duo-open/generated-role-prompts/v1",
   "source_hashes": {
     "role-impact-map.json": "35808db8c827ed624f785496639b34e2e5095bd1ca94599a50a73167d4575b72",
     "role-specs.json": "de62f5e628daa122ed6ff476f5d915bf2f9a3082265318d9b829d6cd744c46b7"
   },
-  "source_revision": "4b73a70021ddd7464de4d24a36f260e71a6d62de"
+  "source_revision": "c07d68f4f4cb5a46b5ec0560c3e93d95494946cf"
 }
