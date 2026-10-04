@@ -1,5 +1,5 @@
 <!-- GENERATED: edit role-specs.json / role-impact-map.json, not this file. -->
-<!-- source_revision: c07d68f4f4cb5a46b5ec0560c3e93d95494946cf -->
+<!-- source_revision: b141161f0e5293ddf6cabd318ee14f85a82d3203 -->
 
 # Duo Open Manager Agent Template
 
@@ -36,9 +36,12 @@ Own coordination, concurrency, dependency visibility, quality gates, and swarm e
 
 ## Current project-change context
 
-Generated from revision `c07d68f4f4cb5a46b5ec0560c3e93d95494946cf`.
+Generated from revision `b141161f0e5293ddf6cabd318ee14f85a82d3203`.
 
 Role-relevant changed paths:
 - `.swarm/releases/role-template-system-v1.json`
+- `DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/messages/20261004T084000Z__primary__all__role-template-package-sync-complete.json`
+- `DEPLOYMENT_METADATA/ROLE_PACKAGES/CANONICAL_ROLE_PACKAGE_REGISTRY_20261004_ROLE_TEMPLATE_SYNC.json`
+- `DEPLOYMENT_METADATA/ROLE_PACKAGES/PACKAGE_RELEASE_MANIFEST_ROLE_TEMPLATE_V1.json`
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.
