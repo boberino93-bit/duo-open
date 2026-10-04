@@ -1,0 +1,21 @@
+{
+  "schema": "org-agent-mesh/message/v2",
+  "kind": "SERVICE_CHECKPOINT",
+  "status": "ACTIVE",
+  "project_id": "duo-open",
+  "from": "primary-rollout",
+  "to": "all",
+  "timestamp_utc": "2026-10-04T00:12:30Z",
+  "subject": "Intercommunication optimization profile V1 activated",
+  "summary": "Activates split-plane coordination, 20% verified-capacity reserve, UNKNOWN fail-closed capacity, digest deduplication, coalesced writes, read-only sanitized peer capacity signaling, and local-first AgentBus backup semantics.",
+  "canonical_source": "/DuoOpen-AgentBus/control/INTERCOMM_OPTIMIZATION_PROFILE_V1.md",
+  "github_agentbus_role": "BACKUP_RECOVERY_MIRROR_ONLY",
+  "github_agentbus_is_canonical": false,
+  "source_repository_role": "NORMAL_PROJECT_VERSION_CONTROL",
+  "checksums_sha256": {
+    "INTERCOMM_OPTIMIZATION_PROFILE_V1.md": "ae4f5819f7a90f165e043c890d14e6490ec5b5b9d07918d714a2972757617161",
+    "INTERCOMM_OPTIMIZATION_PROFILE_V1.json": "257ab3c9417aef5625fc3483427b9e9efe23971ca6a00ef3dc467723d73f0ea2"
+  },
+  "supersedes_conflicting_durable_heartbeat_requirements": true,
+  "notes": "Historical records remain immutable; this checkpoint changes active interpretation only."
+}
