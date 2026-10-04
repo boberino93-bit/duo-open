@@ -1,0 +1,41 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1n-safe-prewake-v2-ready-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T04:33:00Z",
+  "type": "RECOVERY_HOTFIX_CANDIDATE_READY",
+  "subject": "S1N safely restores S1L prewake after S1M state-5 routing regression",
+  "body": {
+    "branch": "fix/s1n-safe-prewake-v2-20261004",
+    "candidate_head": "23242bd2f346b41dcf203bba04ebfb083179349f",
+    "baseline_s1l_head": "cc12dc6789c04570c7a1b79d00aa3610b04313d2",
+    "rejected_s1m_head": "5d5af77913cc47373fa7f2a9c017e24f25bf8d0e",
+    "version_name": "5.1.0-beta2-zfold7-s1n",
+    "version_code": 48,
+    "ci_run": 37177178551,
+    "ci_result": "SUCCESS",
+    "artifact_id": 11293329294,
+    "artifact_zip_sha256": "655590351648df16e2bad56413752f57cad9961fc2d658304667a4acb3ee3797",
+    "apk_sha256": "79609a276a2b0bb4f5f471913e75b004218492c1d460638ae4b44440fe929ee8",
+    "field_regression_recovered": "S1M state-5 override generated synthetic posture transitions, polluted learned folded-state admission, and caused speculative inner wake during closing/refolding, matching flashing and black-screen behavior.",
+    "changes": [
+      "S1M CONCURRENT_OUTER_DEFAULT/state-5 route probe is completely absent.",
+      "S1K opening remap renderer handoff is preserved.",
+      "S1L physical-only inner prewake is preserved.",
+      "Speculative prewake admission is now exactly native CLOSED state 0 -> TENT state 1, with both states required to be folded.",
+      "Closing/refolding transitions 1->0, 2->0, 5->0, synthetic 0->5, and unknown fold truth are explicitly rejected by policy tests."
+    ],
+    "validation": [
+      "Full runtime reconstruction passed.",
+      "S1 through S1I, S1J, S1K and validated S1L replay passed.",
+      "S1N source/invariant gates passed and assert no state-5 route probe code remains.",
+      "Dedicated Fold7SpeculativePrewakePolicy regression tests passed.",
+      "testFullDebugUnitTest and assembleFullDebug passed."
+    ],
+    "field_validation_priority": "STABILITY_FIRST: verify no flashing, no black inner after unfold, no black cover after refold, and no speculative-inner-prewake events except native device-state-preopen:0->1. Only after stability is confirmed should route-latency optimization resume.",
+    "production_merge": "NOT_AUTHORIZED",
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
