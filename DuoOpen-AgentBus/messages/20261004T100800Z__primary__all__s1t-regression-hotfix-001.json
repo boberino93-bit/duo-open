@@ -1,0 +1,39 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "project_id": "duo-open",
+  "kind": "S1T_REGRESSION_HOTFIX_IN_PROGRESS",
+  "from": "primary",
+  "to": "all",
+  "created_at_utc": "2026-10-04T10:08:00Z",
+  "source_regression": "S1S_BETA_CONVERGENCE_V1",
+  "candidate": "S1T_CYCLE_AWARE_NATIVE_COVER_V1",
+  "branch": "fix/s1t-cycle-aware-terminal-fence-20261004",
+  "ci_run": 37194318911,
+  "confirmed_failure": {
+    "area": "Gen4 cover panel authority",
+    "symptom": "first close/open cycle can succeed; later close prewarm attempts fail immediately",
+    "root_cause": "S1S phase-only NATIVE_COVER fence rejects legitimate prepares from strictly newer close cycles",
+    "hinge_ingress": "HEALTHY_IN_CAPTURED_S1S_FIELD_BUNDLE"
+  },
+  "fix_contract": [
+    "Preserve rejection of delayed prepare mutations from the completed close cycle.",
+    "Track the highest closeCycleId that legitimately reaches native cover.",
+    "Permit prepare when incoming closeCycleId is strictly newer.",
+    "Reset terminal close-cycle memory on daemon/app service lifetime rollover.",
+    "Expose gen4TerminalCloseCycleId in diagnostics.",
+    "Require a regression test proving close cycle N is fenced and close cycle N+1 is admitted."
+  ],
+  "do_not_do": [
+    "Do not remove the S1S terminal fence wholesale.",
+    "Do not tune hinge thresholds or wake timing as a substitute for fixing lifecycle identity.",
+    "Do not merge this candidate to main without explicit human authorization and green CI."
+  ],
+  "parallel_investigation": {
+    "area": "opening presentation-ready bridge release",
+    "signal": "RELEASE_READY can be followed by stale=true/ok=false bridge release",
+    "status": "UNRESOLVED_SEPARATE_TRIAGE",
+    "instruction": "Keep independent from S1T unless causal linkage is proven."
+  },
+  "production_merge": "NOT_AUTHORIZED",
+  "physical_fold7_validation": "REQUIRED_AFTER_GREEN_CI"
+}
