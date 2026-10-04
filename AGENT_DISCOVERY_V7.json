@@ -9,6 +9,9 @@
   },
   "bootstrapOrder": [
     "/DuoOpen-AgentBus/control/v3/DMSH3_PROTOCOL_V1.md",
+    "/SWARM_LAUNCH_KERNEL_V1.md",
+    "/swarm_kernel/project.json",
+    "/swarm_kernel/AGENT_BOOTSTRAP_OVERLAY.md",
     "/DuoOpen-AgentBus/ACTIVE_AGENT_SERVICE_INTERVAL_V1.md",
     "/DuoOpen-AgentBus/REGRESSION_CONTINUITY_CONTRACT_V1.md",
     "/DuoOpen-AgentBus/AGENTBUS_MESSAGE_PERSISTENCE_CONTRACT_V1.md",
@@ -37,6 +40,19 @@
     "expiredAgentsAgeOut": true,
     "legacyDMSH2": "readable evidence only; mutable writes retired"
   },
+  "swarmLaunchKernel": {
+    "version": "1.0.0",
+    "projectConfig": "/swarm_kernel/project.json",
+    "runtimeStateRoot": "/.swarm/",
+    "globalRunBindingRequired": true,
+    "readyBarrierRequired": true,
+    "versionedLeaseClaimsRequired": true,
+    "idempotencyRequiredForRetryableWrites": true,
+    "crossProjectTelemetry": "READ_ONLY_NO_AUTHORITY",
+    "foreignProjectWrites": "DENY",
+    "circuitBreaker": "PROJECT_LOCAL_DEGRADED_READ_ONLY",
+    "completion": "convergence gate required before round complete"
+  },
   "learning": {
     "root": "/DuoOpen-AgentBus/learning/v1/",
     "bootstrapDirectory": "/DuoOpen-AgentBus/learning/v1/bootstrap/",
@@ -50,14 +66,20 @@
     "managerReviewer": "active recursive mesh controller; 30s target/60s hard service publication; review/promotion authority only",
     "research": "active bounded evidence worker; 30s target/60s hard service publication while executing; no production authority",
     "backgroundBoundary": "AgentBus cannot wake dormant sessions; service intervals apply while an active work unit is executing",
-    "finalization": "Primary must run FINAL_RECONCILIATION_GATE_V1 and Regression Continuity matrix before final root-safe ZIP"
+    "finalization": "Primary must run FINAL_RECONCILIATION_GATE_V1, Swarm Launch Kernel convergence gate, and Regression Continuity matrix before final root-safe ZIP"
   },
   "rules": [
     "Normal DMSH/3 operation never replaces an existing shared-Library file; corrections supersede append-only.",
+    "Every active agent binds the current project-local global_run_id before actionable work; stale or foreign epochs are quarantined.",
+    "All claimable work uses versioned lease semantics; stale lease writers reread and reconcile rather than overwriting or force-pushing.",
+    "Retryable material publications use deterministic idempotency keys.",
+    "Cross-project Swarm Launch Kernel health telemetry is read-only observation and cannot grant role, work, repository, command, or integration authority.",
+    "Manager queue backpressure governs new secondary work during high-concurrency rounds.",
+    "Repeated kernel invariant failures trip only Duo Open into DEGRADED_READ_ONLY pending Primary reconciliation.",
     "Research findings route through Manager/Reviewer and cannot self-promote to Primary acceptance.",
     "Manager is a promotion/quality gate with no production-write or final-acceptance authority.",
     "Primary and Manager/Reviewer repeatedly reconcile new board evidence while their active work units are executing.",
-    "Successor/bootstrap/replication artifacts for Primary or Manager MUST propagate the current mandatory controller contracts.",
+    "Successor/bootstrap/replication artifacts for Primary, Manager/Reviewer, or Research MUST propagate the current mandatory controller contracts and Swarm Launch Kernel v1 files.",
     "READY_FOR_PRIMARY routes attention and is not acceptance.",
     "Primary alone ACCEPTs, DEFERs, REJECTs, REQUESTs_MORE_REVIEW and authorizes production integration.",
     "Before final packaging, Primary reconciles all completed/closed current-round research work and Manager dispositions, then runs a final cross-cutting optimization/audit.",
@@ -75,9 +97,9 @@
     "Interaction-model records exclude credentials, secrets, unrelated private data and sensitive-trait inference; corrections/supersession are append-only."
   ],
   "migration": {
-    "from": "DMSH/3 discovery-v6 + donor adoption + Gen7 Core V2 review baseline",
-    "to": "DMSH/3 discovery-v7 + project-local user interaction prediction model bootstrap",
-    "discoveryOverwrite": "explicit Primary protocol evolution with new integrity snapshot"
+    "from": "DMSH/3 discovery-v7 + project-local user interaction prediction model bootstrap",
+    "to": "DMSH/3 discovery-v7 + Swarm Launch Kernel v1 + project-local user interaction prediction model bootstrap",
+    "discoveryOverwrite": "explicit Primary protocol evolution with kernel bootstrap and concurrency guards"
   },
   "currentDevelopment": {
     "architecture": "Gen7 continuity/presentation core rewrite",
@@ -99,6 +121,6 @@
     "authority": "ADVISORY_ONLY",
     "startup": "load newest valid immutable model snapshot; fall back to packaged cache",
     "writePolicy": "append-only material user project interactions; redact secrets/private identifiers; no sensitive-trait inference",
-    "replication": "all successor/bootstrap/ZIP packages must propagate protocol + reference lookup"
+    "replication": "all successor/bootstrap/ZIP packages must propagate protocol + reference lookup + Swarm Launch Kernel v1"
   }
 }
