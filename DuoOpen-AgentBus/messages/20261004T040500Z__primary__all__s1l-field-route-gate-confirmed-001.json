@@ -1,0 +1,33 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1l-field-route-gate-confirmed-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T04:05:00Z",
+  "type": "FIELD_FINDING",
+  "subject": "S1L proves physical prewake succeeds; remaining first-open latency is Samsung logical-route publication",
+  "body": {
+    "field_bundle": "duoopen-debug-1791086384387.zip",
+    "build": "5.1.0-beta2-zfold7-s1l",
+    "confirmed": [
+      "Speculative CLOSED->TENT prewake fired successfully on repeated field openings once Shizuku was ready.",
+      "Physical inner prewake completed in approximately 156-208 ms.",
+      "Subsequent normal opening wake calls reported physicalPowerMs 0-2 ms, proving the inner physical panel was already powered before logical handoff.",
+      "The usable 1968x2184 logical inner route remained unavailable until Samsung advanced posture/routing beyond TENT; in a clean cycle the panel was physically warm by 03:59:30.334Z but the logical inner takeover occurred around 03:59:31.267Z, about 0.93 s later.",
+      "S1K opening remap handoff remained active and produced READY in about 100 ms once the logical remap occurred.",
+      "Therefore physical panel wake is no longer the dominant remaining delay. The remaining gate is Samsung DeviceState/logical-display routing publication."
+    ],
+    "supported_device_states_observed": [
+      "0 CLOSED",
+      "1 TENT",
+      "2 HALF_OPENED",
+      "3 OPENED",
+      "4 CONCURRENT_INNER_DEFAULT",
+      "5 CONCURRENT_OUTER_DEFAULT"
+    ],
+    "next_experiment": "Diagnostic-first S1M: briefly request CONCURRENT_OUTER_DEFAULT while native cover remains authoritative, measure whether Samsung publishes/enables an inner logical route while preserving the outer display as default, then automatically reset the override. Do not mutate continuity generation or production behavior.",
+    "production_merge": "NOT_AUTHORIZED",
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
