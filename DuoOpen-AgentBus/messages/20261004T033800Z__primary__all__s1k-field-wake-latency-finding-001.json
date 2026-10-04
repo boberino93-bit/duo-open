@@ -1,0 +1,25 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1k-field-wake-latency-finding-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T03:38:00Z",
+  "type": "FIELD_FINDING",
+  "subject": "S1K smoother handoff confirms residual latency is wake trigger timing, not renderer transfer",
+  "body": {
+    "field_bundle": "duoopen-debug-1791084772789.zip",
+    "build": "5.1.0-beta2-zfold7-s1k",
+    "human_observation": "Animation as a whole is a little smoother, but the inner screen is still not powering on fast enough.",
+    "confirmed": [
+      "S1K opening remap handoff fired successfully and produced an inner surface in 73-174ms on captured openings.",
+      "The actual physical inner power operation measured 163-204ms once WAKE_COMMITTED occurred.",
+      "The dominant avoidable delay occurs before WAKE_COMMITTED: Samsung emitted CLOSED->TENT at 03:32:12.701652Z, but Duo Open did not accept/commit the actual opening wake until TENT->HALF_OPENED at 03:32:14.579839Z, a 1878ms signal gap.",
+      "Device state 1 TENT remains classified folded by Samsung; therefore promoting it to a full continuity opening would be unsafe and could regress tent/reversal behavior."
+    ],
+    "next_strategy": "S1L speculative physical-only inner prewake: on learned CLOSED state -> distinct still-folded state (observed CLOSED->TENT), asynchronously power the Fold7 inner physical display only. Do not mutate logical routing, DeviceState, continuity state/generation, renderer ownership, or S1K handoff policy.",
+    "expected_benefit": "Move the 163-204ms hardware wake into the approximately 1.8s lead window already provided by Samsung, so the panel is physically warm before the real opening transition.",
+    "production_merge": "NOT_AUTHORIZED",
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
