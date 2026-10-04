@@ -51,7 +51,20 @@ def transform_observer(text: str) -> str:
                 currentFolded = inferredFolded,
             )
 '''
-    return one(text, old, new, "narrow speculative prewake admission")
+    out = one(text, old, new, "narrow speculative prewake admission")
+
+    # The policy can only return true when previousStateId == CLOSED_STATE_ID,
+    # but Kotlin cannot smart-cast a nullable value through a separate policy
+    # function. Make that invariant explicit at the callback boundary.
+    out = one(
+        out,
+        '''            onPreOpeningEdge(previousId, id)
+''',
+        '''            onPreOpeningEdge(requireNotNull(previousId), id)
+''',
+        "null-safe speculative prewake callback",
+    )
+    return out
 
 
 def transform_exporter(text: str) -> str:
@@ -77,7 +90,14 @@ def transform_exporter(text: str) -> str:
 def validate(g: str, o: str, e: str) -> None:
     required = (
         (g, ['versionCode = 48', 'versionName = "5.1.0-beta2-zfold7-s1n"']),
-        (o, ["S1N_SAFE_PREWAKE_V2", "Fold7SpeculativePrewakePolicy.shouldPrewake("]),
+        (
+            o,
+            [
+                "S1N_SAFE_PREWAKE_V2",
+                "Fold7SpeculativePrewakePolicy.shouldPrewake(",
+                "onPreOpeningEdge(requireNotNull(previousId), id)",
+            ],
+        ),
         (e, ["safeSpeculativePrewake=S1N_SAFE_PREWAKE_V2", "EXACT_NATIVE_CLOSED_0_TO_TENT_1_ONLY", "REMOVED_AFTER_S1M_FIELD_REGRESSION"]),
     )
     for text, needles in required:
