@@ -1,10 +1,12 @@
 package com.duoopen.overlay
 
-import android.content.Context
+import android.accessibilityservice.AccessibilityService
+import android.app.admin.DevicePolicyManager
 import android.graphics.Bitmap
 import android.hardware.display.DisplayManager
 import android.os.Handler
 import android.os.SystemClock
+import android.os.UserManager
 import android.view.SurfaceControl
 import com.duoopen.debug.DuoDiagnostics
 import com.duoopen.shell.ShizukuBridge
@@ -13,6 +15,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.Instant
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.max
 
@@ -20,16 +24,17 @@ import kotlin.math.max
  * S1H read-only visual forensics.
  *
  * Captures a timestamped burst of both Fold7 panel routes after an accepted
- * opening edge. The capture uses the same overlay exclusion SurfaceControl as
- * the renderer, so successful frames show what is actually underneath Duo Open.
+ * opening edge. Successful Shizuku captures exclude Duo Open's own overlay
+ * when an engine route is available, so the stored frame represents content
+ * underneath the overlay.
  *
- * Protected content is fail-closed: secure frames are never persisted. Capture
- * failures are retained as structured manifest rows with raw callback status and
- * policy/window evidence so ROUTE_ABSENT, FLAG_SECURE, managed-profile policy,
- * timeout, and API failures are not collapsed into the same "black screenshot".
+ * Screenshot failures are not collapsed into "black frame": the manifest keeps
+ * route state, DevicePolicy evidence, AccessibilityService screenshot result,
+ * and read-only wallpaper/widget/window/compositor evidence. Secure/protected
+ * content is fail-closed and is never persisted by the diagnostic recorder.
  */
 internal class Fold7VisualForensics(
-    private val context: Context,
+    private val service: AccessibilityService,
     private val displayManager: DisplayManager,
     private val handler: Handler,
     private val scope: CoroutineScope,
@@ -44,8 +49,31 @@ internal class Fold7VisualForensics(
         val excluded: List<SurfaceControl>,
     )
 
+    private data class MetadataEvidence(
+        val probeAvailable: Boolean,
+        val capturePolicy: String,
+        val secureWindowEvidence: Boolean,
+        val screenCapturePolicyEvidence: Boolean,
+        val managedProfileEvidence: Boolean,
+        val protectedLayerEvidence: Boolean,
+    )
+
+    private data class LocalPolicyEvidence(
+        val screenCaptureDisabled: Boolean?,
+        val managedProfile: Boolean?,
+        val contentCaptureRestricted: Boolean?,
+    )
+
+    private data class AccessibilityClassification(
+        val attempted: Boolean,
+        val result: String,
+        val errorCode: Int,
+        val elapsedMs: Long,
+    )
+
     private val burstSequence = AtomicLong(0L)
     @Volatile private var lastGeneration = -1L
+    private val lastAccessibilityProbeByPanel = mutableMapOf<String, Long>()
 
     fun startOpeningBurst(
         reason: String,
@@ -62,6 +90,7 @@ internal class Fold7VisualForensics(
         synchronized(this) {
             if (generation == lastGeneration) return
             lastGeneration = generation
+            lastAccessibilityProbeByPanel.clear()
         }
 
         val burstId = burstSequence.incrementAndGet()
@@ -69,11 +98,9 @@ internal class Fold7VisualForensics(
         val startedWall = System.currentTimeMillis()
         val root =
             File(
-                context.filesDir,
+                service.filesDir,
                 "visual-forensics/burst-${startedWall}-g${generation}",
-            ).apply {
-                mkdirs()
-            }
+            ).apply { mkdirs() }
 
         pruneOldBursts(root.parentFile)
 
@@ -86,9 +113,11 @@ internal class Fold7VisualForensics(
                 appendLine("started=${Instant.ofEpochMilli(startedWall)}")
                 appendLine("captureScale=$CAPTURE_SCALE")
                 appendLine("encoding=WEBP_LOSSY quality=$WEBP_QUALITY")
-                appendLine("securePolicy=secure/protected captures are never persisted")
-                appendLine("overlayPolicy=own overlay layer excluded when a PanelEngine route exists")
-                appendLine("failurePolicy=manifest records raw callback/policy evidence instead of assuming every failure is secure content")
+                appendLine("sampleOffsetsMs=${SAMPLE_OFFSETS_MS.joinToString(",")}")
+                appendLine("securePolicy=secure/protected captures are never intentionally persisted")
+                appendLine("overlayPolicy=own overlay SurfaceControl excluded from Shizuku frame when available")
+                appendLine("fallbackPolicy=AccessibilityService screenshot is classification-only and is never written")
+                appendLine("failurePolicy=ROUTE_ABSENT, secure-window, admin policy, rate-limit, invalid-display and generic capture failures remain distinct")
             },
         )
 
@@ -108,6 +137,9 @@ internal class Fold7VisualForensics(
             handler.postDelayed(
                 {
                     if (burstSequence.get() != burstId) return@postDelayed
+
+                    // Snapshot Display objects and overlay exclusions on main;
+                    // capture/encoding/dumps run on IO afterwards.
                     val targets = snapshotTargets()
                     val elapsed = SystemClock.elapsedRealtime() - startedElapsed
                     val collectMetadata = index in METADATA_SAMPLE_INDEXES
@@ -179,10 +211,8 @@ internal class Fold7VisualForensics(
 
     private fun snapshotTargets(): List<Target> =
         displayManager.displays.mapNotNull { display ->
-            val mode =
-                runCatching { display.mode }
-                    .getOrNull()
-                    ?: return@mapNotNull null
+            val mode = runCatching { display.mode }.getOrNull()
+                ?: return@mapNotNull null
             val geometry = mode.physicalWidth to mode.physicalHeight
             if (
                 geometry != (1080 to 2520) &&
@@ -192,26 +222,16 @@ internal class Fold7VisualForensics(
             }
 
             Target(
-                panel =
-                    if (geometry == (1968 to 2184)) "inner" else "cover",
+                panel = if (geometry == (1968 to 2184)) "inner" else "cover",
                 displayId = display.displayId,
                 state = display.state,
                 width = mode.physicalWidth,
                 height = mode.physicalHeight,
-                excluded =
-                    runCatching {
-                        excludedLayersForDisplay(display.displayId)
-                    }.getOrDefault(emptyList()),
+                excluded = runCatching {
+                    excludedLayersForDisplay(display.displayId)
+                }.getOrDefault(emptyList()),
             )
         }
-
-    private data class MetadataEvidence(
-        val capturePolicy: String,
-        val secureWindowEvidence: Boolean,
-        val screenCapturePolicyEvidence: Boolean,
-        val managedProfileEvidence: Boolean,
-        val protectedLayerEvidence: Boolean,
-    )
 
     private fun captureMetadata(
         root: File,
@@ -219,10 +239,9 @@ internal class Fold7VisualForensics(
         offsetMs: Long,
         elapsedMs: Long,
     ): MetadataEvidence {
-        val bundle =
-            runCatching {
-                ShizukuBridge.visualForensicsProbe()
-            }.getOrNull()
+        val bundle = runCatching {
+            ShizukuBridge.visualForensicsProbe()
+        }.getOrNull()
 
         val wallpaper = bundle?.getString("wallpaper").orEmpty()
         val appWidgets = bundle?.getString("appWidgets").orEmpty()
@@ -231,12 +250,14 @@ internal class Fold7VisualForensics(
         val capturePolicy = bundle?.getString("capturePolicy").orEmpty()
         val topActivity = bundle?.getString("topActivity").orEmpty()
 
-        val text =
+        writeTextSafe(
+            File(root, "metadata-%02d-%04dms.txt".format(index, offsetMs)),
             buildString {
                 appendLine("sampleIndex=$index")
                 appendLine("scheduledOffsetMs=$offsetMs")
                 appendLine("actualElapsedMs=$elapsedMs")
                 appendLine("generated=${Instant.now()}")
+                appendLine("probeAvailable=${bundle != null}")
                 appendLine()
                 appendLine("=== WALLPAPER ===")
                 appendLine(wallpaper)
@@ -255,20 +276,14 @@ internal class Fold7VisualForensics(
                 appendLine()
                 appendLine("=== TOP ACTIVITY / DISPLAY OWNERSHIP ===")
                 appendLine(topActivity)
-            }
-
-        writeTextSafe(
-            File(
-                root,
-                "metadata-%02d-%04dms.txt".format(index, offsetMs),
-            ),
-            text,
+            },
         )
 
         val policyLower = capturePolicy.lowercase()
         val surfaceLower = surfaceLayers.lowercase()
 
         return MetadataEvidence(
+            probeAvailable = bundle != null,
             capturePolicy = capturePolicy,
             secureWindowEvidence =
                 policyLower.contains("flag_secure") ||
@@ -302,11 +317,9 @@ internal class Fold7VisualForensics(
         targets: List<Target>,
         metadata: MetadataEvidence?,
     ) {
-        val target =
-            targets.firstOrNull {
-                it.width == expectedWidth &&
-                    it.height == expectedHeight
-            }
+        val target = targets.firstOrNull {
+            it.width == expectedWidth && it.height == expectedHeight
+        }
 
         if (target == null) {
             appendManifest(
@@ -332,54 +345,67 @@ internal class Fold7VisualForensics(
             return
         }
 
+        val policy = localPolicyEvidence()
         val started = SystemClock.elapsedRealtime()
-        val capture =
-            ShizukuBridge.captureDiagnostic(
-                displayId = target.displayId,
-                excluded = target.excluded,
-                scale = CAPTURE_SCALE,
+        val bitmap = runCatching {
+            ShizukuBridge.capture(
+                target.displayId,
+                target.excluded,
+                CAPTURE_SCALE,
             )
-        val totalMs = SystemClock.elapsedRealtime() - started
+        }.getOrNull()
+        val shellMs = SystemClock.elapsedRealtime() - started
+
+        val accessibility =
+            if (bitmap == null) {
+                classifyWithAccessibility(
+                    panel = panel,
+                    displayId = target.displayId,
+                )
+            } else {
+                AccessibilityClassification(
+                    attempted = false,
+                    result = "NOT_NEEDED",
+                    errorCode = 0,
+                    elapsedMs = 0L,
+                )
+            }
 
         var classification =
-            classifyCapture(
-                capture = capture,
+            classifyCaptureFailure(
+                bitmap = bitmap,
+                accessibility = accessibility,
+                policy = policy,
                 metadata = metadata,
             )
         var fileName = ""
         var frameStats = ""
 
-        val bitmap = capture.bitmap
-        if (
-            capture.ok &&
-            !capture.secure &&
-            bitmap != null
-        ) {
+        if (bitmap != null) {
             frameStats = frameStats(bitmap)
-            val file =
-                File(
-                    root,
-                    "%02d-%04dms-%s-d%d.webp".format(
-                        index,
-                        offsetMs,
-                        panel,
-                        target.displayId,
-                    ),
-                )
+            val file = File(
+                root,
+                "%02d-%04dms-%s-d%d.webp".format(
+                    index,
+                    offsetMs,
+                    panel,
+                    target.displayId,
+                ),
+            )
 
-            val encoded =
-                runCatching {
-                    file.outputStream().buffered().use { out ->
-                        bitmap.compress(
-                            Bitmap.CompressFormat.WEBP_LOSSY,
-                            WEBP_QUALITY,
-                            out,
-                        )
-                    }
-                }.getOrDefault(false)
+            val encoded = runCatching {
+                file.outputStream().buffered().use { out ->
+                    bitmap.compress(
+                        Bitmap.CompressFormat.WEBP_LOSSY,
+                        WEBP_QUALITY,
+                        out,
+                    )
+                }
+            }.getOrDefault(false)
 
             if (encoded && file.isFile && file.length() > 0L) {
                 fileName = file.name
+                classification = "CAPTURED"
             } else {
                 classification = "ENCODE_FAILED"
                 runCatching { file.delete() }
@@ -401,20 +427,22 @@ internal class Fold7VisualForensics(
                 "geometry=${target.width}x${target.height}",
                 "excludedLayers=${target.excluded.size}",
                 "classification=$classification",
-                "shellClass=${clean(capture.classification)}",
-                "callbackStatus=${capture.callbackStatus}",
-                "secure=${capture.secure}",
-                "captureApi=${clean(capture.captureApi.orEmpty())}",
-                "captureMs=${capture.captureMs}",
-                "totalMs=$totalMs",
-                "bitmap=${capture.bitmap != null}",
+                "shizukuBitmap=${bitmap != null}",
+                "shizukuCaptureMs=$shellMs",
+                "a11yAttempted=${accessibility.attempted}",
+                "a11yResult=${accessibility.result}",
+                "a11yErrorCode=${accessibility.errorCode}",
+                "a11yMs=${accessibility.elapsedMs}",
+                "dpmScreenCaptureDisabled=${policy.screenCaptureDisabled}",
+                "currentUserManagedProfile=${policy.managedProfile}",
+                "contentCaptureRestricted=${policy.contentCaptureRestricted}",
+                "metadataProbeAvailable=${metadata?.probeAvailable}",
+                "metadataScreenCapturePolicy=${metadata?.screenCapturePolicyEvidence}",
+                "metadataManagedProfile=${metadata?.managedProfileEvidence}",
+                "metadataSecureWindow=${metadata?.secureWindowEvidence}",
+                "metadataProtectedLayer=${metadata?.protectedLayerEvidence}",
                 "file=${clean(fileName)}",
                 "frameStats=${clean(frameStats)}",
-                "policyScreenCaptureDisabled=${metadata?.screenCapturePolicyEvidence}",
-                "policyManagedProfile=${metadata?.managedProfileEvidence}",
-                "secureWindowEvidence=${metadata?.secureWindowEvidence}",
-                "protectedLayerEvidence=${metadata?.protectedLayerEvidence}",
-                "error=${clean(capture.error.orEmpty())}",
                 "reason=${clean(reason)}",
             ),
         )
@@ -422,44 +450,158 @@ internal class Fold7VisualForensics(
         DuoDiagnostics.event(
             "visual-forensics",
             "sample=$index offset=$offsetMs panel=$panel display=${target.displayId} " +
-                "state=${target.state} class=$classification shell=${capture.classification} " +
-                "status=${capture.callbackStatus} secure=${capture.secure} " +
-                "captureMs=${capture.captureMs} totalMs=$totalMs file=$fileName",
+                "state=${target.state} class=$classification shizukuBitmap=${bitmap != null} " +
+                "shellMs=$shellMs a11y=${accessibility.result}:${accessibility.errorCode} " +
+                "dpm=${policy.screenCaptureDisabled} managed=${policy.managedProfile} file=$fileName",
         )
 
-        runCatching {
-            bitmap?.recycle()
-        }
+        runCatching { bitmap?.recycle() }
     }
 
-    private fun classifyCapture(
-        capture: ShizukuBridge.DiagnosticCapture,
+    private fun localPolicyEvidence(): LocalPolicyEvidence {
+        val dpm = service.getSystemService(DevicePolicyManager::class.java)
+        val userManager = service.getSystemService(UserManager::class.java)
+
+        return LocalPolicyEvidence(
+            screenCaptureDisabled = runCatching {
+                dpm?.getScreenCaptureDisabled(null)
+            }.getOrNull(),
+            managedProfile = runCatching {
+                userManager?.isManagedProfile
+            }.getOrNull(),
+            contentCaptureRestricted = runCatching {
+                userManager?.userRestrictions
+                    ?.getBoolean(UserManager.DISALLOW_CONTENT_CAPTURE)
+            }.getOrNull(),
+        )
+    }
+
+    private fun classifyWithAccessibility(
+        panel: String,
+        displayId: Int,
+    ): AccessibilityClassification {
+        val now = SystemClock.elapsedRealtime()
+        synchronized(lastAccessibilityProbeByPanel) {
+            val last = lastAccessibilityProbeByPanel[panel] ?: Long.MIN_VALUE
+            if (now - last < ACCESSIBILITY_CLASSIFIER_MIN_INTERVAL_MS) {
+                return AccessibilityClassification(
+                    attempted = false,
+                    result = "RATE_GUARDED",
+                    errorCode = AccessibilityService.ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT,
+                    elapsedMs = 0L,
+                )
+            }
+            lastAccessibilityProbeByPanel[panel] = now
+        }
+
+        val latch = CountDownLatch(1)
+        var errorCode = 0
+        var result = "CALLBACK_TIMEOUT"
+        val started = SystemClock.elapsedRealtime()
+
+        runCatching {
+            service.takeScreenshot(
+                displayId,
+                service.mainExecutor,
+                object : AccessibilityService.TakeScreenshotCallback {
+                    override fun onSuccess(
+                        screenshot: AccessibilityService.ScreenshotResult,
+                    ) {
+                        result = "SUCCESS"
+                        runCatching { screenshot.hardwareBuffer.close() }
+                        latch.countDown()
+                    }
+
+                    override fun onFailure(code: Int) {
+                        errorCode = code
+                        result = accessibilityErrorName(code)
+                        latch.countDown()
+                    }
+                },
+            )
+        }.onFailure { error ->
+            result = "THREW_${error.javaClass.simpleName}"
+            latch.countDown()
+        }
+
+        latch.await(ACCESSIBILITY_CLASSIFIER_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+        return AccessibilityClassification(
+            attempted = true,
+            result = result,
+            errorCode = errorCode,
+            elapsedMs = SystemClock.elapsedRealtime() - started,
+        )
+    }
+
+    private fun accessibilityErrorName(code: Int): String =
+        when (code) {
+            AccessibilityService.ERROR_TAKE_SCREENSHOT_INTERNAL_ERROR ->
+                "INTERNAL_ERROR"
+            AccessibilityService.ERROR_TAKE_SCREENSHOT_NO_ACCESSIBILITY_ACCESS ->
+                "NO_ACCESSIBILITY_ACCESS"
+            AccessibilityService.ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT ->
+                "INTERVAL_TOO_SHORT"
+            AccessibilityService.ERROR_TAKE_SCREENSHOT_INVALID_DISPLAY ->
+                "INVALID_DISPLAY"
+            AccessibilityService.ERROR_TAKE_SCREENSHOT_INVALID_WINDOW ->
+                "INVALID_WINDOW"
+            AccessibilityService.ERROR_TAKE_SCREENSHOT_SECURE_WINDOW ->
+                "SECURE_WINDOW"
+            else ->
+                "UNKNOWN_$code"
+        }
+
+    private fun classifyCaptureFailure(
+        bitmap: Bitmap?,
+        accessibility: AccessibilityClassification,
+        policy: LocalPolicyEvidence,
         metadata: MetadataEvidence?,
     ): String {
-        if (capture.secure) return "SECURE_LAYER_BLOCKED"
+        if (bitmap != null) return "CAPTURED"
 
-        if (!capture.ok) {
-            if (metadata?.screenCapturePolicyEvidence == true) {
-                return if (metadata.managedProfileEvidence) {
-                    "MANAGED_PROFILE_SCREEN_CAPTURE_POLICY"
-                } else {
-                    "DEVICE_POLICY_SCREEN_CAPTURE_DISABLED"
-                }
-            }
-            if (metadata?.secureWindowEvidence == true) {
-                return "FLAG_SECURE_WINDOW"
-            }
-            if (metadata?.protectedLayerEvidence == true) {
-                return "PROTECTED_OR_SECURE_LAYER_EVIDENCE"
-            }
-            return capture.classification
+        if (
+            accessibility.errorCode ==
+                AccessibilityService.ERROR_TAKE_SCREENSHOT_SECURE_WINDOW
+        ) {
+            return "FLAG_SECURE_OR_SECURE_WINDOW"
         }
 
-        if (capture.bitmap == null) {
-            return "CAPTURE_OK_NO_PERSISTABLE_BITMAP"
+        if (
+            policy.screenCaptureDisabled == true ||
+            metadata?.screenCapturePolicyEvidence == true
+        ) {
+            val managed =
+                policy.managedProfile == true ||
+                    metadata?.managedProfileEvidence == true
+            return if (managed) {
+                "MANAGED_PROFILE_SCREEN_CAPTURE_POLICY"
+            } else {
+                "DEVICE_POLICY_SCREEN_CAPTURE_DISABLED"
+            }
         }
 
-        return "CAPTURED"
+        if (metadata?.secureWindowEvidence == true) {
+            return "FLAG_SECURE_WINDOW_EVIDENCE"
+        }
+
+        if (metadata?.protectedLayerEvidence == true) {
+            return "PROTECTED_OR_SECURE_LAYER_EVIDENCE"
+        }
+
+        return when (accessibility.result) {
+            "SUCCESS" ->
+                "SHIZUKU_CAPTURE_FAILED_ACCESSIBILITY_ALLOWED"
+            "INVALID_DISPLAY" ->
+                "ACCESSIBILITY_INVALID_DISPLAY"
+            "NO_ACCESSIBILITY_ACCESS" ->
+                "ACCESSIBILITY_PERMISSION_MISSING"
+            "INTERNAL_ERROR" ->
+                "ACCESSIBILITY_INTERNAL_ERROR"
+            "INTERVAL_TOO_SHORT", "RATE_GUARDED" ->
+                "CAPTURE_FAILED_CLASSIFIER_RATE_LIMITED"
+            else ->
+                "CAPTURE_FAILED_UNCLASSIFIED_${clean(accessibility.result)}"
+        }
     }
 
     private fun frameStats(bitmap: Bitmap): String {
@@ -507,22 +649,14 @@ internal class Fold7VisualForensics(
         )
     }
 
-    private fun appendManifest(
-        root: File,
-        fields: List<String>,
-    ) {
+    private fun appendManifest(root: File, fields: List<String>) {
         runCatching {
             File(root, "manifest.tsv")
-                .appendText(
-                    fields.joinToString("\t") + "\n"
-                )
+                .appendText(fields.joinToString("\t") + "\n")
         }
     }
 
-    private fun writeTextSafe(
-        file: File,
-        text: String,
-    ) {
+    private fun writeTextSafe(file: File, text: String) {
         runCatching {
             file.parentFile?.mkdirs()
             file.writeText(text)
@@ -544,32 +678,30 @@ internal class Fold7VisualForensics(
             .sortedByDescending { it.lastModified() }
             .drop(MAX_BURSTS_RETAINED - 1)
             .forEach { directory ->
-                runCatching {
-                    directory.deleteRecursively()
-                }
+                runCatching { directory.deleteRecursively() }
             }
     }
 
     private companion object {
-        val SAMPLE_OFFSETS_MS =
-            longArrayOf(
-                100L,
-                250L,
-                500L,
-                750L,
-                1_000L,
-                1_500L,
-                2_250L,
-                3_250L,
-                4_500L,
-                6_000L,
-            )
+        val SAMPLE_OFFSETS_MS = longArrayOf(
+            100L,
+            250L,
+            500L,
+            750L,
+            1_000L,
+            1_500L,
+            2_250L,
+            3_250L,
+            4_500L,
+            6_000L,
+        )
 
-        val METADATA_SAMPLE_INDEXES =
-            setOf(0, 4, 7, 9)
+        val METADATA_SAMPLE_INDEXES = setOf(0, 4, 7, 9)
 
         const val CAPTURE_SCALE = 0.35f
         const val WEBP_QUALITY = 88
         const val MAX_BURSTS_RETAINED = 4
+        const val ACCESSIBILITY_CLASSIFIER_MIN_INTERVAL_MS = 450L
+        const val ACCESSIBILITY_CLASSIFIER_TIMEOUT_MS = 750L
     }
 }
