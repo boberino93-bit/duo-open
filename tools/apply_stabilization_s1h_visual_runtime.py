@@ -52,11 +52,18 @@ def transform_service(text: str) -> str:
         "S1H service field",
     )
 
-    text = replace_once(
-        text,
-        '''        deviceStateObserver =
-''',
-        '''        visualForensics =
+    # FoldOverlayService has more than one DeviceState observer assignment in
+    # generated variants. Insert only at the service-connect observer that
+    # occurs after Gen3 visual initialization instead of relying on global
+    # uniqueness of the short anchor.
+    gen3_idx = text.find("        gen3Visual =")
+    if gen3_idx < 0:
+        raise RuntimeError("S1H gen3 visual init anchor missing")
+    observer_anchor = "        deviceStateObserver =\n"
+    observer_idx = text.find(observer_anchor, gen3_idx)
+    if observer_idx < 0:
+        raise RuntimeError("S1H service-connect DeviceState observer anchor missing")
+    visual_init = '''        visualForensics =
             Fold7VisualForensics(
                 service = this,
                 displayManager = displayManager,
@@ -69,10 +76,8 @@ def transform_service(text: str) -> str:
                 },
             )
 
-        deviceStateObserver =
-''',
-        "S1H visual forensics init",
-    )
+'''
+    text = text[:observer_idx] + visual_init + text[observer_idx:]
 
     text = replace_once(
         text,
