@@ -17,26 +17,6 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
     return text.replace(old, new, 1)
 
 
-def insert_after_call_reason(
-    text: str,
-    search_from: str,
-    reason_line: str,
-    insertion: str,
-    label: str,
-) -> str:
-    start = text.find(search_from)
-    if start < 0:
-        raise RuntimeError(f"{label}: context anchor missing")
-    reason_idx = text.find(reason_line, start)
-    if reason_idx < 0:
-        raise RuntimeError(f"{label}: call reason anchor missing")
-    call_end = text.find("\n                    )", reason_idx)
-    if call_end < 0:
-        raise RuntimeError(f"{label}: call end missing")
-    insert_at = call_end + len("\n                    )")
-    return text[:insert_at] + insertion + text[insert_at:]
-
-
 def transform_engine(text: str) -> str:
     if "diagnosticExcludedLayers" in text:
         return text
@@ -98,31 +78,34 @@ def transform_service(text: str) -> str:
 '''
     text = text[:observer_idx] + visual_init + text[observer_idx:]
 
-    # S1/S1G add telemetry around the early-opening block, so patch the stable
-    # semantic call rather than requiring the entire surrounding if-block to
-    # remain byte-identical.
-    text = insert_after_call_reason(
-        text=text,
-        search_from="val beforeOpeningState =",
-        reason_line='reason = "device-state:$reason",',
-        insertion='''
-                    visualForensics.startOpeningBurst(
-                        reason = "device-state:$reason",
-                        generation = continuity.generation,
-                    )''',
-        label="S1H device-state burst trigger",
-    )
+    # Trigger from semantic visual demand rather than individual ingress call
+    # sites. Both DeviceState/Hall and authoritative-hinge fallback converge on
+    # this point, and Fold7VisualForensics deduplicates by generation.
+    text = replace_once(
+        text,
+        '''        val openingDemand =
+            ::gen3Visual.isInitialized &&
+                gen3Visual.openingVisualDemandActive
 
-    text = insert_after_call_reason(
-        text=text,
-        search_from="for (sample in drain.samples)",
-        reason_line='reason = "authoritative-hinge-opening-edge",',
-        insertion='''
-                visualForensics.startOpeningBurst(
-                    reason = "authoritative-hinge-opening-edge",
-                    generation = continuity.generation,
-                )''',
-        label="S1H hinge fallback burst trigger",
+        val openingHostDisplayId =
+''',
+        '''        val openingDemand =
+            ::gen3Visual.isInitialized &&
+                gen3Visual.openingVisualDemandActive
+
+        if (
+            openingDemand &&
+            ::visualForensics.isInitialized
+        ) {
+            visualForensics.startOpeningBurst(
+                reason = "opening-visual-demand:$reason",
+                generation = continuity.generation,
+            )
+        }
+
+        val openingHostDisplayId =
+''',
+        "S1H semantic opening-demand burst trigger",
     )
 
     text = replace_once(
@@ -339,6 +322,7 @@ def apply(repo: Path, check_only: bool) -> None:
     for needle, text in (
         ('diagnosticExcludedLayers', outputs[ENGINE]),
         ('visualForensics.startOpeningBurst(', outputs[SERVICE]),
+        ('opening-visual-demand:', outputs[SERVICE]),
         ('visualForensicFiles', outputs[EXPORTER]),
         ('MANAGED_PROFILE_SCREEN_CAPTURE_POLICY', visual),
         ('FLAG_SECURE_OR_SECURE_WINDOW', visual),
