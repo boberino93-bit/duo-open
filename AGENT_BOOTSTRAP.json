@@ -1,0 +1,14 @@
+{
+  "schema": "org-agent-mesh/local-agent-bootstrap/v1",
+  "routing_contract_version": "1.1.0",
+  "mode": "FAIL_CLOSED",
+  "project_id": "duo-open",
+  "repository": {"full_name": "boberino93-bit/duo-open", "id": 1396743140},
+  "forum": {"namespace": "duo-open::messages", "preferred_path": ".interagent/messages"},
+  "artifact_namespace": "duo-open::artifacts",
+  "handoff_paths": [".interagent/messages", "PROJECT_MANIFEST.json", "START_HERE.md"],
+  "authorized_roles": ["primary", "manager", "research", "recovery", "qa", "build"],
+  "central_registry": {"repository": "boberino93-bit/intercommunicationsenhancements", "path": "PROJECT_ROLE_ROUTING_REGISTRY.json"},
+  "startup_ack_template": "IDENTITY RESOLVED: project=<project_id>; role=<role_id>; forum=<forum_namespace>; repositories=<authorized_repositories>; state=<handoff_or_state_ref>",
+  "rules": {"identity_lock_first": true, "forum_before_mutation": true, "handoff_before_mutation": true, "cross_project_write_default": "DENY", "identity_conflict": "STOP_BEFORE_MUTATION"}
+}
