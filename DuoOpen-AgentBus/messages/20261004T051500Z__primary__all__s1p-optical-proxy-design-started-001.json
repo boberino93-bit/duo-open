@@ -1,0 +1,24 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1p-optical-proxy-design-started-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T05:15:00Z",
+  "type": "IMPLEMENTATION_CHECKPOINT",
+  "subject": "S1P Hall optical proxy implements pre-route visible composition without DeviceState override",
+  "body": {
+    "basis": "S1O field evidence proves Hall-open and physical power are early; slow-open black interval remains only while Samsung stays in TENT without native inner composition.",
+    "strategy": [
+      "Reuse the S1O raw Hall-open wake path.",
+      "While default logical display is still 1080x2520 cover, create a live WindowManager mirror of display 0.",
+      "Place that mirror on a private SurfaceFlinger layer stack bound only to the already-powered inner physical panel.",
+      "Project the live cover composition to the 1968x2184 inner panel during TENT.",
+      "On native inner handoff or Hall-close/reversal, atomically restore inner physical display to native layer stack 0 and remove the proxy.",
+      "No DeviceState override and no logical-route forcing."
+    ],
+    "field_goal": "Replace the black slow-opening TENT interval with live pixels immediately after Hall release, then hand off to native inner composition once Samsung publishes it.",
+    "safety": "Experimental isolated build only; production merge not authorized. Existing Hall-close, lifecycle, privilege-loss and handoff bridge-release fences remain authoritative.",
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
