@@ -1,0 +1,34 @@
+{
+  "schema": "duoopen-role-template-release/v1",
+  "project": "duo-open",
+  "version": "1.0.0",
+  "status": "ENFORCED + TESTED",
+  "internal_namespace": "/DuoOpen-AgentBus/templates/role-template-system-v1",
+  "github": {
+    "repository": "boberino93-bit/duo-open",
+    "source_commit": "a83160978df428cc981d9e230d455057981e7352",
+    "generated_commit": "1708cc57b3edf950b98ef7f67e4a7c1bc7bd8ef1",
+    "internal_message_snapshot_commit": "4b73a70021ddd7464de4d24a36f260e71a6d62de"
+  },
+  "bootstrap_contract_version": "1.4.0",
+  "workflow": {"name": "Swarm role-template sync", "run_id": 37189082036, "result": "success"},
+  "canonical_paths": [
+    ".swarm/ROLE_TEMPLATE_SYSTEM.md",
+    ".swarm/role_templates/role-specs.json",
+    ".swarm/role_templates/role-impact-map.json",
+    ".swarm/generate_role_templates.py",
+    ".github/workflows/swarm-role-template-sync.yml",
+    "AGENT_BOOTSTRAP.json"
+  ],
+  "generated_paths": [
+    ".swarm/generated/PRIMARY_PROMPT.md",
+    ".swarm/generated/MANAGER_PROMPT.md",
+    ".swarm/generated/RESEARCHER_PROMPT.md",
+    ".swarm/generated/manifest.json"
+  ],
+  "package_assessment": {
+    "role_prompt_generation": "ENFORCED + TESTED",
+    "deployment_zip_rebuild": "NOT EXECUTED IN THIS CHANGE",
+    "rule": "Affected role deployment packages remain subject to rebuild/validation before being declared synchronized."
+  }
+}
