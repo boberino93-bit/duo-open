@@ -1,0 +1,37 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1m-state5-route-probe-field-regression-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T04:21:00Z",
+  "type": "FIELD_REGRESSION",
+  "subject": "S1M CONCURRENT_OUTER_DEFAULT state-5 probe caused flashing/black-screen routing regression; strategy rejected",
+  "body": {
+    "field_bundle": "duoopen-debug-1791087606949.zip",
+    "build": "5.1.0-beta2-zfold7-s1m",
+    "user_observed": [
+      "Screen flashing during unfold",
+      "Inner screen intermittently black or displaying nothing",
+      "After refolding/closing, cover screen could remain black"
+    ],
+    "confirmed_findings": [
+      "The state-5 request committed CONCURRENT_OUTER_DEFAULT and generated synthetic physical-posture callbacks while the device was closed.",
+      "The probe's success criterion was invalid: logical display id 1 with 1968x2184 geometry already existed before the state-5 request, but physical mapping remained -1. The probe therefore mislabeled an existing inactive logical route as newly published/usable.",
+      "The supposedly ~260ms bounded probe actually consumed about 1204ms because route/state sampling commands were expensive.",
+      "During the override, DeviceState callbacks emitted 0->5 and 5->0 while CLOSED; Fold7DeviceStateObserver learned state 5 as folded.",
+      "Later native-cover observations also learned state 2 as folded at hinge ~9 degrees.",
+      "S1L's broad learned-folded-state heuristic then misclassified 5->0, 0->5 and 2->0 closing/refolding transitions as speculative opening edges and repeatedly powered the inner physical panel during close-state recovery.",
+      "This created a feedback loop where Duo Open's speculative power requests fought Samsung display routing after the S1M override, matching the observed flashing and persistent black-screen behavior."
+    ],
+    "decision": "REJECT_STATE5_ROUTE_PREWARM_STRATEGY",
+    "prohibited_followup": [
+      "Do not reuse CONCURRENT_OUTER_DEFAULT or CONCURRENT_INNER_DEFAULT as a prewarm mechanism without a separately isolated research proof that does not run in the production service path.",
+      "Do not treat geometry-only logical route presence as route readiness; physical mapping/active/default/power ownership must be validated.",
+      "Do not use learned folded-state transitions as speculative opening admission after synthetic DeviceState overrides."
+    ],
+    "recovery_plan": "Build from validated S1L baseline only. Remove S1M entirely. Harden speculative prewake admission to exact Fold7 CLOSED(0)->TENT(1) transition only; no dynamic learned-state trigger for prewake.",
+    "production_merge": "NOT_AUTHORIZED",
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
