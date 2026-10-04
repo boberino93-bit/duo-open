@@ -17,6 +17,26 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
     return text.replace(old, new, 1)
 
 
+def insert_after_call_reason(
+    text: str,
+    search_from: str,
+    reason_line: str,
+    insertion: str,
+    label: str,
+) -> str:
+    start = text.find(search_from)
+    if start < 0:
+        raise RuntimeError(f"{label}: context anchor missing")
+    reason_idx = text.find(reason_line, start)
+    if reason_idx < 0:
+        raise RuntimeError(f"{label}: call reason anchor missing")
+    call_end = text.find("\n                    )", reason_idx)
+    if call_end < 0:
+        raise RuntimeError(f"{label}: call end missing")
+    insert_at = call_end + len("\n                    )")
+    return text[:insert_at] + insertion + text[insert_at:]
+
+
 def transform_engine(text: str) -> str:
     if "diagnosticExcludedLayers" in text:
         return text
@@ -52,10 +72,9 @@ def transform_service(text: str) -> str:
         "S1H service field",
     )
 
-    # FoldOverlayService has more than one DeviceState observer assignment in
-    # generated variants. Insert only at the service-connect observer that
-    # occurs after Gen3 visual initialization instead of relying on global
-    # uniqueness of the short anchor.
+    # Generated service variants contain multiple DeviceState assignments. Find
+    # the observer that follows Gen3 initialization rather than assuming that
+    # short line is globally unique.
     gen3_idx = text.find("        gen3Visual =")
     if gen3_idx < 0:
         raise RuntimeError("S1H gen3 visual init anchor missing")
@@ -79,70 +98,31 @@ def transform_service(text: str) -> str:
 '''
     text = text[:observer_idx] + visual_init + text[observer_idx:]
 
-    text = replace_once(
-        text,
-        '''                if (
-                    beforeOpeningState ==
-                        Fold7ContinuityController.State.NATIVE_COVER &&
-                    continuity.state ==
-                        Fold7ContinuityController.State.OPENING_FROM_CLOSED
-                ) {
-                    gen3Visual.beginOpening(
-                        generation = continuity.generation,
-                        reason = "device-state:$reason",
-                    )
-                }
-''',
-        '''                if (
-                    beforeOpeningState ==
-                        Fold7ContinuityController.State.NATIVE_COVER &&
-                    continuity.state ==
-                        Fold7ContinuityController.State.OPENING_FROM_CLOSED
-                ) {
-                    gen3Visual.beginOpening(
-                        generation = continuity.generation,
-                        reason = "device-state:$reason",
-                    )
+    # S1/S1G add telemetry around the early-opening block, so patch the stable
+    # semantic call rather than requiring the entire surrounding if-block to
+    # remain byte-identical.
+    text = insert_after_call_reason(
+        text=text,
+        search_from="val beforeOpeningState =",
+        reason_line='reason = "device-state:$reason",',
+        insertion='''
                     visualForensics.startOpeningBurst(
                         reason = "device-state:$reason",
                         generation = continuity.generation,
-                    )
-                }
-''',
-        "S1H device-state burst trigger",
+                    )''',
+        label="S1H device-state burst trigger",
     )
 
-    text = replace_once(
-        text,
-        '''            if (
-                beforeState ==
-                    Fold7ContinuityController.State.NATIVE_COVER &&
-                continuity.state ==
-                    Fold7ContinuityController.State.OPENING_FROM_CLOSED
-            ) {
-                gen3Visual.beginOpening(
-                    generation = continuity.generation,
-                    reason = "authoritative-hinge-opening-edge",
-                )
-            }
-''',
-        '''            if (
-                beforeState ==
-                    Fold7ContinuityController.State.NATIVE_COVER &&
-                continuity.state ==
-                    Fold7ContinuityController.State.OPENING_FROM_CLOSED
-            ) {
-                gen3Visual.beginOpening(
-                    generation = continuity.generation,
-                    reason = "authoritative-hinge-opening-edge",
-                )
+    text = insert_after_call_reason(
+        text=text,
+        search_from="for (sample in drain.samples)",
+        reason_line='reason = "authoritative-hinge-opening-edge",',
+        insertion='''
                 visualForensics.startOpeningBurst(
                     reason = "authoritative-hinge-opening-edge",
                     generation = continuity.generation,
-                )
-            }
-''',
-        "S1H hinge fallback burst trigger",
+                )''',
+        label="S1H hinge fallback burst trigger",
     )
 
     text = replace_once(
