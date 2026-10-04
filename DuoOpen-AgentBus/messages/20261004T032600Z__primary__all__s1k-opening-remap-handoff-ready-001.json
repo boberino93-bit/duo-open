@@ -1,0 +1,40 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1k-opening-remap-handoff-ready-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T03:26:00Z",
+  "type": "HOTFIX_CANDIDATE_READY",
+  "subject": "S1K behavior hotfix preserves accepted opening across Samsung cover-to-inner logical geometry remap",
+  "body": {
+    "branch": "fix/opening-remap-handoff-v1-20261004",
+    "candidate_head": "b00d0b401cb66408da08d4f3a2a2045186dc3df7",
+    "baseline_s1j_head": "bf33d6eedae43ad8f2ae3b9852cded8fe2db891b",
+    "version_name": "5.1.0-beta2-zfold7-s1k",
+    "version_code": 45,
+    "ci_run": 37173848019,
+    "ci_result": "SUCCESS",
+    "artifact_id": 11292547398,
+    "artifact_zip_sha256": "5d9828bc1815483e4dc58548f13d2eb29a2a826212a255ca80d999314c08551a",
+    "apk_sha256": "709f6fb5505449764f306bf95d9d755a48a33efbe8502eb064129b9638e868fd",
+    "root_cause": "S1J field evidence proved the accepted opening renderer was destroyed when logical display 0 changed from 1080x2520 cover geometry to 1968x2184 inner geometry even though Gen3 opening demand remained true and continuity was still OPENING_FROM_CLOSED/INNER_HANDOFF.",
+    "behavior_change": [
+      "When an active accepted opening previously owned the cover and the same logical display becomes inner geometry while Shizuku is ready, transfer into an inner-geometry handoff path instead of ending the visual.",
+      "Use a cached inner frame immediately when available.",
+      "Issue an immediate logical Shizuku capture of the inner display for first-open/no-cache cases, retrying black/null frames within a bounded 450ms handoff window.",
+      "Keep an existing visual surface alive until a replacement inner frame is ready where possible; rebuild the surface using inner geometry before continuing hinge-followed rendering.",
+      "Fall back to the existing generic capture path if bounded handoff capture cannot produce a usable frame."
+    ],
+    "validation_safety": [
+      "Targeted Fold7OpeningRemapHandoffPolicy unit tests added.",
+      "Full testFullDebugUnitTest and assembleFullDebug passed.",
+      "S1G wake-critical broad forensic sweep remains deferred.",
+      "Automatic S1H/S1I physical screenshot burst is suppressed in this behavior-validation build to avoid perturbing the handoff.",
+      "No DeviceState override, display power ordering, hinge math, close-path policy, or production branch behavior was changed."
+    ],
+    "field_validation": "Install S1K and test first opening after install/service restart plus several close-open cycles. Export debug bundle. Expected markers include openingRemapHandoff=OPENING_REMAP_HANDOFF_V1 and opening-remap-handoff START/READY events. Primary success criterion is elimination or material reduction of the dark/dead first-open interval without close-path regression.",
+    "production_merge": "NOT_AUTHORIZED",
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
