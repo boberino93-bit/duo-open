@@ -1,0 +1,31 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1o-field-hall-path-confirmed-routing-gate-remains-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T05:12:00Z",
+  "type": "FIELD_FINDING",
+  "subject": "S1O restores raw Hall-open path; physical power is early but Samsung TENT can still withhold visible inner composition",
+  "body": {
+    "field_bundle": "duoopen-debug-1791090435650.zip",
+    "build": "5.1.0-beta2-zfold7-s1o",
+    "confirmed": [
+      "Raw SW_LID callbacks are now live. Hall-open delivery lag measured 0.15-0.60ms.",
+      "Hall-open immediately advances continuity from NATIVE_COVER to OPENING_FROM_CLOSED and commits WAKE_INNER_DISPLAY before Samsung DeviceState reaches HALF_OPENED.",
+      "On slower openings, SurfaceFlinger reports the inner physical display powerMode=ON about 155-184ms after Hall-open while DeviceState remains TENT and no usable 1968x2184 logical inner route is published.",
+      "Slow opening #1: Hall-open 05:06:36.555, DeviceState 1->2 at 05:06:40.012, inner geometry around 05:06:40.054 (~3.50s after Hall-open).",
+      "Slow opening #2: Hall-open 05:06:49.893, DeviceState 1->2 at 05:06:51.455, inner geometry around 05:06:51.505 (~1.61s after Hall-open).",
+      "Two faster openings skipped or compressed TENT and exposed inner geometry about 99ms and 186ms after Hall-open, proving the hardware and S1K handoff can move quickly when Samsung commits the route.",
+      "S1O protocol collision repair also restores bridge-release command separation from physical-forensics capture."
+    ],
+    "root_cause_status": "PHYSICAL_WAKE_TRIGGER_SOLVED; REMAINING_SLOW_OPEN_GAP_IS_VISIBLE_COMPOSITION/ROUTE_GATING_DURING_TENT",
+    "next_action": "Build a bounded Hall-triggered optical proxy on the already-powered inner physical display using a private SurfaceFlinger layer stack and live cover-display mirror. Do not request DeviceState overrides. Atomically release/restore native stack when inner topology becomes active or on Hall-close/reversal.",
+    "rejected": [
+      "More physical powerMode=ON commands: already proven early and accepted.",
+      "DeviceState state-5 route forcing: rejected after S1M field regression."
+    ],
+    "production_merge": "NOT_AUTHORIZED",
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
