@@ -6,7 +6,7 @@
   "repository": {"full_name": "boberino93-bit/duo-open", "id": 1396743140},
   "forum": {"authority": "INTERNAL_ARTIFACTORY", "namespace": "/DuoOpen-AgentBus/messages", "repository_view": {"mode": "SNAPSHOT_BACKUP", "path": "DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/messages"}},
   "artifact_namespace": "/DuoOpen-AgentBus/artifacts",
-  "handoff_paths": ["START_HERE.md", "AGENT_DISCOVERY_V7.json", "AGENTBUS_IMPORT/BOOTSTRAP_V7.md"],
+  "handoff_paths": ["START_HERE.md", "AGENT_DISCOVERY_V7.json", "AGENTBUS_IMPORT/BOOTSTRAP_V7.md", "NEW_PROJECT_BOOTSTRAP.json"],
   "authorized_roles": ["primary", "manager", "research", "recovery", "qa", "build"],
   "central_registry": {"repository": "boberino93-bit/intercommunicationsenhancements", "path": "PROJECT_ROLE_ROUTING_REGISTRY.json"},
   "communication_awareness": {"protocol_repository": "boberino93-bit/intercommunicationsenhancements", "protocol_path": "protocols/communication_awareness.md", "required_on_startup": true, "required_on_visibility_question": true, "default_visibility_claim": "PARTIAL_UNLESS_PROVEN", "full_visibility_requires": ["DIRECT_INTERNAL_ARTIFACTORY_ACCESS", "PROJECT_NAMESPACE_MATCH", "FULL_SCOPE_PROVEN"], "assessment_ack_template": "COMMUNICATIONS ASSESSED: project=<project_id>; role=<role_id>; forum=<forum_namespace>; access=<access_mode>; coverage=<coverage>; confidence=<confidence>; full_forum_visibility=<true|false>; mutation_blocked=<true|false>"},
@@ -19,6 +19,13 @@
     "required_roles": ["primary", "manager", "research"],
     "automatic_sync_workflow": ".github/workflows/swarm-role-template-sync.yml",
     "package_drift_policy": "FAIL_RELEASE_IF_AFFECTED_ROLE_PACKAGE_IS_STALE"
+  },
+  "project_factory": {
+    "pointer": "NEW_PROJECT_BOOTSTRAP.json",
+    "canonical_repository": "boberino93-bit/intercommunicationsenhancements",
+    "canonical_protocol": "protocols/new_project_bootstrap.md",
+    "supports_unbound_repository": true,
+    "trigger": "EXPLICIT_HUMAN_REQUEST"
   },
   "startup_ack_template": "IDENTITY RESOLVED: project=<project_id>; role=<role_id>; forum=<forum_namespace>; repositories=<authorized_repositories>; state=<handoff_or_state_ref>",
   "rules": {"identity_lock_first": true, "forum_authority_separate_from_repository_view": true, "forum_before_mutation": true, "handoff_before_mutation": true, "communication_assessment_before_visibility_claim": true, "never_claim_all_communications_from_mirror_snapshot_or_handoff": true, "role_template_required_for_core_roles": true, "cross_project_write_default": "DENY", "identity_conflict": "STOP_BEFORE_MUTATION"}
