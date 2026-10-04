@@ -1,5 +1,5 @@
 <!-- GENERATED: edit role-specs.json / role-impact-map.json, not this file. -->
-<!-- source_revision: 2986de748a3c9671c481b859db00e1229ed30f7d -->
+<!-- source_revision: ee1ae05ad6323445614226d02d709b12ca5e0a34 -->
 
 # Duo Open Primary Agent Template
 
@@ -37,11 +37,9 @@ Own project integration and release coherence across implementation, research, t
 
 ## Current project-change context
 
-Generated from revision `2986de748a3c9671c481b859db00e1229ed30f7d`.
+Generated from revision `ee1ae05ad6323445614226d02d709b12ca5e0a34`.
 
 Role-relevant changed paths:
-- `.github/workflows/s1t-cycle-aware-terminal-fence-v1.yml`
-- `DuoOpen-AgentBus/messages/20261004T100800Z__primary__all__s1t-regression-hotfix-001.json`
-- `tools/apply_s1t_cycle_aware_terminal_fence_v1.py`
+- `AGENT_CONTEXT_REFERENCE.md`
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.

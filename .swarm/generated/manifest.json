@@ -4,19 +4,17 @@
     "PRIMARY"
   ],
   "changed_files": [
-    ".github/workflows/s1t-cycle-aware-terminal-fence-v1.yml",
-    "DuoOpen-AgentBus/messages/20261004T100800Z__primary__all__s1t-regression-hotfix-001.json",
-    "tools/apply_s1t_cycle_aware_terminal_fence_v1.py"
+    "AGENT_CONTEXT_REFERENCE.md"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "9098be9d21b76573a32b1d75d6c2966f5f0fa1a1ad14837c0100e6a8e0d02a47",
-    "PRIMARY_PROMPT.md": "aec33eba9eae2158147e925677775c751baf06fd682a8f5813b64efd6306696d",
-    "RESEARCHER_PROMPT.md": "6e2289844632cfe85b82a92838a5141a8b08dd833c1482312501a023ca66a052"
+    "MANAGER_PROMPT.md": "6d6d40d71c4b378023f75a2d7b847874d42f70f924c9a2b496988a17a67d7e8d",
+    "PRIMARY_PROMPT.md": "5d80b826659b14673ad638b9d9e6718abc0f393801a869460cab829def1439f7",
+    "RESEARCHER_PROMPT.md": "63144df2b1852f7952c46332097340ecccba152dbaacdd1965965a2aae21a323"
   },
   "schema": "duo-open/generated-role-prompts/v1",
   "source_hashes": {
     "role-impact-map.json": "35808db8c827ed624f785496639b34e2e5095bd1ca94599a50a73167d4575b72",
     "role-specs.json": "de62f5e628daa122ed6ff476f5d915bf2f9a3082265318d9b829d6cd744c46b7"
   },
-  "source_revision": "2986de748a3c9671c481b859db00e1229ed30f7d"
+  "source_revision": "ee1ae05ad6323445614226d02d709b12ca5e0a34"
 }
