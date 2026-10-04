@@ -5,17 +5,17 @@
     "RESEARCHER"
   ],
   "changed_files": [
-    ".swarm/role_templates/role-specs.json"
+    "AGENT_BOOTSTRAP.json"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "b56eac60aee1fd61a84a3d8aefedb21f51fdc6a7745149eb87b669865d7205d8",
-    "PRIMARY_PROMPT.md": "9b93143bc78387752d6f163b7b27d42314d450c9422e0afd0776fa311d2d8dec",
-    "RESEARCHER_PROMPT.md": "16313b898592f767b94e140d590afe404fd1dbc7e5b2ffdd29cb1652c4b0abf5"
+    "MANAGER_PROMPT.md": "8d0fb07d114da3eeee835a8b4dbaef9fcf62e716b97c1069139760c3da9528a0",
+    "PRIMARY_PROMPT.md": "6971da9a7381c2663e77f709389ad968f77adbc35ae9affc169e79e552332469",
+    "RESEARCHER_PROMPT.md": "9eb7a111ac1e4f7f51f13efb8042639afe36a41a293848b944e58a92d696e2c0"
   },
   "schema": "duo-open/generated-role-prompts/v1",
   "source_hashes": {
     "role-impact-map.json": "35808db8c827ed624f785496639b34e2e5095bd1ca94599a50a73167d4575b72",
     "role-specs.json": "f566df2b22fe51d90bf681350e254bd7211c6a3f7205260f9e275bdf48b7aadf"
   },
-  "source_revision": "29ce8a222db3ca3a1102a7aa1545bd7b444815f5"
+  "source_revision": "40cc0cc7a0616335aab1a496ea3977fe0f38f274"
 }
