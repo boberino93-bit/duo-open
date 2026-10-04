@@ -24,16 +24,32 @@
     ],
     "unknown_when_unverified": true,
     "states": {
-      "GREEN": [0, 0.6],
-      "AMBER": [0.6, 0.75],
-      "PRESERVE": [0.75, 0.8],
-      "RESERVE_ONLY": [0.8, 1.0],
+      "GREEN": [
+        0,
+        0.6
+      ],
+      "AMBER": [
+        0.6,
+        0.75
+      ],
+      "PRESERVE": [
+        0.75,
+        0.8
+      ],
+      "RESERVE_ONLY": [
+        0.8,
+        1.0
+      ],
       "EXHAUSTED": "usage>=hard_limit",
       "UNKNOWN": "insufficient_or_stale_evidence"
     }
   },
   "write_policy": {
-    "classes": ["ESSENTIAL_CANONICAL", "COALESCED_CHECKPOINT", "DISCRETIONARY"],
+    "classes": [
+      "ESSENTIAL_CANONICAL",
+      "COALESCED_CHECKPOINT",
+      "DISCRETIONARY"
+    ],
     "digest_deduplication": true,
     "unchanged_disposition": "UNCHANGED_CONTENT",
     "coalesce_nonurgent": true,
@@ -41,18 +57,48 @@
     "raw_capacity_counter_only_commit": false
   },
   "split_plane": {
-    "ephemeral": ["heartbeat", "liveness", "presence", "transient_capacity_observation"],
-    "durable": ["claim", "finding", "blocker", "contradiction", "disposition", "decision", "ownership_change", "handoff", "supersession", "release_checkpoint", "recovery_checkpoint", "approval_change"]
+    "ephemeral": [
+      "heartbeat",
+      "liveness",
+      "presence",
+      "transient_capacity_observation"
+    ],
+    "durable": [
+      "claim",
+      "finding",
+      "blocker",
+      "contradiction",
+      "disposition",
+      "decision",
+      "ownership_change",
+      "handoff",
+      "supersession",
+      "release_checkpoint",
+      "recovery_checkpoint",
+      "approval_change"
+    ]
   },
   "cross_project": {
     "mutation_authority": false,
     "signals_read_only": true,
-    "allowed_needs": ["REVIEW_REQUIRED", "PRIMARY_DECISION", "RELEASE_PENDING", "CAPACITY_PRESSURE", "BLOCKED"],
+    "allowed_needs": [
+      "REVIEW_REQUIRED",
+      "PRIMARY_DECISION",
+      "RELEASE_PENDING",
+      "CAPACITY_PRESSURE",
+      "BLOCKED"
+    ],
     "stale_signal": "UNKNOWN"
   },
   "identity": {
     "fail_closed_on_mismatch": true,
-    "precedence": ["CURRENT_HUMAN_INTENT", "PROJECT_SCOPE_GATE", "PROJECT_IDENTITY_LOCK", "LOCAL_PROJECT_STATE", "TASK_EXECUTION"]
+    "precedence": [
+      "CURRENT_HUMAN_INTENT",
+      "PROJECT_SCOPE_GATE",
+      "PROJECT_IDENTITY_LOCK",
+      "LOCAL_PROJECT_STATE",
+      "TASK_EXECUTION"
+    ]
   },
   "effective_at_utc": "2026-10-04T00:12:30Z"
 }
