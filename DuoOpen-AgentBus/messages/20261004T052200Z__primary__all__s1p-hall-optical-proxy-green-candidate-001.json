@@ -1,0 +1,47 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1p-hall-optical-proxy-green-candidate-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T05:22:00Z",
+  "type": "HOTFIX_CANDIDATE_READY",
+  "subject": "S1P Hall optical proxy green candidate targets confirmed slow-TENT visible-composition gap",
+  "body": {
+    "branch": "fix/s1p-hall-optical-proxy-v1-20261004",
+    "candidate_head": "6f7b508b0cb1cfae3dc9e6d49577fc1eeb7ae473",
+    "baseline_s1o_head": "df353d5b038bdb4a74b87427e27b78429532437d",
+    "version_name": "5.1.0-beta2-zfold7-s1p",
+    "version_code": 50,
+    "ci_run": 37179475203,
+    "ci_result": "SUCCESS",
+    "artifact_id": 11294098525,
+    "artifact_zip_sha256": "ac35029d17835f5d4cdee7baca6ce9b3979fa628d6745dc37439c819803b294d",
+    "apk_sha256": "ab373be87ca4c3f4ad0015c13ce354f312b4e9ca4501c4754917425be3365134",
+    "field_basis": [
+      "S1O proved raw Hall-open delivery at roughly 0.15-0.60ms and immediate full wake commitment.",
+      "On slow openings, inner physical power reached ON about 155-184ms after Hall-open but Samsung stayed in TENT for roughly 1.56-3.46s without native visible inner composition.",
+      "On fast openings, Hall-open to inner geometry was roughly 99ms and 186ms, proving hardware and native handoff can be fast when Samsung promotes the route."
+    ],
+    "behavior_change": [
+      "While default logical display remains the 1080x2520 cover, mirror that live cover display onto a private SurfaceFlinger stack bound only to the already-powered inner physical panel.",
+      "Use raw SW_LID Hall-open as the early trigger via the existing S1O wake path.",
+      "Project the cover mirror to 1968x2184 INNER during the Samsung TENT gap.",
+      "Restore INNER to native stack 0 and native 1968x2184 projection on native-inner handoff or any bridge release/reversal.",
+      "Do not issue a DeviceState override and do not force a logical inner route."
+    ],
+    "validation_notes": [
+      "V1 intentionally stretches cover composition to the full inner panel; optical timing proof is the primary field goal, not final geometry fidelity.",
+      "Expected success is visible live pixels shortly after Hall release during a slow opening instead of a black inner panel until near 90 degrees.",
+      "Test partial open-to-close reversal and confirm native cover recovery remains stable.",
+      "If optical proxy presents successfully, next refinement should correct geometry/continuity while retaining private-stack optical ownership."
+    ],
+    "safety": [
+      "Full testFullDebugUnitTest and assembleFullDebug passed.",
+      "S1M state-5 DeviceState strategy remains rejected and absent.",
+      "Existing Hall-close, native-inner handoff, lifecycle, and privilege-loss bridge cleanup remains authoritative.",
+      "Production merge is not authorized."
+    ],
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
