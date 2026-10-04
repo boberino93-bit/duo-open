@@ -7,6 +7,17 @@
   "coordination_root": "DuoOpen-AgentBus/",
   "state_root": ".swarm",
   "identity_source": "AGENT_DISCOVERY_V7.json",
+  "global_run_binding": "EXTERNALLY_SUPPLIED_SHARED_VALUE_REQUIRED",
+  "global_run_contract_version": 1,
+  "expected_global_round_projects": [
+    "ai-behaviour-control-lab",
+    "benefitflow",
+    "duo-open",
+    "intercommunicationsenhancements",
+    "warp-propulsion-lab"
+  ],
+  "launch_contract_policy": "IDENTICAL_GLOBAL_FIELDS_LOCAL_WRITES_ONLY",
+  "launch_epoch_mismatch_policy": "FAIL_CLOSED_QUARANTINE",
   "foreign_write_policy": "DENY",
   "cross_project_telemetry": "READ_ONLY",
   "lease_ttl_seconds": 1800,
