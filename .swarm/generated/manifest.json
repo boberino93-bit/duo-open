@@ -1,21 +1,20 @@
 {
   "affected_roles": [
     "MANAGER",
-    "PRIMARY",
-    "RESEARCHER"
+    "PRIMARY"
   ],
   "changed_files": [
-    "AGENT_BOOTSTRAP.json"
+    "DuoOpen-AgentBus/messages/20261004T091600Z__primary__all__s1s-beta-convergence-green-001.json"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "d7e54d077a8abbcf4f5fc924df33f5f25adda6b3c31c8f9d77b62c2d148d7303",
-    "PRIMARY_PROMPT.md": "c2720328c7e2eae537000c77ba15bcfda788ace5451d1cda36f159162ab6e827",
-    "RESEARCHER_PROMPT.md": "6a59343bdcc70b45732a043eb7050c35c3a34f4bad6cf217b64a9fbbc1e71419"
+    "MANAGER_PROMPT.md": "19c61bd1668e24470bf3cc044afb0dfc6433fc3442ddae1485f2ba6f94815ae1",
+    "PRIMARY_PROMPT.md": "a92d483d7c9100492b2d75f3a6adaccb235d517ece10c40bd55660cf338d4970",
+    "RESEARCHER_PROMPT.md": "2b68a3783769d6ad0f976ae73dfda1632be45ab2b45acaf6800a3f13a7578c4f"
   },
   "schema": "duo-open/generated-role-prompts/v1",
   "source_hashes": {
     "role-impact-map.json": "35808db8c827ed624f785496639b34e2e5095bd1ca94599a50a73167d4575b72",
     "role-specs.json": "de62f5e628daa122ed6ff476f5d915bf2f9a3082265318d9b829d6cd744c46b7"
   },
-  "source_revision": "d586021273d6728671f9225bac4181497efcaede"
+  "source_revision": "284a9e3645d6e2b76139db674300c5abc79841d4"
 }

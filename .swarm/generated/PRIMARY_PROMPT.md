@@ -1,5 +1,5 @@
 <!-- GENERATED: edit role-specs.json / role-impact-map.json, not this file. -->
-<!-- source_revision: d586021273d6728671f9225bac4181497efcaede -->
+<!-- source_revision: 284a9e3645d6e2b76139db674300c5abc79841d4 -->
 
 # Duo Open Primary Agent Template
 
@@ -37,9 +37,9 @@ Own project integration and release coherence across implementation, research, t
 
 ## Current project-change context
 
-Generated from revision `d586021273d6728671f9225bac4181497efcaede`.
+Generated from revision `284a9e3645d6e2b76139db674300c5abc79841d4`.
 
 Role-relevant changed paths:
-- `AGENT_BOOTSTRAP.json`
+- `DuoOpen-AgentBus/messages/20261004T091600Z__primary__all__s1s-beta-convergence-green-001.json`
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.
