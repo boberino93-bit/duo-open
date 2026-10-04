@@ -9,6 +9,11 @@ S1S also replaces optical-proxy release timing with presentation readiness, but
 a separate secondary reconciliation path still uses the historical 80 ms
 debounce. Retain that constant for that secondary path only; the opening bridge
 release continues to use Fold7InnerPresentationGate.
+
+Historical pure-unit fixtures instantiate Fold7CoverReadiness.Topology without
+Android Display state. Keep those fixtures source-compatible by defaulting the
+new presentation flag to coverActive; production Coordinator code still passes
+actual STATE_ON truth explicitly.
 """
 from __future__ import annotations
 
@@ -16,6 +21,7 @@ import apply_s1s_beta_convergence_v1 as base
 
 _original_panel_authority = base.transform_panel_authority
 _original_coordinator = base.transform_coordinator
+_original_cover_readiness = base.transform_cover_readiness
 
 
 def transform_panel_authority(text: str) -> str:
@@ -43,8 +49,20 @@ def transform_coordinator(text: str) -> str:
     return out
 
 
+def transform_cover_readiness(text: str) -> str:
+    out = _original_cover_readiness(text)
+    required = "        val coverPresentationReady: Boolean,\n"
+    compatible = "        val coverPresentationReady: Boolean = coverActive,\n"
+    if compatible not in out:
+        if required not in out:
+            raise RuntimeError("S1S cover presentation field shape changed")
+        out = out.replace(required, compatible, 1)
+    return out
+
+
 base.transform_panel_authority = transform_panel_authority
 base.transform_coordinator = transform_coordinator
+base.transform_cover_readiness = transform_cover_readiness
 
 if __name__ == "__main__":
     raise SystemExit(base.main())
