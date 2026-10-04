@@ -209,17 +209,16 @@ def transform_panel(t):
 
 def transform_shell(t):
     if 'S1Q_CANONICAL_PROXY_REGISTRATION' in t: return t
-    old='''                                Rect(0, 0, 1080, 2520),
-                                Rect(0, 0, 1968, 2184),
-                            )
-'''
-    new='''                                Rect(0, 0, 1080, 2520),
-                                // S1Q_CANONICAL_PROXY_REGISTRATION: exact inverse of
+    marker='// S1P_HALL_OPTICAL_PROXY_V1: mirror the still-authoritative cover display instead of'
+    start=t.find(marker)
+    if start < 0: raise RuntimeError('S1P optical proxy creation marker not found')
+    needle='Rect(0, 0, 1968, 2184),'
+    dest=t.find(needle,start)
+    if dest < 0: raise RuntimeError('S1P full-inner proxy destination not found after marker')
+    replacement='''// S1Q_CANONICAL_PROXY_REGISTRATION: exact inverse of
                                 // Fold7RightPaneComposer's cover/right-pane mapping.
-                                Rect(984, 0, 1920, 2184),
-                            )
-'''
-    return one(t,old,new,'canonical proxy projection')
+                                Rect(984, 0, 1920, 2184),'''
+    return t[:dest] + replacement + t[dest+len(needle):]
 
 def transform_exporter(t):
     if 'animationCoherence=S1Q_ANIMATION_COHERENCE_V1' in t: return t
@@ -266,7 +265,7 @@ def apply(repo: Path, check: bool):
     e=transform_exporter((repo/EXPORTER).read_text())
     validate(g,h,ht,p,s,e)
     if not check:
-        for rel,txt in ((GRADLE,g),(HINGE,h),(HINGE_TEST,ht),(PANEL,p),(SHELL,s),(EXPORTER,e)):
+        for rel,txt in ((GRADLE,g),(HINGE,h),(HINGE_TEST,ht),(PANEL,q),(SHELL,s),(EXPORTER,e)):
             (repo/rel).write_text(txt)
 
 def main():
