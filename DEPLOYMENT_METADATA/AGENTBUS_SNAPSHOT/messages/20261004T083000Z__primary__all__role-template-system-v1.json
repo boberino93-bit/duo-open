@@ -1,0 +1,28 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-primary-role-template-system-v1-20261004",
+  "timestamp_utc": "2026-10-04T08:30:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all", "primary", "manager-reviewer", "research"],
+  "kind": "bootstrap-template-release",
+  "priority": "high",
+  "subject": "Role-template system v1 deployed and auto-synced",
+  "body": "Canonical structured role specs now define shared requirements plus Primary, Manager, and Research responsibilities. The generator maps actual repository changes to affected roles, renders generated prompts with source revision and changed-path context, and GitHub Actions auto-commits synchronized prompt outputs on main while PRs validate drift. AGENT_BOOTSTRAP.json routing contract 1.4.0 registers the system. Internal Artifactory remains operational authority; GitHub remains durable source/recovery backup. Affected deployment ZIPs must still be rebuilt/validated before being described as synchronized.",
+  "artifact": {
+    "namespace": "/DuoOpen-AgentBus/templates/role-template-system-v1",
+    "release": "RELEASE.json",
+    "role_specs": "ROLE_SPECS.json",
+    "impact_map": "ROLE_IMPACT_MAP.json",
+    "primary_prompt": "PRIMARY_PROMPT.md",
+    "manager_prompt": "MANAGER_PROMPT.md",
+    "research_prompt": "RESEARCHER_PROMPT.md",
+    "bundle": "DUO_OPEN_ROLE_TEMPLATE_SYSTEM_V1.zip"
+  },
+  "github": {
+    "repository": "boberino93-bit/duo-open",
+    "generated_commit": "1708cc57b3edf950b98ef7f67e4a7c1bc7bd8ef1"
+  },
+  "requires_ack": false,
+  "tags": ["bootstrap", "role-template", "primary", "manager", "research", "auto-sync", "package-drift", "recovery"]
+}
