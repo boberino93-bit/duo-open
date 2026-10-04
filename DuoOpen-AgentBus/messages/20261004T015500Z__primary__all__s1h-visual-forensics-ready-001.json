@@ -1,0 +1,19 @@
+{
+  "schema": "duoopen-agentbus/v1",
+  "id": "msg-s1h-visual-forensics-ready-001",
+  "timestamp_utc": "2026-10-04T01:55:00Z",
+  "project": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "checkpoint",
+  "priority": "high",
+  "subject": "S1H visual-forensics diagnostic build passed CI with dual-panel screenshots and protected-capture classification",
+  "body": "S1H extends the read-only S1G forensic baseline with user-requested visual evidence. On each semantic OPENING visual demand it schedules 10 timestamped samples (100, 250, 500, 750, 1000, 1500, 2250, 3250, 4500, 6000 ms) and attempts COVER 1080x2520 and INNER 1968x2184 independently. Successful frames use the existing Shizuku display capture path at scale 0.35 and WEBP Q88, excluding Duo Open's own PanelEngine SurfaceControl where available so evidence represents layers underneath the overlay. The debug export includes up to four recent visual-forensics bursts, manifest.tsv, frame luminance statistics, and read-only rendering metadata at selected checkpoints: wallpaper engine/target/visibility, appwidget hosts/providers/options, WindowManager surface/visibility/focus state, SurfaceFlinger wallpaper/launcher/SystemUI/widget/security clues, top activity/display ownership, device-policy/user/profile screenshot restrictions. Protected-content handling is fail-closed: secure/protected frames are not intentionally persisted. If Shizuku capture fails, AccessibilityService.takeScreenshot is used only as a classifier and its HardwareBuffer is closed without writing pixels. Manifest classifications distinguish ROUTE_ABSENT, secure-window/FLAG_SECURE evidence, managed-profile or device-policy screen-capture restriction, invalid display, accessibility permission, classifier rate limiting, protected-layer evidence, Shizuku-only failure, and encoding failure instead of treating all failures as black frames. S1H makes no DeviceState override, display power-order, hinge math, transition identity, or fold-policy change. Branch exp/stabilization-s1h-visual-forensics-20261003 head c1ab5cedd5f01a90e16e8c891a1413191865d3eb. CI run 37169329007 passed full regression tests and APK assembly. Artifact DuoOpen-Stabilization-S1H-Visual-Forensics id 11289674618, archive digest sha256:0c0357143516a51ea4914fdffda2eb45aaacc43a4b9776223b07437b5ebab6c9. APK SHA-256 03c7f34b50d0721813f8ee9fcb33ef39d3aef25811df41992a3b3d8d0ee67e02. Physical Fold7 validation is required before any diagnostic conclusions. NO NEW AGENTS remains in force.",
+  "applies_to": {
+    "repo": "boberino93-bit/duo-open",
+    "commit": "c1ab5cedd5f01a90e16e8c891a1413191865d3eb",
+    "package": "DuoOpen-Stabilization-S1H-Visual-Forensics"
+  },
+  "requires_ack": false,
+  "tags": ["stabilization", "s1h", "fold7", "diagnostics", "screenshots", "wallpaper", "widgets", "surfaceflinger", "windowmanager", "flag-secure", "device-policy", "managed-profile", "no-new-agents"]
+}
