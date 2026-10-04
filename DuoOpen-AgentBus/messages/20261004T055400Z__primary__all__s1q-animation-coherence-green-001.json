@@ -1,0 +1,43 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1q-animation-coherence-green-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T05:54:00Z",
+  "type": "CANDIDATE_READY",
+  "subject": "S1Q Animation Coherence V1 green candidate focuses on smoothness and spatial registration",
+  "body": {
+    "branch": "fix/s1q-animation-coherence-v1-20261004",
+    "candidate_head": "8d83a370de7c8a5bccdd31594657d5b0fbb9d5cc",
+    "baseline_s1p_head": "6f7b508b0cb1cfae3dc9e6d49577fc1eeb7ae473",
+    "version_name": "5.1.0-beta2-zfold7-s1q",
+    "version_code": 51,
+    "ci_run": 37181000333,
+    "ci_result": "SUCCESS",
+    "artifact_id": 11295064121,
+    "artifact_zip_sha256": "3cca70e199560dafc972cba8171b8e5c3f213e1582f8bda8ed14c8589b019cb3",
+    "apk_sha256": "d1fd1da0fd5e6292765e50ade4baf5c58b4a5d9c21501d6609979fecdba13a0a",
+    "focus": "animation quality, temporal smoothness, and spatial registration; not wake/routing experimentation",
+    "changes": [
+      "Gen5 render timing now uses a Choreographer frameTimeNanos timeline calibrated into the existing uptime sensor timebase, removing per-frame 1 ms uptimeMillis quantization and following measured cadence.",
+      "Gen5 visual motion now carries explicit visual velocity and applies a 720 deg/s speed bound plus 24000 deg/s^2 acceleration bound, preventing new predicted hinge targets from producing instantaneous visual-velocity discontinuities while retaining no-overshoot clamping.",
+      "S1P optical proxy destination is registered to the canonical Fold7 right pane Rect(984,0,1920,2184), the exact inverse of the existing right-pane crop, instead of stretching cover content over the full inner panel.",
+      "S1P Hall trigger, physical wake, private optical proxy stack, native stack restoration, S1K handoff and all existing safety/reversal fences remain preserved."
+    ],
+    "validation": [
+      "123 unit/regression tests passed.",
+      "Kotlin compile and assembleFullDebug passed.",
+      "New tests cover equal-vsync acceleration continuity, no target overshoot, and comparable convergence at 60 Hz versus 120 Hz.",
+      "Physical Fold7 validation is still required for subjective smoothness, spatial drift, proxy/native handoff alignment and reversal feel."
+    ],
+    "non_goals": [
+      "No DeviceState override.",
+      "No logical route forcing.",
+      "No new panel-power policy.",
+      "No production merge authorization."
+    ],
+    "production_merge": "NOT_AUTHORIZED",
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
