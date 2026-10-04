@@ -1,6 +1,6 @@
 {
   "schema": "org-agent-mesh/local-agent-bootstrap/v1",
-  "routing_contract_version": "1.3.0",
+  "routing_contract_version": "1.4.0",
   "mode": "FAIL_CLOSED",
   "project_id": "duo-open",
   "repository": {"full_name": "boberino93-bit/duo-open", "id": 1396743140},
@@ -10,6 +10,16 @@
   "authorized_roles": ["primary", "manager", "research", "recovery", "qa", "build"],
   "central_registry": {"repository": "boberino93-bit/intercommunicationsenhancements", "path": "PROJECT_ROLE_ROUTING_REGISTRY.json"},
   "communication_awareness": {"protocol_repository": "boberino93-bit/intercommunicationsenhancements", "protocol_path": "protocols/communication_awareness.md", "required_on_startup": true, "required_on_visibility_question": true, "default_visibility_claim": "PARTIAL_UNLESS_PROVEN", "full_visibility_requires": ["DIRECT_INTERNAL_ARTIFACTORY_ACCESS", "PROJECT_NAMESPACE_MATCH", "FULL_SCOPE_PROVEN"], "assessment_ack_template": "COMMUNICATIONS ASSESSED: project=<project_id>; role=<role_id>; forum=<forum_namespace>; access=<access_mode>; coverage=<coverage>; confidence=<confidence>; full_forum_visibility=<true|false>; mutation_blocked=<true|false>"},
+  "role_template_system": {
+    "contract": ".swarm/ROLE_TEMPLATE_SYSTEM.md",
+    "canonical_specs": ".swarm/role_templates/role-specs.json",
+    "impact_map": ".swarm/role_templates/role-impact-map.json",
+    "generator": ".swarm/generate_role_templates.py",
+    "generated_root": ".swarm/generated",
+    "required_roles": ["primary", "manager", "research"],
+    "automatic_sync_workflow": ".github/workflows/swarm-role-template-sync.yml",
+    "package_drift_policy": "FAIL_RELEASE_IF_AFFECTED_ROLE_PACKAGE_IS_STALE"
+  },
   "startup_ack_template": "IDENTITY RESOLVED: project=<project_id>; role=<role_id>; forum=<forum_namespace>; repositories=<authorized_repositories>; state=<handoff_or_state_ref>",
-  "rules": {"identity_lock_first": true, "forum_authority_separate_from_repository_view": true, "forum_before_mutation": true, "handoff_before_mutation": true, "communication_assessment_before_visibility_claim": true, "never_claim_all_communications_from_mirror_snapshot_or_handoff": true, "cross_project_write_default": "DENY", "identity_conflict": "STOP_BEFORE_MUTATION"}
+  "rules": {"identity_lock_first": true, "forum_authority_separate_from_repository_view": true, "forum_before_mutation": true, "handoff_before_mutation": true, "communication_assessment_before_visibility_claim": true, "never_claim_all_communications_from_mirror_snapshot_or_handoff": true, "role_template_required_for_core_roles": true, "cross_project_write_default": "DENY", "identity_conflict": "STOP_BEFORE_MUTATION"}
 }
