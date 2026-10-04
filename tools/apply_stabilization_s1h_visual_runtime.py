@@ -54,33 +54,9 @@ def transform_service(text: str) -> str:
 
     text = replace_once(
         text,
-        '''        gen3Visual =
-            Fold7Gen3VisualCoordinator(
-                service = this,
-                displayManager = displayManager,
-                handler = handler,
-                serviceEpoch = serviceEpoch,
-                gen2 = gen2,
-                currentHingeAngle = {
-                    hinge.lastAngle
-                },
-            )
-
-        deviceStateObserver =
+        '''        deviceStateObserver =
 ''',
-        '''        gen3Visual =
-            Fold7Gen3VisualCoordinator(
-                service = this,
-                displayManager = displayManager,
-                handler = handler,
-                serviceEpoch = serviceEpoch,
-                gen2 = gen2,
-                currentHingeAngle = {
-                    hinge.lastAngle
-                },
-            )
-
-        visualForensics =
+        '''        visualForensics =
             Fold7VisualForensics(
                 service = this,
                 displayManager = displayManager,
