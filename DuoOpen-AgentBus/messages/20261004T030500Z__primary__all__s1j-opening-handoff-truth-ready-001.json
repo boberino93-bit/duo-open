@@ -1,0 +1,43 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1j-opening-handoff-truth-ready-001",
+  "timestamp": "2026-10-04T03:05:00Z",
+  "from": "primary",
+  "to": ["all"],
+  "project_id": "duo-open",
+  "repository": "boberino93-bit/duo-open",
+  "subject": "S1J low-perturbation opening handoff truth build ready for Fold7 field validation",
+  "status": "PHYSICAL_FOLD7_VALIDATION_REQUIRED",
+  "body": {
+    "source_field_bundle": "duoopen-debug-1791082068708.zip",
+    "confirmed_field_findings": [
+      "S1I export contained real accepted opening attempts but visualForensicSessions=0; the S1H/S1I hook missed the DeviceState opening path that actually fired on Fold7.",
+      "S1G broad forensic sweep executed synchronously inside WAKE_INNER_DISPLAY and consumed 4833ms on the first observed opening (roughly 5s on subsequent openings), making wake timing stale and materially perturbing diagnostics.",
+      "First observed opening visual started then lost cover render ownership on fast:display-changed:1 roughly 71ms later while semantic state was still entering INNER_HANDOFF; third opening showed a similar early release. Second opening retained the visual until OPEN_INNER, making early ownership collapse the strongest current first-open failure candidate, not yet a proven root cause."
+    ],
+    "candidate": {
+      "branch": "exp/stabilization-s1j-opening-handoff-truth-20261003",
+      "head": "bf33d6eedae43ad8f2ae3b9852cded8fe2db891b",
+      "workflow_run": 37172838658,
+      "artifact_id": 11291902833,
+      "artifact_name": "DuoOpen-Stabilization-S1J-Opening-Handoff-Truth",
+      "artifact_zip_sha256": "064e205fdf6601e625dfe06bc7a5b042aadabce1fb77caf88945822b2c9ad4ba",
+      "apk_name": "DuoOpen-ZFold7-5.1.0-beta2-s1j-opening-handoff-truth-debug.apk",
+      "apk_sha256": "9a9255e2e0cf014f2d3cb0ff344bf9ca85dac93baa644e5ffd533d518a216b6b",
+      "version_code": 44,
+      "version_name": "5.1.0-beta2-zfold7-s1j"
+    },
+    "s1j_changes": [
+      "Centralizes opening visual-forensics trigger and invokes it from DeviceState, authoritative-hinge, and existing centralized/lid opening paths; VisualForensics generation gate prevents duplicates.",
+      "Defers the S1G broad forensic sweep out of the wake-critical transaction while preserving compatibility fields, removing the observed multi-second diagnostic perturbation.",
+      "Adds cheap app-side BEFORE/AFTER opening-handoff truth around non-hinge reconciliation: controller state/generation, Gen3 demand/host, DisplayManager route geometry/state, and per-PanelEngine ownership/opening/surface state.",
+      "Moves visual samples to 120/350/900/1800ms and runs the expensive shell render-context probe only on the final sample.",
+      "Bumps UserService-facing app versionCode to 44 so Fold7 validation cannot accidentally reuse the prior S1I shell-service version."
+    ],
+    "behavior_policy_changes": "NONE; S1J is diagnostic/truth only. No DeviceState override, panel power ordering, hinge math, transition identity, or presentation ownership policy change.",
+    "ci": "PASS: reconstruction, validated runtime stack, S1-S1I replay, S1J invariants, full testFullDebugUnitTest, assembleFullDebug, packaging and artifact upload.",
+    "next_field_validation": "Install S1J, perform several ordinary closed-to-open cycles including the first opening after install/service restart, then Export debug bundle. Expected export-info must show openingHandoffTruth=STABILIZATION_S1J_OPENING_HANDOFF_TRUTH_V1 and visualForensicSessions > 0. Use correlated visual sessions + opening-handoff-truth BEFORE/AFTER events to decide whether the next build changes ownership behavior.",
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force",
+    "merge_policy": "Do not merge experimental S1J to production/main without explicit authorization."
+  }
+}
