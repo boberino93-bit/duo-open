@@ -1,0 +1,35 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "project_id": "duo-open",
+  "kind": "S1T_PRODUCTION_MAIN_PROMOTION",
+  "from": "primary",
+  "to": "all",
+  "created_at_utc": "2026-10-04T10:43:00Z",
+  "candidate": "S1T_CYCLE_AWARE_NATIVE_COVER_V1",
+  "human_commit_authorization": {
+    "authorized": true,
+    "user_instruction": "Do that now"
+  },
+  "validated_branch": "fix/s1t-cycle-aware-terminal-fence-20261004",
+  "validated_branch_head": "8a4d754119bddc70b8e4dbb71a9b74b14efc12fa",
+  "validated_code_commit": "8babfad6b4abf46d4dc4107a64126ce710113168",
+  "ci_run": 37194318911,
+  "artifact_id": 11299804391,
+  "artifact_sha256": "1b85c8b5f225dedf8de0227d3217ee18657e23c77cab9569fa45fc762e233b69",
+  "merge_pr": 3,
+  "merge_commit": "2986de748a3c9671c481b859db00e1229ed30f7d",
+  "production_merge": "AUTHORIZED_AND_EXECUTED",
+  "field_validation": "STILL_REQUIRED",
+  "preserved": [
+    "S1S stale-cycle terminal native-cover safety intent",
+    "close-cycle identity monotonicity",
+    "repeat-close regression coverage",
+    "current main history and AgentBus state"
+  ],
+  "notes": [
+    "S1T fixes the S1S phase-only terminal fence regression by rejecting completed/older close cycles while permitting strictly newer close cycles.",
+    "Full regression tests and APK build passed in CI run 37194318911 before production promotion.",
+    "Physical Galaxy Z Fold7 repeated close/open/close validation remains required.",
+    "The opening presentation-ready bridge-release stale signal remains a separate unresolved investigation unless causal linkage is proven."
+  ]
+}
