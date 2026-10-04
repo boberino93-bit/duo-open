@@ -1,0 +1,45 @@
+name: Swarm parity contract
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate bootstrap parity contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          expected_revision = 'fb592418f700fc5e540e76bfa42b043e03fe6ed9'
+          data = json.loads(Path('AGENT_BOOTSTRAP.json').read_text())
+          assert data['project_id'] == 'duo-open'
+          assert data['repository']['full_name'] == 'boberino93-bit/duo-open'
+          assert data['routing_contract_version'] == '1.5.0'
+          assert set(('primary','manager','research')).issubset(data['authorized_roles'])
+          assert data['central_registry'] == {'repository':'boberino93-bit/intercommunicationsenhancements','path':'PROJECT_ROLE_ROUTING_REGISTRY.json'}
+          recurring = data['recurring_swarm_protocol']
+          assert recurring == {'repository':'boberino93-bit/intercommunicationsenhancements','path':'protocols/primary_recurring_swarm_protocol.md','protocol_version':'2.4.0-alpha.1','canonical_revision':expected_revision,'required_for_normal_operation':True}
+          normalized = data['normalized_swarm_state']
+          assert normalized['canonical_revision'] == expected_revision
+          assert normalized['project_capsule_schema'] == 'schemas/project_state_capsule.schema.json'
+          assert normalized['swarm_capsule_schema'] == 'schemas/swarm_state_capsule.schema.json'
+          assert normalized['thematic_route_schema'] == 'schemas/thematic_route.schema.json'
+          assert normalized['local_mutation_authority'] == 'UNCHANGED'
+          assert data['rules']['cross_project_write_default'] == 'DENY'
+          assert data['rules']['identity_conflict'].startswith('STOP')
+          assert data['rules']['role_template_required_for_core_roles'] is True
+          print('Duo Open normalized swarm parity: PASS')
+          PY
