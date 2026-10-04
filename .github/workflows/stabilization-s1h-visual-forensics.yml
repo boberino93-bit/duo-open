@@ -114,7 +114,7 @@ jobs:
           git diff --check
 
           grep -F 'STABILIZATION_S1H_VISUAL_METADATA_V1' app/src/full/java/com/duoopen/shell/DuoShellService.kt
-          grep -F 'const val VISUAL_FORENSICS = 19' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+          grep -F 'const val VISUAL_FORENSICS = 23' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
           grep -F 'fun visualForensicsProbe(): Bundle?' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
           grep -F 'visualForensics.startOpeningBurst(' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
           grep -F 'diagnosticExcludedLayers' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
