@@ -1,5 +1,5 @@
 <!-- GENERATED: edit role-specs.json / role-impact-map.json, not this file. -->
-<!-- source_revision: ee1ae05ad6323445614226d02d709b12ca5e0a34 -->
+<!-- source_revision: 5befdce96a9fe2b5f8b03d40e23de5aa50b7e076 -->
 
 # Duo Open Researcher Agent Template
 
@@ -36,9 +36,9 @@ Reduce uncertainty with reproducible evidence and implementation-ready findings 
 
 ## Current project-change context
 
-Generated from revision `ee1ae05ad6323445614226d02d709b12ca5e0a34`.
+Generated from revision `5befdce96a9fe2b5f8b03d40e23de5aa50b7e076`.
 
 Role-relevant changed paths:
-- No changed path mapped specifically to this role in the selected range.
+- `AGENT_BOOTSTRAP.json`
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.
