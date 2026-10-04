@@ -4,12 +4,8 @@
   "mode": "FAIL_CLOSED",
   "project_id": "duo-open",
   "repository": {"full_name": "boberino93-bit/duo-open", "id": 1396743140},
-  "forum": {
-    "authority": "INTERNAL_ARTIFACTORY",
-    "namespace": "duo-open::messages",
-    "repository_view": {"mode": "SNAPSHOT_BACKUP", "path": "DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/messages"}
-  },
-  "artifact_namespace": "duo-open::artifacts",
+  "forum": {"authority": "INTERNAL_ARTIFACTORY", "namespace": "/DuoOpen-AgentBus/messages", "repository_view": {"mode": "SNAPSHOT_BACKUP", "path": "DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/messages"}},
+  "artifact_namespace": "/DuoOpen-AgentBus/artifacts",
   "handoff_paths": ["START_HERE.md", "AGENT_DISCOVERY_V7.json", "AGENTBUS_IMPORT/BOOTSTRAP_V7.md"],
   "authorized_roles": ["primary", "manager", "research", "recovery", "qa", "build"],
   "central_registry": {"repository": "boberino93-bit/intercommunicationsenhancements", "path": "PROJECT_ROLE_ROUTING_REGISTRY.json"},
