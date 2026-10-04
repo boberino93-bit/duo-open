@@ -1,5 +1,5 @@
 <!-- GENERATED: edit role-specs.json / role-impact-map.json, not this file. -->
-<!-- source_revision: 39d3408f9e697e81735cbf1d8804f1bcfa0579ac -->
+<!-- source_revision: 2986de748a3c9671c481b859db00e1229ed30f7d -->
 
 # Duo Open Primary Agent Template
 
@@ -37,32 +37,11 @@ Own project integration and release coherence across implementation, research, t
 
 ## Current project-change context
 
-Generated from revision `39d3408f9e697e81735cbf1d8804f1bcfa0579ac`.
+Generated from revision `2986de748a3c9671c481b859db00e1229ed30f7d`.
 
 Role-relevant changed paths:
-- `.github/workflows/s1n-safe-prewake-v2.yml`
-- `.github/workflows/s1o-hall-prewake-protocol-v1.yml`
-- `.github/workflows/s1p-hall-optical-proxy-v1.yml`
-- `.github/workflows/s1q-animation-coherence-v1.yml`
-- `.github/workflows/s1q-animation-coherence-v2.yml`
-- `.github/workflows/s1q-animation-coherence-v3.yml`
-- `.github/workflows/s1r-hinge-reacquisition-v1.yml`
-- `.github/workflows/s1s-beta-convergence-v1.yml`
-- `.github/workflows/s1s-beta-convergence-v2.yml`
-- `DuoOpen-AgentBus/messages/20261004T093000Z__primary__all__s1s-production-main-promotion-001.json`
-- `app/src/main/java/com/duoopen/overlay/Fold7SpeculativePrewakePolicy.kt`
-- `app/src/test/java/com/duoopen/overlay/Fold7SpeculativePrewakePolicyTest.kt`
-- `docs/beta/S1S_BETA_CONVERGENCE_V1.md`
-- `tools/apply_s1n_safe_prewake_v2.py`
-- `tools/apply_s1o_hall_prewake_protocol_v1.py`
-- `tools/apply_s1p_hall_optical_proxy_v1.py`
-- `tools/apply_s1q_animation_coherence_v1.py`
-- `tools/apply_s1q_animation_coherence_v2.py`
-- `tools/apply_s1q_animation_coherence_v3.py`
-- `tools/apply_s1r_hinge_reacquisition_v1.py`
-- `tools/apply_s1s_beta_convergence_v1.py`
-- `tools/apply_s1s_beta_convergence_v2.py`
-- `tools/apply_s1s_beta_convergence_v3.py`
-- `tools/verify_duo_diagnostic_apk_config.py`
+- `.github/workflows/s1t-cycle-aware-terminal-fence-v1.yml`
+- `DuoOpen-AgentBus/messages/20261004T100800Z__primary__all__s1t-regression-hotfix-001.json`
+- `tools/apply_s1t_cycle_aware_terminal_fence_v1.py`
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.
