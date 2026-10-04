@@ -1,0 +1,61 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1s-beta-convergence-commit-authorized-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T09:22:00Z",
+  "type": "HUMAN_COMMIT_AUTHORIZATION_AND_CANDIDATE_RECORD",
+  "subject": "Human authorized committing S1S beta-convergence changes to Duo Open GitHub and internal forum",
+  "body": {
+    "human_instruction": "Commit these changes to the internal message forum and github",
+    "scope": "S1S_BETA_CONVERGENCE_V1",
+    "repository": "boberino93-bit/duo-open",
+    "candidate_branch": "fix/s1s-beta-convergence-v1-20261004",
+    "validated_implementation_head": "edc9ea650e4aabdb583c1d6f7fafa022226bc346",
+    "candidate_record_commit": "4919412aa28946fa672915df7a94eda9be883cbc",
+    "version_name": "5.1.0-beta2-zfold7-s1s",
+    "version_code": 53,
+    "ci_run": 37185438716,
+    "ci_result": "SUCCESS",
+    "artifact_id": 11296153936,
+    "artifact_sha256": "649c65f8006e0a5f66e852f5070b88241122420ba1f7eef19d709a8ead680007",
+    "apk_sha256": "381830804a6b74117915c7f3f069ebafaf17cf04103fa6195a2e7d5678690e93",
+    "integrated_beta_findings": {
+      "hinge_truth": "Coarse public midpoint/90-degree samples may no longer take continuous semantic geometry authority; coarse authority is endpoint/rest only. Ordered ingress and S1R precise-reader reacquisition remain preserved.",
+      "presentation_readiness": "Logical topology existence is insufficient. Native INNER must be default and STATE_ON continuously for 160 ms before optical bridge release, with a bounded 500 ms fail-safe; cover readiness is also presentation-aware.",
+      "terminal_fencing": "NATIVE_COVER is terminal at the privileged daemon boundary; delayed secondary-route prepare is rejected and prepare completion is phase-fenced.",
+      "refresh_truth": "High refresh is requested with SurfaceControl plus WindowManager preferredRefreshRate and measured from Choreographer cadence rather than inferred from the request.",
+      "animation": "S1Q vsync-calibrated, acceleration-limited motion and spatial registration are preserved.",
+      "optical_proxy": "S1P Hall optical proxy is preserved and now hands off based on presentation readiness rather than fixed topology-only timing.",
+      "hinge_recovery": "S1R session-level Samsung FoldInteractive reacquisition is preserved.",
+      "wake": "Hall-triggered early physical wake and safe native CLOSED(0)->TENT(1) fallback prewake are preserved; unsafe state-5 routing experiment remains rejected.",
+      "reversal_and_generation": "Ordered reversal-preserving hinge ingress and generation fencing remain preserved; no latest-only hinge coalescing rewrite was introduced."
+    },
+    "diagnostic_transport": {
+      "final_apk_truth_verifier": "ENABLED",
+      "automatic_https_relay": "NOT_CONFIGURED_IN_VALIDATED_APK",
+      "status": "EXTERNAL_BETA_INFRASTRUCTURE_GATE",
+      "manual_bundle_export": "AVAILABLE",
+      "policy": "Do not claim automatic upload configured without compiled HTTPS endpoint/receipt-capable configuration."
+    },
+    "validation": [
+      "Full deployed Beta2 stack reconstruction passed.",
+      "S1 through S1R replay passed.",
+      "S1S source and invariant gates passed.",
+      "Kotlin compilation passed.",
+      "Full Android unit/regression suite passed.",
+      "APK assembly passed.",
+      "Final compiled-APK diagnostic configuration verification passed as truth reporting.",
+      "Artifact packaging/upload passed."
+    ],
+    "safety": {
+      "device_state_5_override": "ABSENT",
+      "logical_route_override": "ABSENT",
+      "production_merge": "NOT_PERFORMED",
+      "physical_fold7_validation": "REQUIRED_BEFORE_BETA_PROMOTION",
+      "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+    },
+    "next_gate": "Physical Fold7 beta-convergence validation: repeated slow/normal/fast open-close cycles, reversals, first-open after restart, sustained-cycle stability, animation alignment, black-screen recovery, hinge reacquisition, presentation-gated handoff, and measured refresh cadence."
+  }
+}
