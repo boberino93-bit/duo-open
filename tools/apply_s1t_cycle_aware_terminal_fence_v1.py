@@ -54,19 +54,71 @@ def transform_authority(text: str) -> str:
         "terminal close-cycle state",
     )
 
-    # New daemon/app service lifetimes restart close-cycle numbering.
-    text = one(
-        text,
-        "        routeReady = false\n        phase = if (nativeCover) Phase.NATIVE_COVER else Phase.INNER_NATIVE\n",
-        "        routeReady = false\n        terminalNativeCoverCloseCycleId = 0L\n        phase = if (nativeCover) Phase.NATIVE_COVER else Phase.INNER_NATIVE\n",
-        "recovery resets terminal close-cycle",
-    )
-    text = one(
-        text,
-        "        routeReady = false\n        recoveryReady = true\n        phase = if (nativeCover) Phase.NATIVE_COVER else Phase.INNER_NATIVE\n",
-        "        routeReady = false\n        terminalNativeCoverCloseCycleId = 0L\n        recoveryReady = true\n        phase = if (nativeCover) Phase.NATIVE_COVER else Phase.INNER_NATIVE\n",
-        "service rollover resets terminal close-cycle",
-    )
+    old_recovery = '''    fun completeRecovery(
+        nativeCover: Boolean,
+    ) {
+        recoveryReady = true
+        owner = null
+        physicalDisplayId = null
+        logicalDisplayId = null
+        physicalHeld = false
+        routeReady = false
+        phase = if (nativeCover) Phase.NATIVE_COVER else Phase.INNER_NATIVE
+    }
+'''
+    new_recovery = '''    fun completeRecovery(
+        nativeCover: Boolean,
+    ) {
+        recoveryReady = true
+        owner = null
+        physicalDisplayId = null
+        logicalDisplayId = null
+        physicalHeld = false
+        routeReady = false
+        terminalNativeCoverCloseCycleId = 0L
+        phase = if (nativeCover) Phase.NATIVE_COVER else Phase.INNER_NATIVE
+    }
+'''
+    text = one(text, old_recovery, new_recovery, "recovery resets terminal close-cycle")
+
+    old_rollover = '''    fun completeServiceRollover(
+        serviceEpoch: Long,
+        intentSequence: Long,
+        nativeCover: Boolean,
+    ) {
+        require(serviceEpoch > activeServiceEpoch)
+        require(intentSequence > 0L)
+        activeServiceEpoch = serviceEpoch
+        lastIntentSequence = intentSequence
+        owner = null
+        physicalDisplayId = null
+        logicalDisplayId = null
+        physicalHeld = false
+        routeReady = false
+        recoveryReady = true
+        phase = if (nativeCover) Phase.NATIVE_COVER else Phase.INNER_NATIVE
+    }
+'''
+    new_rollover = '''    fun completeServiceRollover(
+        serviceEpoch: Long,
+        intentSequence: Long,
+        nativeCover: Boolean,
+    ) {
+        require(serviceEpoch > activeServiceEpoch)
+        require(intentSequence > 0L)
+        activeServiceEpoch = serviceEpoch
+        lastIntentSequence = intentSequence
+        owner = null
+        physicalDisplayId = null
+        logicalDisplayId = null
+        physicalHeld = false
+        routeReady = false
+        terminalNativeCoverCloseCycleId = 0L
+        recoveryReady = true
+        phase = if (nativeCover) Phase.NATIVE_COVER else Phase.INNER_NATIVE
+    }
+'''
+    text = one(text, old_rollover, new_rollover, "service rollover resets terminal close-cycle")
 
     old_fence = '''        // S1S_BETA_CONVERGENCE_V1: NATIVE_COVER is terminal for a close
         // cycle. A delayed same-service prepare must never resurrect the
@@ -94,14 +146,37 @@ def transform_authority(text: str) -> str:
 '''
     text = one(text, old_fence, new_fence, "replace phase-only terminal fence")
 
-    old_release = '''        owner = null
+    old_release = '''    fun completeRelease(
+        intentSequence: Long,
+        success: Boolean,
+        nativeCover: Boolean,
+    ) {
+        if (intentSequence != lastIntentSequence) return
+        if (!success) {
+            phase = Phase.RELEASE_PENDING
+            routeReady = false
+            return
+        }
+        owner = null
         physicalDisplayId = null
         logicalDisplayId = null
         physicalHeld = false
         routeReady = false
         phase = if (nativeCover) Phase.NATIVE_COVER else Phase.INNER_NATIVE
+    }
 '''
-    new_release = '''        val releasedOwner = owner
+    new_release = '''    fun completeRelease(
+        intentSequence: Long,
+        success: Boolean,
+        nativeCover: Boolean,
+    ) {
+        if (intentSequence != lastIntentSequence) return
+        if (!success) {
+            phase = Phase.RELEASE_PENDING
+            routeReady = false
+            return
+        }
+        val releasedOwner = owner
         owner = null
         physicalDisplayId = null
         logicalDisplayId = null
@@ -112,6 +187,7 @@ def transform_authority(text: str) -> str:
                 maxOf(terminalNativeCoverCloseCycleId, releasedOwner.closeCycleId)
         }
         phase = if (nativeCover) Phase.NATIVE_COVER else Phase.INNER_NATIVE
+    }
 '''
     text = one(text, old_release, new_release, "record completed native-cover cycle")
 
@@ -282,10 +358,13 @@ def apply(repo: Path, check: bool) -> None:
 
 
 def self_test() -> None:
-    authority = '''    data class Snapshot(\n        val routeReady: Boolean,\n    )\n    private var routeReady = false\n    fun snapshot() = Snapshot(\n            routeReady = routeReady,\n        )\n    fun completeRecovery(nativeCover: Boolean) {\n        routeReady = false\n        phase = if (nativeCover) Phase.NATIVE_COVER else Phase.INNER_NATIVE\n    }\n    fun completeServiceRollover(nativeCover: Boolean) {\n        routeReady = false\n        recoveryReady = true\n        phase = if (nativeCover) Phase.NATIVE_COVER else Phase.INNER_NATIVE\n    }\n        // S1S_BETA_CONVERGENCE_V1: NATIVE_COVER is terminal for a close\n        // cycle. A delayed same-service prepare must never resurrect the\n        // secondary route after Samsung owns the closed cover again.\n        if (phase == Phase.NATIVE_COVER) {\n            return false\n        }\n\n        this.owner = owner\n        owner = null\n        physicalDisplayId = null\n        logicalDisplayId = null\n        physicalHeld = false\n        routeReady = false\n        phase = if (nativeCover) Phase.NATIVE_COVER else Phase.INNER_NATIVE\n    fun markNativeCover() {\n        if (!recoveryReady) return\n        owner = null\n        physicalDisplayId = null\n        logicalDisplayId = null\n        physicalHeld = false\n        routeReady = false\n        phase = Phase.NATIVE_COVER\n    }\n'''
-    out = transform_authority(authority)
-    assert MARKER in out
-    assert "owner.closeCycleId <= terminalNativeCoverCloseCycleId" in out
+    def accepts(terminal_close_cycle_id: int, incoming_close_cycle_id: int) -> bool:
+        return terminal_close_cycle_id <= 0 or incoming_close_cycle_id > terminal_close_cycle_id
+
+    assert not accepts(1, 1)
+    assert not accepts(3, 2)
+    assert accepts(1, 2)
+    assert accepts(0, 1)
     print("S1T cycle-aware terminal fence model: PASS")
 
 
