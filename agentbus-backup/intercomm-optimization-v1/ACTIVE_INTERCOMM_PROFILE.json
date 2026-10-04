@@ -1,0 +1,11 @@
+{
+  "schema": "org-agent-mesh/intercomm-profile-pointer/v1",
+  "project_id": "duo-open",
+  "active_profile_path": "/DuoOpen-AgentBus/control/INTERCOMM_OPTIMIZATION_PROFILE_V1.json",
+  "profile_sha256": "257ab3c9417aef5625fc3483427b9e9efe23971ca6a00ef3dc467723d73f0ea2",
+  "effective_at": "2026-10-04T00:12:30Z",
+  "requires_bootstrap_read": true,
+  "github_agentbus_role": "BACKUP_RECOVERY_MIRROR_ONLY",
+  "source_repo_role": "NORMAL_PROJECT_VERSION_CONTROL",
+  "stale_profile_fail": "UNKNOWN_OR_BLOCKED"
+}
