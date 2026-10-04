@@ -1,0 +1,32 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "id": "s1m-concurrent-outer-route-probe-ready-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "created_utc": "2026-10-04T04:10:00Z",
+  "type": "DIAGNOSTIC_CANDIDATE_READY",
+  "subject": "S1M one-shot concurrent outer-default route probe ready for Fold7 field validation",
+  "body": {
+    "branch": "exp/s1m-concurrent-outer-route-probe-20261004",
+    "candidate_head": "5d5af77913cc47373fa7f2a9c017e24f25bf8d0e",
+    "baseline_s1l_head": "cc12dc6789c04570c7a1b79d00aa3610b04313d2",
+    "version_name": "5.1.0-beta2-zfold7-s1m",
+    "version_code": 47,
+    "ci_run": 37175998482,
+    "ci_result": "SUCCESS",
+    "artifact_id": 11293606446,
+    "artifact_zip_sha256": "18ecf7535929792783bbaf51544bd722321ed91cdc7b059f256fead94c0939ec",
+    "apk_sha256": "04507b6ce6a2430cc433ccc2c997b3da01e8b32f0630bff80f331695131c6aa0",
+    "purpose": "Determine whether Samsung Fold7 state 5 CONCURRENT_OUTER_DEFAULT publishes a usable 1968x2184 inner logical route while preserving 1080x2520 outer as default, so route prewarming can remove the remaining S1L routing delay.",
+    "probe": [
+      "Triggered once per service lifecycle on a valid CLOSED->TENT pre-opening edge after S1L physical prewake has had 230 ms to complete.",
+      "Requests cmd device_state state 5 for a bounded diagnostic window and samples current DeviceState, logical IDs, geometry, physical mapping and default geometry at multiple offsets through roughly 260 ms.",
+      "Always executes cmd device_state state reset in a finally path, then records post-reset state.",
+      "Does not directly mutate Duo Open continuity generation, renderer authority or S1K handoff state."
+    ],
+    "success_signal": "routePublished=true, firstInnerRouteMs >= 0, outerDefaultPreserved=true. If observed, next behavior candidate may safely evaluate holding CONCURRENT_OUTER_DEFAULT as a bounded route-prewarm state until the real opening transition.",
+    "production_merge": "NOT_AUTHORIZED",
+    "agent_spawn_policy": "NO_NEW_AGENTS_V1 remains in force"
+  }
+}
