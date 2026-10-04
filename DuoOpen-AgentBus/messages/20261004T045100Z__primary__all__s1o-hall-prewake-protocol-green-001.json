@@ -1,0 +1,67 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "project_id": "duo-open",
+  "message_id": "s1o-hall-prewake-protocol-green-001",
+  "timestamp_utc": "2026-10-04T04:51:00Z",
+  "from": "primary",
+  "to": ["all"],
+  "kind": "candidate_checkpoint",
+  "status": "GREEN_CI_PHYSICAL_FOLD7_VALIDATION_REQUIRED",
+  "summary": "S1N field bundle proved physical-only prewake already fires at native DeviceState 0->1, but visible INNER activation still waits for Samsung HALF_OPENED state. Root-cause review also found Binder transaction-ID collisions that prevented the intended raw SW_LID/Hall path and corrupted bridge release dispatch. S1O assigns unique transaction IDs so raw Hall-open can reach the existing physical-opening latch/full inner wake path, while retaining S1N 0->1 fallback and all S1M safety exclusions.",
+  "field_evidence": {
+    "bundle": "duoopen-debug-1791088786650.zip",
+    "version": "5.1.0-beta2-zfold7-s1n",
+    "observations": [
+      "Cycle 1 DeviceState 0->1 at uptime 250781189; physical-only prewake succeeded at 250781380 (191 ms), but full wake did not commit until 1->2 at 250784570, 3381 ms after 0->1.",
+      "Cycle 2 DeviceState 0->1 at uptime 250794990; physical-only prewake succeeded at 250795147 (157 ms), but full wake did not commit until 1->2 at 250796445, 1455 ms after 0->1.",
+      "Cycle 2 logical INNER reached Display state=ON at uptime 250796575, about 130 ms after full wake commit and only after Samsung state 2; hinge telemetry immediately thereafter was about 97 degrees.",
+      "No lid-edge callbacks were present despite reader-started=true."
+    ]
+  },
+  "root_cause_found": {
+    "binder_transaction_collisions": {
+      "19": ["INNER_PHYSICAL_BRIDGE", "CAPTURE_PHYSICAL_FORENSIC"],
+      "20": ["START_LID_EVENTS", "RENDER_TIMELINE_PROBE"],
+      "21": ["STOP_LID_EVENTS", "PREWAKE_INNER_PHYSICAL_ONLY"]
+    },
+    "impact": [
+      "START_LID_EVENTS was intercepted by RENDER_TIMELINE_PROBE, falsely reporting reader-started while never launching LidReader/getevent.",
+      "INNER_PHYSICAL_BRIDGE release requests were intercepted by physical forensic capture, explaining failed/false bridge release telemetry.",
+      "STOP_LID_EVENTS could dispatch speculative physical prewake rather than stop the Hall reader."
+    ]
+  },
+  "candidate": {
+    "branch": "fix/s1o-hall-prewake-protocol-v1-20261004",
+    "head": "df353d5b038bdb4a74b87427e27b78429532437d",
+    "workflow_run": 37178036061,
+    "artifact_id": 11294250306,
+    "artifact_name": "DuoOpen-S1O-Hall-Prewake-Protocol-V1",
+    "artifact_sha256": "8e834ee6ca710ac09fc9ed7242a1923ad2b84165bba8bd0cc703dd79858f7a8a",
+    "apk": "DuoOpen-ZFold7-5.1.0-beta2-s1o-hall-prewake-protocol-v1-debug.apk",
+    "apk_sha256": "a9cc0b9407d6721b3af7277a43238eaa3ce8e56d8a61665a346926f09036e8e1",
+    "version_code": 49,
+    "version_name": "5.1.0-beta2-zfold7-s1o"
+  },
+  "protocol_ids": {
+    "INNER_PHYSICAL_BRIDGE": 30,
+    "START_LID_EVENTS": 31,
+    "STOP_LID_EVENTS": 32,
+    "CAPTURE_PHYSICAL_FORENSIC": 33,
+    "RENDER_TIMELINE_PROBE": 34,
+    "PREWAKE_INNER_PHYSICAL_ONLY": 35
+  },
+  "safety": {
+    "device_state_override": "NONE",
+    "state5_route_probe": "ABSENT",
+    "safe_device_state_fallback": "EXACT_NATIVE_CLOSED_0_TO_TENT_1_ONLY",
+    "raw_hall_close_terminal": "PRESERVED",
+    "production_merge": "NOT_AUTHORIZED"
+  },
+  "physical_validation": [
+    "Install S1O over S1N.",
+    "Perform a normal closed->open cycle and observe whether INNER visibly activates substantially before ~90 degrees.",
+    "Perform close/open reversals to verify no flashing/black-cover regression.",
+    "Export a debug bundle after the test. Presence of [lid-edge] closed=false/true events is the first gate proving the raw Hall path is now live.",
+    "If Hall events fire but visible INNER still waits for Samsung state 2, next escalation is an early optical-proxy/native-stack presentation on the physical INNER display rather than any DeviceState override."
+  ]
+}
