@@ -1,0 +1,44 @@
+name: Swarm Launch Kernel
+
+on:
+  push:
+    paths:
+      - 'SWARM_LAUNCH_KERNEL_V1.md'
+      - 'swarm_kernel/**'
+      - '.swarm/**'
+      - 'tests/test_swarm_kernel.py'
+      - 'AGENT_DISCOVERY_V7.json'
+      - 'DuoOpen-AgentBus/control/v3/SWARM_LAUNCH_KERNEL_V1_ADOPTION.md'
+      - '.github/workflows/swarm-kernel.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run kernel tests
+        run: python -m unittest discover -s tests -p 'test_swarm_kernel.py' -v
+      - name: Validate launch binding
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=json.loads(Path('swarm_kernel/project.json').read_text())
+          expected=['ai-behaviour-control-lab','benefitflow','duo-open','intercommunicationsenhancements','warp-propulsion-lab']
+          assert p['kernel_version']=='1.0.0'
+          assert p['project_id']=='duo-open'
+          assert p['repository']==os.environ['GITHUB_REPOSITORY']
+          assert p['state_root']=='.swarm'
+          assert p['cross_project_telemetry']=='READ_ONLY'
+          assert p['global_run_binding']=='EXTERNALLY_SUPPLIED_SHARED_VALUE_REQUIRED'
+          assert p['expected_global_round_projects']==expected
+          assert p['launch_epoch_mismatch_policy']=='FAIL_CLOSED_QUARANTINE'
+          PY
