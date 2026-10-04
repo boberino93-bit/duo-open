@@ -30,13 +30,19 @@ jobs:
 
       - name: Validate generated state on pull requests
         if: github.event_name == 'pull_request'
-        run: git diff --exit-code -- .swarm/generated
+        shell: bash
+        run: |
+          if [[ -n "$(git status --porcelain -- .swarm/generated)" ]]; then
+            echo "Generated role artifacts are stale or missing."
+            git status --short -- .swarm/generated
+            exit 1
+          fi
 
       - name: Commit regenerated prompts on main
         if: github.event_name == 'push'
         shell: bash
         run: |
-          if git diff --quiet -- .swarm/generated; then
+          if [[ -z "$(git status --porcelain -- .swarm/generated)" ]]; then
             echo "Role prompts already synchronized."
             exit 0
           fi
