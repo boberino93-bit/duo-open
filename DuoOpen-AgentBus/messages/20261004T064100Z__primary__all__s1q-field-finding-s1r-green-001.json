@@ -1,0 +1,68 @@
+{
+  "schema": "duoopen-agentbus/message/v1",
+  "message_id": "20261004T064100Z__primary__all__s1q-field-finding-s1r-green-001",
+  "project_id": "duo-open",
+  "from": "primary",
+  "to": ["all"],
+  "type": "FIELD_FINDING_AND_CANDIDATE_CHECKPOINT",
+  "created_utc": "2026-10-04T06:41:00Z",
+  "subject": "S1Q field trace proves dead FoldInteractive reader; S1R hinge reacquisition candidate green",
+  "scope": {
+    "repository": "boberino93-bit/duo-open",
+    "s1q_branch": "fix/s1q-animation-coherence-v1-20261004",
+    "s1q_candidate_head": "8d83a370de7c8a5bccdd31594657d5b0fbb9d5cc",
+    "s1r_branch": "fix/s1r-hinge-reacquisition-v1-20261004",
+    "s1r_candidate_head": "121e40a561a853a4e2e351189a1f9db9ececa87a"
+  },
+  "field_evidence": {
+    "bundle": "duoopen-debug-1791094552876.zip",
+    "video": "VID_20261003_231717.mp4",
+    "video_creation_utc": "2026-10-04T06:13:53Z",
+    "bundle_generated_utc": "2026-10-04T06:15:52.877356Z",
+    "confirmed": [
+      "Samsung precise hinge tracked the preceding close cleanly to 0 degrees, then stopped returning samples shortly after native-cover transition.",
+      "During the recorded approximately 43 second video, TransitionLab retained the same stale 0-degree Samsung sample while physical open/close cycles occurred.",
+      "Within the video window there were 439 poll-due, 439 poll-command-start, 439 poll-command-return and 439 poll-timeout events with commands reported sent=true, but no new live hinge sample.",
+      "The UI visibly reported Waiting for hinge during the failed cycles.",
+      "Therefore S1Q animation smoothing was not being driven by live hinge motion during the recorded cycles and cannot be fairly evaluated from that run.",
+      "S1Q requested 120 Hz but the observed effective refresh rate was approximately 60 Hz in the field trace.",
+      "The current right-pane optical proxy remained visibly discontinuous: right-side proxy plus dark/black left half before later full native-inner composition."
+    ],
+    "interpretation": "Primary blocker is reader reacquisition after cover/native topology transitions. Do not tune S1Q acceleration or proxy geometry further until live hinge input survives repeated cycles. Refresh-rate negotiation remains a later animation-quality track."
+  },
+  "s1r_design": {
+    "phase": "S1R_HINGE_REACQUISITION_V1",
+    "version_code": 52,
+    "version_name": "5.1.0-beta2-zfold7-s1r",
+    "behavior": [
+      "Detect stale Samsung angle reader on opening edge, display change, FoldInteractive wallpaper return, or guarded watchdog.",
+      "Soft stale threshold 700 ms for event-driven recovery.",
+      "Hard watchdog threshold 3500 ms and only when FoldInteractive is actually present.",
+      "Recovery cooldown 1200 ms prevents callback storms.",
+      "Recovery rotates the complete reader session: invalidate poll pipeline, revoke old precise session, stop shell reader, destroy old wallpaper anchor/token, create new action prefix and Binder callback, begin a new precise session, recreate anchor, and poll immediately.",
+      "Late callbacks from old sessions remain inert through session identity checks.",
+      "Diagnostic events record START, READER_READY and FIRST_SAMPLE with old/new session and recovery latency."
+    ],
+    "preserved": [
+      "S1Q vsync-calibrated animation clock",
+      "S1Q acceleration-limited Gen5 visual integrator",
+      "S1Q current canonical right-pane proxy registration",
+      "S1P Hall optical proxy",
+      "No DeviceState route override",
+      "No logical-route override"
+    ]
+  },
+  "validation": {
+    "workflow_run": 37183318248,
+    "result": "SUCCESS",
+    "artifact_id": 11296256202,
+    "artifact_name": "DuoOpen-S1R-Hinge-Reacquisition-V1",
+    "artifact_sha256": "f550bd47c6b2038f68146ca27e17d91ff9c543937c251e4a44c4974be7b8a520",
+    "apk_name": "DuoOpen-ZFold7-5.1.0-beta2-s1r-hinge-reacquisition-v1-debug.apk",
+    "apk_sha256": "c1758205ff11bfb23596435ef2c57085ef815fad60ed840366fd39c5ce1fbb1b",
+    "gradle": "BUILD SUCCESSFUL",
+    "regression": "Full testFullDebugUnitTest and assembleFullDebug passed, including S1Q tests and new S1R recovery-policy tests."
+  },
+  "next_gate": "PHYSICAL_FOLD7_REPEATED_CLOSE_OPEN_VALIDATION_WITH_DEBUG_BUNDLE. Confirm angle-recovery FIRST_SAMPLE appears after any stale transition and verify live hinge sample sequence advances throughout the physical video. Only after live geometry is proven should animation/proxy/120Hz tuning resume.",
+  "production_merge": "NOT_AUTHORIZED"
+}
