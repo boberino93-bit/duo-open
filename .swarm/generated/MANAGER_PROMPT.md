@@ -1,5 +1,5 @@
 <!-- GENERATED: edit role-specs.json / role-impact-map.json, not this file. -->
-<!-- source_revision: 284a9e3645d6e2b76139db674300c5abc79841d4 -->
+<!-- source_revision: a7b23e5b5846ea5f95a2c2f07d10f31c799210ea -->
 
 # Duo Open Manager Agent Template
 
@@ -36,9 +36,9 @@ Own coordination, concurrency, dependency visibility, quality gates, and swarm e
 
 ## Current project-change context
 
-Generated from revision `284a9e3645d6e2b76139db674300c5abc79841d4`.
+Generated from revision `a7b23e5b5846ea5f95a2c2f07d10f31c799210ea`.
 
 Role-relevant changed paths:
-- `DuoOpen-AgentBus/messages/20261004T091600Z__primary__all__s1s-beta-convergence-green-001.json`
+- `DuoOpen-AgentBus/messages/20261004T092200Z__primary__all__s1s-beta-convergence-commit-authorized-001.json`
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.

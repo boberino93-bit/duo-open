@@ -1,5 +1,5 @@
 <!-- GENERATED: edit role-specs.json / role-impact-map.json, not this file. -->
-<!-- source_revision: 284a9e3645d6e2b76139db674300c5abc79841d4 -->
+<!-- source_revision: a7b23e5b5846ea5f95a2c2f07d10f31c799210ea -->
 
 # Duo Open Researcher Agent Template
 
@@ -36,7 +36,7 @@ Reduce uncertainty with reproducible evidence and implementation-ready findings 
 
 ## Current project-change context
 
-Generated from revision `284a9e3645d6e2b76139db674300c5abc79841d4`.
+Generated from revision `a7b23e5b5846ea5f95a2c2f07d10f31c799210ea`.
 
 Role-relevant changed paths:
 - No changed path mapped specifically to this role in the selected range.

@@ -4,17 +4,17 @@
     "PRIMARY"
   ],
   "changed_files": [
-    "DuoOpen-AgentBus/messages/20261004T091600Z__primary__all__s1s-beta-convergence-green-001.json"
+    "DuoOpen-AgentBus/messages/20261004T092200Z__primary__all__s1s-beta-convergence-commit-authorized-001.json"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "19c61bd1668e24470bf3cc044afb0dfc6433fc3442ddae1485f2ba6f94815ae1",
-    "PRIMARY_PROMPT.md": "a92d483d7c9100492b2d75f3a6adaccb235d517ece10c40bd55660cf338d4970",
-    "RESEARCHER_PROMPT.md": "2b68a3783769d6ad0f976ae73dfda1632be45ab2b45acaf6800a3f13a7578c4f"
+    "MANAGER_PROMPT.md": "3bde06f73821980ecd1e5793e808ea206ea0e9a84c67686aaaca15171f606925",
+    "PRIMARY_PROMPT.md": "855d0191768627c39214292b99e97e5bbb6d77b1cf3a95deacf7a499e06129fe",
+    "RESEARCHER_PROMPT.md": "6755416b335314be0ea6298fc1c1bf742204977bd4c00e3cc9b9f7f907526af5"
   },
   "schema": "duo-open/generated-role-prompts/v1",
   "source_hashes": {
     "role-impact-map.json": "35808db8c827ed624f785496639b34e2e5095bd1ca94599a50a73167d4575b72",
     "role-specs.json": "de62f5e628daa122ed6ff476f5d915bf2f9a3082265318d9b829d6cd744c46b7"
   },
-  "source_revision": "284a9e3645d6e2b76139db674300c5abc79841d4"
+  "source_revision": "a7b23e5b5846ea5f95a2c2f07d10f31c799210ea"
 }
