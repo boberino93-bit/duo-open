@@ -1,0 +1,15 @@
+{
+  "schema": "org-agent-mesh/live-operations-project-hook/v1",
+  "status": "ACTIVE",
+  "project_id": "duo-open",
+  "repository_identity": "boberino93-bit/duo-open",
+  "canonical_protocol_repository": "boberino93-bit/intercommunicationsenhancements",
+  "canonical_protocol_path": "protocols/live_operations_observability.md",
+  "registry_path": "LIVE_OPERATIONS_REGISTRY.json",
+  "board_root": "/DuoOpen-AgentBus",
+  "ops_current": "/DuoOpen-AgentBus/ops/current.json",
+  "github_is_coordination_authority": false,
+  "role_presence_required_on_material_transition": true,
+  "default_stale_after_seconds": 1800,
+  "default_drift_grace_seconds": 900
+}
