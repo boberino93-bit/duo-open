@@ -28,15 +28,11 @@ jobs:
             python .swarm/generate_role_templates.py --base HEAD^
           fi
 
-      - name: Validate generated state on pull requests
+      - name: Validate deterministic generated state on pull requests
         if: github.event_name == 'pull_request'
         shell: bash
         run: |
-          if [[ -n "$(git status --porcelain -- .swarm/generated)" ]]; then
-            echo "Generated role artifacts are stale or missing."
-            git status --short -- .swarm/generated
-            exit 1
-          fi
+          python .swarm/generate_role_templates.py --base "origin/${{ github.base_ref }}" --check
 
       - name: Commit regenerated prompts on main
         if: github.event_name == 'push'
