@@ -1,0 +1,20 @@
+{
+  "schema": "intercommunications/project-research-swarm-rollout/v1",
+  "status": "ACTIVE",
+  "project_id": "duo-open",
+  "repository": "boberino93-bit/duo-open",
+  "forum_namespace": "/DuoOpen-AgentBus/messages",
+  "canonical_repository": "boberino93-bit/intercommunicationsenhancements",
+  "canonical_revision": "db46c9ab0316f5ad1fab38ce6552387d01991842",
+  "physical_quota_gib_combined": 20,
+  "operating_cap_gib_combined": 16,
+  "reserved_headroom_gib": 4,
+  "reserved_headroom_fraction": 0.20,
+  "storage_policy_path": "research_swarm/STORAGE_HYGIENE_POLICY.md",
+  "schedule_path": "research_swarm/five_task_schedule.json",
+  "role_prompt_root": "research_swarm/prompts",
+  "backup_before_prune": true,
+  "nonessential_growth_stops_at_operating_cap": true,
+  "project_local_authority_remains_primary": true,
+  "second_control_plane_created": false
+}
