@@ -1,20 +1,26 @@
 {
   "affected_roles": [
     "MANAGER",
-    "PRIMARY"
+    "PRIMARY",
+    "RESEARCHER"
   ],
   "changed_files": [
-    "SWARM_OPERATIONS_OBSERVABILITY.json"
+    ".github/workflows/swarm-role-template-sync.yml",
+    ".swarm/generate_role_templates.py",
+    ".swarm/role_templates/role-impact-map.json",
+    ".swarm/role_templates/role-specs.json",
+    "AGENT_BOOTSTRAP.json",
+    "AUTHORITY_SECURITY_OVERLAY.json"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "6c81b9ee5331aeb33ba4c4ec58c8a98f96092d924361d9e695cbaafc8657e384",
-    "PRIMARY_PROMPT.md": "16e105ea843b7f2b97736cb3b79ec34f4e8c7b3339ab65aee87b4ea3a3b77296",
-    "RESEARCHER_PROMPT.md": "c43e9e682bb6ed685c88c5596494d3e77b4cb67ddb19f4c689a55d7ba07265d1"
+    "MANAGER_PROMPT.md": "afc59aaec158b62fe9983da449303c9ffe69435106ccb9a0126b691bbc8a2f7f",
+    "PRIMARY_PROMPT.md": "5f5857d9c6bf22cbf95c3d62c02f6ebe47bf8141848b1b1a93e3c634e636c2f4",
+    "RESEARCHER_PROMPT.md": "6299d4473ea9559c2a94fdc038d5eadee7ea0aa74d81e9c49b107e9e2deefc7c"
   },
   "schema": "duo-open/generated-role-prompts/v1",
   "source_hashes": {
-    "role-impact-map.json": "35808db8c827ed624f785496639b34e2e5095bd1ca94599a50a73167d4575b72",
-    "role-specs.json": "f566df2b22fe51d90bf681350e254bd7211c6a3f7205260f9e275bdf48b7aadf"
+    "role-impact-map.json": "6582b008eae2f89ec6c41a1131b454e07ed74c6a99ef4bd95c75a8cd68aae322",
+    "role-specs.json": "2f11eb0511562b7e0072f63465f69bd3b096526c3d5a1bd57b1c33aeb2d3ec2c"
   },
-  "source_revision": "144af3f5f86332c64ca24db9b98985fedc8c23bf"
+  "source_revision": "inputs-sha256:1cf7b02cb0669cbb022534778b872ce00f603dc4f7747c4af536f505eaa45322"
 }
