@@ -8,14 +8,14 @@
     "AUTHORITY_SECURITY_OVERLAY.json"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "b1c98586767202d51c4dfd09e2533f9f22bfc23d15640b7a313c18cb0d9ee606",
-    "PRIMARY_PROMPT.md": "d4ea6367c43136bff99dc63dabc5d01f313f89ee52b6626a9da7154145330276",
-    "RESEARCHER_PROMPT.md": "958ff3811592048818b47b1c60dd690a55809c45d5cf90b0c36412d588a81804"
+    "MANAGER_PROMPT.md": "8a304c1f4f90b1d42059ae9b3049ab0050a7c8a7c0cdc2a6ef390800b497142b",
+    "PRIMARY_PROMPT.md": "9a835f57040e41e5d99bb4a8e21158647b2fe4eda424db63327530b23dbb31c3",
+    "RESEARCHER_PROMPT.md": "1c8160a96dd6005b5637dda7785b8f3403b5489d2cf9e4017b6e2b4362c2f551"
   },
   "schema": "duo-open/generated-role-prompts/v1",
   "source_hashes": {
     "role-impact-map.json": "6582b008eae2f89ec6c41a1131b454e07ed74c6a99ef4bd95c75a8cd68aae322",
     "role-specs.json": "8c7e88dbe8c2c233f55daa72b1553ea9c65ebecde968f6487ddab646dda883f2"
   },
-  "source_revision": "inputs-sha256:52fdc1282d398bb1697556e7f56521559427ea2e282cc88b479f7268871c1c70"
+  "source_revision": "inputs-sha256:cf645fcf50d82c716ff4698183ea7d8cd3ff3b781cc18f0691e07561ef6d12b7"
 }

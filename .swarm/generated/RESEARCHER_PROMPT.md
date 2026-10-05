@@ -1,5 +1,5 @@
 <!-- GENERATED: edit role-specs.json / role-impact-map.json, not this file. -->
-<!-- source_revision: inputs-sha256:52fdc1282d398bb1697556e7f56521559427ea2e282cc88b479f7268871c1c70 -->
+<!-- source_revision: inputs-sha256:cf645fcf50d82c716ff4698183ea7d8cd3ff3b781cc18f0691e07561ef6d12b7 -->
 
 # Duo Open Researcher Agent Template
 
@@ -48,7 +48,7 @@ Reduce uncertainty with reproducible evidence and implementation-ready findings 
 
 ## Current project-change context
 
-Generated from source fingerprint `inputs-sha256:52fdc1282d398bb1697556e7f56521559427ea2e282cc88b479f7268871c1c70`.
+Generated from source fingerprint `inputs-sha256:cf645fcf50d82c716ff4698183ea7d8cd3ff3b781cc18f0691e07561ef6d12b7`.
 
 Role-relevant changed paths:
 - `AUTHORITY_SECURITY_OVERLAY.json`
