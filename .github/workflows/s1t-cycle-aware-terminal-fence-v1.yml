@@ -1,19 +1,29 @@
-name: S1T Cycle-Aware Terminal Fence V1
+name: Build Materialized Fold7 Latest — S1T
 
 on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/s1t-cycle-aware-terminal-fence-v1.yml"
+      - "tools/**"
+      - "service_packs/**"
+      - "app/**"
   push:
     branches:
+      - main
       - fix/s1t-cycle-aware-terminal-fence-20261004
     paths:
       - ".github/workflows/s1t-cycle-aware-terminal-fence-v1.yml"
-      - "tools/apply_s1t_cycle_aware_terminal_fence_v1.py"
-  workflow_dispatch:
+      - "tools/**"
+      - "service_packs/**"
+      - "app/**"
 
 permissions:
   contents: read
 
 concurrency:
-  group: s1t-cycle-aware-terminal-fence-v1-${{ github.ref }}
+  group: build-materialized-fold7-latest-s1t-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -148,22 +158,50 @@ jobs:
           chmod +x gradlew
           ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
 
-      - name: Package S1T physical validation APK
+      - name: Package auditable S1T physical-validation artifact
         run: |
           set -euo pipefail
           OUT=s1t-cycle-aware-terminal-fence-v1
-          mkdir -p "$OUT"
+          SOURCE_DIR="$OUT/generated-source"
+          mkdir -p "$SOURCE_DIR"
           APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
           test -n "$APK"
           cp "$APK" "$OUT/DuoOpen-ZFold7-5.1.0-beta2-s1t-cycle-aware-terminal-fence-v1-debug.apk"
           sha256sum "$OUT/DuoOpen-ZFold7-5.1.0-beta2-s1t-cycle-aware-terminal-fence-v1-debug.apk" > "$OUT/APK-SHA256.txt"
+
+          for file in \
+            app/build.gradle.kts \
+            app/src/full/java/com/duoopen/shell/Fold7PanelAuthorityGen4.kt \
+            app/src/test/java/com/duoopen/shell/Fold7PanelAuthorityGen4Test.kt \
+            app/src/full/java/com/duoopen/shell/DuoShellService.kt \
+            app/src/full/java/com/duoopen/shell/ShizukuBridge.kt \
+            app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt \
+            app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt \
+            app/src/full/java/com/duoopen/overlay/PanelEngine.kt \
+            app/src/main/java/com/duoopen/fold/HingeAngleSource.kt \
+            app/src/main/java/com/duoopen/fold/DuoShader.kt
+          do
+            test -f "$file"
+            mkdir -p "$SOURCE_DIR/$(dirname "$file")"
+            cp "$file" "$SOURCE_DIR/$file"
+          done
+
+          find "$SOURCE_DIR" -type f -print0 | sort -z | xargs -0 sha256sum > "$OUT/MATERIALIZED-SOURCE-SHA256.txt"
+          git diff --binary --no-ext-diff > "$OUT/MATERIALIZED-RUNTIME.patch"
+
           {
-            echo "sourceHead=${GITHUB_SHA}"
+            echo "repositoryHead=${GITHUB_SHA}"
+            echo "materializationModel=BASELINE_PLUS_PINNED_TRANSFORMS"
+            echo "workflow=.github/workflows/s1t-cycle-aware-terminal-fence-v1.yml"
             echo "phase=S1T_CYCLE_AWARE_NATIVE_COVER_V1"
             echo "versionCode=54"
             echo "versionName=5.1.0-beta2-zfold7-s1t"
             echo "regression=REPEAT_CLOSE_AFTER_NATIVE_COVER"
             echo "terminalFence=CLOSE_CYCLE_AWARE"
+            echo "generatedSourceManifest=MATERIALIZED-SOURCE-SHA256.txt"
+            echo "materializedPatch=MATERIALIZED-RUNTIME.patch"
             echo "physicalFold7Validation=REQUIRED"
             echo "productionMerge=NOT_AUTHORIZED"
           } > "$OUT/BUILD-INFO.txt"
