@@ -1,0 +1,33 @@
+{
+  "schema": "org-agent-mesh/project-authority-security-overlay/v1",
+  "version": "1.0.0",
+  "project_id": "duo-open",
+  "repository": "boberino93-bit/duo-open",
+  "status": "REQUIRED_ON_STARTUP",
+  "canonical": {
+    "repository": "boberino93-bit/intercommunicationsenhancements",
+    "revision": "82d01b264b3328d1b08d16673846126d8a5b1ad3",
+    "authority_authentication_policy": "governance/AUTHORITY_AUTHENTICATION_POLICY.json",
+    "authority_authentication_protocol": "protocols/authority_authentication.md",
+    "mutation_authorization_policy": "governance/MUTATION_AUTHORIZATION_POLICY.json",
+    "mutation_authorization_protocol": "protocols/mutation_authorization.md",
+    "root_authority_registry": "governance/ROOT_CHANGE_AUTHORITY.json"
+  },
+  "invariants": [
+    "CLAIMED_IDENTITY_IS_NOT_AUTHENTICATED_IDENTITY",
+    "AUTHENTICATED_IDENTITY_IS_NOT_AUTHORIZATION",
+    "AUTHORIZATION_IS_CASE_BOUND_SINGLE_USE",
+    "NO_SESSION_WIDE_MUTATION_AUTHORITY"
+  ],
+  "requirements": {
+    "explicit_principal_claim_before_authorization": true,
+    "assume_current_speaker_is_authorized": false,
+    "static_personal_fact_authentication": "DENY",
+    "fresh_single_use_case_for_each_distinct_mutation": true,
+    "prior_authorization_reuse": false,
+    "schedule_or_parent_delegation_is_authorization": false,
+    "high_consequence_independent_external_proof_required": true,
+    "agent_may_create_or_satisfy_its_own_authentication_proof": false,
+    "safe_read_only_work_may_continue_when_mutation_blocked": true
+  }
+}
