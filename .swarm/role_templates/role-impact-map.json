@@ -3,7 +3,9 @@
   "roles": ["PRIMARY", "MANAGER", "RESEARCHER"],
   "default_roles": ["PRIMARY", "MANAGER"],
   "rules": [
+    {"glob": ".swarm/generated/**", "roles": []},
     {"glob": ".swarm/**", "roles": ["PRIMARY", "MANAGER", "RESEARCHER"]},
+    {"glob": "AUTHORITY_SECURITY_OVERLAY.json", "roles": ["PRIMARY", "MANAGER", "RESEARCHER"]},
     {"glob": "AGENT_BOOTSTRAP.*", "roles": ["PRIMARY", "MANAGER", "RESEARCHER"]},
     {"glob": "AGENT_DISCOVERY*", "roles": ["PRIMARY", "MANAGER", "RESEARCHER"]},
     {"glob": "AGENTBUS_IMPORT/**", "roles": ["PRIMARY", "MANAGER", "RESEARCHER"]},
