@@ -1,12 +1,12 @@
 {
   "schema": "org-agent-mesh/project-authority-security-overlay/v1",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "project_id": "duo-open",
   "repository": "boberino93-bit/duo-open",
   "status": "REQUIRED_ON_STARTUP",
   "canonical": {
     "repository": "boberino93-bit/intercommunicationsenhancements",
-    "revision": "5e423eb92aa1e6552f6f7eb13436fb129a1218d0",
+    "revision": "51a4f414356de4bd4aa26895db5406768fa0f810",
     "authority_authentication_policy": "governance/AUTHORITY_AUTHENTICATION_POLICY.json",
     "authority_authentication_protocol": "protocols/authority_authentication.md",
     "mutation_authorization_policy": "governance/MUTATION_AUTHORIZATION_POLICY.json",
@@ -18,8 +18,47 @@
     "project_work_control_event_schema": "schemas/project_work_control_event.schema.json",
     "project_work_control_runtime": "org_agent_mesh.project_work_control",
     "autonomous_continuation_protocol": "protocols/autonomous_continuation.md",
-    "root_authority_registry": "governance/ROOT_CHANGE_AUTHORITY.json"
+    "root_authority_registry": "governance/ROOT_CHANGE_AUTHORITY.json",
+    "coordination_publication_policy": "governance/COORDINATION_PUBLICATION_POLICY.json",
+    "coordination_publication_protocol": "protocols/non_authoritative_coordination_publication.md",
+    "coordination_publication_runtime": "org_agent_mesh.coordination_publication"
   },
-  "invariants": ["CLAIMED_IDENTITY_IS_NOT_AUTHENTICATED_IDENTITY", "AUTHENTICATED_IDENTITY_IS_NOT_AUTHORIZATION", "AUTHORIZATION_IS_CASE_BOUND_SINGLE_USE", "NO_SESSION_WIDE_MUTATION_AUTHORITY", "PROJECT_HOLD_IS_NOT_CANCELLATION", "PENDING_HUMAN_RESPONSE_BLOCKS_ONLY_DEPENDENT_BRANCH"],
-  "requirements": {"explicit_principal_claim_before_authorization": true, "assume_current_speaker_is_authorized": false, "static_personal_fact_authentication": "DENY", "fresh_single_use_case_for_each_distinct_mutation": true, "prior_authorization_reuse": false, "schedule_or_parent_delegation_is_authorization": false, "high_consequence_independent_external_proof_required": true, "agent_may_create_or_satisfy_its_own_authentication_proof": false, "safe_read_only_work_may_continue_when_mutation_blocked": true, "project_work_control_required_before_new_work": true, "project_work_control_recheck_between_bounded_units": true, "held_project_blocks_new_work_respawn_and_mutation": true, "active_agent_checkpoint_then_stop_on_hold": true, "hold_is_cancellation": false, "hold_is_failure": false, "manual_hold_expiry_requires_authenticated_resume": true, "auto_resume_only_when_hold_explicitly_sets_AUTO_AT_EXPIRY": true, "ordinary_user_interruption_auto_resumes": true, "pending_human_response_blocks_only_dependent_branch": true, "continue_other_safe_work_while_human_response_pending": true}
+  "invariants": [
+    "CLAIMED_IDENTITY_IS_NOT_AUTHENTICATED_IDENTITY",
+    "AUTHENTICATED_IDENTITY_IS_NOT_AUTHORIZATION",
+    "AUTHORIZATION_IS_CASE_BOUND_SINGLE_USE",
+    "NO_SESSION_WIDE_MUTATION_AUTHORITY",
+    "PROJECT_HOLD_IS_NOT_CANCELLATION",
+    "PENDING_HUMAN_RESPONSE_BLOCKS_ONLY_DEPENDENT_BRANCH",
+    "COORDINATION_PUBLICATION_IS_NOT_MUTATION_AUTHORIZATION",
+    "BACKUP_WRITE_IS_NOT_SOURCE_WRITE"
+  ],
+  "requirements": {
+    "explicit_principal_claim_before_authorization": true,
+    "assume_current_speaker_is_authorized": false,
+    "static_personal_fact_authentication": "DENY",
+    "fresh_single_use_case_for_each_distinct_mutation": true,
+    "prior_authorization_reuse": false,
+    "schedule_or_parent_delegation_is_authorization": false,
+    "high_consequence_independent_external_proof_required": true,
+    "agent_may_create_or_satisfy_its_own_authentication_proof": false,
+    "safe_read_only_work_may_continue_when_mutation_blocked": true,
+    "project_work_control_required_before_new_work": true,
+    "project_work_control_recheck_between_bounded_units": true,
+    "held_project_blocks_new_work_respawn_and_mutation": true,
+    "active_agent_checkpoint_then_stop_on_hold": true,
+    "hold_is_cancellation": false,
+    "hold_is_failure": false,
+    "manual_hold_expiry_requires_authenticated_resume": true,
+    "auto_resume_only_when_hold_explicitly_sets_AUTO_AT_EXPIRY": true,
+    "ordinary_user_interruption_auto_resumes": true,
+    "pending_human_response_blocks_only_dependent_branch": true,
+    "continue_other_safe_work_while_human_response_pending": true,
+    "research_manager_durable_write_exception": "APPEND_ONLY_NON_AUTHORITATIVE_COORDINATION_PUBLICATION",
+    "coordination_artifactory_namespace": "/DuoOpen-AgentBus/messages",
+    "coordination_github_backup_prefix": "agentbus-backup/coordination-messages/",
+    "coordination_cross_project_write": "DENY",
+    "coordination_overwrite_delete_rename_move": "DENY",
+    "coordination_authority_conveyed": false
+  }
 }
