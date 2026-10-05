@@ -1,5 +1,5 @@
 <!-- GENERATED: edit role-specs.json / role-impact-map.json, not this file. -->
-<!-- source_revision: 8c059534010edd1ced39f6fb31ed630b5d4e7061 -->
+<!-- source_revision: 7d15ee069f466ef4edab8afe1902da9def1d4546 -->
 
 # Duo Open Manager Agent Template
 
@@ -41,9 +41,10 @@ Own coordination, concurrency, dependency visibility, quality gates, and swarm e
 
 ## Current project-change context
 
-Generated from revision `8c059534010edd1ced39f6fb31ed630b5d4e7061`.
+Generated from revision `7d15ee069f466ef4edab8afe1902da9def1d4546`.
 
 Role-relevant changed paths:
-- `.github/workflows/swarm-parity.yml`
+- `RESEARCH_SWARM_ROLLOUT_2026-10-05.md`
+- `RESEARCH_SWARM_STORAGE_BUDGET.json`
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.
