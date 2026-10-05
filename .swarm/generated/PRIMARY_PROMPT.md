@@ -1,5 +1,5 @@
 <!-- GENERATED: edit role-specs.json / role-impact-map.json, not this file. -->
-<!-- source_revision: inputs-sha256:2e687ba6e98ecf97a3cd72422b92fd5941f4c3d14ffff62100e6a782058e5f30 -->
+<!-- source_revision: inputs-sha256:52fdc1282d398bb1697556e7f56521559427ea2e282cc88b479f7268871c1c70 -->
 
 # Duo Open Primary Agent Template
 
@@ -49,10 +49,9 @@ Own project integration and release coherence across implementation, research, t
 
 ## Current project-change context
 
-Generated from source fingerprint `inputs-sha256:2e687ba6e98ecf97a3cd72422b92fd5941f4c3d14ffff62100e6a782058e5f30`.
+Generated from source fingerprint `inputs-sha256:52fdc1282d398bb1697556e7f56521559427ea2e282cc88b479f7268871c1c70`.
 
 Role-relevant changed paths:
-- `.swarm/role_templates/role-specs.json`
-- `AGENT_BOOTSTRAP.json`
+- `AUTHORITY_SECURITY_OVERLAY.json`
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.
