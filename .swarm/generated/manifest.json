@@ -1,21 +1,20 @@
 {
   "affected_roles": [
     "MANAGER",
-    "PRIMARY",
-    "RESEARCHER"
+    "PRIMARY"
   ],
   "changed_files": [
-    "AGENT_BOOTSTRAP.json"
+    "SWARM_OPERATIONS_OBSERVABILITY.json"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "6994ddb07de170164ee2badd8ca0b33ac35b13e16d9055d22fb1cdf08be685ee",
-    "PRIMARY_PROMPT.md": "258e3a3e3179b7f57829e0b403b2f26e471a8febe674fc660971e713979066a8",
-    "RESEARCHER_PROMPT.md": "6cc0a503ac4f15653cdb5ebb14c87a1f4a7c38e8b261df928636930f7144dd11"
+    "MANAGER_PROMPT.md": "6c81b9ee5331aeb33ba4c4ec58c8a98f96092d924361d9e695cbaafc8657e384",
+    "PRIMARY_PROMPT.md": "16e105ea843b7f2b97736cb3b79ec34f4e8c7b3339ab65aee87b4ea3a3b77296",
+    "RESEARCHER_PROMPT.md": "c43e9e682bb6ed685c88c5596494d3e77b4cb67ddb19f4c689a55d7ba07265d1"
   },
   "schema": "duo-open/generated-role-prompts/v1",
   "source_hashes": {
     "role-impact-map.json": "35808db8c827ed624f785496639b34e2e5095bd1ca94599a50a73167d4575b72",
     "role-specs.json": "f566df2b22fe51d90bf681350e254bd7211c6a3f7205260f9e275bdf48b7aadf"
   },
-  "source_revision": "034cca5f9cb8a5abedcc9b9ff8a0d61be69f5c5f"
+  "source_revision": "144af3f5f86332c64ca24db9b98985fedc8c23bf"
 }
