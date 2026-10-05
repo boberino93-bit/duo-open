@@ -1,21 +1,18 @@
 {
   "schema": "swarm-kernel/project/v1",
-  "kernel_version": "1.0.0",
+  "kernel_version": "1.2.1",
   "project_id": "duo-open",
   "repository": "boberino93-bit/duo-open",
-  "canonical_branch": "main",
   "coordination_root": "DuoOpen-AgentBus/",
-  "state_root": ".swarm",
   "identity_source": "AGENT_DISCOVERY_V7.json",
+  "canonical_branch": "main",
+  "state_root": ".swarm",
+  "swarm_state_authority": "PROJECT_LOCAL_OPERATIONAL_RECOVERY_STATE",
+  "master_handoff_path": "MASTER_HANDOFF.json",
+  "master_handoff_required_before_ready": true,
   "global_run_binding": "EXTERNALLY_SUPPLIED_SHARED_VALUE_REQUIRED",
   "global_run_contract_version": 1,
-  "expected_global_round_projects": [
-    "ai-behaviour-control-lab",
-    "benefitflow",
-    "duo-open",
-    "intercommunicationsenhancements",
-    "warp-propulsion-lab"
-  ],
+  "expected_global_round_projects": ["ai-behaviour-control-lab", "benefitflow", "duo-open", "fold7-power-lab", "intercommunicationsenhancements", "warp-propulsion-lab", "xrp-thesis"],
   "launch_contract_policy": "IDENTICAL_GLOBAL_FIELDS_LOCAL_WRITES_ONLY",
   "launch_epoch_mismatch_policy": "FAIL_CLOSED_QUARANTINE",
   "foreign_write_policy": "DENY",
@@ -24,5 +21,6 @@
   "heartbeat_interval_seconds": 300,
   "circuit_breaker_threshold": 3,
   "manager_queue_soft_limit": 8,
-  "manager_queue_hard_limit": 15
+  "manager_queue_hard_limit": 15,
+  "max_active_specialists": 8
 }
