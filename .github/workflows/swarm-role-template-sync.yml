@@ -28,15 +28,19 @@ jobs:
             python .swarm/generate_role_templates.py --base HEAD^
           fi
 
-      - name: Validate generated state on pull requests
+      - name: Validate deterministic generation on pull requests
         if: github.event_name == 'pull_request'
         shell: bash
         run: |
-          if [[ -n "$(git status --porcelain -- .swarm/generated)" ]]; then
-            echo "Generated role artifacts are stale or missing."
-            git status --short -- .swarm/generated
-            exit 1
-          fi
+          set -euo pipefail
+          # Generated prompts intentionally contain the exact checked-out revision
+          # and current change context. A PR therefore cannot be required to have
+          # the previous main snapshot already equal the synthetic PR merge output.
+          # Regenerate once above, then require a second check to be a no-op.
+          python .swarm/generate_role_templates.py --base "origin/${{ github.base_ref }}" --check
+          git diff --check -- .swarm/generated
+          echo "Generated role prompts are deterministic for this PR revision."
+          echo "The main-push path remains responsible for committing refreshed generated artifacts after merge."
 
       - name: Commit regenerated prompts on main
         if: github.event_name == 'push'
