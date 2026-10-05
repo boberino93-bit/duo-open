@@ -51,6 +51,6 @@ Reduce uncertainty with reproducible evidence and implementation-ready findings 
 Generated from source fingerprint `inputs-sha256:cf645fcf50d82c716ff4698183ea7d8cd3ff3b781cc18f0691e07561ef6d12b7`.
 
 Role-relevant changed paths:
-- `AUTHORITY_SECURITY_OVERLAY.json`
+- No changed path mapped specifically to this role in the selected range.
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.
