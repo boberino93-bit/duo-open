@@ -8,26 +8,44 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / ".swarm" / "role_templates"
 OUT = ROOT / ".swarm" / "generated"
 ROLES = ("PRIMARY", "MANAGER", "RESEARCHER")
+GENERATED_PREFIX = ".swarm/generated/"
 
 
 def git(*args: str) -> str:
     return subprocess.check_output(["git", *args], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).strip()
 
 
-def revision() -> str:
-    try: return git("rev-parse", "HEAD")
-    except Exception: return "UNKNOWN"
+def source_revision() -> str:
+    """Stable fingerprint of canonical role/bootstrap inputs, not the commit containing generated outputs."""
+    hasher = hashlib.sha256()
+    inputs = [
+        ROOT / "AGENT_BOOTSTRAP.json",
+        ROOT / "AUTHORITY_SECURITY_OVERLAY.json",
+        SRC / "role-specs.json",
+        SRC / "role-impact-map.json",
+    ]
+    for path in inputs:
+        if not path.exists():
+            continue
+        hasher.update(str(path.relative_to(ROOT)).encode("utf-8"))
+        hasher.update(b"\0")
+        hasher.update(path.read_bytes())
+        hasher.update(b"\0")
+    return "inputs-sha256:" + hasher.hexdigest()
 
 
 def changed(base: str | None) -> list[str]:
     env = os.environ.get("SWARM_CHANGED_FILES", "").strip()
-    if env: return sorted({x.strip() for x in env.splitlines() if x.strip()})
-    try:
-        spec = f"{base}...HEAD" if base else "HEAD^..HEAD"
-        return sorted({x for x in git("diff", "--name-only", spec).splitlines() if x})
-    except Exception:
-        try: return sorted({x for x in git("ls-files").splitlines() if x})
-        except Exception: return []
+    if env:
+        paths = {x.strip() for x in env.splitlines() if x.strip()}
+    else:
+        try:
+            spec = f"{base}...HEAD" if base else "HEAD^..HEAD"
+            paths = {x for x in git("diff", "--name-only", spec).splitlines() if x}
+        except Exception:
+            try: paths = {x for x in git("ls-files").splitlines() if x}
+            except Exception: paths = set()
+    return sorted(path for path in paths if not path.startswith(GENERATED_PREFIX))
 
 
 def load_json(name: str) -> dict:
@@ -57,7 +75,7 @@ def render(role: str, spec: dict, impact: dict, rev: str, paths: list[str]) -> s
     lines += [f"{i}. {text}" for i, text in enumerate(shared["requirements"], 1)]
     lines += ["", "## Role mission", "", role_spec["mission"], "", "## Role responsibilities", ""]
     lines += [f"{i}. {text}" for i, text in enumerate(role_spec["responsibilities"], 1)]
-    lines += ["", "## Current project-change context", "", f"Generated from revision `{rev}`.", "", "Role-relevant changed paths:"]
+    lines += ["", "## Current project-change context", "", f"Generated from source fingerprint `{rev}`.", "", "Role-relevant changed paths:"]
     lines += [f"- `{p}`" for p in relevant] if relevant else ["- No changed path mapped specifically to this role in the selected range."]
     lines += ["", "Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.", ""]
     return "\n".join(lines)
@@ -68,7 +86,7 @@ def main() -> int:
     ap.add_argument("--base")
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
-    spec, impact, rev, paths = load_json("role-specs.json"), load_json("role-impact-map.json"), revision(), changed(args.base)
+    spec, impact, rev, paths = load_json("role-specs.json"), load_json("role-impact-map.json"), source_revision(), changed(args.base)
     OUT.mkdir(parents=True, exist_ok=True)
     expected: dict[Path, str] = {}
     for role in ROLES: expected[OUT / f"{role}_PROMPT.md"] = render(role, spec, impact, rev, paths)
