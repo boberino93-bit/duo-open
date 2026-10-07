@@ -4,11 +4,12 @@
     "PRIMARY"
   ],
   "changed_files": [
-    ".github/workflows/build-gen10-live-mirror-candidate.yml"
+    "swarm_kernel/AGENT_BOOTSTRAP_OVERLAY.md",
+    "swarm_kernel/VALIDATION_CLAIM_GATE.md"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "eaed3b3e0a3f5fdb1f32a6cf48d58d037b9dba6a12eb393c479208457ce3a340",
-    "PRIMARY_PROMPT.md": "a022663c0e46a64fd2f0ccde82ba8245ed3f73e23810c1c8ab63e787ace67d2e",
+    "MANAGER_PROMPT.md": "a151ca45451f66c712e8a133e71221706d0d55ea9afdfb33a58cf81fbb76e163",
+    "PRIMARY_PROMPT.md": "dcf9b3a85fe122561d8c7b6dd9f0eecbcd4810389fb19a3a19581e8b7fe5bf42",
     "RESEARCHER_PROMPT.md": "2750c7d4b4cc19cd7b4923fafbb018ad77f5d3a87221e6b691d0279eca881558"
   },
   "schema": "duo-open/generated-role-prompts/v1",

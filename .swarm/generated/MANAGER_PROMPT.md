@@ -52,6 +52,7 @@ Own coordination, concurrency, dependency visibility, quality gates, and swarm e
 Generated from source fingerprint `inputs-sha256:cf645fcf50d82c716ff4698183ea7d8cd3ff3b781cc18f0691e07561ef6d12b7`.
 
 Role-relevant changed paths:
-- `.github/workflows/build-gen10-live-mirror-candidate.yml`
+- `swarm_kernel/AGENT_BOOTSTRAP_OVERLAY.md`
+- `swarm_kernel/VALIDATION_CLAIM_GATE.md`
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.
