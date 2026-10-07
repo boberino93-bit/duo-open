@@ -1,0 +1,170 @@
+name: Build Gen10.1 Handoff Guard Candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - build/gen10-1-handoff-guard-20261007
+    paths:
+      - ".github/workflows/build-gen10-1-handoff-guard-candidate.yml"
+      - "tools/apply_gen10_1_handoff_guard.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-gen10-1-handoff-guard-candidate
+  cancel-in-progress: true
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout isolated Gen10.1 candidate branch
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen10-1-handoff-guard-20261007
+          fetch-depth: 0
+
+      - name: Verify baseline and candidate tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'versionCode = 42' app/build.gradle.kts
+          grep -F 'versionName = "5.0.0-beta1-zfold7"' app/build.gradle.kts
+          test -f tools/apply_gen8_anchored_transition.py
+          test -f tools/apply_gen9_predictive_inner_wake.py
+          test -f tools/apply_gen9_guarded_prewake.py
+          test -f tools/apply_gen10_live_mirror_close.py
+          test -f tools/apply_gen10_1_handoff_guard.py
+          grep -F 'GEN7_RUNTIME_REGRESSION_BETA2' tools/apply_gen7_runtime_regression_beta2.py
+
+      - name: Reapply validated Shizuku onboarding predecessor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+
+      - name: Reapply validated Gen7 Beta2 runtime service pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+          grep -F 'versionCode = 43' app/build.gradle.kts
+
+      - name: Reapply validated Gen8 anchored transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen8_anchored_transition.py --repo .
+          grep -F 'versionCode = 44' app/build.gradle.kts
+
+      - name: Reapply validated Gen9 responsiveness overhaul
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen9_predictive_inner_wake.py --repo .
+          grep -F 'versionCode = 45' app/build.gradle.kts
+
+      - name: Reapply validated Gen9.1 guarded prewake
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen9_guarded_prewake.py --repo .
+          grep -F 'versionCode = 46' app/build.gradle.kts
+
+      - name: Apply validated Gen10 live-mirror closing path
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_live_mirror_close.py --repo .
+          grep -F 'versionCode = 47' app/build.gradle.kts
+          grep -F 'GEN10_LIVE_MIRROR_DELEGATED' app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt
+
+      - name: Apply Gen10.1 terminal-handoff guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_1_handoff_guard.py --repo .
+          git diff --check
+          grep -F 'versionCode = 48' app/build.gradle.kts
+          grep -F 'versionName = "5.4.1-gen10-handoff-guard-zfold7"' app/build.gradle.kts
+          grep -F 'GEN10_1_HANDOFF_GUARD' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'native-cover-brightness-reassert' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'activeCover.displayId == Display.DEFAULT_DISPLAY' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Test and build full debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p gen10-1-handoff-guard-failure
+          git diff -- app > gen10-1-handoff-guard-failure/APPLIED-SOURCE.diff || true
+          {
+            echo "candidateBranch=build/gen10-1-handoff-guard-20261007"
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo "status=CI_FAILED_BEFORE_TESTED_ARTIFACT"
+            echo "physicalFold7Validation=NOT_RUN"
+          } > gen10-1-handoff-guard-failure/FAILURE-INFO.txt
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.4.1-gen10-handoff-guard-failure-diagnostics
+          path: gen10-1-handoff-guard-failure/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Package tested Gen10.1 artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen10-1-handoff-guard-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          OUTPUT="gen10-1-handoff-guard-build/DuoOpen-ZFold7-5.4.1-gen10-handoff-guard-debug.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" > gen10-1-handoff-guard-build/APK-SHA256.txt
+          git diff -- app > gen10-1-handoff-guard-build/APPLIED-SOURCE.diff
+          {
+            echo "version=5.4.1-gen10-handoff-guard-zfold7"
+            echo "versionCode=48"
+            echo "candidateBranch=build/gen10-1-handoff-guard-20261007"
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo "baseLineage=Gen7 onboarding -> Gen7 Beta2 -> Gen8 anchor -> Gen9 responsiveness -> Gen9.1 guarded prewake -> Gen10 live mirror -> Gen10.1 handoff guard"
+            echo "change1=live mirror refuses Samsung native/default display 0 before construction"
+            echo "change2=topology is revalidated again before attach and before publish"
+            echo "change3=cover brightness is reasserted once per NATIVE_COVER generation using stable physical cover identity"
+            echo "gen10LiveMirror=PRESERVED"
+            echo "physicalFold7Validation=NOT_RUN"
+            echo "tests=testFullDebugUnitTest"
+            echo "build=assembleFullDebug"
+          } > gen10-1-handoff-guard-build/BUILD-INFO.txt
+
+      - name: Upload tested APK and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.4.1-gen10-handoff-guard
+          path: |
+            gen10-1-handoff-guard-build/DuoOpen-ZFold7-5.4.1-gen10-handoff-guard-debug.apk
+            gen10-1-handoff-guard-build/APK-SHA256.txt
+            gen10-1-handoff-guard-build/BUILD-INFO.txt
+            gen10-1-handoff-guard-build/APPLIED-SOURCE.diff
+          if-no-files-found: error
+          retention-days: 30
