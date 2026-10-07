@@ -4,11 +4,11 @@
     "PRIMARY"
   ],
   "changed_files": [
-    "INTERNAL_SCHEDULER_SERVICE_BINDING.json"
+    "bootstrap/INTERNAL_SCHEDULER_SERVICE.json"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "bac7fdcc3d274131cb4f3cb3453a41c23ea6351b289c4108bca1e62f811ae922",
-    "PRIMARY_PROMPT.md": "3e735d934e52495e43898544d073176d7f120f601c1002007566ebf8b7ccdac4",
+    "MANAGER_PROMPT.md": "c570660f6709aca158de4ee40b3e4b57a0b0fce33246d41a6586464a73d82e3f",
+    "PRIMARY_PROMPT.md": "d7c3df2d9aaab94b134cb2815ab020c93335dca21e5bfaed7b10150d57b9b39c",
     "RESEARCHER_PROMPT.md": "2750c7d4b4cc19cd7b4923fafbb018ad77f5d3a87221e6b691d0279eca881558"
   },
   "schema": "duo-open/generated-role-prompts/v1",
