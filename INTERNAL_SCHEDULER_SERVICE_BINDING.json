@@ -1,0 +1,9 @@
+{
+  "schema": "org-agent-mesh/project-internal-scheduler-binding/v1",
+  "project_id": "duo-open",
+  "repository": {"full_name": "boberino93-bit/duo-open", "id": 1396743140},
+  "canonical_service": {"repository":"boberino93-bit/intercommunicationsenhancements","service_binding":"bootstrap/INTERNAL_SCHEDULER_SERVICE.json","project_binding_registry":"governance/INTERNAL_SPAWN_PROJECT_BINDINGS.json","policy":"governance/INTERNAL_SPAWN_SCHEDULER_POLICY.json","protocol":"protocols/internal_scheduler_service.md"},
+  "delegated_spawn_scope": {"allowed_roles":["research","manager"],"max_workers_per_occurrence":1,"primary_allowed":false,"master_allowed":false,"full_swarm_auto_start_allowed":false},
+  "authority_boundaries": {"spawn_authority_is_not_mutation_authority":true,"spawn_ticket_is_not_session_started":true,"host_start_receipt_required":true,"existing_scheduled_task_state_mutation_prohibited":true,"project_hold_stop_claim_lease_fence_checks_required":true},
+  "activation": {"state":"ACTIVE_BY_EXPLICIT_HUMAN_ROLLOUT","human_rollout_authorization":"2026-10-07"}
+}
