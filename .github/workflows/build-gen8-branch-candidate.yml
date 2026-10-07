@@ -1,0 +1,148 @@
+name: Build Isolated Gen8 Branch Candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build-gen8-branch-candidate.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-isolated-gen8-branch-candidate
+  cancel-in-progress: true
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout isolated Gen8 candidate branch
+        uses: actions/checkout@v4
+        with:
+          ref: gen8-anchored-transition
+          fetch-depth: 0
+
+      - name: Verify candidate ancestry and baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 28842ae4d1c4f907257b24a73012bf5015702f81 HEAD
+          grep -F 'versionCode = 42' app/build.gradle.kts
+          grep -F 'versionName = "5.0.0-beta1-zfold7"' app/build.gradle.kts
+          test -f app/src/full/java/com/duoopen/overlay/Fold7TransitionEpoch.kt
+          test -f tools/apply_gen8_anchored_transition.py
+
+      - name: Reapply validated Shizuku onboarding predecessor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          grep -F 'object Binding : State' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+
+      - name: Reapply validated Gen7 Beta2 runtime service pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+          grep -F 'versionCode = 43' app/build.gradle.kts
+          grep -F 'gen3-live-content' app/src/full/java/com/duoopen/overlay/Fold7CoverVisualHost.kt
+
+      - name: Apply Gen8 anchored-transition invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen8_anchored_transition.py --repo .
+          git diff --check
+          grep -F 'versionCode = 44' app/build.gradle.kts
+          grep -F 'versionName = "5.2.0-gen8-anchored-zfold7"' app/build.gradle.kts
+          grep -F 'private val anchorRotation = display.rotation' app/src/full/java/com/duoopen/overlay/Fold7CoverVisualHost.kt
+          grep -F 'liveFrameEpoch.invalidate()' app/src/full/java/com/duoopen/overlay/Fold7CoverVisualHost.kt
+          grep -F 'liveFrameEpoch.owns(loopEpoch)' app/src/full/java/com/duoopen/overlay/Fold7CoverVisualHost.kt
+          grep -F 'gen8-frame-epoch' app/src/full/java/com/duoopen/overlay/Fold7CoverVisualHost.kt
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Test and build full debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p gen8-failure
+          if [ -d app/build/reports/tests/testFullDebugUnitTest ]; then
+            cp -R app/build/reports/tests/testFullDebugUnitTest gen8-failure/test-report
+          fi
+          if [ -d app/build/test-results/testFullDebugUnitTest ]; then
+            cp -R app/build/test-results/testFullDebugUnitTest gen8-failure/test-results
+          fi
+          git diff > gen8-failure/APPLIED-SOURCE.diff || true
+          {
+            echo "workflowRun=${{ github.run_id }}"
+            echo "launcherHead=${{ github.sha }}"
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo "status=CI_FAILED_BEFORE_TESTED_ARTIFACT"
+            echo "physicalFold7Validation=NOT_RUN"
+          } > gen8-failure/FAILURE-INFO.txt
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.2.0-gen8-anchored-failure-diagnostics
+          path: gen8-failure/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Package tested Gen8 artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen8-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" gen8-build/DuoOpen-ZFold7-5.2.0-gen8-anchored-debug.apk
+          sha256sum gen8-build/DuoOpen-ZFold7-5.2.0-gen8-anchored-debug.apk > gen8-build/APK-SHA256.txt
+          git diff > gen8-build/APPLIED-SOURCE.diff
+          {
+            echo "version=5.2.0-gen8-anchored-zfold7"
+            echo "versionCode=44"
+            echo "launcherHead=${{ github.sha }}"
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo "baseKnownGood=28842ae4d1c4f907257b24a73012bf5015702f81"
+            echo "predecessor=Gen7 Shizuku onboarding V1 + Gen7 Beta2 runtime regression"
+            echo "gen8Invariant1=only the active transition epoch may publish asynchronous live frames"
+            echo "gen8Invariant2=cover fold anchor rotation is frozen for the visual host lifetime"
+            echo "gen8Invariant3=capture display identity and source rotation are frozen before asynchronous shell capture"
+            echo "tests=testFullDebugUnitTest including Fold7TransitionEpochTest"
+            echo "build=assembleFullDebug"
+            echo "physicalFold7Validation=NOT_RUN"
+          } > gen8-build/BUILD-INFO.txt
+
+      - name: Upload tested APK and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.2.0-gen8-anchored
+          path: |
+            gen8-build/DuoOpen-ZFold7-5.2.0-gen8-anchored-debug.apk
+            gen8-build/APK-SHA256.txt
+            gen8-build/BUILD-INFO.txt
+            gen8-build/APPLIED-SOURCE.diff
+          if-no-files-found: error
+          retention-days: 30
