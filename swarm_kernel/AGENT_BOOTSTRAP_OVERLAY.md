@@ -19,5 +19,8 @@ Before actionable swarm work:
 12. On repeated invariant failure, enter project-local `DEGRADED_READ_ONLY`; do not broaden the stop to unrelated projects.
 13. Before handoff/finalization, close or explicitly account for leases, persist recovery/convergence state, and checkpoint the master handoff.
 14. Existing project-local authentication, authorization, security, recovery, hold, schedule, foreign-write, and production-acceptance controls remain authoritative and are never weakened by this overlay.
+15. Load and obey `swarm_kernel/VALIDATION_CLAIM_GATE.md` as a project-local HARD STOP before describing or handing off any implementation artifact. A build/CI success is not a solution claim. If acceptance needed for the claimed end state has not been executed, the artifact remains explicitly unvalidated for that scope and solution-level wording is prohibited.
+
+Before every implementation handoff, reconcile the requested end state against the acceptance tests actually executed. The handoff MUST state its validation class and exact scope. Missing device/runtime validation cannot be converted into confidence language, implied success, or a "potential solution" claim.
 
 Research still produces evidence/proposals only unless separately authorized. Manager still reviews/coordinates within granted scope. Primary/local production acceptance remains project-local and separately authorized where required.
