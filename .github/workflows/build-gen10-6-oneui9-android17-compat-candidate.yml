@@ -1,0 +1,236 @@
+name: Build Gen10.6 One UI 9 Android 17 Compatibility Candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - build/gen10-6-oneui9-android17-compat-20261007
+    paths:
+      - ".github/workflows/build-gen10-6-oneui9-android17-compat-candidate.yml"
+      - "tools/apply_gen10_6_oneui9_android17_compat.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-gen10-6-oneui9-android17-compat-candidate
+  cancel-in-progress: true
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout isolated Gen10.6 candidate branch
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen10-6-oneui9-android17-compat-20261007
+          fetch-depth: 0
+
+      - name: Verify baseline and candidate tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'versionCode = 42' app/build.gradle.kts
+          grep -F 'compileSdk = 35' app/build.gradle.kts
+          grep -F 'targetSdk = 35' app/build.gradle.kts
+          grep -F 'version "8.9.1"' build.gradle.kts
+          test -f tools/apply_gen10_live_mirror_close.py
+          test -f tools/apply_gen10_1_handoff_guard.py
+          test -f tools/apply_gen10_2_secure_fail_open.py
+          test -f tools/apply_gen10_3_hybrid_animation.py
+          test -f tools/apply_gen10_4_io_coalescing.py
+          test -f tools/apply_gen10_5_mirror_warmup_retention.py
+          test -f tools/apply_gen10_6_oneui9_android17_compat.py
+
+      - name: Reapply validated Shizuku onboarding predecessor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+
+      - name: Reapply validated Gen7 Beta2 runtime service pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+          grep -F 'versionCode = 43' app/build.gradle.kts
+
+      - name: Reapply validated Gen8 anchored transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen8_anchored_transition.py --repo .
+          grep -F 'versionCode = 44' app/build.gradle.kts
+
+      - name: Reapply validated Gen9 responsiveness overhaul
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen9_predictive_inner_wake.py --repo .
+          grep -F 'versionCode = 45' app/build.gradle.kts
+
+      - name: Reapply validated Gen9.1 guarded prewake
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen9_guarded_prewake.py --repo .
+          grep -F 'versionCode = 46' app/build.gradle.kts
+
+      - name: Apply validated Gen10 live-mirror closing path
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_live_mirror_close.py --repo .
+          grep -F 'versionCode = 47' app/build.gradle.kts
+
+      - name: Apply validated Gen10.1 terminal-handoff guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_1_handoff_guard.py --repo .
+          grep -F 'versionCode = 48' app/build.gradle.kts
+
+      - name: Apply validated Gen10.2 protected-content fail-open guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_2_secure_fail_open.py --repo .
+          grep -F 'versionCode = 49' app/build.gradle.kts
+          grep -F 'capture-protected-or-black' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+
+      - name: Apply validated Gen10.3 hybrid close animation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_3_hybrid_animation.py --repo .
+          grep -F 'versionCode = 50' app/build.gradle.kts
+
+      - name: Apply validated Gen10.4 IO coalescing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_4_io_coalescing.py --repo .
+          grep -F 'versionCode = 51' app/build.gradle.kts
+
+      - name: Apply validated Gen10.5 mirror warmup retention
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_5_mirror_warmup_retention.py --repo .
+          grep -F 'versionCode = 52' app/build.gradle.kts
+          grep -F 'GEN10_5_MIRROR_WARMUP_RETENTION' app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+
+      - name: Apply Gen10.6 One UI 9 / Android 17 compatibility bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_6_oneui9_android17_compat.py --repo .
+          git diff --check
+          grep -F 'versionCode = 53' app/build.gradle.kts
+          grep -F 'versionName = "5.4.6-gen10-oneui9-android17-compat-zfold7"' app/build.gradle.kts
+          grep -F 'compileSdk = 37' app/build.gradle.kts
+          grep -F 'targetSdk = 35' app/build.gradle.kts
+          ! grep -F 'targetSdk = 37' app/build.gradle.kts
+          grep -F 'version "9.4.0"' build.gradle.kts
+          grep -F 'gradle-9.6.0-bin.zip' gradle/wrapper/gradle-wrapper.properties
+          grep -F 'android.builtInKotlin=false' gradle.properties
+          grep -F 'android.newDsl=false' gradle.properties
+          grep -F 'GEN10_6_ONEUI9_ANDROID17_COMPAT' app/src/full/java/com/duoopen/overlay/Android17Compatibility.kt
+          grep -F 'platform-compat' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'capture-protected-or-black' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Ensure Android 17 SDK is installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37" "build-tools;36.0.0"
+          test -d "$ANDROID_HOME/platforms/android-37"
+
+      - name: Test, lint and build full debug APK against API 37
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest lintFullDebug assembleFullDebug --stacktrace
+
+      - name: Package failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p gen10-6-oneui9-android17-compat-failure
+          git diff > gen10-6-oneui9-android17-compat-failure/APPLIED-SOURCE.diff || true
+          {
+            echo "candidateBranch=build/gen10-6-oneui9-android17-compat-20261007"
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo "status=CI_FAILED_BEFORE_TESTED_ARTIFACT"
+            echo "compileSdk=37"
+            echo "targetSdk=35"
+            echo "agp=9.4.0"
+            echo "gradle=9.6.0"
+            echo "physicalOneUI9Validation=NOT_RUN"
+          } > gen10-6-oneui9-android17-compat-failure/FAILURE-INFO.txt
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.4.6-gen10-oneui9-android17-compat-failure-diagnostics
+          path: gen10-6-oneui9-android17-compat-failure/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Package tested Gen10.6 artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen10-6-oneui9-android17-compat-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          OUTPUT="gen10-6-oneui9-android17-compat-build/DuoOpen-ZFold7-5.4.6-gen10-oneui9-android17-compat-debug.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" > gen10-6-oneui9-android17-compat-build/APK-SHA256.txt
+          git diff > gen10-6-oneui9-android17-compat-build/APPLIED-SOURCE.diff
+          {
+            echo "version=5.4.6-gen10-oneui9-android17-compat-zfold7"
+            echo "versionCode=53"
+            echo "candidateBranch=build/gen10-6-oneui9-android17-compat-20261007"
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo "baseLineage=Gen7 onboarding -> Gen7 Beta2 -> Gen8 anchor -> Gen9 responsiveness -> Gen9.1 guarded prewake -> Gen10 live mirror -> Gen10.1 handoff guard -> Gen10.2 secure fail-open -> Gen10.3 hybrid animation -> Gen10.4 IO coalescing -> Gen10.5 mirror warmup retention -> Gen10.6 One UI 9 Android 17 compatibility"
+            echo "compileSdk=37"
+            echo "targetSdk=35"
+            echo "agp=9.4.0"
+            echo "gradle=9.6.0"
+            echo "java=17"
+            echo "change1=compile against Android 17 API 37 using supported AGP and Gradle"
+            echo "change2=retain targetSdk 35 for first One UI 9 physical migration test"
+            echo "change3=add API/release/build/target platform compatibility telemetry"
+            echo "change4=preserve Gen10.5 runtime behavior and Gen10.2 secure native fail-open"
+            echo "secureFlagBypass=NO"
+            echo "forcedRefreshModeChange=NO"
+            echo "physicalOneUI9Validation=NOT_RUN"
+            echo "tests=testFullDebugUnitTest"
+            echo "lint=lintFullDebug"
+            echo "build=assembleFullDebug"
+          } > gen10-6-oneui9-android17-compat-build/BUILD-INFO.txt
+
+      - name: Upload tested APK and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.4.6-gen10-oneui9-android17-compat
+          path: |
+            gen10-6-oneui9-android17-compat-build/DuoOpen-ZFold7-5.4.6-gen10-oneui9-android17-compat-debug.apk
+            gen10-6-oneui9-android17-compat-build/APK-SHA256.txt
+            gen10-6-oneui9-android17-compat-build/BUILD-INFO.txt
+            gen10-6-oneui9-android17-compat-build/APPLIED-SOURCE.diff
+          if-no-files-found: error
+          retention-days: 30
