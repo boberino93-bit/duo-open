@@ -147,15 +147,15 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Ensure Android 17 SDK is installed
+      - name: Ensure Android 17.0 SDK is installed
         shell: bash
         run: |
           set -euo pipefail
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" --channel=3 "platforms;android-37" "build-tools;37.0.0"
-          test -d "$ANDROID_HOME/platforms/android-37"
-          test -d "$ANDROID_HOME/build-tools/37.0.0"
+          "$SDKMANAGER" "platforms;android-37.0" "build-tools;36.0.0"
+          test -d "$ANDROID_HOME/platforms/android-37.0"
+          test -d "$ANDROID_HOME/build-tools/36.0.0"
 
       - name: Test, lint and build full debug APK against API 37
         shell: bash
@@ -176,6 +176,7 @@ jobs:
             echo "candidateHead=$(git rev-parse HEAD)"
             echo "status=CI_FAILED_BEFORE_TESTED_ARTIFACT"
             echo "compileSdk=37"
+            echo "sdkPackage=platforms;android-37.0"
             echo "targetSdk=35"
             echo "agp=9.4.0"
             echo "gradle=9.6.0"
@@ -209,6 +210,7 @@ jobs:
             echo "candidateHead=$(git rev-parse HEAD)"
             echo "baseLineage=Gen7 onboarding -> Gen7 Beta2 -> Gen8 anchor -> Gen9 responsiveness -> Gen9.1 guarded prewake -> Gen10 live mirror -> Gen10.1 handoff guard -> Gen10.2 secure fail-open -> Gen10.3 hybrid animation -> Gen10.4 IO coalescing -> Gen10.5 mirror warmup retention -> Gen10.6 One UI 9 Android 17 compatibility"
             echo "compileSdk=37"
+            echo "sdkPackage=platforms;android-37.0"
             echo "targetSdk=35"
             echo "agp=9.4.0"
             echo "gradle=9.6.0"
