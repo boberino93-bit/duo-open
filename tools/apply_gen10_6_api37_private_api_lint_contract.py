@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Scope Android 17 BlockedPrivateApi lint suppressions to intentional shell primitives.
+"""Scope Android 17 private-API lint suppressions to intentional shell primitives.
 
 Gen10.6's first real API-37 build compiled, unit-tested, dexed and assembled, but
-AGP 9.4 lint promoted three existing intentional SurfaceControl reflection sites
-to fatal BlockedPrivateApi findings. Duo Open already treats these as privileged
-Shizuku/HiddenApiBypass implementation details; removing them would remove the
-physical display control path rather than make it Android-17 compatible.
+AGP 9.4 lint promoted the existing intentional SurfaceControl reflection sites
+to fatal BlockedPrivateApi/SoonBlockedPrivateApi findings. Duo Open already
+treats these as privileged Shizuku/HiddenApiBypass implementation details;
+removing them would remove the physical display control path rather than make it
+Android-17 compatible.
 
-This patch does NOT disable lint globally and does NOT suppress BlockedPrivateApi
-for the file/class. It documents and suppresses only the three methods that own
-those reflected SurfaceControl calls so every other API-37 lint finding remains
+This patch does NOT disable lint globally and does NOT suppress these checks for
+the file/class. It documents and suppresses only the methods that own the three
+reflected SurfaceControl primitives so every other API-37 lint finding remains
 fatal in CI.
 """
 
@@ -51,6 +52,7 @@ def apply(repo: Path) -> None:
         text,
         """    private fun setPhysicalPowerMode(\n""",
         """    @android.annotation.SuppressLint("BlockedPrivateApi")
+    @android.annotation.SuppressLint("SoonBlockedPrivateApi")
     private fun setPhysicalPowerMode(\n""",
         "setPhysicalPowerMode suppression",
     )
@@ -73,7 +75,7 @@ def verify(repo: Path) -> None:
     required = [
         MARKER,
         '@android.annotation.SuppressLint("BlockedPrivateApi")\n    private fun physicalDisplayToken(',
-        '@android.annotation.SuppressLint("BlockedPrivateApi")\n    private fun setPhysicalPowerMode(',
+        '@android.annotation.SuppressLint("BlockedPrivateApi")\n    @android.annotation.SuppressLint("SoonBlockedPrivateApi")\n    private fun setPhysicalPowerMode(',
         '@android.annotation.SuppressLint("BlockedPrivateApi")\n    private fun setPhysicalBrightness(',
         '"getPhysicalDisplayToken"',
         '"setDisplayPowerMode"',
@@ -85,11 +87,15 @@ def verify(repo: Path) -> None:
 
     if shell.count('@android.annotation.SuppressLint("BlockedPrivateApi")') != 3:
         raise RuntimeError("BlockedPrivateApi suppression must remain exactly method-scoped to three primitives")
+    if shell.count('@android.annotation.SuppressLint("SoonBlockedPrivateApi")') != 1:
+        raise RuntimeError("SoonBlockedPrivateApi suppression must remain singular on physical power mode")
 
     # Never trade a method-scoped contract for global lint suppression.
     forbidden = [
         'disable.add("BlockedPrivateApi")',
         'disable += "BlockedPrivateApi"',
+        'disable.add("SoonBlockedPrivateApi")',
+        'disable += "SoonBlockedPrivateApi"',
         'abortOnError = false',
         'checkReleaseBuilds = false',
     ]
