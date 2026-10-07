@@ -179,7 +179,7 @@ jobs:
             echo "change2=retain Gen10 live mirror beneath animated close and preserve Gen10.2 native secure fail-open"
             echo "change3=forward every authoritative hinge sample to the live mirror host"
             echo "change4=suppress redundant stable topology geometry transactions"
-            echo "change5=reduce closing shader follower tau from 28ms to 20ms without forcing display mode"
+            echo "change5=reduce closing shader follower tau from 22ms to 20ms without forcing display mode"
             echo "secureFlagBypass=NO"
             echo "forcedRefreshModeChange=NO"
             echo "physicalFold7Validation=NOT_RUN"
