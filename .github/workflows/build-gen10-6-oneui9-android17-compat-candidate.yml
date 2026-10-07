@@ -141,8 +141,8 @@ jobs:
           grep -F 'android.newDsl=false' gradle.properties
           grep -F 'GEN10_6_ONEUI9_ANDROID17_COMPAT' app/src/full/java/com/duoopen/overlay/Android17Compatibility.kt
           grep -F 'GEN10_6_API37_PRIVATE_API_LINT_CONTRACT' app/src/full/java/com/duoopen/shell/DuoShellService.kt
-          test "$(grep -F -o '"'"'"BlockedPrivateApi"'"'"' app/src/full/java/com/duoopen/shell/DuoShellService.kt | wc -l)" -eq 3
-          test "$(grep -F -o '"'"'"SoonBlockedPrivateApi"'"'"' app/src/full/java/com/duoopen/shell/DuoShellService.kt | wc -l)" -eq 1
+          test "$(grep -o '"BlockedPrivateApi"' app/src/full/java/com/duoopen/shell/DuoShellService.kt | wc -l)" -eq 3
+          test "$(grep -o '"SoonBlockedPrivateApi"' app/src/full/java/com/duoopen/shell/DuoShellService.kt | wc -l)" -eq 1
           grep -F 'platform-compat' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
           grep -F 'capture-protected-or-black' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
 
