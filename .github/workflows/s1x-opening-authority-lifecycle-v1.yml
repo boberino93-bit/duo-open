@@ -1,0 +1,211 @@
+name: S1X Opening Authority Lifecycle V1
+
+on:
+  push:
+    branches:
+      - build/s1x-opening-authority-lifecycle-20261007
+    paths:
+      - ".github/workflows/s1x-opening-authority-lifecycle-v1.yml"
+      - "tools/apply_s1x_opening_authority_lifecycle_v1.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: s1x-opening-authority-lifecycle-v1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct Beta2 through validated wake stack
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo . --check
+          python3 tools/apply_gen7_runtime_regression_beta2.py --self-test
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+          for x in a b c; do
+            python3 tools/apply_runtime_optimization_cycle_${x}.py --self-test
+            python3 tools/apply_runtime_optimization_cycle_${x}.py --repo . --check
+            python3 tools/apply_runtime_optimization_cycle_${x}.py --repo .
+          done
+          python3 tools/apply_inner_wake_probe_v1.py --self-test
+          python3 tools/apply_inner_wake_probe_v1.py --repo . --check
+          python3 tools/apply_inner_wake_probe_v1.py --repo .
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --self-test
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo . --check
+          python3 tools/prepare_inner_physical_bridge_v1_transformer.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase pre
+          python3 tools/apply_inner_physical_bridge_v1.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_service_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v1_protocol_compat.py --repo . --phase post
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --self-test
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v1_fixups.py --repo .
+          python3 tools/apply_inner_physical_bridge_v2.py --self-test
+          python3 tools/apply_inner_physical_bridge_v2.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v2.py --repo .
+          python3 tools/apply_fold7_display_status_v3.py --self-test
+          python3 tools/apply_fold7_display_status_v3.py --repo . --check
+          python3 tools/apply_fold7_display_status_v3.py --repo .
+          python3 tools/apply_hall_open_latch_v3.py --self-test
+          python3 tools/apply_hall_open_latch_v3.py --repo . --check
+          python3 tools/apply_hall_open_latch_v3.py --repo .
+          python3 tools/apply_inner_physical_bridge_v4.py --self-test
+          python3 tools/apply_inner_physical_bridge_v4.py --repo . --check
+          python3 tools/apply_inner_physical_bridge_v4.py --repo .
+
+      - name: Reapply S1 through S1P
+        run: |
+          set -euo pipefail
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --self-test
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo . --check
+          python3 tools/apply_stabilization_s1_ingress_telemetry.py --repo .
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1b_sf_power_truth.py --repo .
+          python3 tools/apply_stabilization_s1e_logical_layout_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1e_logical_layout_truth.py --repo .
+          python3 tools/apply_stabilization_s1f_layout_map_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1f_layout_map_truth.py --repo .
+          python3 tools/apply_stabilization_s1g_forensic_superset.py --repo . --check
+          python3 tools/apply_stabilization_s1g_forensic_superset.py --repo .
+          python3 tools/apply_stabilization_s1h_visual_forensics.py --self-test
+          python3 tools/apply_stabilization_s1h_visual_forensics.py --repo . --check
+          python3 tools/apply_stabilization_s1h_visual_forensics.py --repo .
+          python3 tools/apply_stabilization_s1i_correlated_forensics_v3.py --self-test
+          python3 tools/apply_stabilization_s1i_correlated_forensics_v3.py --repo . --check
+          python3 tools/apply_stabilization_s1i_correlated_forensics_v3.py --repo .
+          python3 tools/apply_stabilization_s1j_opening_handoff_truth.py --self-test
+          python3 tools/apply_stabilization_s1j_opening_handoff_truth.py --repo . --check
+          python3 tools/apply_stabilization_s1j_opening_handoff_truth.py --repo .
+          python3 tools/apply_opening_remap_handoff_v1.py --self-test
+          python3 tools/apply_opening_remap_handoff_v1.py --repo . --check
+          python3 tools/apply_opening_remap_handoff_v1.py --repo .
+          python3 tools/apply_speculative_inner_prewake_v1_v2.py --self-test
+          python3 tools/apply_speculative_inner_prewake_v1_v2.py --repo . --check
+          python3 tools/apply_speculative_inner_prewake_v1_v2.py --repo .
+          python3 tools/apply_s1n_safe_prewake_v2.py --self-test
+          python3 tools/apply_s1n_safe_prewake_v2.py --repo . --check
+          python3 tools/apply_s1n_safe_prewake_v2.py --repo .
+          python3 tools/apply_s1o_hall_prewake_protocol_v1.py --self-test
+          python3 tools/apply_s1o_hall_prewake_protocol_v1.py --repo . --check
+          python3 tools/apply_s1o_hall_prewake_protocol_v1.py --repo .
+          python3 tools/apply_s1p_hall_optical_proxy_v1.py --self-test
+          python3 tools/apply_s1p_hall_optical_proxy_v1.py --repo . --check
+          python3 tools/apply_s1p_hall_optical_proxy_v1.py --repo .
+
+      - name: Reapply S1Q through S1U
+        run: |
+          set -euo pipefail
+          python3 tools/apply_s1q_animation_coherence_v3.py --self-test
+          python3 tools/apply_s1q_animation_coherence_v3.py --repo . --check
+          python3 tools/apply_s1q_animation_coherence_v3.py --repo .
+          python3 tools/apply_s1r_hinge_reacquisition_v1.py --self-test
+          python3 tools/apply_s1r_hinge_reacquisition_v1.py --repo . --check
+          python3 tools/apply_s1r_hinge_reacquisition_v1.py --repo .
+          python3 tools/apply_s1s_beta_convergence_v2.py --self-test
+          python3 tools/apply_s1s_beta_convergence_v2.py --repo . --check
+          python3 tools/apply_s1s_beta_convergence_v2.py --repo .
+          python3 tools/apply_s1t_cycle_aware_terminal_fence_v1.py --self-test
+          python3 tools/apply_s1t_cycle_aware_terminal_fence_v1.py --repo . --check
+          python3 tools/apply_s1t_cycle_aware_terminal_fence_v1.py --repo .
+          python3 tools/apply_s1u_presentation_hold_window_v1.py --self-test
+          python3 tools/apply_s1u_presentation_hold_window_v1.py --repo . --check
+          python3 tools/apply_s1u_presentation_hold_window_v1.py --repo .
+
+      - name: Reapply S1V frozen-cover opening anchor proof
+        run: |
+          set -euo pipefail
+          python3 tools/apply_s1v_opening_anchor_proof_v2.py --self-test
+          python3 tools/apply_s1v_opening_anchor_proof_v2.py --repo . --check
+          python3 tools/apply_s1v_opening_anchor_proof_v2.py --repo .
+
+      - name: Reapply S1W immutable opening authority
+        run: |
+          set -euo pipefail
+          python3 tools/apply_s1w_opening_anchor_authority_v1.py --self-test
+          python3 tools/apply_s1w_opening_anchor_authority_v1.py --repo . --check
+          python3 tools/apply_s1w_opening_anchor_authority_v1.py --repo .
+
+      - name: Apply S1X semantic authority lifecycle
+        run: |
+          set -euo pipefail
+          python3 tools/apply_s1x_opening_authority_lifecycle_v1.py --self-test
+          python3 tools/apply_s1x_opening_authority_lifecycle_v1.py --repo . --check
+          python3 tools/apply_s1x_opening_authority_lifecycle_v1.py --repo .
+          git diff --check
+          grep -F 'versionCode = 58' app/build.gradle.kts
+          grep -F 'versionName = "5.1.0-beta2-zfold7-s1x-lifecycle"' app/build.gradle.kts
+          grep -F 'S1X_OPENING_AUTHORITY_LIFECYCLE_V1' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'AUTHORITY_EMERGENCY_TIMEOUT' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'AUTHORITY_CANCEL' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'ANCHOR_AUTHORITY_EMERGENCY_HOLD_MS = 30_000L' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'cancelContinuityOpeningAuthority' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'AUTHORITY_LOCKED' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'ANCHOR_PROOF_VISIBLE_HOLD_MS = 900L' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Full regression tests and APK build
+        env:
+          ORG_GRADLE_PROJECT_DUO_DIAGNOSTIC_UPLOAD_URL: ${{ vars.DUO_DIAGNOSTIC_UPLOAD_URL }}
+          ORG_GRADLE_PROJECT_DUO_DIAGNOSTIC_INGEST_KEY: ${{ secrets.DUO_DIAGNOSTIC_INGEST_KEY }}
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package S1X physical anchor-validation APK
+        run: |
+          set -euo pipefail
+          OUT=s1x-opening-authority-lifecycle-v1
+          mkdir -p "$OUT"
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" "$OUT/DuoOpen-ZFold7-5.1.0-beta2-s1x-opening-authority-lifecycle-v1-debug.apk"
+          sha256sum "$OUT/DuoOpen-ZFold7-5.1.0-beta2-s1x-opening-authority-lifecycle-v1-debug.apk" > "$OUT/APK-SHA256.txt"
+          git diff -- app > "$OUT/APPLIED-ANDROID-SOURCE.diff"
+          sha256sum "$OUT/APPLIED-ANDROID-SOURCE.diff" > "$OUT/APPLIED-ANDROID-SOURCE-SHA256.txt"
+          {
+            echo "sourceHead=${GITHUB_SHA}"
+            echo "authorizationBasis=Robert Leonard explicitly authorized continued work after S1W physical validation"
+            echo "phase=S1X_OPENING_AUTHORITY_LIFECYCLE_V1"
+            echo "versionCode=58"
+            echo "versionName=5.1.0-beta2-zfold7-s1x-lifecycle"
+            echo "sourceAuthority=IMMUTABLE_INITIAL_FULL_RES_COVER_FRAME"
+            echo "canonicalAuthority=1080x2520"
+            echo "normalAuthorityRelease=PHYSICAL_OWNER_RELEASE_OR_AUTHORITATIVE_LID_CLOSE"
+            echo "authoritativeReversalSignal=SW_LID_CLOSED_TRUE"
+            echo "emergencyAuthorityWatchdogMs=30000"
+            echo "observedS1WOwnerReleaseMs=approximately_10080"
+            echo "innerRegistration=RIGHT_PANE_984_0_1920_2184"
+            echo "animation=DISABLED_FOR_BINARY_ANCHOR_PROOF"
+            echo "appPresentationEvidence=DRAW+ATTACHED+LAID_OUT+INNER_GEOMETRY+DISPLAY_STATE_ON"
+            echo "visibleHoldMs=900"
+            echo "maxAnchorPresentationWaitMs=6500"
+            echo "productionMerge=NOT_AUTHORIZED"
+            echo "physicalFold7Validation=REQUIRED"
+          } > "$OUT/BUILD-INFO.txt"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-S1X-Opening-Authority-Lifecycle-V1
+          path: s1x-opening-authority-lifecycle-v1/
+          if-no-files-found: error
+          retention-days: 30
