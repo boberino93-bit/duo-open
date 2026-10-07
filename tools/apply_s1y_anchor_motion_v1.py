@@ -19,6 +19,19 @@ def one(text: str, old: str, new: str, label: str) -> str:
 
 def exact_n(text: str, old: str, new: str, expected: int, label: str) -> str:
     count = text.count(old)
+    if label == "release/abort Gen5 cleanup" and expected == 2 and count == 1:
+        # S1V release has a blank line before removeOverlay; abort does not.
+        # Treat them as two explicit terminal shapes rather than weakening the
+        # assertion or silently missing one cleanup path.
+        out = text.replace(old, new, 1)
+        abort_old = old.replace("\n\n        if (surface", "\n        if (surface")
+        abort_new = new.replace("\n\n        if (surface", "\n        if (surface")
+        abort_count = out.count(abort_old)
+        if abort_count != 1:
+            raise RuntimeError(
+                f"{label}: release matched but abort expected exactly one match, found {abort_count}"
+            )
+        return out.replace(abort_old, abort_new, 1)
     if count != expected:
         raise RuntimeError(f"{label}: expected {expected} matches, found {count}")
     return text.replace(old, new, expected)
@@ -90,8 +103,8 @@ def transform_panel(text: str) -> str:
     )
 
     # Now that the Gen5 clock survives handoff, release and cancellation own its
-    # terminal cleanup. These two identical proof cleanup sites are release and
-    # abort; both must stop the virtual clock and clear any frame-rate lease.
+    # terminal cleanup. Release and abort differ only by one blank line; exact_n
+    # requires both shapes to be present and patched.
     cleanup = '''        openingRemapInnerSurfaceReady = false\n\n        if (surface != null) removeOverlay()\n'''
     cleanup_motion = f'''        openingRemapInnerSurfaceReady = false\n        // {MARKER}: proof terminal owns Gen5 cleanup after cross-display motion.\n        stopGen5OpeningClock()\n        openingAnchorMotionLastStage = "inactive"\n\n        if (surface != null) removeOverlay()\n'''
     text = exact_n(text, cleanup, cleanup_motion, 2, "release/abort Gen5 cleanup")
