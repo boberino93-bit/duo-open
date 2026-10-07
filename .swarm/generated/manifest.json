@@ -4,11 +4,11 @@
     "PRIMARY"
   ],
   "changed_files": [
-    ".github/workflows/build-gen8-branch-candidate.yml"
+    ".github/workflows/build-gen9-branch-candidate.yml"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "de232bbb69b5958a7e1c233acc7af626c78c466972d09a1d082b153d71a5434f",
-    "PRIMARY_PROMPT.md": "2d8cc13dc0e0b11864e99dc41b907f56fe94bf0a2c7dbda6605ca55a0f14942f",
+    "MANAGER_PROMPT.md": "f5246d6cb0623eb085eab4e64598a9baed94a9d608a992bce444cac6eff7abf1",
+    "PRIMARY_PROMPT.md": "eb1cc875b82d88ffbf64a09d9498319019d5e565976b0b073d601f0f5fc80e04",
     "RESEARCHER_PROMPT.md": "2750c7d4b4cc19cd7b4923fafbb018ad77f5d3a87221e6b691d0279eca881558"
   },
   "schema": "duo-open/generated-role-prompts/v1",
