@@ -51,8 +51,7 @@ def apply(repo: Path) -> None:
     text = replace_once(
         text,
         """    private fun setPhysicalPowerMode(\n""",
-        """    @android.annotation.SuppressLint("BlockedPrivateApi")
-    @android.annotation.SuppressLint("SoonBlockedPrivateApi")
+        """    @android.annotation.SuppressLint("BlockedPrivateApi", "SoonBlockedPrivateApi")
     private fun setPhysicalPowerMode(\n""",
         "setPhysicalPowerMode suppression",
     )
@@ -75,7 +74,7 @@ def verify(repo: Path) -> None:
     required = [
         MARKER,
         '@android.annotation.SuppressLint("BlockedPrivateApi")\n    private fun physicalDisplayToken(',
-        '@android.annotation.SuppressLint("BlockedPrivateApi")\n    @android.annotation.SuppressLint("SoonBlockedPrivateApi")\n    private fun setPhysicalPowerMode(',
+        '@android.annotation.SuppressLint("BlockedPrivateApi", "SoonBlockedPrivateApi")\n    private fun setPhysicalPowerMode(',
         '@android.annotation.SuppressLint("BlockedPrivateApi")\n    private fun setPhysicalBrightness(',
         '"getPhysicalDisplayToken"',
         '"setDisplayPowerMode"',
@@ -85,9 +84,10 @@ def verify(repo: Path) -> None:
     if missing:
         raise RuntimeError(f"API-37 private-api lint contract verification failed: {missing}")
 
-    if shell.count('@android.annotation.SuppressLint("BlockedPrivateApi")') != 3:
+    # Three method-scoped BlockedPrivateApi entries total: token, power, brightness.
+    if shell.count('"BlockedPrivateApi"') != 3:
         raise RuntimeError("BlockedPrivateApi suppression must remain exactly method-scoped to three primitives")
-    if shell.count('@android.annotation.SuppressLint("SoonBlockedPrivateApi")') != 1:
+    if shell.count('"SoonBlockedPrivateApi"') != 1:
         raise RuntimeError("SoonBlockedPrivateApi suppression must remain singular on physical power mode")
 
     # Never trade a method-scoped contract for global lint suppression.
