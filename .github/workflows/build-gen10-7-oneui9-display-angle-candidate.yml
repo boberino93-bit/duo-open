@@ -1,0 +1,246 @@
+name: Build Gen10.7 One UI 9 Display + Angle Candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - build/gen10-7-oneui9-display-angle-20261007
+    paths:
+      - ".github/workflows/build-gen10-7-oneui9-display-angle-candidate.yml"
+      - "tools/apply_gen10_7_oneui9_display_angle.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-gen10-7-oneui9-display-angle-candidate
+  cancel-in-progress: true
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout isolated Gen10.7 candidate branch
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen10-7-oneui9-display-angle-20261007
+          fetch-depth: 0
+
+      - name: Verify baseline and lineage tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'versionCode = 42' app/build.gradle.kts
+          grep -F 'compileSdk = 35' app/build.gradle.kts
+          grep -F 'targetSdk = 35' app/build.gradle.kts
+          test -f tools/apply_gen10_live_mirror_close.py
+          test -f tools/apply_gen10_1_handoff_guard.py
+          test -f tools/apply_gen10_2_secure_fail_open.py
+          test -f tools/apply_gen10_3_hybrid_animation.py
+          test -f tools/apply_gen10_4_io_coalescing.py
+          test -f tools/apply_gen10_5_mirror_warmup_retention.py
+          test -f tools/apply_gen10_6_oneui9_android17_compat.py
+          test -f tools/apply_gen10_6_api37_private_api_lint_contract.py
+          test -f tools/apply_gen10_7_oneui9_display_angle.py
+
+      - name: Reapply validated Shizuku onboarding predecessor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+
+      - name: Reapply validated Gen7 Beta2 runtime service pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+          grep -F 'versionCode = 43' app/build.gradle.kts
+
+      - name: Reapply validated Gen8 anchored transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen8_anchored_transition.py --repo .
+          grep -F 'versionCode = 44' app/build.gradle.kts
+
+      - name: Reapply validated Gen9 responsiveness overhaul
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen9_predictive_inner_wake.py --repo .
+          grep -F 'versionCode = 45' app/build.gradle.kts
+
+      - name: Reapply validated Gen9.1 guarded prewake
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen9_guarded_prewake.py --repo .
+          grep -F 'versionCode = 46' app/build.gradle.kts
+
+      - name: Apply validated Gen10 live mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_live_mirror_close.py --repo .
+          grep -F 'versionCode = 47' app/build.gradle.kts
+
+      - name: Apply validated Gen10.1 handoff guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_1_handoff_guard.py --repo .
+          grep -F 'versionCode = 48' app/build.gradle.kts
+
+      - name: Apply validated Gen10.2 secure fail-open
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_2_secure_fail_open.py --repo .
+          grep -F 'versionCode = 49' app/build.gradle.kts
+          grep -F 'capture-protected-or-black' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+
+      - name: Apply validated Gen10.3 hybrid animation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_3_hybrid_animation.py --repo .
+          grep -F 'versionCode = 50' app/build.gradle.kts
+
+      - name: Apply validated Gen10.4 IO coalescing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_4_io_coalescing.py --repo .
+          grep -F 'versionCode = 51' app/build.gradle.kts
+
+      - name: Apply validated Gen10.5 mirror warmup retention
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_5_mirror_warmup_retention.py --repo .
+          grep -F 'versionCode = 52' app/build.gradle.kts
+
+      - name: Apply validated Gen10.6 Android 17 compatibility bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_6_oneui9_android17_compat.py --repo .
+          python3 tools/apply_gen10_6_api37_private_api_lint_contract.py --repo .
+          grep -F 'versionCode = 53' app/build.gradle.kts
+          grep -F 'compileSdk = 37' app/build.gradle.kts
+          grep -F 'targetSdk = 35' app/build.gradle.kts
+          grep -F 'GEN10_6_API37_PRIVATE_API_LINT_CONTRACT' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+
+      - name: Apply Gen10.7 One UI 9 display and angle correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_7_oneui9_display_angle.py --repo .
+          git diff --check
+          grep -F 'versionCode = 54' app/build.gradle.kts
+          grep -F 'versionName = "5.4.7-gen10-oneui9-display-angle-zfold7"' app/build.gradle.kts
+          grep -F 'compileSdk = 37' app/build.gradle.kts
+          grep -F 'targetSdk = 35' app/build.gradle.kts
+          ! grep -F 'targetSdk = 37' app/build.gradle.kts
+          grep -F 'android.hardware.display.category.ALL_INCLUDING_DISABLED' app/src/full/java/com/duoopen/overlay/Fold7DisplayInventory.kt
+          grep -F 'GEN10_7_TOPOLOGY_ANGLE_HOLD' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'DEFAULT_COARSE_PUBLIC_MAX_AGE_MS = 160L' app/src/main/java/com/duoopen/fold/Fold7AngleAuthority.kt
+          grep -F 'delayedCoarseShadowCannotReversePreciseMotion' app/src/test/java/com/duoopen/fold/Fold7AngleAuthorityTest.kt
+          grep -F 'capture-protected-or-black' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Ensure Android 17.0 SDK is installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-37.0" "build-tools;36.0.0"
+          test -d "$ANDROID_HOME/platforms/android-37.0"
+          test -d "$ANDROID_HOME/build-tools/36.0.0"
+
+      - name: Test lint and build Gen10.7 against API 37
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest lintFullDebug assembleFullDebug --stacktrace
+
+      - name: Package failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p gen10-7-oneui9-display-angle-failure
+          git diff > gen10-7-oneui9-display-angle-failure/APPLIED-SOURCE.diff || true
+          cp app/build/intermediates/lint_intermediate_text_report/fullDebug/lintReportFullDebug/lint-results-fullDebug.txt gen10-7-oneui9-display-angle-failure/LINT.txt 2>/dev/null || true
+          {
+            echo "candidateBranch=build/gen10-7-oneui9-display-angle-20261007"
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo "status=CI_FAILED_BEFORE_TESTED_ARTIFACT"
+            echo "sourceFieldLog=duoopen-debug-1791409800900.zip"
+            echo "physicalOneUI9Validation=FAILED_GEN10_6_INPUT"
+          } > gen10-7-oneui9-display-angle-failure/FAILURE-INFO.txt
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.4.7-gen10-oneui9-display-angle-failure-diagnostics
+          path: gen10-7-oneui9-display-angle-failure/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Package tested Gen10.7 artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen10-7-oneui9-display-angle-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          OUTPUT="gen10-7-oneui9-display-angle-build/DuoOpen-ZFold7-5.4.7-gen10-oneui9-display-angle-debug.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" > gen10-7-oneui9-display-angle-build/APK-SHA256.txt
+          git diff > gen10-7-oneui9-display-angle-build/APPLIED-SOURCE.diff
+          {
+            echo "version=5.4.7-gen10-oneui9-display-angle-zfold7"
+            echo "versionCode=54"
+            echo "candidateBranch=build/gen10-7-oneui9-display-angle-20261007"
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo "baseLineage=Gen7 onboarding -> Gen7 Beta2 -> Gen8 -> Gen9 -> Gen9.1 -> Gen10 -> Gen10.1 -> Gen10.2 -> Gen10.3 -> Gen10.4 -> Gen10.5 -> Gen10.6 -> Gen10.7"
+            echo "sourceFieldLog=duoopen-debug-1791409800900.zip"
+            echo "confirmedFinding1=One UI 9 shell cover route was ready as logical 1 while app no-argument DisplayManager inventory reported no cover"
+            echo "confirmedFinding2=topology switched to inner default while precise hinge was NaN causing synthetic 180-degree opening handoff"
+            echo "confirmedFinding3=coarse PUBLIC_STANDARD shadows aged 174-1976ms were promoted after precise expiry and caused false reversals"
+            echo "change1=use Android17 ALL_INCLUDING_DISABLED display inventory with public fallback for Fold7 topology and Gen3 cover host discovery"
+            echo "change2=reuse the Display object from expanded inventory instead of re-fetching hidden logical id with getDisplay"
+            echo "change3=hold last real/endpoint hinge geometry across topology callbacks when current sensor authority is unknown"
+            echo "change4=limit coarse public fallback promotion to 160ms while retaining 3000ms budget for non-coarse public sources"
+            echo "compileSdk=37"
+            echo "targetSdk=35"
+            echo "secureFlagBypass=NO"
+            echo "globalLintDisable=NO"
+            echo "physicalGen10_7Validation=NOT_RUN"
+            echo "tests=testFullDebugUnitTest"
+            echo "lint=lintFullDebug"
+            echo "build=assembleFullDebug"
+          } > gen10-7-oneui9-display-angle-build/BUILD-INFO.txt
+
+      - name: Upload tested APK and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.4.7-gen10-oneui9-display-angle
+          path: |
+            gen10-7-oneui9-display-angle-build/DuoOpen-ZFold7-5.4.7-gen10-oneui9-display-angle-debug.apk
+            gen10-7-oneui9-display-angle-build/APK-SHA256.txt
+            gen10-7-oneui9-display-angle-build/BUILD-INFO.txt
+            gen10-7-oneui9-display-angle-build/APPLIED-SOURCE.diff
+          if-no-files-found: error
+          retention-days: 30
