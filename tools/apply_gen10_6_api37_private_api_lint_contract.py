@@ -75,9 +75,9 @@ def verify(repo: Path) -> None:
         '@android.annotation.SuppressLint("BlockedPrivateApi")\n    private fun physicalDisplayToken(',
         '@android.annotation.SuppressLint("BlockedPrivateApi")\n    private fun setPhysicalPowerMode(',
         '@android.annotation.SuppressLint("BlockedPrivateApi")\n    private fun setPhysicalBrightness(',
-        'getDeclaredMethod(\n                        "getPhysicalDisplayToken"',
-        'getDeclaredMethod(\n                    "setDisplayPowerMode"',
-        'getDeclaredMethod(\n                        "setDisplayBrightness"',
+        '"getPhysicalDisplayToken"',
+        '"setDisplayPowerMode"',
+        '"setDisplayBrightness"',
     ]
     missing = [needle for needle in required if needle not in shell]
     if missing:
