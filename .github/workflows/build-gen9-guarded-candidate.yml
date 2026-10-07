@@ -1,0 +1,156 @@
+name: Build Isolated Gen9.1 Guarded Candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build-gen9-guarded-candidate.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-gen9-guarded-candidate
+  cancel-in-progress: true
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout isolated Gen9 candidate branch
+        uses: actions/checkout@v4
+        with:
+          ref: gen9-predictive-inner-wake
+          fetch-depth: 0
+
+      - name: Verify baseline and candidate tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'versionCode = 42' app/build.gradle.kts
+          grep -F 'versionName = "5.0.0-beta1-zfold7"' app/build.gradle.kts
+          test -f tools/apply_gen8_anchored_transition.py
+          test -f tools/apply_gen9_predictive_inner_wake.py
+          test -f tools/apply_gen9_guarded_prewake.py
+          grep -F 'GEN7_RUNTIME_REGRESSION_BETA2' tools/apply_gen7_runtime_regression_beta2.py
+
+      - name: Reapply validated Shizuku onboarding predecessor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+
+      - name: Reapply validated Gen7 Beta2 runtime service pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+          grep -F 'versionCode = 43' app/build.gradle.kts
+
+      - name: Reapply validated Gen8 anchored transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen8_anchored_transition.py --repo .
+          grep -F 'versionCode = 44' app/build.gradle.kts
+          grep -F 'liveFrameEpoch.owns(loopEpoch)' app/src/full/java/com/duoopen/overlay/Fold7CoverVisualHost.kt
+
+      - name: Apply Gen9 responsiveness overhaul
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen9_predictive_inner_wake.py --repo .
+          grep -F 'versionCode = 45' app/build.gradle.kts
+          grep -F 'INNER_PREWAKE_V1 = 20' app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+
+      - name: Apply Gen9.1 guarded prewake
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen9_guarded_prewake.py --repo .
+          git diff --check
+          grep -F 'versionCode = 46' app/build.gradle.kts
+          grep -F 'versionName = "5.3.1-gen9-guarded-zfold7"' app/build.gradle.kts
+          grep -F 'previousId == corroboratedClosedStateId' app/src/full/java/com/duoopen/overlay/Fold7DeviceStateObserver.kt
+          grep -F 'preOpeningHintArmed' app/src/full/java/com/duoopen/overlay/Fold7DeviceStateObserver.kt
+          grep -F 'prewakeLeadMs' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'liveFrameEpoch.owns(loopEpoch)' app/src/full/java/com/duoopen/overlay/Fold7CoverVisualHost.kt
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Test and build full debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p gen9-guarded-failure
+          git diff -- app > gen9-guarded-failure/APPLIED-SOURCE.diff || true
+          {
+            echo "candidateBranch=gen9-predictive-inner-wake"
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo "status=CI_FAILED_BEFORE_TESTED_ARTIFACT"
+            echo "physicalFold7Validation=NOT_RUN"
+          } > gen9-guarded-failure/FAILURE-INFO.txt
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.3.1-gen9-guarded-failure-diagnostics
+          path: gen9-guarded-failure/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Package tested Gen9.1 artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen9-guarded-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          OUTPUT="gen9-guarded-build/DuoOpen-ZFold7-5.3.1-gen9-guarded-debug.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" > gen9-guarded-build/APK-SHA256.txt
+          git diff -- app > gen9-guarded-build/APPLIED-SOURCE.diff
+          {
+            echo "version=5.3.1-gen9-guarded-zfold7"
+            echo "versionCode=46"
+            echo "candidateBranch=gen9-predictive-inner-wake"
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo "baseLineage=Gen7 onboarding -> Gen7 Beta2 -> Gen8 anchor -> Gen9 responsiveness -> Gen9.1 guarded prewake"
+            echo "change1=prewake only on first departure from corroborated fully-closed rest state"
+            echo "change2=prewake cannot fire again until real opening then independently corroborated re-close"
+            echo "change3=logs measured prewake completion lead before authoritative opening edge"
+            echo "change4=Gen9 responsiveness parameters unchanged"
+            echo "gen8OwnershipInvariant=PRESERVED"
+            echo "physicalFold7Validation=NOT_RUN"
+            echo "tests=testFullDebugUnitTest"
+            echo "build=assembleFullDebug"
+          } > gen9-guarded-build/BUILD-INFO.txt
+
+      - name: Upload tested APK and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.3.1-gen9-guarded
+          path: |
+            gen9-guarded-build/DuoOpen-ZFold7-5.3.1-gen9-guarded-debug.apk
+            gen9-guarded-build/APK-SHA256.txt
+            gen9-guarded-build/BUILD-INFO.txt
+            gen9-guarded-build/APPLIED-SOURCE.diff
+          if-no-files-found: error
+          retention-days: 30
