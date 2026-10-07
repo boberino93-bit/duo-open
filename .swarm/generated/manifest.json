@@ -4,11 +4,11 @@
     "PRIMARY"
   ],
   "changed_files": [
-    ".github/workflows/build-gen9-guarded-candidate.yml"
+    "INTERNAL_SCHEDULER_SERVICE_BINDING.json"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "d7cec17f5c332b5b490fe5ec4d7b8ec06b7b3184debf12cbe80398330b6112f2",
-    "PRIMARY_PROMPT.md": "3791d6ff9227ab0ff186248d2d84512c8dd60f2a426358334811cbfcdcd99c46",
+    "MANAGER_PROMPT.md": "bac7fdcc3d274131cb4f3cb3453a41c23ea6351b289c4108bca1e62f811ae922",
+    "PRIMARY_PROMPT.md": "3e735d934e52495e43898544d073176d7f120f601c1002007566ebf8b7ccdac4",
     "RESEARCHER_PROMPT.md": "2750c7d4b4cc19cd7b4923fafbb018ad77f5d3a87221e6b691d0279eca881558"
   },
   "schema": "duo-open/generated-role-prompts/v1",
