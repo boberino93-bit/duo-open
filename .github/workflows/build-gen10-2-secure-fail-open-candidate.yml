@@ -1,0 +1,181 @@
+name: Build Gen10.2 Secure Fail-Open Candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - build/gen10-2-secure-fail-open-20261007
+    paths:
+      - ".github/workflows/build-gen10-2-secure-fail-open-candidate.yml"
+      - "tools/apply_gen10_2_secure_fail_open.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-gen10-2-secure-fail-open-candidate
+  cancel-in-progress: true
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout isolated Gen10.2 candidate branch
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen10-2-secure-fail-open-20261007
+          fetch-depth: 0
+
+      - name: Verify baseline and candidate tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'versionCode = 42' app/build.gradle.kts
+          grep -F 'versionName = "5.0.0-beta1-zfold7"' app/build.gradle.kts
+          test -f tools/apply_gen8_anchored_transition.py
+          test -f tools/apply_gen9_predictive_inner_wake.py
+          test -f tools/apply_gen9_guarded_prewake.py
+          test -f tools/apply_gen10_live_mirror_close.py
+          test -f tools/apply_gen10_1_handoff_guard.py
+          test -f tools/apply_gen10_2_secure_fail_open.py
+          grep -F 'GEN7_RUNTIME_REGRESSION_BETA2' tools/apply_gen7_runtime_regression_beta2.py
+
+      - name: Reapply validated Shizuku onboarding predecessor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+
+      - name: Reapply validated Gen7 Beta2 runtime service pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+          grep -F 'versionCode = 43' app/build.gradle.kts
+
+      - name: Reapply validated Gen8 anchored transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen8_anchored_transition.py --repo .
+          grep -F 'versionCode = 44' app/build.gradle.kts
+
+      - name: Reapply validated Gen9 responsiveness overhaul
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen9_predictive_inner_wake.py --repo .
+          grep -F 'versionCode = 45' app/build.gradle.kts
+
+      - name: Reapply validated Gen9.1 guarded prewake
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen9_guarded_prewake.py --repo .
+          grep -F 'versionCode = 46' app/build.gradle.kts
+
+      - name: Apply validated Gen10 live-mirror closing path
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_live_mirror_close.py --repo .
+          grep -F 'versionCode = 47' app/build.gradle.kts
+          grep -F 'GEN10_LIVE_MIRROR_DELEGATED' app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt
+
+      - name: Apply Gen10.1 terminal-handoff guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_1_handoff_guard.py --repo .
+          grep -F 'versionCode = 48' app/build.gradle.kts
+          grep -F 'GEN10_1_HANDOFF_GUARD' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+
+      - name: Apply Gen10.2 protected-content fail-open guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen10_2_secure_fail_open.py --repo .
+          git diff --check
+          grep -F 'versionCode = 49' app/build.gradle.kts
+          grep -F 'versionName = "5.4.2-gen10-secure-fail-open-zfold7"' app/build.gradle.kts
+          grep -F 'GEN10_2_SECURE_FAIL_OPEN' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'GEN10_2_SECURE_FAIL_OPEN' app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+          grep -F 'capture-protected-or-black' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'Protected/uncapturable content: native display passthrough.' app/src/full/java/com/duoopen/overlay/DisplayMirrorHost.kt
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Test and build full debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Package failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p gen10-2-secure-fail-open-failure
+          git diff -- app > gen10-2-secure-fail-open-failure/APPLIED-SOURCE.diff || true
+          {
+            echo "candidateBranch=build/gen10-2-secure-fail-open-20261007"
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo "status=CI_FAILED_BEFORE_TESTED_ARTIFACT"
+            echo "physicalFold7Validation=NOT_RUN"
+          } > gen10-2-secure-fail-open-failure/FAILURE-INFO.txt
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.4.2-gen10-secure-fail-open-failure-diagnostics
+          path: gen10-2-secure-fail-open-failure/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Package tested Gen10.2 artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen10-2-secure-fail-open-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          OUTPUT="gen10-2-secure-fail-open-build/DuoOpen-ZFold7-5.4.2-gen10-secure-fail-open-debug.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" > gen10-2-secure-fail-open-build/APK-SHA256.txt
+          git diff -- app > gen10-2-secure-fail-open-build/APPLIED-SOURCE.diff
+          {
+            echo "version=5.4.2-gen10-secure-fail-open-zfold7"
+            echo "versionCode=49"
+            echo "candidateBranch=build/gen10-2-secure-fail-open-20261007"
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo "baseLineage=Gen7 onboarding -> Gen7 Beta2 -> Gen8 anchor -> Gen9 responsiveness -> Gen9.1 guarded prewake -> Gen10 live mirror -> Gen10.1 handoff guard -> Gen10.2 secure fail-open"
+            echo "change1=exact-cycle Shizuku continuity prime rejects protected/mostly-black captures"
+            echo "change2=live SurfaceControl mirror requires a fresh valid current-cycle capture proof"
+            echo "change3=missing proof releases Duo mirror pixels and leaves transparent native passthrough"
+            echo "change4=capture proof retries are bounded to 8 x 25ms while host remains transparent"
+            echo "secureFlagBypass=NO"
+            echo "physicalFold7Validation=NOT_RUN"
+            echo "tests=testFullDebugUnitTest"
+            echo "build=assembleFullDebug"
+          } > gen10-2-secure-fail-open-build/BUILD-INFO.txt
+
+      - name: Upload tested APK and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.4.2-gen10-secure-fail-open
+          path: |
+            gen10-2-secure-fail-open-build/DuoOpen-ZFold7-5.4.2-gen10-secure-fail-open-debug.apk
+            gen10-2-secure-fail-open-build/APK-SHA256.txt
+            gen10-2-secure-fail-open-build/BUILD-INFO.txt
+            gen10-2-secure-fail-open-build/APPLIED-SOURCE.diff
+          if-no-files-found: error
+          retention-days: 30
