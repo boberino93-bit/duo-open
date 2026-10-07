@@ -4,15 +4,11 @@
     "PRIMARY"
   ],
   "changed_files": [
-    "SWARM_LAUNCH_KERNEL_V1.md",
-    "swarm_kernel/AGENT_BOOTSTRAP_OVERLAY.md",
-    "swarm_kernel/__init__.py",
-    "swarm_kernel/kernel.py",
-    "swarm_kernel/project.json"
+    ".github/workflows/build-gen8-branch-candidate.yml"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "de99fe6998e2d845f74484b806a4fef841fd5e0c1f97594bd725073de7e24d80",
-    "PRIMARY_PROMPT.md": "98857230956051a20d2b70bb5e39e6c68e1d7bc55d61b14ce1ccec5eef099831",
+    "MANAGER_PROMPT.md": "de232bbb69b5958a7e1c233acc7af626c78c466972d09a1d082b153d71a5434f",
+    "PRIMARY_PROMPT.md": "2d8cc13dc0e0b11864e99dc41b907f56fe94bf0a2c7dbda6605ca55a0f14942f",
     "RESEARCHER_PROMPT.md": "2750c7d4b4cc19cd7b4923fafbb018ad77f5d3a87221e6b691d0279eca881558"
   },
   "schema": "duo-open/generated-role-prompts/v1",

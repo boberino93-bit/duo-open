@@ -52,10 +52,6 @@ Own coordination, concurrency, dependency visibility, quality gates, and swarm e
 Generated from source fingerprint `inputs-sha256:cf645fcf50d82c716ff4698183ea7d8cd3ff3b781cc18f0691e07561ef6d12b7`.
 
 Role-relevant changed paths:
-- `SWARM_LAUNCH_KERNEL_V1.md`
-- `swarm_kernel/AGENT_BOOTSTRAP_OVERLAY.md`
-- `swarm_kernel/__init__.py`
-- `swarm_kernel/kernel.py`
-- `swarm_kernel/project.json`
+- `.github/workflows/build-gen8-branch-candidate.yml`
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.
