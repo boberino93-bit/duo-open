@@ -1,0 +1,10 @@
+{
+  "schema":"org-agent-mesh/bootstrap-service-binding/v1",
+  "service_id":"internal-spawn-scheduler",
+  "status":"ACTIVE_BY_EXPLICIT_HUMAN_ROLLOUT",
+  "project":{"project_id":"duo-open","repository":"boberino93-bit/duo-open","repository_id":1396743140},
+  "canonical":{"repository":"boberino93-bit/intercommunicationsenhancements","service_binding":"bootstrap/INTERNAL_SCHEDULER_SERVICE.json","policy":"governance/INTERNAL_SPAWN_SCHEDULER_POLICY.json","project_binding_registry":"governance/INTERNAL_SPAWN_PROJECT_BINDINGS.json","protocol":"protocols/internal_scheduler_service.md"},
+  "local_binding":"INTERNAL_SCHEDULER_SERVICE_BINDING.json",
+  "allowed_roles":["research","manager"],
+  "invariants":{"primary_spawn_prohibited":true,"master_spawn_prohibited":true,"full_swarm_auto_start_prohibited":true,"spawn_authority_is_not_mutation_authority":true,"spawn_ticket_is_not_session_started":true,"host_start_receipt_required":true,"existing_scheduled_task_state_mutation_prohibited":true}
+}
