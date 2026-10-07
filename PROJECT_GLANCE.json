@@ -1,0 +1,12 @@
+{
+  "schema":"org-agent-mesh/project-glance/v1",
+  "project_id":"duo-open",
+  "repository":"boberino93-bit/duo-open",
+  "observed_at_utc":"2026-10-07T13:10:00Z",
+  "status":"UNKNOWN",
+  "current_focus":"Galaxy Z Fold7 dual-display, continuity, mirroring, hinge/display-state and presentation engineering; exact live lane remains AgentBus-derived.",
+  "blockers":["Live worker/role state is not yet materialized into PROJECT_GLANCE.json from the current AgentBus handoff."],
+  "next_action":"On the next bounded Duo worker/material transition, refresh this snapshot from current AgentBus accepted state rather than repository activity alone.",
+  "last_material_change":"Scheduler-service binding is present; repository role prompts were regenerated, but repository activity alone is not treated as live execution evidence.",
+  "evidence_refs":["AGENT_CONTEXT_REFERENCE.md","bootstrap/INTERNAL_SCHEDULER_SERVICE.json","commit:7fb9c1a5a1087ab84f3075e70aa1bf40b16e1368"]
+}
