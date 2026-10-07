@@ -218,16 +218,14 @@ def apply(repo: Path) -> None:
     )
     coordinator.write_text(text)
 
-    # Reduce only the close shader's follower latency. This does not request a
-    # display mode switch and therefore cannot introduce a non-seamless 60/120
-    # Hz transition. The field trace showed 60 Hz remaining active even after a
-    # seamless-only 120 Hz request, so mode forcing is intentionally deferred.
+    # Gen9 already lowered the close follower to 22ms. Trim it to 20ms only;
+    # do not force a 60/120Hz mode switch in the middle of the fold.
     host = repo / "app/src/full/java/com/duoopen/overlay/Fold7CoverVisualHost.kt"
     text = host.read_text()
     text = replace_once(
         text,
         '''        const val CLOSING_TAU_S =
-            0.028f
+            0.022f
 ''',
         '''        // GEN10_3_HYBRID_ANIMATION: lower close-follow latency at 60 Hz.
         const val CLOSING_TAU_S =
