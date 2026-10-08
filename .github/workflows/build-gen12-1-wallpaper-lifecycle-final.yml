@@ -1,0 +1,319 @@
+name: Build Gen12.1 Wallpaper Lifecycle Final Candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - build/gen12-1-wallpaper-lifecycle-20261008
+    paths:
+      - ".github/workflows/build-gen12-1-wallpaper-lifecycle-final.yml"
+      - "tools/apply_gen12_1_wallpaper_lifecycle.py"
+      - "tools/apply_gen12_1_wallpaper_metadata_receipt.py"
+      - "tools/apply_gen12_1_wallpaper_ui_io.py"
+      - "tools/gen12_1_engineering_decision_log.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-gen12-1-wallpaper-lifecycle
+  cancel-in-progress: true
+
+jobs:
+  test-build-compare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Gen12.1 candidate
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen12-1-wallpaper-lifecycle-20261008
+          fetch-depth: 0
+
+      - name: Checkout exact Gen12 comparison baseline
+        uses: actions/checkout@v4
+        with:
+          ref: ada974eb9a9bebb19fa0a669278fa250889d976a
+          path: baseline
+          fetch-depth: 0
+
+      - name: Enforce post-lineage overlay-only committed delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=ada974eb9a9bebb19fa0a669278fa250889d976a
+          mapfile -t changed < <(git diff --name-only "$BASE"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          for path in "${changed[@]}"; do
+            case "$path" in
+              tools/apply_gen12_1_wallpaper_lifecycle.py|\
+              tools/apply_gen12_1_wallpaper_metadata_receipt.py|\
+              tools/apply_gen12_1_wallpaper_ui_io.py|\
+              tools/gen12_1_engineering_decision_log.md|\
+              .github/workflows/build-gen12-1-wallpaper-lifecycle.yml|\
+              .github/workflows/build-gen12-1-wallpaper-lifecycle-final.yml)
+                ;;
+              *)
+                echo "Unexpected committed change outside Gen12.1 overlay packaging: $path" >&2
+                exit 1
+                ;;
+            esac
+          done
+
+      - name: Reconstruct exact Gen12 lineage in candidate and baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          apply_gen12() {
+            local repo="$1"
+            python3 "$repo/service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py" "$repo"
+            python3 "$repo/tools/apply_gen7_runtime_regression_beta2.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen8_anchored_transition.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen9_predictive_inner_wake.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen9_guarded_prewake.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_live_mirror_close.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_1_handoff_guard.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_2_secure_fail_open.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_3_hybrid_animation.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_4_io_coalescing.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_5_mirror_warmup_retention.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_6_oneui9_android17_compat.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_6_api37_private_api_lint_contract.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_7_oneui9_display_angle.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen11_product_ui.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen12_route_lane_resilience.py" --repo "$repo"
+          }
+          apply_gen12 "$GITHUB_WORKSPACE/baseline"
+          apply_gen12 "$GITHUB_WORKSPACE"
+          grep -F 'versionCode = 56' baseline/app/build.gradle.kts
+          grep -F 'versionCode = 56' app/build.gradle.kts
+          grep -F 'GEN12_ROUTE_LANE_RESILIENCE' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'GEN11_PRODUCT_UI' app/src/main/java/com/duoopen/ui/HomePreview.kt
+          grep -F 'GEN10_7_TOPOLOGY_ANGLE_HOLD' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'capture-protected-or-black' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+
+      - name: Apply and self-verify Gen12.1 wallpaper lifecycle hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen12_1_wallpaper_lifecycle.py --repo .
+          python3 tools/apply_gen12_1_wallpaper_metadata_receipt.py --repo .
+          python3 tools/apply_gen12_1_wallpaper_ui_io.py --repo .
+          git diff --check
+          grep -F 'versionCode = 57' app/build.gradle.kts
+          grep -F 'versionName = "5.6.1-gen12-1-wallpaper-lifecycle-zfold7"' app/build.gradle.kts
+          grep -F 'compileSdk = 37' app/build.gradle.kts
+          grep -F 'targetSdk = 35' app/build.gradle.kts
+          ! grep -F 'targetSdk = 37' app/build.gradle.kts
+          grep -F 'GEN12_1_WALLPAPER_LIFECYCLE' app/src/main/java/com/duoopen/wallpaper/WallpaperImage.kt
+          grep -F 'AtomicFile' app/src/main/java/com/duoopen/wallpaper/WallpaperImage.kt
+          grep -F 'payload-commit-ok' app/src/main/java/com/duoopen/wallpaper/WallpaperImage.kt
+          ! grep -F 'renameTo(' app/src/main/java/com/duoopen/wallpaper/WallpaperImage.kt
+          grep -F 'GEN12_1_WALLPAPER_METADATA_RECEIPT' app/src/main/java/com/duoopen/settings/DuoSettings.kt
+          grep -F '.commit()' app/src/main/java/com/duoopen/settings/DuoSettings.kt
+          grep -F 'GEN12_1_WALLPAPER_SERVICE_DIAGNOSTICS' app/src/main/java/com/duoopen/wallpaper/DuoWallpaperService.kt
+          grep -F 'GEN12_1_EXIT_FORENSICS' app/src/main/java/com/duoopen/DuoApplication.kt
+          grep -F 'GEN12_1_WALLPAPER_CONFLICT_WARNING' app/src/main/java/com/duoopen/ui/ControlSheet.kt
+          grep -F 'GEN12_1_WALLPAPER_ACTIVE_WARNING' app/src/main/java/com/duoopen/ui/HomePreview.kt
+          grep -F 'GEN12_1_WALLPAPER_RESET_IO' app/src/main/java/com/duoopen/ui/DuoApp.kt
+          grep -F 'twoReplacementsSurviveMemoryAndSettingsRehydrate' app/src/androidTest/java/com/duoopen/wallpaper/WallpaperImagePersistenceTest.kt
+          grep -F 'corruptPersistedPayloadFailsSafeAndIsQuarantined' app/src/androidTest/java/com/duoopen/wallpaper/WallpaperImagePersistenceTest.kt
+
+      - name: Compare protected architecture to Gen12
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen12-1-compare
+          diff -qr baseline/app/src/full/java app/src/full/java > gen12-1-compare/full-runtime.diff || true
+          test ! -s gen12-1-compare/full-runtime.diff
+          cmp baseline/app/src/main/AndroidManifest.xml app/src/main/AndroidManifest.xml
+          cmp baseline/app/src/full/AndroidManifest.xml app/src/full/AndroidManifest.xml
+          diff -qr baseline/app/src/main/res app/src/main/res > gen12-1-compare/resources.diff || true
+          test ! -s gen12-1-compare/resources.diff
+          grep -F 'GEN12_ROUTE_LANE_RESILIENCE' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'GEN10_7_TOPOLOGY_ANGLE_HOLD' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'capture-protected-or-black' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'const val MAX_TILT = 60f' app/src/main/java/com/duoopen/fold/DuoShader.kt
+          grep -F 'setFilterMode(BitmapShader.FILTER_MODE_LINEAR)' app/src/full/java/com/duoopen/overlay/FoldOverlayView.kt
+
+          for path in \
+            app/src/main/java/com/duoopen/settings/DuoSettings.kt \
+            app/src/main/java/com/duoopen/wallpaper/WallpaperImage.kt \
+            app/src/main/java/com/duoopen/wallpaper/DuoWallpaperService.kt \
+            app/src/main/java/com/duoopen/DuoApplication.kt \
+            app/src/main/java/com/duoopen/ui/ControlSheet.kt \
+            app/src/main/java/com/duoopen/ui/HomePreview.kt \
+            app/src/main/java/com/duoopen/ui/DuoApp.kt; do
+            mkdir -p "gen12-1-compare/$(dirname "$path")"
+            diff -u "baseline/$path" "$path" > "gen12-1-compare/$path.diff" || true
+            test -s "gen12-1-compare/$path.diff"
+          done
+
+          (
+            cd baseline
+            find app/src/main/java -type f \
+              ! -path 'app/src/main/java/com/duoopen/settings/DuoSettings.kt' \
+              ! -path 'app/src/main/java/com/duoopen/wallpaper/WallpaperImage.kt' \
+              ! -path 'app/src/main/java/com/duoopen/wallpaper/DuoWallpaperService.kt' \
+              ! -path 'app/src/main/java/com/duoopen/DuoApplication.kt' \
+              ! -path 'app/src/main/java/com/duoopen/ui/ControlSheet.kt' \
+              ! -path 'app/src/main/java/com/duoopen/ui/HomePreview.kt' \
+              ! -path 'app/src/main/java/com/duoopen/ui/DuoApp.kt' \
+              -print0 | sort -z | xargs -0 sha256sum
+          ) > gen12-1-compare/baseline-main-protected.sha256
+          (
+            find app/src/main/java -type f \
+              ! -path 'app/src/main/java/com/duoopen/settings/DuoSettings.kt' \
+              ! -path 'app/src/main/java/com/duoopen/wallpaper/WallpaperImage.kt' \
+              ! -path 'app/src/main/java/com/duoopen/wallpaper/DuoWallpaperService.kt' \
+              ! -path 'app/src/main/java/com/duoopen/DuoApplication.kt' \
+              ! -path 'app/src/main/java/com/duoopen/ui/ControlSheet.kt' \
+              ! -path 'app/src/main/java/com/duoopen/ui/HomePreview.kt' \
+              ! -path 'app/src/main/java/com/duoopen/ui/DuoApp.kt' \
+              -print0 | sort -z | xargs -0 sha256sum
+          ) > gen12-1-compare/candidate-main-protected.sha256
+          diff -u gen12-1-compare/baseline-main-protected.sha256 gen12-1-compare/candidate-main-protected.sha256 > gen12-1-compare/main-protected.diff || true
+          test ! -s gen12-1-compare/main-protected.diff
+
+          {
+            echo 'comparisonBaseline=Gen12 ada974eb9a9bebb19fa0a669278fa250889d976a'
+            echo 'fullFoldRuntimeParity=PASS'
+            echo 'manifestParity=PASS'
+            echo 'resourceParity=PASS'
+            echo 'protectedMainRuntimeParity=PASS'
+            echo 'intendedMainMutations=DuoSettings, WallpaperImage, DuoWallpaperService, DuoApplication, ControlSheet, HomePreview, DuoApp'
+            echo 'newTests=WallpaperImageSizingTest + WallpaperImagePersistenceTest'
+            echo 'gen12RouteLaneMarker=PRESENT'
+            echo 'secureFailOpenMarker=PRESENT'
+            echo 'gen10_7AngleHoldMarker=PRESENT'
+            echo 'rendererMaxTilt60=PRESENT'
+            echo 'rendererLinearFilter=PRESENT'
+          } > gen12-1-compare/ARCHITECTURE-COMPARE.txt
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Ensure Android 17 SDK is installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-37.0" "build-tools;36.0.0"
+          test -d "$ANDROID_HOME/platforms/android-37.0"
+
+      - name: Run unit tests lint and assemble
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest lintFullDebug assembleFullDebug --stacktrace
+
+      - name: Enable KVM access
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run Android lifecycle and UI instrumentation tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: ./gradlew connectedFullDebugAndroidTest --stacktrace
+
+      - name: Package failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p gen12-1-failure
+          git diff ada974eb9a9bebb19fa0a669278fa250889d976a...HEAD > gen12-1-failure/COMMITTED-OVERLAY.diff || true
+          git diff > gen12-1-failure/APPLIED-GEN12-1.diff || true
+          cp -r gen12-1-compare gen12-1-failure/ 2>/dev/null || true
+          cp tools/gen12_1_engineering_decision_log.md gen12-1-failure/ENGINEERING-DECISION-LOG.md 2>/dev/null || true
+          cp app/build/intermediates/lint_intermediate_text_report/fullDebug/lintReportFullDebug/lint-results-fullDebug.txt gen12-1-failure/LINT.txt 2>/dev/null || true
+          {
+            echo 'status=CI_FAILED_BEFORE_ELIGIBLE_HANDOFF'
+            echo 'validationStatus=BUILD-UNVERIFIED'
+            echo 'physicalFold7Validation=NOT_RUN'
+          } > gen12-1-failure/FAILURE-INFO.txt
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.6.1-gen12-1-wallpaper-lifecycle-failure
+          path: gen12-1-failure/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Package Gen12.1 validation candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen12-1-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          OUTPUT="gen12-1-build/DuoOpen-ZFold7-5.6.1-gen12-1-wallpaper-lifecycle-debug.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" > gen12-1-build/APK-SHA256.txt
+          git diff ada974eb9a9bebb19fa0a669278fa250889d976a...HEAD > gen12-1-build/COMMITTED-OVERLAY.diff
+          git diff > gen12-1-build/APPLIED-GEN12-1.diff
+          cp -r gen12-1-compare gen12-1-build/architecture-compare
+          cp tools/gen12_1_engineering_decision_log.md gen12-1-build/ENGINEERING-DECISION-LOG.md
+          {
+            echo 'sourceFieldBundle=duoopen-debug-1791432567831.zip'
+            echo 'sourceBuild=5.5.0-gen11-product-ui-zfold7 code55'
+            echo 'confirmedSourceDefect=unchecked wallpaper rename/version advance'
+            echo 'confirmedResourceDefect=imported bitmap immediately redecoded after version bump'
+            echo 'confirmedCallerHazard=default reset performed durable mutation on Compose main thread'
+            echo 'confirmedCrossFeatureConflict=DuoWallpaperService ownership can stale Samsung FoldInteractive precise-angle feed'
+            echo 'exactCrashCause=INSUFFICIENT_EVIDENCE in supplied bundle'
+            echo 'bundlePreviousExit=reason10 USER_REQUESTED [REMOVE TASK] remove task'
+          } > gen12-1-build/FORENSIC-EVIDENCE-SUMMARY.txt
+          {
+            echo 'version=5.6.1-gen12-1-wallpaper-lifecycle-zfold7'
+            echo 'versionCode=57'
+            echo 'candidateBranch=build/gen12-1-wallpaper-lifecycle-20261008'
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo 'comparisonBaseline=Gen12 ada974eb9a9bebb19fa0a669278fa250889d976a'
+            echo 'change1=AtomicFile payload commit before image metadata version'
+            echo 'change2=checked synchronous SharedPreferences metadata receipt before StateFlow publication'
+            echo 'change3=reuse imported decoded bitmap for committed cache version'
+            echo 'change4=5MP/2600px decode envelope + low-memory fallback'
+            echo 'change5=wallpaper store/service lifecycle persistent diagnostics'
+            echo 'change6=multi-record ApplicationExitInfo forensic logging'
+            echo 'change7=Fold7 wallpaper/precise-angle compatibility warnings'
+            echo 'change8=default wallpaper reset moved off main thread with failure containment'
+            echo 'gen12RouteLanePreserved=YES'
+            echo 'secureFlagBypass=NO'
+            echo 'angleAuthorityMutation=NO'
+            echo 'tests=testFullDebugUnitTest + connectedFullDebugAndroidTest'
+            echo 'lint=lintFullDebug'
+            echo 'validationStatus=BUILD-VERIFIED / EMULATOR-LIFECYCLE-VERIFIED / PHYSICAL-FOLD7-UNVALIDATED'
+            echo 'physicalFold7Validation=NOT_RUN_FOR_GEN12_1'
+          } > gen12-1-build/BUILD-INFO.txt
+
+      - name: Upload APK and validation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.6.1-gen12-1-wallpaper-lifecycle
+          path: |
+            gen12-1-build/DuoOpen-ZFold7-5.6.1-gen12-1-wallpaper-lifecycle-debug.apk
+            gen12-1-build/APK-SHA256.txt
+            gen12-1-build/BUILD-INFO.txt
+            gen12-1-build/FORENSIC-EVIDENCE-SUMMARY.txt
+            gen12-1-build/ENGINEERING-DECISION-LOG.md
+            gen12-1-build/COMMITTED-OVERLAY.diff
+            gen12-1-build/APPLIED-GEN12-1.diff
+            gen12-1-build/architecture-compare/
+          if-no-files-found: error
+          retention-days: 30
