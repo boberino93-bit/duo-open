@@ -9,6 +9,7 @@ on:
       - ".github/workflows/build-gen12-4-angle-authority-runtime.yml"
       - "tools/apply_gen12_4_angle_authority_model.py"
       - "tools/apply_gen12_4_angle_authority_model_fix1.py"
+      - "tools/apply_gen12_4_angle_authority_model_fix2.py"
       - "tools/apply_gen12_4_angle_authority_runtime.py"
       - "tools/gen12_4_angle_authority_design.md"
 
@@ -61,9 +62,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 tools/apply_gen12_4_angle_authority_model_fix1.py --repo .
+          python3 tools/apply_gen12_4_angle_authority_model_fix2.py --repo .
           test -s app/src/full/java/com/duoopen/shell/Fold7AngleTargetArbiter.kt
           test -s app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt
+          grep -F 'unchangedDeadTargetSetDoesNotRestartReaderForever' app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt
 
       - name: Snapshot pre-runtime app tree
         shell: bash
@@ -113,6 +115,7 @@ jobs:
           from pathlib import Path
           feed = Path('app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt').read_text()
           shell = Path('app/src/full/java/com/duoopen/shell/DuoShellService.kt').read_text()
+          arbiter = Path('app/src/full/java/com/duoopen/shell/Fold7AngleTargetArbiter.kt').read_text()
           assert feed.count('sendWallpaperCommand(') == 1, 'Gen12.4 must send one target per poll'
           assert 'POLL_TIMEOUT_MS =\n            64L' in feed
           assert 'NO_TARGET_RECHECK_MS =\n            250L' in feed
@@ -123,6 +126,8 @@ jobs:
           assert 'if (!started)' in feed[start:commit]
           assert 'targetArbiter.onAck(' in feed
           assert 'targetArbiter.onMiss(' in feed
+          assert 'restartSuppressed = true' in arbiter
+          assert 'candidates != lastCandidateSet' in arbiter
           assert 'line.contains("isVisible=true") ||' in shell
           assert 'putInt("hiddenParsed", hiddenParsed)' in shell
           print('GEN12.4 STATIC AUTHORITY INVARIANTS: PASS')
@@ -166,6 +171,7 @@ jobs:
           cp gen12-4-shell.diff gen12-4-build/ANGLE-AUTHORITY-SHELL.diff
           cp gen12-4-version.diff gen12-4-build/VERSION.diff
           cp tools/gen12_4_angle_authority_design.md gen12-4-build/DESIGN.md
+          cp tools/gen12_4_direct_sensor_probe.md gen12-4-build/DIRECT-SENSOR-PROBE.md
           cp app/src/full/java/com/duoopen/shell/Fold7AngleTargetArbiter.kt gen12-4-build/Fold7AngleTargetArbiter.kt
           cp app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt gen12-4-build/Fold7AngleTargetArbiterTest.kt
 
@@ -178,6 +184,7 @@ jobs:
           cp gen12-4-feed.diff gen12-4-failure/ANGLE-AUTHORITY-FEED.diff 2>/dev/null || true
           cp gen12-4-shell.diff gen12-4-failure/ANGLE-AUTHORITY-SHELL.diff 2>/dev/null || true
           cp tools/gen12_4_angle_authority_design.md gen12-4-failure/DESIGN.md 2>/dev/null || true
+          cp tools/gen12_4_direct_sensor_probe.md gen12-4-failure/DIRECT-SENSOR-PROBE.md 2>/dev/null || true
           git diff > gen12-4-failure/APPLIED.diff || true
 
       - name: Upload Gen12.4 candidate
