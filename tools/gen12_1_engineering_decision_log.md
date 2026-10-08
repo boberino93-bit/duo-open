@@ -114,6 +114,37 @@ The Gen11/Gen12 `DuoApp` callback for `Use default` calls `WallpaperImage.reset(
 
 Gen12.1 moves reset onto `Dispatchers.IO`, wraps it in `runCatching`, and reports failure to the UI rather than allowing the storage operation to take down the activity.
 
+### 8. Emulator lifecycle tests confirm the wallpaper transaction, while the ready-CTA smoke test was viewport-sensitive
+
+Workflow run `37732257545` on head `0f23d7e26e692cce83b74e3c73e68b91a37c28a5` passed:
+
+- exact Gen12 reconstruction;
+- Gen12.1 applicator verification;
+- protected architecture parity;
+- API-37 compile;
+- unit tests;
+- lint;
+- APK assembly.
+
+Its connected Android test XML executed four instrumentation tests. Both new wallpaper tests passed:
+
+- `WallpaperImagePersistenceTest.twoReplacementsSurviveMemoryAndSettingsRehydrate` — PASS;
+- `WallpaperImagePersistenceTest.corruptPersistedPayloadFailsSafeAndIsQuarantined` — PASS.
+
+The only failing test was the pre-existing Gen11 UI smoke `ProductUiSmokeTest.readyDashboardRendersAndPrimaryActionFires`. The stack points to the final `assertTrue(clicked)` after `performClick()`. `Continuity Console` and `Continuity ready` assertions had already passed. Source reconstruction shows the Gen12.1 compatibility warning adds one readiness row when `wallpaperActive && shizukuReady`; on the compact emulator layout this moves the primary CTA below the initial viewport. Compose `performClick()` does not make that viewport transition itself, so the semantics node is found but the synthetic tap does not reach the visible button.
+
+**Classification:**
+
+- wallpaper replacement/rehydration acceptance: `CONFIRMED_PASS` on API-35 emulator;
+- corrupt-payload fail-safe/quarantine acceptance: `CONFIRMED_PASS` on API-35 emulator;
+- Gen11 ready-CTA raw-click smoke: `CONFIRMED_FAILURE` as a viewport-sensitive test interaction after the additional warning row;
+- evidence that the CTA action wiring itself changed: `FALSIFIED_HYPOTHESIS` by unchanged `onPrimary = if (state.ready) onTest else onTune` source;
+- physical Fold7 persistence/crash result: `NOT_EXERCISED`.
+
+The smoke test is therefore hardened—not weakened—to `performScrollTo() -> assertIsDisplayed() -> performClick()`, proving the CTA remains reachable through the actual compact scroll container before asserting the callback.
+
+The first emulator-failure run did not preserve connected-test XML/report or logcat. That failure-capture gap was itself corrected; subsequent failure artifacts preserve test XML, HTML report, Gradle console, and emulator logcat where available.
+
 ## Gen12.1 implementation
 
 ### Durable wallpaper transaction
@@ -172,17 +203,21 @@ When Shizuku/Fold7 mode is available, settings explicitly warn that Duo wallpape
 
 No new sensor authority is introduced.
 
+### Compact UI smoke hardening
+
+When the compatibility warning increases the status panel height on compact layouts, the ready-CTA smoke test now scrolls the CTA into view, asserts it is displayed, performs the click, and still requires the `onTest` callback to fire. This preserves the original behavioral assertion while making viewport state explicit.
+
 ## Lifecycle / persistence matrix
 
 | Boundary | Pre-Gen12.1 evidence | Gen12.1 automated acceptance |
 |---|---|---|
 | Immediate import | payload write present, replacement receipt unchecked | atomic commit + metadata receipt |
-| Second replacement | unsafe rename replacement | instrumentation performs two replacements |
-| Activity/background resume | not specifically exercised in bundle | unchanged UI smoke + persistent version state |
+| Second replacement | unsafe rename replacement | **CONFIRMED_PASS**: instrumentation performs A→B replacement |
+| Activity/background resume | not specifically exercised in bundle | UI smoke retained; ready CTA scroll path explicitly exercised |
 | Default/reset mutation threading | synchronous durable mutation from Compose click | reset dispatched to IO and failures contained |
-| In-memory cache loss | not exercised | test explicitly clears wallpaper cache |
-| Settings reinitialization / process rehydrate simulation | not exercised | test re-runs `DuoSettings.init` and reloads persisted image |
-| Corrupt payload | not exercised | instrumentation corrupts payload and verifies responsive fallback/quarantine |
+| In-memory cache loss | not exercised | **CONFIRMED_PASS**: test explicitly clears wallpaper cache |
+| Settings reinitialization / process rehydrate simulation | not exercised | **CONFIRMED_PASS**: test re-runs `DuoSettings.init` and reloads persisted image |
+| Corrupt payload | not exercised | **CONFIRMED_PASS**: corrupt payload produces responsive fallback/quarantine |
 | Service coexistence | same-process architecture confirmed | existing wallpaper service retained + lifecycle diagnostics |
 | Peak resource ownership | redundant decode confirmed by source | imported bitmap reused; pixel budget unit-tested |
 | Exact crash reason | missing from supplied bundle | expanded exit-reason instrumentation for next physical reproduction |
