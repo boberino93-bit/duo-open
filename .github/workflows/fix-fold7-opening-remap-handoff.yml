@@ -1,0 +1,140 @@
+name: Validate Fold7 Opening Remap Handoff Fix
+
+on:
+  push:
+    branches:
+      - fix/fold7-opening-remap-handoff-20261008
+    paths:
+      - ".github/workflows/fix-fold7-opening-remap-handoff.yml"
+      - "tools/apply_fold7_opening_remap_handoff_fix.py"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fix-fold7-opening-remap-handoff-20261008
+  cancel-in-progress: false
+
+jobs:
+  apply-test-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout fix branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/fold7-opening-remap-handoff-20261008
+
+      - name: Verify current production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "8110a771d5b80443cd2302e51daf342aa69bc467" || true
+          grep -F 'versionCode = 42' app/build.gradle.kts
+          grep -F 'versionName = "5.0.0-beta1-zfold7"' app/build.gradle.kts
+          grep -F 'gen3-opening-render-delegated' app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt
+          grep -F 'engine.isFold7CoverGeometryNow()' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'shouldTransferToInner' app/src/main/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicy.kt
+
+      - name: Apply opening remap handoff fix
+        run: python3 tools/apply_fold7_opening_remap_handoff_fix.py
+
+      - name: Validate ownership invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+
+          SERVICE=app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          POLICY=app/src/main/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicy.kt
+          TEST=app/src/test/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicyTest.kt
+
+          grep -F 'private var openingBridgeDisplayId: Int?' "$SERVICE"
+          grep -F 'openingHostBeforeReconcile' "$SERVICE"
+          grep -F 'retainAcceptedOpeningOwner' "$SERVICE"
+          grep -F 'retainRemappedOpeningRenderer' "$SERVICE"
+          grep -F 'BRIDGE-LATCH' "$SERVICE"
+          grep -F 'BRIDGE-RELEASE' "$SERVICE"
+          grep -F 'shouldRetainAcceptedOpeningOnDisplay' "$POLICY"
+          grep -F 'retainsAcceptedOpeningAcrossSameLogicalDisplayRemap' "$TEST"
+          grep -F 'doesNotRetainOpeningAfterPrivilegeLoss' "$TEST"
+          grep -F 'doesNotRetainOpeningOnDifferentLogicalDisplay' "$TEST"
+
+          # The observed failure must remain impossible by policy: topology
+          # morph alone cannot make the accepted same-logical-display attempt
+          # fall through to gen3-opening-not-owner while semantic demand lives.
+          python3 - <<'PY'
+          from pathlib import Path
+          s = Path('app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt').read_text()
+          assert 'retainRemappedOpeningRenderer' in s
+          assert 'openingBridgeDisplayId' in s
+          assert s.index('else if (retainRemappedOpeningRenderer)') < s.index('engine.endContinuityOpeningVisual(\n                    "gen3-opening-not-owner:$reason"')
+          print('opening remap retention ordering: PASS')
+          PY
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Run unit tests and assemble debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Prepare tested APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p handoff-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" handoff-build/DuoOpen-ZFold7-opening-remap-handoff-debug.apk
+          sha256sum handoff-build/DuoOpen-ZFold7-opening-remap-handoff-debug.apk > handoff-build/APK-SHA256.txt
+          {
+            echo "baseMain=8110a771d5b80443cd2302e51daf342aa69bc467"
+            echo "version=5.0.0-beta1-zfold7"
+            echo "change=retain accepted opening visual across same-logical-display cover-to-inner geometry remap"
+            echo "fieldRepro=2026-10-08 opening teardown at ~81deg owner-released followed by delegated host=null/content=null"
+            echo "tests=testFullDebugUnitTest"
+            echo "build=assembleFullDebug"
+          } > handoff-build/BUILD-INFO.txt
+
+      - name: Upload tested APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-opening-remap-handoff
+          path: |
+            handoff-build/DuoOpen-ZFold7-opening-remap-handoff-debug.apk
+            handoff-build/APK-SHA256.txt
+            handoff-build/BUILD-INFO.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Commit tested source to fix branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add \
+            app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt \
+            app/src/main/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicy.kt \
+            app/src/test/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicyTest.kt
+
+          if ! git diff --cached --name-only | grep -q .; then
+            echo 'ERROR: no source/test changes staged.'
+            exit 1
+          fi
+
+          git diff --cached --check
+          git commit -m "fix(fold7): preserve opening visual across display remap"
+          git push origin HEAD:fix/fold7-opening-remap-handoff-20261008
