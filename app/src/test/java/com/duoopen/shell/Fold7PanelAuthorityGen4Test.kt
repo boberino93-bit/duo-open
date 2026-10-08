@@ -125,6 +125,60 @@ class Fold7PanelAuthorityGen4Test {
     }
 
     @Test
+    fun staleGenerationReleaseCannotTearDownNewerPreparedRoute() {
+        val m = Fold7PanelAuthorityGen4()
+        val newerOwner = Fold7PanelAuthorityGen4.Owner(100, 10, 71)
+        val staleOwner = Fold7PanelAuthorityGen4.Owner(100, 9, 66)
+
+        m.completeRecovery(false)
+        assertTrue(m.admit(100, 1).accepted)
+        m.beginPrepare(newerOwner, 1)
+        m.completePrepare(1, true, 222, 7, true)
+
+        // The delayed gen66 worker can still receive a numerically newer RPC
+        // sequence. Sequence order alone must not grant teardown authority.
+        assertTrue(m.admit(100, 2).accepted)
+        val release =
+            m.beginReleaseOwned(
+                serviceEpoch = 100,
+                intentSequence = 2,
+                expectedOwner = staleOwner,
+            )
+
+        assertFalse(release.accepted)
+        assertTrue(release.stale)
+        assertEquals("stale-release-owner", release.reason)
+        assertEquals(Fold7PanelAuthorityGen4.Phase.COVER_READY_HIDDEN, m.snapshot().phase)
+        assertEquals(newerOwner, m.snapshot().owner)
+        assertTrue(m.snapshot().physicalHeld)
+        assertTrue(m.snapshot().routeReady)
+    }
+
+    @Test
+    fun exactOwnerReleaseStillEntersPendingRelease() {
+        val m = Fold7PanelAuthorityGen4()
+        val owner = Fold7PanelAuthorityGen4.Owner(100, 10, 71)
+
+        m.completeRecovery(false)
+        assertTrue(m.admit(100, 1).accepted)
+        m.beginPrepare(owner, 1)
+        m.completePrepare(1, true, 222, 7, true)
+        assertTrue(m.admit(100, 2).accepted)
+
+        val release =
+            m.beginReleaseOwned(
+                serviceEpoch = 100,
+                intentSequence = 2,
+                expectedOwner = owner,
+            )
+
+        assertTrue(release.accepted)
+        assertFalse(release.stale)
+        assertEquals(Fold7PanelAuthorityGen4.Phase.RELEASE_PENDING, m.snapshot().phase)
+        assertFalse(m.snapshot().routeReady)
+    }
+
+    @Test
     fun nativeCoverRecoveryNeverRequestsSecondaryReset() {
         val m = Fold7PanelAuthorityGen4()
         assertEquals(
@@ -134,6 +188,7 @@ class Fold7PanelAuthorityGen4Test {
         m.completeRecovery(true)
         assertEquals(Fold7PanelAuthorityGen4.Phase.NATIVE_COVER, m.snapshot().phase)
     }
+
     @Test
     fun fixedSeedHundredThousandIntentFuzzMaintainsAuthorityInvariants() {
         val random = Random(0x47454E34)
@@ -242,5 +297,4 @@ class Fold7PanelAuthorityGen4Test {
             }
         }
     }
-
 }
