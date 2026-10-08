@@ -106,6 +106,14 @@ Gen12.1 does not replace the angle transport. It adds an explicit Fold7 compatib
 
 **Classification:** `DIRECTLY_CONFIRMED` forensic observability defect.
 
+### 7. Default-image reset performs durable storage work on the Compose/main thread
+
+The Gen11/Gen12 `DuoApp` callback for `Use default` calls `WallpaperImage.reset(context.applicationContext)` directly from the Compose click handler. Gen12.1 intentionally makes reset a checked durable transaction, so leaving that caller synchronous would permit storage latency/failure to block the UI thread and would make a thrown reset failure an activity-level crash path.
+
+**Classification:** `DIRECTLY_CONFIRMED` caller/lifecycle hazard from source inspection. It is not proven to be the exact historical crash reported by the user.
+
+Gen12.1 moves reset onto `Dispatchers.IO`, wraps it in `runCatching`, and reports failure to the UI rather than allowing the storage operation to take down the activity.
+
 ## Gen12.1 implementation
 
 ### Durable wallpaper transaction
@@ -129,6 +137,12 @@ Gen12.1 does not replace the angle transport. It adds an explicit Fold7 compatib
 - Cap custom-image decode to `MAX_DIM=2600` and `MAX_PIXELS=5,000,000`.
 - Avoid immediate second decode after import.
 - Do not recycle the previous shared bitmap from the store because UI/wallpaper consumers may still reference it; let ownership drain naturally.
+
+### UI mutation threading
+
+- Keep image import on `Dispatchers.IO`.
+- Move `Use default` / wallpaper reset to `Dispatchers.IO`.
+- Catch reset failures and surface them with a user-visible error instead of blocking/crashing the Compose activity.
 
 ### Service lifecycle diagnostics
 
@@ -165,6 +179,7 @@ No new sensor authority is introduced.
 | Immediate import | payload write present, replacement receipt unchecked | atomic commit + metadata receipt |
 | Second replacement | unsafe rename replacement | instrumentation performs two replacements |
 | Activity/background resume | not specifically exercised in bundle | unchanged UI smoke + persistent version state |
+| Default/reset mutation threading | synchronous durable mutation from Compose click | reset dispatched to IO and failures contained |
 | In-memory cache loss | not exercised | test explicitly clears wallpaper cache |
 | Settings reinitialization / process rehydrate simulation | not exercised | test re-runs `DuoSettings.init` and reloads persisted image |
 | Corrupt payload | not exercised | instrumentation corrupts payload and verifies responsive fallback/quarantine |
@@ -192,9 +207,10 @@ After installing Gen12.1 on the Fold7:
 2. leave/reopen app;
 3. choose image B over A;
 4. leave/reopen app;
-5. activate/deactivate Duo wallpaper mode if intentionally testing wallpaper-only behavior;
-6. repeat at least several app opens and fold transitions;
-7. export a debug bundle immediately after any freeze/crash or state loss.
+5. choose `Default`, leave/reopen again;
+6. activate/deactivate Duo wallpaper mode if intentionally testing wallpaper-only behavior;
+7. repeat at least several app opens and fold transitions;
+8. export a debug bundle immediately after any freeze/crash or state loss.
 
 Expected new receipts include `wallpaper-store`, `wallpaper-lifecycle`, and multi-ranked `process-exit` events.
 
