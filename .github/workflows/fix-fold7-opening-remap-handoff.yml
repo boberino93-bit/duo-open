@@ -1,3 +1,4 @@
+# Branch-only validation for the 2026-10-08 Fold7 opening-remap field failure.
 name: Validate Fold7 Opening Remap Handoff Fix
 
 on:
