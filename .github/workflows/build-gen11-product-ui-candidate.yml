@@ -1,0 +1,266 @@
+name: Build Gen11 Product UI Validation Candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - build/gen11-product-ui-redesign-20261007
+    paths:
+      - ".github/workflows/build-gen11-product-ui-candidate.yml"
+      - "tools/apply_gen11_product_ui.py"
+      - "app/src/main/java/com/duoopen/MainActivity.kt"
+      - "app/src/main/java/com/duoopen/ui/**"
+      - "app/src/test/java/com/duoopen/ui/**"
+      - "app/src/androidTest/java/com/duoopen/ui/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-gen11-product-ui-candidate
+  cancel-in-progress: true
+
+jobs:
+  test-build-compare:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Gen11 candidate
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen11-product-ui-redesign-20261007
+          fetch-depth: 0
+
+      - name: Checkout Gen10.7 comparison baseline
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen10-7-oneui9-display-angle-20261007
+          path: baseline
+          fetch-depth: 0
+
+      - name: Enforce product-surface-only committed delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=ae9238d5554fbcf5e86631222e3dbfcdab7afc91
+          mapfile -t changed < <(git diff --name-only "$BASE"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          for path in "${changed[@]}"; do
+            case "$path" in
+              app/src/main/java/com/duoopen/MainActivity.kt|\
+              app/src/main/java/com/duoopen/ui/*|\
+              app/src/test/java/com/duoopen/ui/*|\
+              app/src/androidTest/java/com/duoopen/ui/*|\
+              tools/apply_gen11_product_ui.py|\
+              .github/workflows/build-gen11-product-ui-candidate.yml)
+                ;;
+              *)
+                echo "Unexpected non-product-surface committed change: $path" >&2
+                exit 1
+                ;;
+            esac
+          done
+
+      - name: Reconstruct Gen10.7 lineage in candidate and baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          apply_lineage() {
+            local repo="$1"
+            python3 "$repo/service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py" "$repo"
+            python3 "$repo/tools/apply_gen7_runtime_regression_beta2.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen8_anchored_transition.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen9_predictive_inner_wake.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen9_guarded_prewake.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_live_mirror_close.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_1_handoff_guard.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_2_secure_fail_open.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_3_hybrid_animation.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_4_io_coalescing.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_5_mirror_warmup_retention.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_6_oneui9_android17_compat.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_6_api37_private_api_lint_contract.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_7_oneui9_display_angle.py" --repo "$repo"
+          }
+
+          apply_lineage "$GITHUB_WORKSPACE/baseline"
+          apply_lineage "$GITHUB_WORKSPACE"
+
+          grep -F 'versionCode = 54' baseline/app/build.gradle.kts
+          grep -F 'versionCode = 54' app/build.gradle.kts
+          grep -F 'GEN10_7_TOPOLOGY_ANGLE_HOLD' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'capture-protected-or-black' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+
+      - name: Apply and self-verify Gen11 product UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen11_product_ui.py --repo .
+          git diff --check
+          grep -F 'versionCode = 55' app/build.gradle.kts
+          grep -F 'versionName = "5.5.0-gen11-product-ui-zfold7"' app/build.gradle.kts
+          grep -F 'compileSdk = 37' app/build.gradle.kts
+          grep -F 'targetSdk = 35' app/build.gradle.kts
+          ! grep -F 'targetSdk = 37' app/build.gradle.kts
+          grep -F 'GEN11_PRODUCT_UI' app/src/main/java/com/duoopen/ui/HomePreview.kt
+          grep -F 'GEN11_PRODUCT_UI_SETTINGS' app/src/main/java/com/duoopen/ui/ControlSheet.kt
+
+      - name: Compare runtime architecture to Gen10.7
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen11-compare
+
+          diff -qr baseline/app/src/full/java app/src/full/java | tee gen11-compare/full-runtime.diff
+          test ! -s gen11-compare/full-runtime.diff
+
+          (
+            cd baseline
+            find app/src/main/java -type f \
+              ! -path 'app/src/main/java/com/duoopen/ui/*' \
+              ! -path 'app/src/main/java/com/duoopen/MainActivity.kt' \
+              -print0 | sort -z | xargs -0 sha256sum
+          ) > gen11-compare/baseline-main-runtime.sha256
+
+          (
+            find app/src/main/java -type f \
+              ! -path 'app/src/main/java/com/duoopen/ui/*' \
+              ! -path 'app/src/main/java/com/duoopen/MainActivity.kt' \
+              -print0 | sort -z | xargs -0 sha256sum
+          ) > gen11-compare/candidate-main-runtime.sha256
+
+          diff -u \
+            gen11-compare/baseline-main-runtime.sha256 \
+            gen11-compare/candidate-main-runtime.sha256 \
+            > gen11-compare/main-runtime.diff || true
+          test ! -s gen11-compare/main-runtime.diff
+
+          cmp baseline/app/src/main/AndroidManifest.xml app/src/main/AndroidManifest.xml
+          cmp baseline/app/src/full/AndroidManifest.xml app/src/full/AndroidManifest.xml
+          diff -qr baseline/app/src/main/res app/src/main/res | tee gen11-compare/resources.diff
+          test ! -s gen11-compare/resources.diff
+
+          {
+            echo 'comparisonBaseline=Gen10.7 ae9238d5554fbcf5e86631222e3dbfcdab7afc91'
+            echo 'fullRuntimeSourceParity=PASS'
+            echo 'mainRuntimeSourceParityExcludingProductUIAndThemeHost=PASS'
+            echo 'mainManifestParity=PASS'
+            echo 'fullManifestParity=PASS'
+            echo 'resourceParity=PASS'
+            echo 'secureFailOpenMarker=PRESENT'
+            echo 'gen10_7AngleHoldMarker=PRESENT'
+          } > gen11-compare/ARCHITECTURE-COMPARE.txt
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Ensure Android 17 SDK is installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-37.0" "build-tools;36.0.0"
+          test -d "$ANDROID_HOME/platforms/android-37.0"
+
+      - name: Run unit tests lint and assemble
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest lintFullDebug assembleFullDebug --stacktrace
+
+      - name: Enable KVM access
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run Android UI smoke tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: ./gradlew connectedFullDebugAndroidTest --stacktrace
+
+      - name: Package failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p gen11-product-ui-failure
+          git diff ae9238d5554fbcf5e86631222e3dbfcdab7afc91...HEAD > gen11-product-ui-failure/COMMITTED-UI.diff || true
+          git diff > gen11-product-ui-failure/APPLIED-LINEAGE.diff || true
+          cp -r gen11-compare gen11-product-ui-failure/ 2>/dev/null || true
+          cp app/build/intermediates/lint_intermediate_text_report/fullDebug/lintReportFullDebug/lint-results-fullDebug.txt gen11-product-ui-failure/LINT.txt 2>/dev/null || true
+          {
+            echo 'status=CI_FAILED_BEFORE_ELIGIBLE_HANDOFF'
+            echo 'validationStatus=BUILD-UNVERIFIED'
+            echo 'physicalFold7Validation=NOT_RUN'
+          } > gen11-product-ui-failure/FAILURE-INFO.txt
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.5.0-gen11-product-ui-failure-diagnostics
+          path: gen11-product-ui-failure/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Package Gen11 validation candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen11-product-ui-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          OUTPUT="gen11-product-ui-build/DuoOpen-ZFold7-5.5.0-gen11-product-ui-debug.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" > gen11-product-ui-build/APK-SHA256.txt
+          git diff ae9238d5554fbcf5e86631222e3dbfcdab7afc91...HEAD > gen11-product-ui-build/COMMITTED-UI.diff
+          git diff > gen11-product-ui-build/APPLIED-LINEAGE.diff
+          cp -r gen11-compare gen11-product-ui-build/architecture-compare
+          {
+            echo 'version=5.5.0-gen11-product-ui-zfold7'
+            echo 'versionCode=55'
+            echo 'candidateBranch=build/gen11-product-ui-redesign-20261007'
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo 'comparisonBaseline=Gen10.7 ae9238d5554fbcf5e86631222e3dbfcdab7afc91'
+            echo 'change1=adaptive cover-vs-inner continuity console'
+            echo 'change2=live hinge visual and readiness pipeline'
+            echo 'change3=task-oriented Setup Look Diagnostics control tabs'
+            echo 'change4=dedicated Duo Open Material3 dark product theme'
+            echo 'runtimeArchitectureMutation=NO_BY_SOURCE_PARITY_GATE'
+            echo 'mainManifestMutation=NO'
+            echo 'fullManifestMutation=NO'
+            echo 'secureFlagBypass=NO'
+            echo 'tests=testFullDebugUnitTest'
+            echo 'lint=lintFullDebug'
+            echo 'androidUiSmoke=connectedFullDebugAndroidTest API35 emulator'
+            echo 'validationStatus=BUILD-VERIFIED / EMULATOR-UI-SMOKE-VERIFIED / PHYSICAL-FOLD7-UNVALIDATED'
+            echo 'physicalFold7Validation=NOT_RUN'
+          } > gen11-product-ui-build/BUILD-INFO.txt
+
+      - name: Upload APK and validation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.5.0-gen11-product-ui
+          path: |
+            gen11-product-ui-build/DuoOpen-ZFold7-5.5.0-gen11-product-ui-debug.apk
+            gen11-product-ui-build/APK-SHA256.txt
+            gen11-product-ui-build/BUILD-INFO.txt
+            gen11-product-ui-build/COMMITTED-UI.diff
+            gen11-product-ui-build/APPLIED-LINEAGE.diff
+            gen11-product-ui-build/architecture-compare/
+          if-no-files-found: error
+          retention-days: 30
