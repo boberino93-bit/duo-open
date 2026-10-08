@@ -9,6 +9,7 @@ on:
       - ".github/workflows/build-gen12-4-angle-authority-model.yml"
       - "tools/apply_gen12_4_angle_authority_model.py"
       - "tools/apply_gen12_4_angle_authority_model_fix1.py"
+      - "tools/apply_gen12_4_angle_authority_model_fix2.py"
       - "tools/gen12_4_angle_authority_design.md"
 
 permissions:
@@ -64,10 +65,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 tools/apply_gen12_4_angle_authority_model_fix1.py --repo .
+          python3 tools/apply_gen12_4_angle_authority_model_fix2.py --repo .
           git diff --check
           grep -F 'GEN12_4_ANGLE_AUTHORITY' app/src/full/java/com/duoopen/shell/Fold7AngleTargetArbiter.kt
           grep -F 'readerRestartRequiresRepeatedAllTargetFailure' app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt
+          grep -F 'unchangedDeadTargetSetDoesNotRestartReaderForever' app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt
+          grep -F 'targetSetChangeRearmsReaderRecovery' app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt
           grep -F 'noCandidateDoesNotManufactureReaderFailure' app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt
           grep -F 'summaryAlwaysIncludesAllAuthorityFields' app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt
 
