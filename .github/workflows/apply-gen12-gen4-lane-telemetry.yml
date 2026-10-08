@@ -1,0 +1,67 @@
+name: Apply Gen12 Gen4 Lane Telemetry
+
+on:
+  push:
+    branches:
+      - build/gen12-route-lane-resilience-20261008
+    paths:
+      - ".github/workflows/apply-gen12-gen4-lane-telemetry.yml"
+      - "tools/apply_gen12_gen4_lane_telemetry.py"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-gen12-gen4-lane-telemetry
+  cancel-in-progress: false
+
+jobs:
+  apply-test-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Gen12 branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply deterministic Gen4 telemetry patch
+        run: python3 tools/apply_gen12_gen4_lane_telemetry.py
+
+      - name: Validate telemetry diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          grep -F '"gen4QueueUs"' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F '"gen4ExecutionUs"' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F '"gen4TotalUs"' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'queueUs=${result.getLong("gen4QueueUs", -1L)}' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Run unit tests and assemble debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Commit tested Gen4 telemetry
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            app/src/full/java/com/duoopen/shell/DuoShellService.kt \
+            app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          git diff --cached --quiet && { echo 'No generated changes to commit.'; exit 0; }
+          git commit -m "diag: split Gen4 queue and execution latency"
+          git push origin HEAD:build/gen12-route-lane-resilience-20261008
