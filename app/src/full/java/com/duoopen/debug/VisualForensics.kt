@@ -199,19 +199,25 @@ object VisualForensics {
         physicalId: Long,
         exclusions: List<SurfaceControl>,
     ): Record {
-        val result = runCatching {
-            ShizukuBridge.captureForensics(route.id, exclusions, SCALE)
+        /*
+         * The S1H recorder was merged without the proposed captureForensics()
+         * bridge transaction. Use the existing read-only logical capture path
+         * instead of calling a nonexistent API. A null result can mean backend
+         * unavailability or protected content; current ShellProtocol cannot
+         * distinguish those causes, so the status remains explicitly ambiguous.
+         */
+        val bitmap = runCatching {
+            ShizukuBridge.capture(route.id, exclusions, SCALE)
         }.getOrElse { error ->
             return Record(sample, target, actual, panel, "logical-excluded", route.id, physicalId,
                 route.state, exclusions.size, "CAPTURE_CALL_EXCEPTION", false,
                 "${error.javaClass.simpleName}: ${error.message}", null, 0L, null, null, null, null)
         }
 
-        val bitmap = result.bitmap
-        if (!result.ok || result.secureLayers || bitmap == null) {
-            bitmap?.recycle()
+        if (bitmap == null) {
             return Record(sample, target, actual, panel, "logical-excluded", route.id, physicalId,
-                route.state, exclusions.size, result.status, result.secureLayers, result.error,
+                route.state, exclusions.size, "CAPTURE_UNAVAILABLE_OR_SECURE", false,
+                "Current ShizukuBridge CAPTURE transaction does not expose secure/backend attribution",
                 null, 0L, null, null, null, null)
         }
 
@@ -248,30 +254,17 @@ object VisualForensics {
                 null, 0L, null, null, null, null)
         }
 
-        val name = "s${sample}-${target}ms-${panel}-physical-screencap.png"
-        val file = File(session, name)
-        val result = runCatching { ShizukuBridge.capturePhysicalForensics(physicalId, file) }
-            .getOrElse { error ->
-                runCatching { file.delete() }
-                return Record(sample, target, actual, panel, "physical-screencap", route?.id ?: -1, physicalId,
-                    route?.state ?: Display.STATE_UNKNOWN, 0, "CAPTURE_CALL_EXCEPTION", false,
-                    "${error.javaClass.simpleName}: ${error.message}", null, 0L, null, null, null, null)
-            }
-
-        if (!result.ok || !file.isFile || file.length() <= 0L) {
-            runCatching { file.delete() }
-            return Record(sample, target, actual, panel, "physical-screencap", route?.id ?: -1, physicalId,
-                route?.state ?: Display.STATE_UNKNOWN, 0, result.status, false,
-                listOfNotNull(result.error, result.commandOutput).joinToString(" | ").ifBlank { null },
-                null, 0L, null, null, null, null)
-        }
-
-        val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-        val metric = bitmap?.let(::metrics)
-        bitmap?.recycle()
+        /*
+         * capturePhysicalForensics() and its shell transaction were never
+         * implemented in the current bridge/protocol. Do not invent a command
+         * path or silently bypass Android capture policy. Preserve the forensic
+         * record as an explicit unavailable backend until that protocol is
+         * designed and reviewed.
+         */
         return Record(sample, target, actual, panel, "physical-screencap", route?.id ?: -1, physicalId,
-            route?.state ?: Display.STATE_UNKNOWN, 0, "CAPTURED", false, result.commandOutput,
-            name, file.length(), sha256(file), metric?.mean, metric?.range, metric?.dark)
+            route?.state ?: Display.STATE_UNKNOWN, 0, "PHYSICAL_BACKEND_UNAVAILABLE", false,
+            "Current ShellProtocol has no physical screencap forensic transaction",
+            null, 0L, null, null, null, null)
     }
 
     private fun capturePolicyContext(): PolicyContext {
