@@ -15,7 +15,7 @@ old_ensure = '''    if feed_text.count("ensureAnchor()") != 3:\n        fail(f"e
 new_ensure = '''    if feed_text.count("ensureAnchor()") != 4:\n        fail(f"expected three ensureAnchor call sites plus declaration, found {feed_text.count('ensureAnchor()')}")\n'''
 
 old_remove = '''    if feed_text.count("removeAnchor()") != 1:\n        fail(f"expected one removeAnchor call, found {feed_text.count('removeAnchor()')}")\n'''
-new_remove = '''    if feed_text.count("removeAnchor()") != 2:\n        fail(f"expected one removeAnchor call site plus declaration, found {feed_text.count('removeAnchor()')}")\n'''
+new_remove = '''    if feed_text.count("removeAnchor()") != 3:\n        fail(f"expected stop call, ensureAnchor refresh call, and declaration; found {feed_text.count('removeAnchor()')}")\n'''
 
 if text.count(old_ensure) != 1:
     raise SystemExit("ERROR: Gen12.3 ensureAnchor matcher patch anchor missing")
