@@ -56,6 +56,9 @@ jobs:
           python3 tools/apply_gen12_3_angle_feed_resilience_fix1.py --repo .
           grep -F 'versionCode = 59' app/build.gradle.kts
           grep -F 'versionName = "5.6.3-gen12-3-angle-feed-resilience-zfold7"' app/build.gradle.kts
+          test ! -e app/src/full/java/com/duoopen/shell/Fold7AngleTargetArbiter.kt
+          test ! -e app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt
+          find app -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/gen12-3-app.sha256
 
       - name: Apply Gen12.4 authority model
         shell: bash
@@ -72,11 +75,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git diff -- app/src/full/java/com/duoopen/shell/Fold7AngleTargetArbiter.kt app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt > gen12-4-model.diff
+          sha256sum -c /tmp/gen12-3-app.sha256
+          test -s app/src/full/java/com/duoopen/shell/Fold7AngleTargetArbiter.kt
+          test -s app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt
+          diff -u /dev/null app/src/full/java/com/duoopen/shell/Fold7AngleTargetArbiter.kt > gen12-4-model.diff || true
+          diff -u /dev/null app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt >> gen12-4-model.diff || true
           test -s gen12-4-model.diff
-          test "$(git diff --name-only | grep -v -E '^(app/src/full/java/com/duoopen/shell/Fold7AngleTargetArbiter.kt|app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt|app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt|app/src/full/java/com/duoopen/shell/DuoShellService.kt|app/build.gradle.kts)$' | wc -l)" -eq 0
-          # The allowed baseline-generated files above are from Gen12.3 reconstruction;
-          # Gen12.4 itself must not mutate them in the model-only stage.
           grep -F 'versionCode = 59' app/build.gradle.kts
 
       - name: Set up Java 17
