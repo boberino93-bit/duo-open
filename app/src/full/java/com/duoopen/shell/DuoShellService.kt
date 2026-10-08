@@ -532,6 +532,7 @@ class DuoShellService : Binder() {
             }
 
             ShellProtocol.COVER_PANEL_GEN4 -> {
+                val binderArrivalNs = SystemClock.elapsedRealtimeNanos()
                 val operation = data.readInt()
                 val serviceEpoch = data.readLong()
                 val closeCycleId = data.readLong()
@@ -539,10 +540,12 @@ class DuoShellService : Binder() {
                 val intentSequence = data.readLong()
                 val reason = data.readString() ?: "unspecified"
                 val identity = clearCallingIdentity()
+                var mutationStartedNs = 0L
 
                 val result =
                     try {
                         runCoverMutation {
+                            mutationStartedNs = SystemClock.elapsedRealtimeNanos()
                             handleGen4PanelCommand(
                                 operation = operation,
                                 serviceEpoch = serviceEpoch,
@@ -557,6 +560,30 @@ class DuoShellService : Binder() {
                     } finally {
                         restoreCallingIdentity(identity)
                     }
+
+                val completedNs = SystemClock.elapsedRealtimeNanos()
+                val startedNs = mutationStartedNs
+                result.putInt("gen4Operation", operation)
+                result.putLong(
+                    "gen4QueueUs",
+                    if (startedNs > 0L) {
+                        ((startedNs - binderArrivalNs) / 1_000L).coerceAtLeast(0L)
+                    } else {
+                        -1L
+                    },
+                )
+                result.putLong(
+                    "gen4ExecutionUs",
+                    if (startedNs > 0L) {
+                        ((completedNs - startedNs) / 1_000L).coerceAtLeast(0L)
+                    } else {
+                        -1L
+                    },
+                )
+                result.putLong(
+                    "gen4TotalUs",
+                    ((completedNs - binderArrivalNs) / 1_000L).coerceAtLeast(0L),
+                )
 
                 out.writeNoException()
                 out.writeBundle(result)

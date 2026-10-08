@@ -1017,7 +1017,11 @@ internal class Fold7ContinuityCoordinator(
                 "revision=${snapshot.shellRevision} lease=${snapshot.leaseId} " +
                 "epoch=${snapshot.leaseEpoch} owner=${snapshot.ownerGeneration} " +
                 "physical=${snapshot.physicalDisplayId} logical=${snapshot.targetLogicalId} " +
-                "held=${snapshot.physicalLeaseHeld} routeReady=${snapshot.routeReady}",
+                "held=${snapshot.physicalLeaseHeld} routeReady=${snapshot.routeReady} " +
+                "op=${result.getInt("gen4Operation", -1)} " +
+                "queueUs=${result.getLong("gen4QueueUs", -1L)} " +
+                "execUs=${result.getLong("gen4ExecutionUs", -1L)} " +
+                "totalUs=${result.getLong("gen4TotalUs", -1L)}",
         )
 
         if (acceptance.accepted) {
