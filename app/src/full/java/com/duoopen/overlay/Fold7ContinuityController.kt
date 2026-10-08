@@ -230,11 +230,14 @@ internal class Fold7ContinuityController(
             requestGeneration != activePrewarmGeneration ||
             state != State.COVER_PREWARMING
         ) {
-            // The asynchronous operation completed after a reversal/state change.
-            // If it actually enabled anything, immediately hand it back to Samsung.
-            if (ok) {
-                actions += Action.ReleaseSecondary(generation)
-            }
+            /*
+             * A completion from an obsolete generation has no authority over
+             * the current route. In particular, never translate an old
+             * successful prewarm into ReleaseSecondary(currentGeneration):
+             * doing so lets a stale callback tear down a route already owned
+             * by a newer close cycle. Exact-owner shell reconciliation owns
+             * cleanup of any stale physical work.
+             */
             return decision(actions)
         }
 
