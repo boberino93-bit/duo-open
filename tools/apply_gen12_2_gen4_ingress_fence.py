@@ -479,7 +479,7 @@ class Fold7Gen4IngressFenceTest {
     require(shell, "superseded-before-cleanup", 1)
     require(shell, "superseded-during-cleanup", 1)
     require(shell, "expectedIntentSequence: Long? = null", 1)
-    require(shell, "GEN4_INGRESS_SUPERSEDED", 6)
+    require(shell, "GEN4_INGRESS_SUPERSEDED", 7)
     require(fence, "class Fold7Gen4IngressFence", 1)
     require(fence_test, "newerIntentInvalidatesOlderQueuedMutationBeforeExecution", 1)
     require(gradle, f"versionCode = {TARGET_VERSION_CODE}", 1)
