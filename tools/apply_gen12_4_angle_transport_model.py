@@ -31,7 +31,7 @@ def main() -> None:
  * GEN12_4_ANGLE_TRANSPORT_AUTHORITY
  *
  * Separates explicit shell/log-reader failure from wallpaper-target failure.
- * Staleness alone is never transport-failure evidence.
+ * Geometry age alone is never transport-failure evidence.
  *
  * A connection-epoch change is hard evidence that the previously started
  * reader belongs to an obsolete shell service. A terminal reader state is also
