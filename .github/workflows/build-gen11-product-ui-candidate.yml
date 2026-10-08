@@ -8,10 +8,7 @@ on:
     paths:
       - ".github/workflows/build-gen11-product-ui-candidate.yml"
       - "tools/apply_gen11_product_ui.py"
-      - "app/src/main/java/com/duoopen/MainActivity.kt"
-      - "app/src/main/java/com/duoopen/ui/**"
-      - "app/src/test/java/com/duoopen/ui/**"
-      - "app/src/androidTest/java/com/duoopen/ui/**"
+      - "tools/gen11_ui/**"
 
 permissions:
   contents: read
@@ -38,7 +35,7 @@ jobs:
           path: baseline
           fetch-depth: 0
 
-      - name: Enforce product-surface-only committed delta
+      - name: Enforce post-lineage overlay-only committed delta
         shell: bash
         run: |
           set -euo pipefail
@@ -47,15 +44,12 @@ jobs:
           printf '%s\n' "${changed[@]}"
           for path in "${changed[@]}"; do
             case "$path" in
-              app/src/main/java/com/duoopen/MainActivity.kt|\
-              app/src/main/java/com/duoopen/ui/*|\
-              app/src/test/java/com/duoopen/ui/*|\
-              app/src/androidTest/java/com/duoopen/ui/*|\
               tools/apply_gen11_product_ui.py|\
+              tools/gen11_ui/*|\
               .github/workflows/build-gen11-product-ui-candidate.yml)
                 ;;
               *)
-                echo "Unexpected non-product-surface committed change: $path" >&2
+                echo "Unexpected committed change outside Gen11 overlay packaging: $path" >&2
                 exit 1
                 ;;
             esac
@@ -198,8 +192,8 @@ jobs:
         run: |
           set -u
           mkdir -p gen11-product-ui-failure
-          git diff ae9238d5554fbcf5e86631222e3dbfcdab7afc91...HEAD > gen11-product-ui-failure/COMMITTED-UI.diff || true
-          git diff > gen11-product-ui-failure/APPLIED-LINEAGE.diff || true
+          git diff ae9238d5554fbcf5e86631222e3dbfcdab7afc91...HEAD > gen11-product-ui-failure/COMMITTED-OVERLAY.diff || true
+          git diff > gen11-product-ui-failure/APPLIED-LINEAGE-AND-UI.diff || true
           cp -r gen11-compare gen11-product-ui-failure/ 2>/dev/null || true
           cp app/build/intermediates/lint_intermediate_text_report/fullDebug/lintReportFullDebug/lint-results-fullDebug.txt gen11-product-ui-failure/LINT.txt 2>/dev/null || true
           {
@@ -227,8 +221,8 @@ jobs:
           OUTPUT="gen11-product-ui-build/DuoOpen-ZFold7-5.5.0-gen11-product-ui-debug.apk"
           cp "$APK" "$OUTPUT"
           sha256sum "$OUTPUT" > gen11-product-ui-build/APK-SHA256.txt
-          git diff ae9238d5554fbcf5e86631222e3dbfcdab7afc91...HEAD > gen11-product-ui-build/COMMITTED-UI.diff
-          git diff > gen11-product-ui-build/APPLIED-LINEAGE.diff
+          git diff ae9238d5554fbcf5e86631222e3dbfcdab7afc91...HEAD > gen11-product-ui-build/COMMITTED-OVERLAY.diff
+          git diff > gen11-product-ui-build/APPLIED-LINEAGE-AND-UI.diff
           cp -r gen11-compare gen11-product-ui-build/architecture-compare
           {
             echo 'version=5.5.0-gen11-product-ui-zfold7'
@@ -259,8 +253,8 @@ jobs:
             gen11-product-ui-build/DuoOpen-ZFold7-5.5.0-gen11-product-ui-debug.apk
             gen11-product-ui-build/APK-SHA256.txt
             gen11-product-ui-build/BUILD-INFO.txt
-            gen11-product-ui-build/COMMITTED-UI.diff
-            gen11-product-ui-build/APPLIED-LINEAGE.diff
+            gen11-product-ui-build/COMMITTED-OVERLAY.diff
+            gen11-product-ui-build/APPLIED-LINEAGE-AND-UI.diff
             gen11-product-ui-build/architecture-compare/
           if-no-files-found: error
           retention-days: 30
