@@ -227,7 +227,14 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
-          script: ./gradlew connectedFullDebugAndroidTest --stacktrace
+          script: |
+            set +e
+            ./gradlew connectedFullDebugAndroidTest --stacktrace > gen12-1-android-test-console.log 2>&1
+            status=$?
+            adb logcat -d -v threadtime > gen12-1-emulator-logcat.txt 2>&1 || true
+            echo "connectedFullDebugAndroidTest status=$status"
+            tail -n 250 gen12-1-android-test-console.log || true
+            exit $status
 
       - name: Package failure diagnostics
         if: failure()
@@ -240,10 +247,15 @@ jobs:
           cp -r gen12-1-compare gen12-1-failure/ 2>/dev/null || true
           cp tools/gen12_1_engineering_decision_log.md gen12-1-failure/ENGINEERING-DECISION-LOG.md 2>/dev/null || true
           cp app/build/intermediates/lint_intermediate_text_report/fullDebug/lintReportFullDebug/lint-results-fullDebug.txt gen12-1-failure/LINT.txt 2>/dev/null || true
+          cp gen12-1-android-test-console.log gen12-1-failure/ANDROID-TEST-CONSOLE.log 2>/dev/null || true
+          cp gen12-1-emulator-logcat.txt gen12-1-failure/EMULATOR-LOGCAT.txt 2>/dev/null || true
+          cp -r app/build/outputs/androidTest-results/connected gen12-1-failure/androidTest-results 2>/dev/null || true
+          cp -r app/build/reports/androidTests/connected gen12-1-failure/androidTest-report 2>/dev/null || true
           {
             echo 'status=CI_FAILED_BEFORE_ELIGIBLE_HANDOFF'
             echo 'validationStatus=BUILD-UNVERIFIED'
             echo 'physicalFold7Validation=NOT_RUN'
+            echo 'forensicFailureCapture=connected-test XML/report + Gradle console + emulator logcat when available'
           } > gen12-1-failure/FAILURE-INFO.txt
 
       - name: Upload failure diagnostics
