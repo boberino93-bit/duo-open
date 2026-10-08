@@ -1,0 +1,202 @@
+name: Build Gen12.2 Gen4 Ingress Fence
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - build/gen12-2-panel-authority-isolation-20261008
+    paths:
+      - ".github/workflows/build-gen12-2-gen4-ingress-fence.yml"
+      - "tools/apply_gen12_2_gen4_ingress_fence.py"
+      - "tools/gen12_2_gen4_ingress_fence_forensics.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-gen12-2-gen4-ingress-fence
+  cancel-in-progress: true
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Gen12.2 candidate
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen12-2-panel-authority-isolation-20261008
+          fetch-depth: 0
+
+      - name: Checkout reconstruction baseline
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen12-2-panel-authority-isolation-20261008
+          path: baseline
+          fetch-depth: 0
+
+      - name: Reconstruct exact Gen12.1 lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          apply_gen12_1() {
+            local repo="$1"
+            python3 "$repo/service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py" "$repo"
+            python3 "$repo/tools/apply_gen7_runtime_regression_beta2.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen8_anchored_transition.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen9_predictive_inner_wake.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen9_guarded_prewake.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_live_mirror_close.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_1_handoff_guard.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_2_secure_fail_open.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_3_hybrid_animation.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_4_io_coalescing.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_5_mirror_warmup_retention.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_6_oneui9_android17_compat.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_6_api37_private_api_lint_contract.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_7_oneui9_display_angle.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen11_product_ui.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen12_route_lane_resilience.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen12_1_wallpaper_lifecycle.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen12_1_wallpaper_metadata_receipt.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen12_1_wallpaper_ui_io.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen12_1_ui_smoke_scroll.py" --repo "$repo"
+          }
+          apply_gen12_1 "$GITHUB_WORKSPACE/baseline"
+          apply_gen12_1 "$GITHUB_WORKSPACE"
+          grep -F 'versionCode = 57' baseline/app/build.gradle.kts
+          grep -F 'versionCode = 57' app/build.gradle.kts
+          grep -F 'GEN12_ROUTE_LANE_RESILIENCE' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'runCoverMutation {' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'ShellProtocol.COVER_PRESENTATION_V1 -> {' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+
+      - name: Apply Gen12.2 ingress fence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen12_2_gen4_ingress_fence.py --repo .
+          git diff --check
+          grep -F 'versionCode = 58' app/build.gradle.kts
+          grep -F 'versionName = "5.6.2-gen12-2-gen4-ingress-fence-zfold7"' app/build.gradle.kts
+          grep -F 'GEN12_2_GEN4_INGRESS_FENCE' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'superseded-before-execution' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'superseded-before-release' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'superseded-before-cleanup' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'superseded-during-cleanup' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+
+      - name: Enforce narrow runtime delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmp baseline/app/src/full/java/com/duoopen/shell/ShizukuBridge.kt app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+          cmp baseline/app/src/full/java/com/duoopen/shell/ShellProtocol.kt app/src/full/java/com/duoopen/shell/ShellProtocol.kt
+          cmp baseline/app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          cmp baseline/app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          cmp baseline/app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt
+          cmp baseline/app/src/full/java/com/duoopen/overlay/PanelEngine.kt app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          cmp baseline/app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt
+          test ! -e baseline/app/src/full/java/com/duoopen/shell/Fold7Gen4IngressFence.kt
+          test ! -e baseline/app/src/test/java/com/duoopen/shell/Fold7Gen4IngressFenceTest.kt
+          diff -u baseline/app/src/full/java/com/duoopen/shell/DuoShellService.kt app/src/full/java/com/duoopen/shell/DuoShellService.kt > gen12-2-shell.diff || true
+          test -s gen12-2-shell.diff
+
+      - name: Forensic ordering replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          # Model only the ordering property under test. The old daemon advanced
+          # authority when executor work began; the new fence advances authority
+          # at Binder ingress.
+          watermark = (10, 66)
+          queued_release = (10, 66)
+          incoming_prepare = (10, 71)
+          watermark = max(watermark, incoming_prepare)
+          assert queued_release != watermark
+          assert incoming_prepare == watermark
+
+          # New service lifetime must win even when local sequence restarts.
+          watermark = (100, 900)
+          incoming_new_service = (101, 1)
+          watermark = max(watermark, incoming_new_service)
+          assert watermark == incoming_new_service
+          print("GEN12.2 BINDER-INGRESS ORDERING REPLAY: PASS")
+          PY
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Ensure Android 17 SDK is installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-37.0" "build-tools;36.0.0"
+          test -d "$ANDROID_HOME/platforms/android-37.0"
+
+      - name: Run unit tests lint and assemble
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest lintFullDebug assembleFullDebug --stacktrace
+
+      - name: Package failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p gen12-2-failure
+          git diff > gen12-2-failure/APPLIED-GEN12-2.diff || true
+          cp gen12-2-shell.diff gen12-2-failure/SHELL-DELTA.diff 2>/dev/null || true
+          cp tools/gen12_2_gen4_ingress_fence_forensics.md gen12-2-failure/FORENSICS.md 2>/dev/null || true
+          cp app/build/intermediates/lint_intermediate_text_report/fullDebug/lintReportFullDebug/lint-results-fullDebug.txt gen12-2-failure/LINT.txt 2>/dev/null || true
+          {
+            echo 'status=CI_FAILED'
+            echo 'physicalFold7Validation=NOT_RUN'
+            echo 'sourceCapture=duoopen-debug-1791438725678.zip'
+          } > gen12-2-failure/FAILURE-INFO.txt
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.6.2-gen12-2-ingress-fence-failure
+          path: gen12-2-failure/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Package Gen12.2 candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen12-2-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          OUTPUT="gen12-2-build/DuoOpen-ZFold7-5.6.2-gen12-2-gen4-ingress-fence-debug.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" > gen12-2-build/APK-SHA256.txt
+          git diff > gen12-2-build/APPLIED-GEN12-2.diff
+          cp gen12-2-shell.diff gen12-2-build/SHELL-DELTA.diff
+          cp tools/gen12_2_gen4_ingress_fence_forensics.md gen12-2-build/FORENSICS.md
+          {
+            echo 'sourceFieldBundle=duoopen-debug-1791438725678.zip'
+            echo 'sourceBuild=5.6.1-gen12-1-wallpaper-lifecycle-zfold7 code57'
+            echo 'confirmedPrimaryDefect=older queued Gen4 release can execute before newer prepare because authority sequence advanced only inside the same serialized mutation lane'
+            echo 'mitigation=Binder-ingress serviceEpoch+intentSequence fence with destructive release rechecks'
+            echo 'hardwareMutationConcurrency=UNCHANGED_SINGLE_WRITER'
+            echo 'unitLintAssemble=PASS'
+            echo 'physicalFold7Validation=REQUIRED'
+          } > gen12-2-build/FORENSIC-EVIDENCE-SUMMARY.txt
+
+      - name: Upload Gen12.2 candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.6.2-gen12-2-gen4-ingress-fence
+          path: gen12-2-build/
+          if-no-files-found: error
+          retention-days: 14
