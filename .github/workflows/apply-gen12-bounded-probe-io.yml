@@ -1,0 +1,65 @@
+name: Apply Gen12 Bounded Probe IO
+
+on:
+  push:
+    branches:
+      - build/gen12-route-lane-resilience-20261008
+    paths:
+      - ".github/workflows/apply-gen12-bounded-probe-io.yml"
+      - "tools/apply_gen12_bounded_probe_io.py"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-gen12-bounded-probe-io
+  cancel-in-progress: false
+
+jobs:
+  apply-test-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Gen12 branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply deterministic bounded probe patch
+        run: python3 tools/apply_gen12_bounded_probe_io.py
+
+      - name: Validate bounded probe diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          grep -F 'Thread(' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F '"duo-probe-reader"' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'PROBE_TIMEOUT_MS' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          grep -F 'reader.join(PROBE_READER_JOIN_MS)' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Run unit tests and assemble debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
+
+      - name: Commit tested bounded probe fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/full/java/com/duoopen/shell/DuoShellService.kt
+          git diff --cached --quiet && { echo 'No generated changes to commit.'; exit 0; }
+          git commit -m "fix: bound shell probe IO on Fold7 route fallback"
+          git push origin HEAD:build/gen12-route-lane-resilience-20261008
