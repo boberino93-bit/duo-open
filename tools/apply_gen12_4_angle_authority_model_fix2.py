@@ -209,6 +209,59 @@ def main() -> None:
     replace_once(
         test,
         '''    @Test
+    fun restartRequestsAreRateLimitedWhenTargetsRemainDead() {
+        val arbiter =
+            Fold7AngleTargetArbiter(
+                restartAfterExhaustedRounds = 1,
+                restartCooldownMs = 1_000L,
+            )
+        val keys = listOf(inner.key)
+
+        assertTrue(
+            arbiter.onMiss(inner.key, keys, 1_000L)
+                .requestReaderRestart
+        )
+        assertFalse(
+            arbiter.onMiss(inner.key, keys, 1_200L)
+                .requestReaderRestart
+        )
+        assertTrue(
+            arbiter.onMiss(inner.key, keys, 2_000L)
+                .requestReaderRestart
+        )
+    }
+''',
+        '''    @Test
+    fun unchangedFailureEpochStaysLatchedEvenAfterCooldown() {
+        val arbiter =
+            Fold7AngleTargetArbiter(
+                restartAfterExhaustedRounds = 1,
+                restartCooldownMs = 1_000L,
+            )
+        val keys = listOf(inner.key)
+
+        assertTrue(
+            arbiter.onMiss(inner.key, keys, 1_000L)
+                .requestReaderRestart
+        )
+        arbiter.onReaderRestart()
+        assertFalse(
+            arbiter.onMiss(inner.key, keys, 1_200L)
+                .requestReaderRestart
+        )
+        assertFalse(
+            arbiter.onMiss(inner.key, keys, 2_500L)
+                .requestReaderRestart
+        )
+        assertFalse(arbiter.readerRecoveryArmed)
+    }
+''',
+        "obsolete cooldown-only restart expectation",
+    )
+
+    replace_once(
+        test,
+        '''    @Test
     fun successfulAckClearsProbeRoundAndRestartPressure() {
 ''',
         '''    @Test
