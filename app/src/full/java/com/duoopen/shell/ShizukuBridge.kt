@@ -624,14 +624,16 @@ object ShizukuBridge {
 
     internal fun returnCoverPanelGen4(
         serviceEpoch: Long,
+        closeCycleId: Long,
+        transitionGeneration: Long,
         intentSequence: Long,
         reason: String,
     ): Bundle? =
         coverPanelGen4(
             operation = 4,
             serviceEpoch = serviceEpoch,
-            closeCycleId = 0L,
-            transitionGeneration = -1L,
+            closeCycleId = closeCycleId,
+            transitionGeneration = transitionGeneration,
             intentSequence = intentSequence,
             reason = reason,
         )

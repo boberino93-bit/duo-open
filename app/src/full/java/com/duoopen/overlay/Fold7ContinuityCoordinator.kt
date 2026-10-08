@@ -49,6 +49,7 @@ internal class Fold7ContinuityCoordinator(
     @Volatile private var coverRouteReassertInFlight = false
     @Volatile private var prewarmInFlightGeneration = -1L
     @Volatile private var prewarmInFlightConnectionEpoch = -1L
+    @Volatile private var prewarmInFlightOwner: CoverReleaseOwner? = null
     @Volatile private var destroyed = false
     @Volatile private var renderOwnershipArmed = false
     @Volatile private var armRequested = true
@@ -314,6 +315,7 @@ internal class Fold7ContinuityCoordinator(
     fun release(reason: String) {
         armRequested = false
         renderOwnershipArmed = false
+        val releaseOwner = currentCoverReleaseOwner()
         gen2.cancelActiveCycle()
         val generation = controller.generation
 
@@ -323,7 +325,7 @@ internal class Fold7ContinuityCoordinator(
             stopShellMirror = true,
         )
 
-        releaseCoverLease(reason)
+        releaseCoverLease(reason, releaseOwner)
     }
 
     fun destroy() {
@@ -340,7 +342,7 @@ internal class Fold7ContinuityCoordinator(
             Thread(
                 {
                     runCatching {
-                        ShizukuBridge.returnCoverPanelGen4(
+                        ShizukuBridge.reconcileCoverPanelGen4(
                             serviceEpoch = serviceEpoch,
                             intentSequence = intentSequence,
                             reason = "destroy",
@@ -418,6 +420,7 @@ internal class Fold7ContinuityCoordinator(
         coverRouteReassertInFlight = false
         prewarmInFlightGeneration = -1L
         prewarmInFlightConnectionEpoch = -1L
+        prewarmInFlightOwner = null
 
         gen2.coverAuthority.onConnectionEpoch(
             ShizukuBridge.connectionEpoch
@@ -553,6 +556,12 @@ internal class Fold7ContinuityCoordinator(
         }
         prewarmInFlightGeneration = generation
         prewarmInFlightConnectionEpoch = requestConnectionEpoch
+        prewarmInFlightOwner =
+            CoverReleaseOwner(
+                serviceEpoch = cycle.serviceEpoch,
+                closeCycleId = cycle.closeCycleId,
+                transitionGeneration = generation,
+            )
 
         val intentSequence = panelIntentSequence.incrementAndGet()
         gen4RouteRetryCount = 0
@@ -581,6 +590,7 @@ internal class Fold7ContinuityCoordinator(
                 ) {
                     prewarmInFlightGeneration = -1L
                     prewarmInFlightConnectionEpoch = -1L
+                    prewarmInFlightOwner = null
                 }
 
                 if (
@@ -733,15 +743,20 @@ internal class Fold7ContinuityCoordinator(
             return
         }
 
-        // Hiding is local and immediate. The privileged release is best effort
-        // and resolves a fresh current cover route internally.
+        val releaseOwner = currentCoverReleaseOwner()
+
+        // Hiding is local and immediate. The privileged release is exact-owner
+        // compare-and-release so an obsolete transition cannot tear down a newer route.
         hideMirror(
             generation = generation,
             reason = "release-secondary",
             stopShellMirror = true,
         )
 
-        releaseCoverLease("secondary-release:generation=$generation")
+        releaseCoverLease(
+            reason = "secondary-release:generation=$generation",
+            expectedOwner = releaseOwner,
+        )
     }
 
     private fun syncMirrorHost(
@@ -1156,17 +1171,79 @@ internal class Fold7ContinuityCoordinator(
         }
     }
 
+    private data class CoverReleaseOwner(
+        val serviceEpoch: Long,
+        val closeCycleId: Long,
+        val transitionGeneration: Long,
+    )
+
+    private fun currentCoverReleaseOwner(): CoverReleaseOwner? {
+        val inFlight = prewarmInFlightOwner
+        if (
+            inFlight != null &&
+            prewarmInFlightConnectionEpoch == ShizukuBridge.connectionEpoch &&
+            inFlight.transitionGeneration == prewarmInFlightGeneration
+        ) {
+            return inFlight
+        }
+
+        val token = gen2.coverAuthority.acceptedToken ?: return null
+        if (
+            token.ownerServiceEpoch <= 0L ||
+            token.ownerCloseCycleId <= 0L ||
+            token.ownerGeneration < 0L
+        ) {
+            return null
+        }
+
+        return CoverReleaseOwner(
+            serviceEpoch = token.ownerServiceEpoch,
+            closeCycleId = token.ownerCloseCycleId,
+            transitionGeneration = token.ownerGeneration,
+        )
+    }
+
     private fun releaseCoverLease(
         reason: String,
+        expectedOwner: CoverReleaseOwner? = currentCoverReleaseOwner(),
     ) {
         if (!ShizukuBridge.ready) return
+
+        if (expectedOwner == null) {
+            DuoDiagnostics.event(
+                "gen4-authority",
+                "return skipped no-owner reason=$reason",
+            )
+            return
+        }
+
         val requestConnectionEpoch = ShizukuBridge.connectionEpoch
-        val intentSequence = panelIntentSequence.incrementAndGet()
 
         scope.launch(Dispatchers.IO) {
+            if (
+                requestConnectionEpoch != ShizukuBridge.connectionEpoch ||
+                !ShizukuBridge.ready
+            ) {
+                return@launch
+            }
+
+            val latestOwner = currentCoverReleaseOwner()
+            if (latestOwner != null && latestOwner != expectedOwner) {
+                DuoDiagnostics.event(
+                    "gen4-authority",
+                    "return stale-before-rpc reason=$reason expected=$expectedOwner latest=$latestOwner",
+                )
+                return@launch
+            }
+
+            // Allocate ordering identity at execution time, not queue time. A stale
+            // worker that is discarded above therefore cannot consume a newer RPC id.
+            val intentSequence = panelIntentSequence.incrementAndGet()
             val result =
                 ShizukuBridge.returnCoverPanelGen4(
-                    serviceEpoch = serviceEpoch,
+                    serviceEpoch = expectedOwner.serviceEpoch,
+                    closeCycleId = expectedOwner.closeCycleId,
+                    transitionGeneration = expectedOwner.transitionGeneration,
                     intentSequence = intentSequence,
                     reason = reason,
                 )

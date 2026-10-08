@@ -1674,6 +1674,8 @@ class DuoShellService : Binder() {
             4 ->
                 returnCoverPanelGen4(
                     serviceEpoch = serviceEpoch,
+                    closeCycleId = closeCycleId,
+                    transitionGeneration = transitionGeneration,
                     intentSequence = intentSequence,
                     reason = reason,
                 )
@@ -1870,13 +1872,33 @@ class DuoShellService : Binder() {
 
     private fun returnCoverPanelGen4(
         serviceEpoch: Long,
+        closeCycleId: Long,
+        transitionGeneration: Long,
         intentSequence: Long,
         reason: String,
     ): Bundle {
-        gen4PanelAuthority.beginRelease(
-            serviceEpoch = serviceEpoch,
-            intentSequence = intentSequence,
-        )
+        val expectedOwner =
+            Fold7PanelAuthorityGen4.Owner(
+                serviceEpoch = serviceEpoch,
+                closeCycleId = closeCycleId,
+                transitionGeneration = transitionGeneration,
+            )
+
+        val release =
+            gen4PanelAuthority.beginReleaseOwned(
+                serviceEpoch = serviceEpoch,
+                intentSequence = intentSequence,
+                expectedOwner = expectedOwner,
+            )
+
+        if (!release.accepted) {
+            return gen4PanelBundle(
+                operation = "return:$reason",
+                ok = false,
+                stale = release.stale,
+                decision = release.reason,
+            )
+        }
 
         val cleanup =
             normalizeGen4SecondaryRoute(
@@ -1905,12 +1927,23 @@ class DuoShellService : Binder() {
         val before = gen4PanelAuthority.snapshot()
 
         return when (before.phase) {
-            Fold7PanelAuthorityGen4.Phase.RELEASE_PENDING ->
+            Fold7PanelAuthorityGen4.Phase.RELEASE_PENDING -> {
+                val owner =
+                    before.owner
+                        ?: return gen4PanelBundle(
+                            operation = "reconcile:$reason",
+                            ok = false,
+                            decision = "release-pending-without-owner",
+                        )
+
                 returnCoverPanelGen4(
-                    serviceEpoch = serviceEpoch,
+                    serviceEpoch = owner.serviceEpoch,
+                    closeCycleId = owner.closeCycleId,
+                    transitionGeneration = owner.transitionGeneration,
                     intentSequence = intentSequence,
                     reason = "reconcile:$reason",
                 )
+            }
 
             Fold7PanelAuthorityGen4.Phase.COVER_PREPARING,
             Fold7PanelAuthorityGen4.Phase.COVER_READY_HIDDEN -> {
