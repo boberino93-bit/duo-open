@@ -178,7 +178,11 @@ def main() -> None:
     require(feed, "transportSupervisor.observe(", 1)
     require(feed, "transportSupervisor.onSample()", 1)
     require(feed, "transportSupervisor.reset(", 1)
-    require(feed, "readerRestartPending\n        )", 1)
+    require(
+        feed,
+        "!isCurrent(expectedSession) ||\n            readerRestartPending",
+        1,
+    )
     require(feed, 'reason = "transport:$transportReason"', 1)
 
     print("GEN12.4 ANGLE TRANSPORT RUNTIME: APPLIED")
