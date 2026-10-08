@@ -1,0 +1,44 @@
+name: Validate Gen12 Route Lane Resilience
+
+on:
+  push:
+    branches:
+      - build/gen12-route-lane-resilience-20261008
+    paths:
+      - "app/src/full/java/com/duoopen/overlay/Fold7ContinuityController.kt"
+      - "app/src/full/java/com/duoopen/shell/Fold7PanelAuthorityGen4.kt"
+      - "app/src/test/java/com/duoopen/overlay/Fold7ContinuityControllerTest.kt"
+      - "app/src/test/java/com/duoopen/shell/Fold7PanelAuthorityGen4Test.kt"
+      - ".github/workflows/gen12-route-lane-resilience-validate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-gen12-route-lane-resilience
+  cancel-in-progress: true
+
+jobs:
+  unit-and-assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Validate diff whitespace
+        run: git diff --check HEAD^
+
+      - name: Run full unit tests and assemble debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest assembleFullDebug --stacktrace
