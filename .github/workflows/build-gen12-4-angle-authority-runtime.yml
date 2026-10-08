@@ -1,0 +1,199 @@
+name: Build Gen12.4 Angle Authority Runtime
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - build/gen12-4-angle-authority-20261008
+    paths:
+      - ".github/workflows/build-gen12-4-angle-authority-runtime.yml"
+      - "tools/apply_gen12_4_angle_authority_model.py"
+      - "tools/apply_gen12_4_angle_authority_model_fix1.py"
+      - "tools/apply_gen12_4_angle_authority_runtime.py"
+      - "tools/gen12_4_angle_authority_design.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-gen12-4-angle-authority-runtime
+  cancel-in-progress: true
+
+jobs:
+  runtime-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout candidate branch
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen12-4-angle-authority-20261008
+          fetch-depth: 0
+
+      - name: Reconstruct exact Gen12.3 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+          python3 tools/apply_gen8_anchored_transition.py --repo .
+          python3 tools/apply_gen9_predictive_inner_wake.py --repo .
+          python3 tools/apply_gen9_guarded_prewake.py --repo .
+          python3 tools/apply_gen10_live_mirror_close.py --repo .
+          python3 tools/apply_gen10_1_handoff_guard.py --repo .
+          python3 tools/apply_gen10_2_secure_fail_open.py --repo .
+          python3 tools/apply_gen10_3_hybrid_animation.py --repo .
+          python3 tools/apply_gen10_4_io_coalescing.py --repo .
+          python3 tools/apply_gen10_5_mirror_warmup_retention.py --repo .
+          python3 tools/apply_gen10_6_oneui9_android17_compat.py --repo .
+          python3 tools/apply_gen10_6_api37_private_api_lint_contract.py --repo .
+          python3 tools/apply_gen10_7_oneui9_display_angle.py --repo .
+          python3 tools/apply_gen11_product_ui.py --repo .
+          python3 tools/apply_gen12_route_lane_resilience.py --repo .
+          python3 tools/apply_gen12_1_wallpaper_lifecycle.py --repo .
+          python3 tools/apply_gen12_1_wallpaper_metadata_receipt.py --repo .
+          python3 tools/apply_gen12_1_wallpaper_ui_io.py --repo .
+          python3 tools/apply_gen12_1_ui_smoke_scroll.py --repo .
+          python3 tools/apply_gen12_2_route_retention_fence.py --repo .
+          python3 tools/apply_gen12_3_angle_feed_resilience_fix1.py --repo .
+          grep -F 'versionCode = 59' app/build.gradle.kts
+
+      - name: Apply Gen12.4 authority model
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen12_4_angle_authority_model_fix1.py --repo .
+          test -s app/src/full/java/com/duoopen/shell/Fold7AngleTargetArbiter.kt
+          test -s app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt
+
+      - name: Snapshot pre-runtime app tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          find app -type f \
+            ! -path 'app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt' \
+            ! -path 'app/src/full/java/com/duoopen/shell/DuoShellService.kt' \
+            ! -path 'app/build.gradle.kts' \
+            -print0 | sort -z | xargs -0 sha256sum > /tmp/gen12-4-pre-runtime.sha256
+          cp app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt /tmp/WallpaperAngleFeed.gen12-3.kt
+          cp app/src/full/java/com/duoopen/shell/DuoShellService.kt /tmp/DuoShellService.gen12-3.kt
+          cp app/build.gradle.kts /tmp/build.gradle.gen12-3.kts
+
+      - name: Apply Gen12.4 runtime integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen12_4_angle_authority_runtime.py --repo .
+          git diff --check
+          grep -F 'versionCode = 60' app/build.gradle.kts
+          grep -F 'versionName = "5.6.4-gen12-4-angle-authority-zfold7"' app/build.gradle.kts
+          grep -F 'angle-target-select' app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
+          grep -F 'transactional=true' app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
+          grep -F 'visibleParsed' app/src/full/java/com/duoopen/shell/DuoShellService.kt
+
+      - name: Enforce bounded runtime delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum -c /tmp/gen12-4-pre-runtime.sha256
+          diff -u /tmp/WallpaperAngleFeed.gen12-3.kt app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt > gen12-4-feed.diff || true
+          diff -u /tmp/DuoShellService.gen12-3.kt app/src/full/java/com/duoopen/shell/DuoShellService.kt > gen12-4-shell.diff || true
+          diff -u /tmp/build.gradle.gen12-3.kts app/build.gradle.kts > gen12-4-version.diff || true
+          test -s gen12-4-feed.diff
+          test -s gen12-4-shell.diff
+          test -s gen12-4-version.diff
+          ! grep -F 'for (commandAnchor in commandAnchors)' app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
+          ! grep -F 'readerWatchdog.onTimeout' app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
+          ! grep -F 'readerWatchdog.onSample' app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
+
+      - name: Static authority invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          feed = Path('app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt').read_text()
+          shell = Path('app/src/full/java/com/duoopen/shell/DuoShellService.kt').read_text()
+          assert feed.count('sendWallpaperCommand(') == 1, 'Gen12.4 must send one target per poll'
+          assert 'POLL_TIMEOUT_MS =\n            64L' in feed
+          assert 'NO_TARGET_RECHECK_MS =\n            250L' in feed
+          assert 'readerSession = newSession' in feed
+          start = feed.index('val started =\n            ShizukuBridge.startAnglesSequenced(')
+          commit = feed.index('readerSession = newSession', start)
+          assert commit > start, 'session ownership must commit after replacement start attempt'
+          assert 'if (!started)' in feed[start:commit]
+          assert 'targetArbiter.onAck(' in feed
+          assert 'targetArbiter.onMiss(' in feed
+          assert 'line.contains("isVisible=true") ||' in shell
+          assert 'putInt("hiddenParsed", hiddenParsed)' in shell
+          print('GEN12.4 STATIC AUTHORITY INVARIANTS: PASS')
+          PY
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Ensure Android 17 SDK is installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-37.0" "build-tools;36.0.0"
+          test -d "$ANDROID_HOME/platforms/android-37.0"
+
+      - name: Run unit tests lint and assemble
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest lintFullDebug assembleFullDebug --stacktrace
+
+      - name: Package Gen12.4 validation candidate
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen12-4-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          OUTPUT="gen12-4-build/DuoOpen-ZFold7-5.6.4-gen12-4-angle-authority-debug.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" > gen12-4-build/APK-SHA256.txt
+          cp gen12-4-feed.diff gen12-4-build/ANGLE-AUTHORITY-FEED.diff
+          cp gen12-4-shell.diff gen12-4-build/ANGLE-AUTHORITY-SHELL.diff
+          cp gen12-4-version.diff gen12-4-build/VERSION.diff
+          cp tools/gen12_4_angle_authority_design.md gen12-4-build/DESIGN.md
+          cp app/src/full/java/com/duoopen/shell/Fold7AngleTargetArbiter.kt gen12-4-build/Fold7AngleTargetArbiter.kt
+          cp app/src/test/java/com/duoopen/shell/Fold7AngleTargetArbiterTest.kt gen12-4-build/Fold7AngleTargetArbiterTest.kt
+
+      - name: Package failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p gen12-4-failure
+          cp gen12-4-feed.diff gen12-4-failure/ANGLE-AUTHORITY-FEED.diff 2>/dev/null || true
+          cp gen12-4-shell.diff gen12-4-failure/ANGLE-AUTHORITY-SHELL.diff 2>/dev/null || true
+          cp tools/gen12_4_angle_authority_design.md gen12-4-failure/DESIGN.md 2>/dev/null || true
+          git diff > gen12-4-failure/APPLIED.diff || true
+
+      - name: Upload Gen12.4 candidate
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.6.4-gen12-4-angle-authority
+          path: gen12-4-build/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.6.4-gen12-4-angle-authority-failure
+          path: gen12-4-failure/
+          if-no-files-found: warn
+          retention-days: 14
