@@ -44,6 +44,7 @@ internal class Fold7ContinuityCoordinator(
     private val mirrorSequence = AtomicLong(0L)
     private val mirrorLeaseCounter = AtomicLong(0L)
     private val panelIntentSequence = AtomicLong(0L)
+    private val standbyRouteLease = Fold7StandbyRouteLease()
 
     @Volatile private var coverLeaseOwnerGeneration = -1L
     @Volatile private var coverRouteReassertInFlight = false
@@ -77,6 +78,7 @@ internal class Fold7ContinuityCoordinator(
         armRequested = true
         destroyed = false
         renderOwnershipArmed = false
+        cancelStandbyRoute("arm")
 
         if (!ShizukuBridge.ready) {
             onStatus("Fold7 continuity is waiting for the Gen4 panel daemon.")
@@ -316,6 +318,7 @@ internal class Fold7ContinuityCoordinator(
         armRequested = false
         renderOwnershipArmed = false
         val releaseOwner = currentCoverReleaseOwner()
+        cancelStandbyRoute("manual-release:$reason")
         gen2.cancelActiveCycle()
         val generation = controller.generation
 
@@ -332,6 +335,7 @@ internal class Fold7ContinuityCoordinator(
         destroyed = true
         armRequested = false
         renderOwnershipArmed = false
+        cancelStandbyRoute("destroy")
         hideMirror(
             generation = controller.generation,
             reason = "destroy",
@@ -405,6 +409,7 @@ internal class Fold7ContinuityCoordinator(
         gen4AdmittedConnectionEpoch = -1L
         gen4AdmissionInFlight = false
         gen4StartupRetryCount = 0
+        cancelStandbyRoute("privilege-unavailable")
 
         hideMirror(
             generation = controller.generation,
@@ -745,14 +750,30 @@ internal class Fold7ContinuityCoordinator(
 
         val releaseOwner = currentCoverReleaseOwner()
 
-        // Hiding is local and immediate. The privileged release is exact-owner
-        // compare-and-release so an obsolete transition cannot tear down a newer route.
+        // Visibility ends immediately. Opening-side reversals retain the exact
+        // old route hidden for a short grace so a quick re-close can adopt it
+        // instead of paying a cold Samsung route-publication penalty again.
         hideMirror(
             generation = generation,
             reason = "release-secondary",
             stopShellMirror = true,
         )
 
+        val openingSide =
+            controller.state in setOf(
+                Fold7ContinuityController.State.INNER_HANDOFF,
+                Fold7ContinuityController.State.OPEN_INNER,
+            )
+
+        if (openingSide && releaseOwner != null) {
+            retainStandbyRoute(
+                owner = releaseOwner,
+                generation = generation,
+            )
+            return
+        }
+
+        cancelStandbyRoute("immediate-secondary-release:generation=$generation")
         releaseCoverLease(
             reason = "secondary-release:generation=$generation",
             expectedOwner = releaseOwner,
@@ -1177,6 +1198,76 @@ internal class Fold7ContinuityCoordinator(
         val transitionGeneration: Long,
     )
 
+    private fun CoverReleaseOwner.toStandbyOwner() =
+        Fold7StandbyRouteLease.Owner(
+            serviceEpoch = serviceEpoch,
+            closeCycleId = closeCycleId,
+            transitionGeneration = transitionGeneration,
+        )
+
+    private fun Fold7StandbyRouteLease.Owner.toReleaseOwner() =
+        CoverReleaseOwner(
+            serviceEpoch = serviceEpoch,
+            closeCycleId = closeCycleId,
+            transitionGeneration = transitionGeneration,
+        )
+
+    private fun retainStandbyRoute(
+        owner: CoverReleaseOwner,
+        generation: Long,
+    ) {
+        val ticket = standbyRouteLease.retain(owner.toStandbyOwner())
+
+        DuoDiagnostics.event(
+            "gen4-standby",
+            "retained generation=$generation owner=$owner graceMs=$COVER_STANDBY_GRACE_MS",
+        )
+
+        handler.postDelayed(
+            {
+                if (destroyed) return@postDelayed
+
+                if (!standbyRouteLease.consumeExpiry(ticket)) {
+                    DuoDiagnostics.event(
+                        "gen4-standby",
+                        "expiry inert ticket=${ticket.epoch} owner=${ticket.owner}",
+                    )
+                    return@postDelayed
+                }
+
+                val expectedOwner = ticket.owner.toReleaseOwner()
+                val latestOwner = currentCoverReleaseOwner()
+                if (latestOwner != null && latestOwner != expectedOwner) {
+                    DuoDiagnostics.event(
+                        "gen4-standby",
+                        "expiry superseded expected=$expectedOwner latest=$latestOwner",
+                    )
+                    return@postDelayed
+                }
+
+                DuoDiagnostics.event(
+                    "gen4-standby",
+                    "expired owner=$expectedOwner; returning native authority",
+                )
+                releaseCoverLease(
+                    reason = "standby-expired:generation=$generation",
+                    expectedOwner = expectedOwner,
+                )
+            },
+            COVER_STANDBY_GRACE_MS,
+        )
+    }
+
+    private fun cancelStandbyRoute(
+        reason: String,
+    ) {
+        val cancelled = standbyRouteLease.cancel() ?: return
+        DuoDiagnostics.event(
+            "gen4-standby",
+            "cancelled reason=$reason owner=$cancelled",
+        )
+    }
+
     private fun currentCoverReleaseOwner(): CoverReleaseOwner? {
         val inFlight = prewarmInFlightOwner
         if (
@@ -1185,6 +1276,10 @@ internal class Fold7ContinuityCoordinator(
             inFlight.transitionGeneration == prewarmInFlightGeneration
         ) {
             return inFlight
+        }
+
+        standbyRouteLease.owner()?.let { retained ->
+            return retained.toReleaseOwner()
         }
 
         val token = gen2.coverAuthority.acceptedToken ?: return null
@@ -1407,6 +1502,9 @@ internal class Fold7ContinuityCoordinator(
             )
 
         cycleChange.started?.let { cycle ->
+            cancelStandbyRoute(
+                "new-close:cycle=${cycle.closeCycleId}:generation=${transition.generation}"
+            )
             DuoDiagnostics.event(
                 "fold7-cycle",
                 "START serviceEpoch=${cycle.serviceEpoch} " +
@@ -1448,6 +1546,7 @@ internal class Fold7ContinuityCoordinator(
         const val COVER_WIDTH = 1080
         const val COVER_HEIGHT = 2520
         const val READINESS_WATCHDOG_MS = 80L
+        const val COVER_STANDBY_GRACE_MS = 1_800L
         const val FROZEN_FRAME_MAX_AGE_MS = 10_000L
         const val MAX_GEN4_STARTUP_RETRIES = 4
         const val GEN4_STARTUP_RETRY_MS = 60L
