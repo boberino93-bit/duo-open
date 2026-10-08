@@ -4,12 +4,11 @@
     "PRIMARY"
   ],
   "changed_files": [
-    "swarm_kernel/AGENT_BOOTSTRAP_OVERLAY.md",
-    "swarm_kernel/VALIDATION_CLAIM_GATE.md"
+    "swarm_kernel/FORENSIC_AUDIT_LIFECYCLE_DIRECTIVE.md"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "a151ca45451f66c712e8a133e71221706d0d55ea9afdfb33a58cf81fbb76e163",
-    "PRIMARY_PROMPT.md": "dcf9b3a85fe122561d8c7b6dd9f0eecbcd4810389fb19a3a19581e8b7fe5bf42",
+    "MANAGER_PROMPT.md": "5fa9b8fdb94155a9c63a8e9c93bc034959639b38de3b6a9a45f8ca0e12553d5a",
+    "PRIMARY_PROMPT.md": "2946854d45bf382a978e3f617396793505ac12b76e0c83ffbd7bdff1455f3313",
     "RESEARCHER_PROMPT.md": "2750c7d4b4cc19cd7b4923fafbb018ad77f5d3a87221e6b691d0279eca881558"
   },
   "schema": "duo-open/generated-role-prompts/v1",
