@@ -8,6 +8,7 @@ on:
     paths:
       - ".github/workflows/build-gen12-route-lane-resilience.yml"
       - "tools/apply_gen12_route_lane_resilience.py"
+      - "tools/gen12_engineering_decision_log.md"
 
 permissions:
   contents: read
@@ -44,6 +45,7 @@ jobs:
           for path in "${changed[@]}"; do
             case "$path" in
               tools/apply_gen12_route_lane_resilience.py|\
+              tools/gen12_engineering_decision_log.md|\
               .github/workflows/build-gen12-route-lane-resilience.yml)
                 ;;
               *)
@@ -57,7 +59,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           apply_gen11() {
             local repo="$1"
             python3 "$repo/service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py" "$repo"
@@ -76,10 +77,8 @@ jobs:
             python3 "$repo/tools/apply_gen10_7_oneui9_display_angle.py" --repo "$repo"
             python3 "$repo/tools/apply_gen11_product_ui.py" --repo "$repo"
           }
-
           apply_gen11 "$GITHUB_WORKSPACE/baseline"
           apply_gen11 "$GITHUB_WORKSPACE"
-
           grep -F 'versionCode = 55' baseline/app/build.gradle.kts
           grep -F 'versionCode = 55' app/build.gradle.kts
           grep -F 'GEN11_PRODUCT_UI' app/src/main/java/com/duoopen/ui/HomePreview.kt
@@ -109,39 +108,28 @@ jobs:
           set -euo pipefail
           mkdir -p gen12-compare
 
-          diff -qr baseline/app/src/main/java/com/duoopen/ui app/src/main/java/com/duoopen/ui \
-            > gen12-compare/ui.diff || true
+          diff -qr baseline/app/src/main/java/com/duoopen/ui app/src/main/java/com/duoopen/ui > gen12-compare/ui.diff || true
           test ! -s gen12-compare/ui.diff
           cmp baseline/app/src/main/java/com/duoopen/MainActivity.kt app/src/main/java/com/duoopen/MainActivity.kt
 
           (
             cd baseline
-            find app/src/full/java -type f \
-              ! -path 'app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt' \
-              -print0 | sort -z | xargs -0 sha256sum
+            find app/src/full/java -type f ! -path 'app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt' -print0 | sort -z | xargs -0 sha256sum
           ) > gen12-compare/baseline-full-protected.sha256
           (
-            find app/src/full/java -type f \
-              ! -path 'app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt' \
-              -print0 | sort -z | xargs -0 sha256sum
+            find app/src/full/java -type f ! -path 'app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt' -print0 | sort -z | xargs -0 sha256sum
           ) > gen12-compare/candidate-full-protected.sha256
-          diff -u gen12-compare/baseline-full-protected.sha256 gen12-compare/candidate-full-protected.sha256 \
-            > gen12-compare/full-protected.diff || true
+          diff -u gen12-compare/baseline-full-protected.sha256 gen12-compare/candidate-full-protected.sha256 > gen12-compare/full-protected.diff || true
           test ! -s gen12-compare/full-protected.diff
 
           (
             cd baseline
-            find app/src/main/java -type f \
-              ! -path 'app/src/main/java/com/duoopen/fold/Fold7PresentationBootstrapGate.kt' \
-              -print0 | sort -z | xargs -0 sha256sum
+            find app/src/main/java -type f ! -path 'app/src/main/java/com/duoopen/fold/Fold7PresentationBootstrapGate.kt' -print0 | sort -z | xargs -0 sha256sum
           ) > gen12-compare/baseline-main-protected.sha256
           (
-            find app/src/main/java -type f \
-              ! -path 'app/src/main/java/com/duoopen/fold/Fold7PresentationBootstrapGate.kt' \
-              -print0 | sort -z | xargs -0 sha256sum
+            find app/src/main/java -type f ! -path 'app/src/main/java/com/duoopen/fold/Fold7PresentationBootstrapGate.kt' -print0 | sort -z | xargs -0 sha256sum
           ) > gen12-compare/candidate-main-protected.sha256
-          diff -u gen12-compare/baseline-main-protected.sha256 gen12-compare/candidate-main-protected.sha256 \
-            > gen12-compare/main-protected.diff || true
+          diff -u gen12-compare/baseline-main-protected.sha256 gen12-compare/candidate-main-protected.sha256 > gen12-compare/main-protected.diff || true
           test ! -s gen12-compare/main-protected.diff
 
           cmp baseline/app/src/main/AndroidManifest.xml app/src/main/AndroidManifest.xml
@@ -149,9 +137,7 @@ jobs:
           diff -qr baseline/app/src/main/res app/src/main/res > gen12-compare/resources.diff || true
           test ! -s gen12-compare/resources.diff
 
-          diff -u baseline/app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt \
-            app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt \
-            > gen12-compare/INTENDED-FoldOverlayService.diff || true
+          diff -u baseline/app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt > gen12-compare/INTENDED-FoldOverlayService.diff || true
           test -s gen12-compare/INTENDED-FoldOverlayService.diff
 
           {
@@ -219,6 +205,7 @@ jobs:
           git diff 5b43c181faa1a89ee7ee7c0848612033a1545372...HEAD > gen12-failure/COMMITTED-OVERLAY.diff || true
           git diff > gen12-failure/APPLIED-GEN12.diff || true
           cp -r gen12-compare gen12-failure/ 2>/dev/null || true
+          cp tools/gen12_engineering_decision_log.md gen12-failure/ENGINEERING-DECISION-LOG.md 2>/dev/null || true
           cp app/build/intermediates/lint_intermediate_text_report/fullDebug/lintReportFullDebug/lint-results-fullDebug.txt gen12-failure/LINT.txt 2>/dev/null || true
           {
             echo 'status=CI_FAILED_BEFORE_ELIGIBLE_HANDOFF'
@@ -248,6 +235,7 @@ jobs:
           git diff 5b43c181faa1a89ee7ee7c0848612033a1545372...HEAD > gen12-build/COMMITTED-OVERLAY.diff
           git diff > gen12-build/APPLIED-GEN12.diff
           cp -r gen12-compare gen12-build/architecture-compare
+          cp tools/gen12_engineering_decision_log.md gen12-build/ENGINEERING-DECISION-LOG.md
           {
             echo 'sourceFieldBundle=duoopen-debug-1791432567831.zip'
             echo 'sourceDevice=Samsung SM-F966W API37 One UI 9'
@@ -291,6 +279,7 @@ jobs:
             gen12-build/APK-SHA256.txt
             gen12-build/BUILD-INFO.txt
             gen12-build/FIELD-EVIDENCE-SUMMARY.txt
+            gen12-build/ENGINEERING-DECISION-LOG.md
             gen12-build/COMMITTED-OVERLAY.diff
             gen12-build/APPLIED-GEN12.diff
             gen12-build/architecture-compare/
