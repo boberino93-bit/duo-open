@@ -1,0 +1,298 @@
+name: Build Gen12 Route-Lane Resilience Candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - build/gen12-route-lane-resilience-20261008
+    paths:
+      - ".github/workflows/build-gen12-route-lane-resilience.yml"
+      - "tools/apply_gen12_route_lane_resilience.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-gen12-route-lane-resilience
+  cancel-in-progress: true
+
+jobs:
+  test-build-compare:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Gen12 candidate
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen12-route-lane-resilience-20261008
+          fetch-depth: 0
+
+      - name: Checkout exact Gen11 comparison baseline
+        uses: actions/checkout@v4
+        with:
+          ref: 5b43c181faa1a89ee7ee7c0848612033a1545372
+          path: baseline
+          fetch-depth: 0
+
+      - name: Enforce Gen12 post-lineage overlay-only committed delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=5b43c181faa1a89ee7ee7c0848612033a1545372
+          mapfile -t changed < <(git diff --name-only "$BASE"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          for path in "${changed[@]}"; do
+            case "$path" in
+              tools/apply_gen12_route_lane_resilience.py|\
+              .github/workflows/build-gen12-route-lane-resilience.yml)
+                ;;
+              *)
+                echo "Unexpected committed change outside Gen12 overlay packaging: $path" >&2
+                exit 1
+                ;;
+            esac
+          done
+
+      - name: Reconstruct exact Gen11 lineage in candidate and baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          apply_gen11() {
+            local repo="$1"
+            python3 "$repo/service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py" "$repo"
+            python3 "$repo/tools/apply_gen7_runtime_regression_beta2.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen8_anchored_transition.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen9_predictive_inner_wake.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen9_guarded_prewake.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_live_mirror_close.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_1_handoff_guard.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_2_secure_fail_open.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_3_hybrid_animation.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_4_io_coalescing.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_5_mirror_warmup_retention.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_6_oneui9_android17_compat.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_6_api37_private_api_lint_contract.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_7_oneui9_display_angle.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen11_product_ui.py" --repo "$repo"
+          }
+
+          apply_gen11 "$GITHUB_WORKSPACE/baseline"
+          apply_gen11 "$GITHUB_WORKSPACE"
+
+          grep -F 'versionCode = 55' baseline/app/build.gradle.kts
+          grep -F 'versionCode = 55' app/build.gradle.kts
+          grep -F 'GEN11_PRODUCT_UI' app/src/main/java/com/duoopen/ui/HomePreview.kt
+          grep -F 'GEN10_7_TOPOLOGY_ANGLE_HOLD' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'capture-protected-or-black' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'const val MAX_TILT = 60f' app/src/main/java/com/duoopen/fold/DuoShader.kt
+          grep -F 'setFilterMode(BitmapShader.FILTER_MODE_LINEAR)' app/src/full/java/com/duoopen/overlay/FoldOverlayView.kt
+
+      - name: Apply and self-verify Gen12 route-lane resilience
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen12_route_lane_resilience.py --repo .
+          git diff --check
+          grep -F 'versionCode = 56' app/build.gradle.kts
+          grep -F 'versionName = "5.6.0-gen12-route-lane-resilience-zfold7"' app/build.gradle.kts
+          grep -F 'compileSdk = 37' app/build.gradle.kts
+          grep -F 'targetSdk = 35' app/build.gradle.kts
+          ! grep -F 'targetSdk = 37' app/build.gradle.kts
+          grep -F 'GEN12_ROUTE_LANE_RESILIENCE' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'presentation deferred count=' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'deferred presentation released' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+
+      - name: Compare protected architecture to Gen11
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen12-compare
+
+          diff -qr baseline/app/src/main/java/com/duoopen/ui app/src/main/java/com/duoopen/ui \
+            > gen12-compare/ui.diff || true
+          test ! -s gen12-compare/ui.diff
+          cmp baseline/app/src/main/java/com/duoopen/MainActivity.kt app/src/main/java/com/duoopen/MainActivity.kt
+
+          (
+            cd baseline
+            find app/src/full/java -type f \
+              ! -path 'app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt' \
+              -print0 | sort -z | xargs -0 sha256sum
+          ) > gen12-compare/baseline-full-protected.sha256
+          (
+            find app/src/full/java -type f \
+              ! -path 'app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt' \
+              -print0 | sort -z | xargs -0 sha256sum
+          ) > gen12-compare/candidate-full-protected.sha256
+          diff -u gen12-compare/baseline-full-protected.sha256 gen12-compare/candidate-full-protected.sha256 \
+            > gen12-compare/full-protected.diff || true
+          test ! -s gen12-compare/full-protected.diff
+
+          (
+            cd baseline
+            find app/src/main/java -type f \
+              ! -path 'app/src/main/java/com/duoopen/fold/Fold7PresentationBootstrapGate.kt' \
+              -print0 | sort -z | xargs -0 sha256sum
+          ) > gen12-compare/baseline-main-protected.sha256
+          (
+            find app/src/main/java -type f \
+              ! -path 'app/src/main/java/com/duoopen/fold/Fold7PresentationBootstrapGate.kt' \
+              -print0 | sort -z | xargs -0 sha256sum
+          ) > gen12-compare/candidate-main-protected.sha256
+          diff -u gen12-compare/baseline-main-protected.sha256 gen12-compare/candidate-main-protected.sha256 \
+            > gen12-compare/main-protected.diff || true
+          test ! -s gen12-compare/main-protected.diff
+
+          cmp baseline/app/src/main/AndroidManifest.xml app/src/main/AndroidManifest.xml
+          cmp baseline/app/src/full/AndroidManifest.xml app/src/full/AndroidManifest.xml
+          diff -qr baseline/app/src/main/res app/src/main/res > gen12-compare/resources.diff || true
+          test ! -s gen12-compare/resources.diff
+
+          diff -u baseline/app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt \
+            app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt \
+            > gen12-compare/INTENDED-FoldOverlayService.diff || true
+          test -s gen12-compare/INTENDED-FoldOverlayService.diff
+
+          {
+            echo 'comparisonBaseline=Gen11 5b43c181faa1a89ee7ee7c0848612033a1545372'
+            echo 'gen11ProductUiParity=PASS'
+            echo 'protectedFullRuntimeParity=PASS'
+            echo 'protectedMainRuntimeParity=PASS'
+            echo 'mainManifestParity=PASS'
+            echo 'fullManifestParity=PASS'
+            echo 'resourceParity=PASS'
+            echo 'intendedRuntimeMutation=FoldOverlayService route-lane deferral only'
+            echo 'newPureGate=Fold7PresentationBootstrapGate'
+            echo 'secureFailOpenMarker=PRESENT'
+            echo 'gen10_7AngleHoldMarker=PRESENT'
+            echo 'rendererMaxTilt60=PRESENT'
+            echo 'rendererLinearFilter=PRESENT'
+          } > gen12-compare/ARCHITECTURE-COMPARE.txt
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Ensure Android 17 SDK is installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-37.0" "build-tools;36.0.0"
+          test -d "$ANDROID_HOME/platforms/android-37.0"
+
+      - name: Run unit tests lint and assemble
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest lintFullDebug assembleFullDebug --stacktrace
+
+      - name: Enable KVM access
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run Android UI smoke tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: ./gradlew connectedFullDebugAndroidTest --stacktrace
+
+      - name: Package failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p gen12-failure
+          git diff 5b43c181faa1a89ee7ee7c0848612033a1545372...HEAD > gen12-failure/COMMITTED-OVERLAY.diff || true
+          git diff > gen12-failure/APPLIED-GEN12.diff || true
+          cp -r gen12-compare gen12-failure/ 2>/dev/null || true
+          cp app/build/intermediates/lint_intermediate_text_report/fullDebug/lintReportFullDebug/lint-results-fullDebug.txt gen12-failure/LINT.txt 2>/dev/null || true
+          {
+            echo 'status=CI_FAILED_BEFORE_ELIGIBLE_HANDOFF'
+            echo 'validationStatus=BUILD-UNVERIFIED'
+            echo 'physicalFold7Validation=NOT_RUN'
+          } > gen12-failure/FAILURE-INFO.txt
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.6.0-gen12-route-lane-failure
+          path: gen12-failure/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Package Gen12 validation candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen12-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          OUTPUT="gen12-build/DuoOpen-ZFold7-5.6.0-gen12-route-lane-resilience-debug.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" > gen12-build/APK-SHA256.txt
+          git diff 5b43c181faa1a89ee7ee7c0848612033a1545372...HEAD > gen12-build/COMMITTED-OVERLAY.diff
+          git diff > gen12-build/APPLIED-GEN12.diff
+          cp -r gen12-compare gen12-build/architecture-compare
+          {
+            echo 'sourceFieldBundle=duoopen-debug-1791432567831.zip'
+            echo 'sourceDevice=Samsung SM-F966W API37 One UI 9'
+            echo 'observedCloseCycles=5'
+            echo 'successfulCoverVisualCycles=4'
+            echo 'failedCoverVisualCycles=1'
+            echo 'failedCycleInitialCoverPresentationRpcMs=1046'
+            echo 'failedCyclePrewarmState=PREWARM_IN_FLIGHT routeReady=false'
+            echo 'failedCycleHingeProgress=175deg to approximately 62deg before privileged return'
+            echo 'capturePrimeWasNotBottleneck=true (READY about 69ms)'
+            echo 'gen10_4CoalescingObserved=true (8 pending replacements)'
+            echo 'hypothesisUnderTest=remove presentation/brightness contention during Gen4 route bootstrap'
+          } > gen12-build/FIELD-EVIDENCE-SUMMARY.txt
+          {
+            echo 'version=5.6.0-gen12-route-lane-resilience-zfold7'
+            echo 'versionCode=56'
+            echo 'candidateBranch=build/gen12-route-lane-resilience-20261008'
+            echo "candidateHead=$(git rev-parse HEAD)"
+            echo 'comparisonBaseline=Gen11 5b43c181faa1a89ee7ee7c0848612033a1545372'
+            echo 'change1=defer closing presentation/brightness RPCs while cover route is bootstrapping'
+            echo 'change2=latest deferred intent only; release at COVER_READY_HIDDEN or COVER_VISUAL'
+            echo 'change3=drop stale deferred intent on reversal, authority loss, timeout, or terminal state'
+            echo 'change4=gen12-route-lane telemetry for defer/release/drop timing'
+            echo 'gen11ProductUiPreserved=YES'
+            echo 'secureFlagBypass=NO'
+            echo 'angleAuthorityMutation=NO'
+            echo 'rendererMutation=NO (existing 60deg domain + linear filtering preserved)'
+            echo 'tests=testFullDebugUnitTest'
+            echo 'lint=lintFullDebug'
+            echo 'androidUiSmoke=connectedFullDebugAndroidTest API35 emulator'
+            echo 'validationStatus=BUILD-VERIFIED / EMULATOR-UI-SMOKE-VERIFIED / PHYSICAL-FOLD7-UNVALIDATED'
+            echo 'physicalFold7Validation=NOT_RUN_FOR_GEN12'
+          } > gen12-build/BUILD-INFO.txt
+
+      - name: Upload APK and validation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.6.0-gen12-route-lane-resilience
+          path: |
+            gen12-build/DuoOpen-ZFold7-5.6.0-gen12-route-lane-resilience-debug.apk
+            gen12-build/APK-SHA256.txt
+            gen12-build/BUILD-INFO.txt
+            gen12-build/FIELD-EVIDENCE-SUMMARY.txt
+            gen12-build/COMMITTED-OVERLAY.diff
+            gen12-build/APPLIED-GEN12.diff
+            gen12-build/architecture-compare/
+          if-no-files-found: error
+          retention-days: 30
