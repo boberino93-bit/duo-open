@@ -17,13 +17,20 @@ new_ensure = '''    if feed_text.count("ensureAnchor()") != 4:\n        fail(f"e
 old_remove = '''    if feed_text.count("removeAnchor()") != 1:\n        fail(f"expected one removeAnchor call, found {feed_text.count('removeAnchor()')}")\n'''
 new_remove = '''    if feed_text.count("removeAnchor()") != 3:\n        fail(f"expected stop call, ensureAnchor refresh call, and declaration; found {feed_text.count('removeAnchor()')}")\n'''
 
-if text.count(old_ensure) != 1:
-    raise SystemExit("ERROR: Gen12.3 ensureAnchor matcher patch anchor missing")
-if text.count(old_remove) != 1:
-    raise SystemExit("ERROR: Gen12.3 removeAnchor matcher patch anchor missing")
+old_inventory = '''    require(feed, "ALL_INCLUDING_DISABLED", 2)\n'''
+new_inventory = '''    require(feed, "ALL_INCLUDING_DISABLED", 3)\n'''
+
+for label, old in (
+    ("ensureAnchor matcher", old_ensure),
+    ("removeAnchor matcher", old_remove),
+    ("display inventory postcondition", old_inventory),
+):
+    if text.count(old) != 1:
+        raise SystemExit(f"ERROR: Gen12.3 {label} patch anchor missing")
 
 text = text.replace(old_ensure, new_ensure, 1)
 text = text.replace(old_remove, new_remove, 1)
+text = text.replace(old_inventory, new_inventory, 1)
 
 patched = HERE / ".apply_gen12_3_angle_feed_resilience_fixed.py"
 patched.write_text(text, encoding="utf-8")
