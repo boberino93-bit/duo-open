@@ -43,6 +43,12 @@ internal class Fold7PanelAuthorityGen4 {
         val reason: String,
     )
 
+    data class ReleaseAdmission(
+        val accepted: Boolean,
+        val stale: Boolean,
+        val reason: String,
+    )
+
     sealed interface RecoveryPlan {
         data object ReadyInner : RecoveryPlan
         data object ReadyNativeCover : RecoveryPlan
@@ -211,6 +217,11 @@ internal class Fold7PanelAuthorityGen4 {
             }
     }
 
+    /**
+     * Begins a normal current-owner release. Callers that are reacting to an
+     * asynchronous transition must prefer [beginReleaseOwned] so a delayed
+     * release cannot tear down a route already transferred to a newer cycle.
+     */
     fun beginRelease(
         serviceEpoch: Long,
         intentSequence: Long,
@@ -220,6 +231,39 @@ internal class Fold7PanelAuthorityGen4 {
         require(intentSequence == lastIntentSequence)
         phase = Phase.RELEASE_PENDING
         routeReady = false
+    }
+
+    /**
+     * Compare-and-release for transition-driven teardown.
+     *
+     * Intent ordering alone is insufficient: an old generation can be queued,
+     * receive a numerically newer intentSequence when it finally runs, and
+     * otherwise tear down the route now owned by a newer close cycle. The
+     * expected owner is therefore part of the mutation authority.
+     */
+    fun beginReleaseOwned(
+        serviceEpoch: Long,
+        intentSequence: Long,
+        expectedOwner: Owner,
+    ): ReleaseAdmission {
+        if (!recoveryReady) {
+            return ReleaseAdmission(false, false, "startup-recovery-required")
+        }
+        if (
+            serviceEpoch != activeServiceEpoch ||
+            intentSequence != lastIntentSequence
+        ) {
+            return ReleaseAdmission(false, true, "stale-release-intent")
+        }
+
+        val currentOwner = owner
+        if (currentOwner != expectedOwner) {
+            return ReleaseAdmission(false, true, "stale-release-owner")
+        }
+
+        phase = Phase.RELEASE_PENDING
+        routeReady = false
+        return ReleaseAdmission(true, false, "accepted")
     }
 
     fun completeRelease(
