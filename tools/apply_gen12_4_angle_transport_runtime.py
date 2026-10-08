@@ -157,6 +157,42 @@ def main() -> None:
 
     replace_once(
         feed,
+        '''        readerRestartPending = true
+        readerRestartReason = reason
+        controlHandler.removeCallbacks(pollRunnable)
+        hinge.expireExternal("reader-restart-pending:$reason")
+''',
+        '''        readerRestartPending = true
+        readerRestartReason = reason
+        controlHandler.removeCallbacks(pollRunnable)
+
+        // Quiesce the old poll session before any replacement attempt. This
+        // invalidates an already-posted timeout token as well as the in-flight
+        // poll, so a failed START_ANGLES transaction cannot accidentally allow
+        // old-prefix polling to resume while replacement is pending.
+        pipeline.invalidateSession()
+        inFlightTargetKey = null
+        hinge.expireExternal("reader-restart-pending:$reason")
+''',
+        "quiesce pipeline before reader replacement",
+    )
+
+    replace_once(
+        feed,
+        '''        controlHandler.removeCallbacks(pollRunnable)
+        pipeline.invalidateSession()
+        hinge.revokeExternalSession(
+            session = oldSession,
+''',
+        '''        controlHandler.removeCallbacks(pollRunnable)
+        hinge.revokeExternalSession(
+            session = oldSession,
+''',
+        "avoid redundant pipeline invalidation after replacement commit",
+    )
+
+    replace_once(
+        feed,
         '''        val now =
             SystemClock.uptimeMillis()
 
@@ -183,6 +219,8 @@ def main() -> None:
         "!isCurrent(expectedSession) ||\n            readerRestartPending",
         1,
     )
+    require(feed, "pipeline.invalidateSession()", 2)
+    require(feed, "old-prefix polling to resume", 1)
     require(feed, 'reason = "transport:$transportReason"', 1)
 
     print("GEN12.4 ANGLE TRANSPORT RUNTIME: APPLIED")
