@@ -8,6 +8,7 @@ on:
     paths:
       - ".github/workflows/fix-fold7-opening-remap-handoff.yml"
       - "tools/apply_fold7_opening_remap_handoff_fix.py"
+      - "tools/apply_visual_forensics_compile_repair.py"
   workflow_dispatch:
 
 permissions:
@@ -33,25 +34,37 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "8110a771d5b80443cd2302e51daf342aa69bc467" || true
           grep -F 'versionCode = 42' app/build.gradle.kts
           grep -F 'versionName = "5.0.0-beta1-zfold7"' app/build.gradle.kts
           grep -F 'gen3-opening-render-delegated' app/src/full/java/com/duoopen/overlay/Fold7Gen3VisualCoordinator.kt
           grep -F 'engine.isFold7CoverGeometryNow()' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
           grep -F 'shouldTransferToInner' app/src/main/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicy.kt
+          grep -F 'captureForensics(' app/src/full/java/com/duoopen/debug/VisualForensics.kt
+          grep -F 'capturePhysicalForensics(' app/src/full/java/com/duoopen/debug/VisualForensics.kt
+          ! grep -Fq 'fun captureForensics(' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+          ! grep -Fq 'fun capturePhysicalForensics(' app/src/full/java/com/duoopen/shell/ShizukuBridge.kt
+
+      - name: Repair pre-existing VisualForensics compile break
+        run: python3 tools/apply_visual_forensics_compile_repair.py
 
       - name: Apply opening remap handoff fix
         run: python3 tools/apply_fold7_opening_remap_handoff_fix.py
 
-      - name: Validate ownership invariants
+      - name: Validate repaired baseline and ownership invariants
         shell: bash
         run: |
           set -euo pipefail
           git diff --check
 
+          VF=app/src/full/java/com/duoopen/debug/VisualForensics.kt
           SERVICE=app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
           POLICY=app/src/main/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicy.kt
           TEST=app/src/test/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicyTest.kt
+
+          ! grep -Fq 'ShizukuBridge.captureForensics(' "$VF"
+          ! grep -Fq 'ShizukuBridge.capturePhysicalForensics(' "$VF"
+          grep -F 'ShizukuBridge.capture(route.id, exclusions, SCALE)' "$VF"
+          grep -F 'PHYSICAL_BACKEND_UNAVAILABLE' "$VF"
 
           grep -F 'private var openingBridgeDisplayId: Int?' "$SERVICE"
           grep -F 'openingHostBeforeReconcile' "$SERVICE"
@@ -64,9 +77,6 @@ jobs:
           grep -F 'doesNotRetainOpeningAfterPrivilegeLoss' "$TEST"
           grep -F 'doesNotRetainOpeningOnDifferentLogicalDisplay' "$TEST"
 
-          # The observed failure must remain impossible by policy: topology
-          # morph alone cannot make the accepted same-logical-display attempt
-          # fall through to gen3-opening-not-owner while semantic demand lives.
           python3 - <<'PY'
           from pathlib import Path
           s = Path('app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt').read_text()
@@ -102,6 +112,7 @@ jobs:
           {
             echo "baseMain=8110a771d5b80443cd2302e51daf342aa69bc467"
             echo "version=5.0.0-beta1-zfold7"
+            echo "prerequisite=repair pre-existing VisualForensics references to unimplemented bridge APIs"
             echo "change=retain accepted opening visual across same-logical-display cover-to-inner geometry remap"
             echo "fieldRepro=2026-10-08 opening teardown at ~81deg owner-released followed by delegated host=null/content=null"
             echo "tests=testFullDebugUnitTest"
@@ -126,16 +137,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          git add app/src/full/java/com/duoopen/debug/VisualForensics.kt
+          git diff --cached --check
+          git commit -m "fix(build): quarantine unavailable forensic capture backends"
+
           git add \
             app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt \
             app/src/main/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicy.kt \
             app/src/test/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicyTest.kt
-
-          if ! git diff --cached --name-only | grep -q .; then
-            echo 'ERROR: no source/test changes staged.'
-            exit 1
-          fi
-
           git diff --cached --check
           git commit -m "fix(fold7): preserve opening visual across display remap"
+
           git push origin HEAD:fix/fold7-opening-remap-handoff-20261008
