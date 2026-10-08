@@ -20,4 +20,24 @@ internal object Fold7OpeningRemapHandoffPolicy {
             !coverGeometryNow &&
             innerGeometryNow &&
             privilegedCaptureReady
+
+    /**
+     * Keep one accepted opening attempt tied to its logical route while
+     * Samsung morphs that route between physical panel geometries.
+     *
+     * This is intentionally independent of current cover/inner geometry:
+     * geometry selects the renderer, while acceptedLogicalDisplayId preserves
+     * attempt identity. Privilege loss or semantic opening completion revokes
+     * retention immediately.
+     */
+    fun shouldRetainAcceptedOpeningOnDisplay(
+        openingVisualActive: Boolean,
+        privilegedCaptureReady: Boolean,
+        acceptedLogicalDisplayId: Int?,
+        currentLogicalDisplayId: Int,
+    ): Boolean =
+        openingVisualActive &&
+            privilegedCaptureReady &&
+            acceptedLogicalDisplayId != null &&
+            acceptedLogicalDisplayId == currentLogicalDisplayId
 }

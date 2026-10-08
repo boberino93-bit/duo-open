@@ -56,4 +56,52 @@ class Fold7OpeningRemapHandoffPolicyTest {
             )
         )
     }
+
+    @Test
+    fun retainsAcceptedOpeningAcrossSameLogicalDisplayRemap() {
+        assertTrue(
+            Fold7OpeningRemapHandoffPolicy.shouldRetainAcceptedOpeningOnDisplay(
+                openingVisualActive = true,
+                privilegedCaptureReady = true,
+                acceptedLogicalDisplayId = 0,
+                currentLogicalDisplayId = 0,
+            )
+        )
+    }
+
+    @Test
+    fun doesNotRetainOpeningAfterSemanticDemandEnds() {
+        assertFalse(
+            Fold7OpeningRemapHandoffPolicy.shouldRetainAcceptedOpeningOnDisplay(
+                openingVisualActive = false,
+                privilegedCaptureReady = true,
+                acceptedLogicalDisplayId = 0,
+                currentLogicalDisplayId = 0,
+            )
+        )
+    }
+
+    @Test
+    fun doesNotRetainOpeningAfterPrivilegeLoss() {
+        assertFalse(
+            Fold7OpeningRemapHandoffPolicy.shouldRetainAcceptedOpeningOnDisplay(
+                openingVisualActive = true,
+                privilegedCaptureReady = false,
+                acceptedLogicalDisplayId = 0,
+                currentLogicalDisplayId = 0,
+            )
+        )
+    }
+
+    @Test
+    fun doesNotRetainOpeningOnDifferentLogicalDisplay() {
+        assertFalse(
+            Fold7OpeningRemapHandoffPolicy.shouldRetainAcceptedOpeningOnDisplay(
+                openingVisualActive = true,
+                privilegedCaptureReady = true,
+                acceptedLogicalDisplayId = 0,
+                currentLogicalDisplayId = 1,
+            )
+        )
+    }
 }

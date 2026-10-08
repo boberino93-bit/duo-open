@@ -86,6 +86,16 @@ class FoldOverlayService : AccessibilityService() {
     private var earlyOpeningVisualStarted =
         false
 
+    /**
+     * Logical display identity that accepted the current CLOSED -> OPEN visual.
+     *
+     * Fold7 can morph that same logical display from cover geometry to inner
+     * geometry during the handoff. Geometry is therefore routing evidence,
+     * not permission to revoke the accepted visual attempt.
+     */
+    private var openingBridgeDisplayId: Int? =
+        null
+
     private val earlyOpeningVisualTimeoutRunnable =
         Runnable {
             if (!earlyOpeningVisualLatched) {
@@ -708,16 +718,62 @@ class FoldOverlayService : AccessibilityService() {
                 continuity.renderOwnershipEnabled
 
         /*
+         * Capture the accepted opening route before Gen3 reconciles topology.
+         * On Fold7 the same logical display can morph 1080x2520 -> 1968x2184.
+         * Losing cover geometry must not revoke an already accepted opening
+         * visual before the successor route has had a chance to take over.
+         */
+        val openingDemandBeforeReconcile =
+            ::gen3Visual.isInitialized &&
+                gen3Visual.openingVisualDemandActive
+
+        val openingHostBeforeReconcile =
+            if (::gen3Visual.isInitialized) {
+                gen3Visual.openingHostDisplayId
+            } else {
+                null
+            }
+
+        if (
+            openingDemandBeforeReconcile &&
+            openingHostBeforeReconcile != null &&
+            openingBridgeDisplayId != openingHostBeforeReconcile
+        ) {
+            openingBridgeDisplayId =
+                openingHostBeforeReconcile
+
+            DuoDiagnostics.event(
+                "cover-opening-visual",
+                "BRIDGE-LATCH display=$openingHostBeforeReconcile reason=$reason",
+            )
+        }
+
+        /*
          * Alpha2 keeps Gen3 as the semantic/exact owner, but restores the
          * validated Fold7 snapshot/shader renderer for OPENING. The Alpha1
          * field trace showed its LiveBlur host failing to attach on every
          * accepted opening attempt.
          */
         for (engine in engines.values.toList()) {
+            val retainAcceptedOpeningOwner =
+                Fold7OpeningRemapHandoffPolicy.shouldRetainAcceptedOpeningOnDisplay(
+                    openingVisualActive =
+                        openingDemandBeforeReconcile,
+                    privilegedCaptureReady =
+                        privilegedReady,
+                    acceptedLogicalDisplayId =
+                        openingBridgeDisplayId,
+                    currentLogicalDisplayId =
+                        engine.display.displayId,
+                )
+
             engine.setContinuityCoverOwned(
                 owned =
                     privilegedReady &&
-                        engine.isFold7CoverGeometryNow(),
+                        (
+                            engine.isFold7CoverGeometryNow() ||
+                                retainAcceptedOpeningOwner
+                            ),
                 reason = "gen3:$reason",
             )
         }
@@ -745,6 +801,24 @@ class FoldOverlayService : AccessibilityService() {
                 null
             }
 
+        if (
+            openingDemand &&
+            openingHostDisplayId != null
+        ) {
+            openingBridgeDisplayId =
+                openingHostDisplayId
+        } else if (
+            !openingDemand &&
+            openingBridgeDisplayId != null
+        ) {
+            DuoDiagnostics.event(
+                "cover-opening-visual",
+                "BRIDGE-RELEASE display=$openingBridgeDisplayId reason=$reason",
+            )
+            openingBridgeDisplayId =
+                null
+        }
+
         for (engine in engines.values.toList()) {
             val runOpeningRenderer =
                 privilegedReady &&
@@ -753,10 +827,33 @@ class FoldOverlayService : AccessibilityService() {
                     engine.display.displayId ==
                         openingHostDisplayId
 
+            val retainRemappedOpeningRenderer =
+                Fold7OpeningRemapHandoffPolicy.shouldRetainAcceptedOpeningOnDisplay(
+                    openingVisualActive =
+                        openingDemand,
+                    privilegedCaptureReady =
+                        privilegedReady,
+                    acceptedLogicalDisplayId =
+                        openingBridgeDisplayId,
+                    currentLogicalDisplayId =
+                        engine.display.displayId,
+                ) &&
+                    engine.isFold7InnerGeometryNow()
+
             if (runOpeningRenderer) {
                 engine.beginContinuityOpeningVisual(
                     "gen3-opening-snapshot:$reason"
                 )
+            } else if (retainRemappedOpeningRenderer) {
+                /*
+                 * Do not tear down the predecessor solely because Samsung
+                 * morphed the accepted logical route to inner geometry. The
+                 * PanelEngine sees the same display object and performs its
+                 * existing after-swap inner bridge on the next hinge/evaluate
+                 * pass. Terminal OPEN_INNER, reversal, privilege loss, or
+                 * Gen3 cancellation still makes openingDemand false and
+                 * reaches the normal end path below.
+                 */
             } else {
                 engine.endContinuityOpeningVisual(
                     "gen3-opening-not-owner:$reason"
