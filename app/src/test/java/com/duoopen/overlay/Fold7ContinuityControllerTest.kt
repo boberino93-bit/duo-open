@@ -353,7 +353,7 @@ class Fold7ContinuityControllerTest {
     }
 
     @Test
-    fun latePrewarmCompletionIsReleased() {
+    fun latePrewarmCompletionCannotReleaseCurrentGenerationRoute() {
         val c = Fold7ContinuityController()
         c.reset(179f, 0L, openTopology)
 
@@ -370,6 +370,12 @@ class Fold7ContinuityControllerTest {
 
         c.onHinge(151f, 130L, openTopology)
 
+        assertTrue(request.generation != c.generation)
+        assertEquals(
+            Fold7ContinuityController.State.INNER_HANDOFF,
+            c.state,
+        )
+
         val late =
             c.onPrewarmResult(
                 requestGeneration = request.generation,
@@ -379,9 +385,13 @@ class Fold7ContinuityControllerTest {
             )
 
         assertTrue(
-            late.actions.any {
+            late.actions.none {
                 it is Fold7ContinuityController.Action.ReleaseSecondary
             }
+        )
+        assertEquals(
+            Fold7ContinuityController.State.INNER_HANDOFF,
+            c.state,
         )
     }
 }
