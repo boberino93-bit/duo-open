@@ -20,7 +20,10 @@ Before actionable swarm work:
 13. Before handoff/finalization, close or explicitly account for leases, persist recovery/convergence state, and checkpoint the master handoff.
 14. Existing project-local authentication, authorization, security, recovery, hold, schedule, foreign-write, and production-acceptance controls remain authoritative and are never weakened by this overlay.
 15. Load and obey `swarm_kernel/VALIDATION_CLAIM_GATE.md` as a project-local HARD STOP before describing or handing off any implementation artifact. A build/CI success is not a solution claim. If acceptance needed for the claimed end state has not been executed, the artifact remains explicitly unvalidated for that scope and solution-level wording is prohibited.
+16. Load and obey `swarm_kernel/FORENSIC_AUDIT_LIFECYCLE_DIRECTIVE.md` for every debug-bundle, crash, field-trace, or regression forensic audit. A subsystem-focused audit is incomplete until materially involved stateful features have an explicit persistence/lifecycle matrix covering reopen/restart/rehydration, storage mutation integrity, service/UI coexistence, and crash/freeze evidence. `NOT_EXERCISED` and `INSUFFICIENT_EVIDENCE` are never passes.
 
 Before every implementation handoff, reconcile the requested end state against the acceptance tests actually executed. The handoff MUST state its validation class and exact scope. Missing device/runtime validation cannot be converted into confidence language, implied success, or a "potential solution" claim.
+
+Before every forensic-audit conclusion, reconcile materially involved stateful features against `FORENSIC_AUDIT_LIFECYCLE_DIRECTIVE.md`. If any required lifecycle boundary was not exercised, label the audit `PARTIAL_FORENSIC_AUDIT` for that scope and add the missing regression test/probe or physical validation requirement before making a full-regression claim.
 
 Research still produces evidence/proposals only unless separately authorized. Manager still reviews/coordinates within granted scope. Primary/local production acceptance remains project-local and separately authorized where required.
