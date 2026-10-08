@@ -6,6 +6,7 @@ from pathlib import Path
 
 TARGET_VERSION_CODE = 55
 TARGET_VERSION_NAME = "5.5.0-gen11-product-ui-zfold7"
+TEMPLATE_ROOT = Path("tools/gen11_ui")
 
 
 def read(path: Path) -> str:
@@ -13,6 +14,7 @@ def read(path: Path) -> str:
 
 
 def write(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
 
 
@@ -70,6 +72,28 @@ def transform_control_sheet(text: str) -> str:
     return text
 
 
+def install_templates(repo: Path) -> None:
+    root = repo / TEMPLATE_ROOT
+    mappings = {
+        "MainActivity.kt.template": "app/src/main/java/com/duoopen/MainActivity.kt",
+        "HomePreview.kt.template": "app/src/main/java/com/duoopen/ui/HomePreview.kt",
+        "ControlSheet.kt.template": "app/src/main/java/com/duoopen/ui/ControlSheet.kt",
+        "DuoTheme.kt.template": "app/src/main/java/com/duoopen/ui/DuoTheme.kt",
+        "ProductUiModel.kt.template": "app/src/main/java/com/duoopen/ui/ProductUiModel.kt",
+        "ProductUiModelTest.kt.template": "app/src/test/java/com/duoopen/ui/ProductUiModelTest.kt",
+        "ProductUiSmokeTest.kt.template": "app/src/androidTest/java/com/duoopen/ui/ProductUiSmokeTest.kt",
+    }
+
+    for template, target in mappings.items():
+        source = root / template
+        if not source.is_file():
+            raise RuntimeError(f"missing Gen11 template: {source}")
+        text = read(source)
+        if template == "ControlSheet.kt.template":
+            text = transform_control_sheet(text)
+        write(repo / target, text)
+
+
 def verify(repo: Path) -> None:
     build = read(repo / "app/build.gradle.kts")
     home = read(repo / "app/src/main/java/com/duoopen/ui/HomePreview.kt")
@@ -112,10 +136,8 @@ def main() -> None:
     repo = Path(args.repo).resolve()
 
     build = repo / "app/build.gradle.kts"
-    controls = repo / "app/src/main/java/com/duoopen/ui/ControlSheet.kt"
-
+    install_templates(repo)
     write(build, transform_build_gradle(read(build)))
-    write(controls, transform_control_sheet(read(controls)))
     verify(repo)
 
 
