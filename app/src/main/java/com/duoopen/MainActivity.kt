@@ -5,8 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -16,6 +14,7 @@ import androidx.window.layout.WindowMetricsCalculator
 import com.duoopen.fold.FoldLine
 import com.duoopen.settings.DuoSettings
 import com.duoopen.ui.DuoApp
+import com.duoopen.ui.DuoOpenTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -43,7 +42,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            MaterialTheme(colorScheme = darkColorScheme()) {
+            DuoOpenTheme {
                 DuoApp(foldLine)
             }
         }
