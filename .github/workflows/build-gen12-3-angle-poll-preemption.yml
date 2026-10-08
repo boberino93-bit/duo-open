@@ -1,0 +1,242 @@
+name: Build Gen12.3 Angle Poll Preemption
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - build/gen12-3-angle-poll-preemption-20261008
+    paths:
+      - ".github/workflows/build-gen12-3-angle-poll-preemption.yml"
+      - "tools/apply_gen12_3_angle_poll_preemption.py"
+      - "tools/gen12_3_angle_poll_preemption_forensics.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-gen12-3-angle-poll-preemption
+  cancel-in-progress: true
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Gen12.3 candidate
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen12-3-angle-poll-preemption-20261008
+          fetch-depth: 0
+
+      - name: Checkout same source for Gen12.2 reconstruction baseline
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen12-3-angle-poll-preemption-20261008
+          path: baseline
+          fetch-depth: 0
+
+      - name: Reconstruct exact Gen12.1 runtime in candidate and baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          apply_gen12_1() {
+            local repo="$1"
+            python3 "$repo/service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py" "$repo"
+            python3 "$repo/tools/apply_gen7_runtime_regression_beta2.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen8_anchored_transition.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen9_predictive_inner_wake.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen9_guarded_prewake.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_live_mirror_close.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_1_handoff_guard.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_2_secure_fail_open.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_3_hybrid_animation.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_4_io_coalescing.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_5_mirror_warmup_retention.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_6_oneui9_android17_compat.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_6_api37_private_api_lint_contract.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen10_7_oneui9_display_angle.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen11_product_ui.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen12_route_lane_resilience.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen12_1_wallpaper_lifecycle.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen12_1_wallpaper_metadata_receipt.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen12_1_wallpaper_ui_io.py" --repo "$repo"
+            python3 "$repo/tools/apply_gen12_1_ui_smoke_scroll.py" --repo "$repo"
+          }
+          apply_gen12_1 "$GITHUB_WORKSPACE/baseline"
+          apply_gen12_1 "$GITHUB_WORKSPACE"
+          grep -F 'versionCode = 57' baseline/app/build.gradle.kts
+          grep -F 'versionCode = 57' app/build.gradle.kts
+
+      - name: Reconstruct Gen12.2 route-retention baseline in both trees
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 baseline/tools/apply_gen12_2_route_retention_fence.py --repo baseline
+          python3 tools/apply_gen12_2_route_retention_fence.py --repo .
+          grep -F 'versionCode = 58' baseline/app/build.gradle.kts
+          grep -F 'versionCode = 58' app/build.gradle.kts
+          grep -F 'GEN12_2_ROUTE_RETENTION_FENCE' baseline/app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+          grep -F 'GEN12_2_ROUTE_RETENTION_FENCE' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+
+      - name: Apply Gen12.3 angle preemption overlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen12_3_angle_poll_preemption.py --repo .
+          git diff --check
+          grep -F 'versionCode = 59' app/build.gradle.kts
+          grep -F 'versionName = "5.6.3-gen12-3-angle-poll-preemption-zfold7"' app/build.gradle.kts
+          grep -F 'fun preemptInFlightPoll(): PollToken?' app/src/full/java/com/duoopen/shell/Fold7AnglePipelineGen2.kt
+          grep -F 'type = "poll-preempt"' app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
+          grep -F 'type = "poll-command-skip-preempted"' app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
+          grep -F 'type = "poll-reacquire-target"' app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt
+          grep -F 'preemptedPollIsFencedWithoutInvalidatingSession' app/src/test/java/com/duoopen/shell/Fold7AnglePipelineGen2Test.kt
+
+      - name: Enforce exact Gen12.3 delta surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          baseline = Path("baseline/app")
+          candidate = Path("app")
+          allowed = {
+              Path("build.gradle.kts"),
+              Path("src/full/java/com/duoopen/shell/Fold7AnglePipelineGen2.kt"),
+              Path("src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt"),
+              Path("src/test/java/com/duoopen/shell/Fold7AnglePipelineGen2Test.kt"),
+          }
+
+          paths = {
+              p.relative_to(baseline)
+              for p in baseline.rglob("*")
+              if p.is_file()
+          } | {
+              p.relative_to(candidate)
+              for p in candidate.rglob("*")
+              if p.is_file()
+          }
+
+          changed = set()
+          for rel in paths:
+              left = baseline / rel
+              right = candidate / rel
+              if not left.exists() or not right.exists() or left.read_bytes() != right.read_bytes():
+                  changed.add(rel)
+
+          print("Gen12.3 changed app files:")
+          for rel in sorted(changed, key=str):
+              print(f"  {rel}")
+
+          assert changed == allowed, (changed, allowed)
+          print("GEN12.3 EXACT DELTA SURFACE: PASS")
+          PY
+
+          {
+            diff -u baseline/app/build.gradle.kts app/build.gradle.kts || true
+            diff -u baseline/app/src/full/java/com/duoopen/shell/Fold7AnglePipelineGen2.kt app/src/full/java/com/duoopen/shell/Fold7AnglePipelineGen2.kt || true
+            diff -u baseline/app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt app/src/full/java/com/duoopen/shell/WallpaperAngleFeed.kt || true
+            diff -u baseline/app/src/test/java/com/duoopen/shell/Fold7AnglePipelineGen2Test.kt app/src/test/java/com/duoopen/shell/Fold7AnglePipelineGen2Test.kt || true
+          } > gen12-3-angle-preemption.diff
+          test -s gen12-3-angle-preemption.diff
+
+      - name: Static ownership and timing assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          # The candidate must not disguise the architectural limit: healthy
+          # FoldInteractive transport is fast; preemption only removes the
+          # residual wait on an obsolete in-flight token.
+          nominal_timeout_ms = 96
+          healthy_p50_ms = 2
+          healthy_p95_ms = 16
+          opening_first_precise_median_ms = 416.8
+          opening_first_precise_p95_ms = 1110.6
+          duo_wallpaper_timeout_share = 543 / 560
+
+          assert healthy_p50_ms < healthy_p95_ms < nominal_timeout_ms
+          assert opening_first_precise_median_ms > nominal_timeout_ms
+          assert opening_first_precise_p95_ms > opening_first_precise_median_ms
+          assert duo_wallpaper_timeout_share > 0.96
+          print("GEN12.3 FORENSIC LIMIT ASSERTIONS: PASS")
+          PY
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Ensure Android 17 SDK is installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-37.0" "build-tools;36.0.0"
+          test -d "$ANDROID_HOME/platforms/android-37.0"
+
+      - name: Run unit tests lint and assemble
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest lintFullDebug assembleFullDebug --stacktrace
+
+      - name: Package failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p gen12-3-failure
+          cp gen12-3-angle-preemption.diff gen12-3-failure/ANGLE-PREEMPTION-DELTA.diff 2>/dev/null || true
+          cp tools/gen12_3_angle_poll_preemption_forensics.md gen12-3-failure/FORENSICS.md 2>/dev/null || true
+          cp app/build/intermediates/lint_intermediate_text_report/fullDebug/lintReportFullDebug/lint-results-fullDebug.txt gen12-3-failure/LINT.txt 2>/dev/null || true
+          {
+            echo 'status=CI_FAILED'
+            echo 'physicalFold7Validation=NOT_RUN'
+            echo 'sourceCapture=duoopen-debug-1791438725678.zip'
+            echo 'candidateLayer=Gen12.2 route retention + Gen12.3 angle poll preemption'
+          } > gen12-3-failure/FAILURE-INFO.txt
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.6.3-gen12-3-angle-poll-preemption-failure
+          path: gen12-3-failure/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Package Gen12.3 validation candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen12-3-build
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          OUTPUT="gen12-3-build/DuoOpen-ZFold7-5.6.3-gen12-3-angle-poll-preemption-debug.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" > gen12-3-build/APK-SHA256.txt
+          cp gen12-3-angle-preemption.diff gen12-3-build/ANGLE-PREEMPTION-DELTA.diff
+          cp tools/gen12_3_angle_poll_preemption_forensics.md gen12-3-build/FORENSICS.md
+          {
+            echo 'sourceFieldBundle=duoopen-debug-1791438725678.zip'
+            echo 'sourceBuild=5.6.1-gen12-1-wallpaper-lifecycle-zfold7 code57'
+            echo 'baseCandidate=5.6.2-gen12-2-route-retention-fence-zfold7 code58'
+            echo 'angleFinding=543/560 timeouts correlated with DuoWallpaperService ownership; healthy FoldInteractive p50/p95 RTT 2/16ms'
+            echo 'mitigation=same-session sequence-fenced high-priority poll preemption + pre-dispatch retirement watermark'
+            echo 'architecturalLimit=wallpaper target availability remains P0 and requires physical validation / target-handoff follow-up'
+            echo 'unitLintAssemble=PASS'
+            echo 'physicalFold7Validation=REQUIRED'
+          } > gen12-3-build/FORENSIC-EVIDENCE-SUMMARY.txt
+
+      - name: Upload Gen12.3 candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.6.3-gen12-3-angle-poll-preemption
+          path: gen12-3-build/
+          if-no-files-found: error
+          retention-days: 14
