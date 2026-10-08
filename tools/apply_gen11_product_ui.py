@@ -59,16 +59,20 @@ def transform_build_gradle(text: str) -> str:
 
 
 def transform_control_sheet(text: str) -> str:
-    # PageColumn is invoked from the ModalBottomSheet Column; make that scope
-    # explicit so its weight modifier is legal and the tab body consumes the
-    # remaining sheet height.
-    if "private fun ColumnScope.PageColumn" not in text:
-        text = replace_once(
-            text,
-            "private fun PageColumn(content: @Composable ColumnScope.() -> Unit)",
-            "private fun ColumnScope.PageColumn(content: @Composable ColumnScope.() -> Unit)",
-            "PageColumn scope",
-        )
+    # Weight is a RowScope/ColumnScope member and must not be imported as the
+    # internal parent-data property. The page container itself does not need a
+    # parent-scope weight; it scrolls naturally inside the bounded sheet.
+    text = text.replace("import androidx.compose.foundation.layout.weight\n", "")
+    text = text.replace(
+        "private fun ColumnScope.PageColumn(content: @Composable ColumnScope.() -> Unit)",
+        "private fun PageColumn(content: @Composable ColumnScope.() -> Unit)",
+    )
+    text = replace_once(
+        text,
+        ".fillMaxWidth()\n            .weight(1f)\n            .verticalScroll(rememberScrollState())",
+        ".fillMaxWidth()\n            .verticalScroll(rememberScrollState())",
+        "PageColumn weight",
+    )
     return text
 
 
@@ -111,7 +115,7 @@ def verify(repo: Path) -> None:
         "theme": "DuoOpenTheme" in main and "DuoOpenColors" in theme,
         "dashboard": "GEN11_PRODUCT_UI" in home and "Continuity Console" in home,
         "settings-tabs": "GEN11_PRODUCT_UI_SETTINGS" in controls and 'listOf("Setup", "Look", "Diagnostics")' in controls,
-        "settings-scope": "private fun ColumnScope.PageColumn" in controls,
+        "settings-page": "private fun PageColumn" in controls and ".weight(1f)\n            .verticalScroll" not in controls,
         "model-tests": "layoutThresholdKeepsCoverCompactAndInnerExpanded" in model_test,
         "smoke-tests": "readyDashboardRendersAndPrimaryActionFires" in smoke_test,
         "secure-fail-open": "capture-protected-or-black" in panel,
