@@ -32,6 +32,7 @@ jobs:
           git rev-parse HEAD | tee /tmp/SOURCE-HEAD.txt
           echo 'gen12_4_source=319e89b01e73dfaf7ed667b28f0612de3f4c8096' | tee /tmp/LINEAGE.txt
           echo 'handoff_fix_source=2e609333fcd284d8703b1933fbf962a90aca4726' >> /tmp/LINEAGE.txt
+          echo 'handoff_adaptation=service-section-exact-plus-tested-policy-and-tests' >> /tmp/LINEAGE.txt
 
       - name: Reconstruct full accepted product lineage through Gen12.3
         shell: bash
@@ -88,7 +89,26 @@ jobs:
         run: |
           set -euo pipefail
           cp handoff-source/tools/apply_fold7_opening_remap_handoff_fix.py tools/apply_fold7_opening_remap_handoff_fix.py
-          python3 tools/apply_fold7_opening_remap_handoff_fix.py
+
+          # Gen12.4 does not materialize the older standalone policy/test files,
+          # but the tested repair's service anchors are still exact. Execute only
+          # the service section of the tested patch, then add the exact final
+          # tested policy and tests from commit 2e609333.
+          test ! -e app/src/main/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicy.kt
+          test ! -e app/src/test/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicyTest.kt
+          python3 - <<'PY'
+          from pathlib import Path
+          script_path = Path('tools/apply_fold7_opening_remap_handoff_fix.py').resolve()
+          source = script_path.read_text()
+          prefix, marker, _ = source.partition('\npolicy = POLICY.read_text')
+          assert marker, 'tested patch structure changed'
+          ns = {'__file__': str(script_path), '__name__': '__gen12_service_patch__'}
+          exec(compile(prefix, str(script_path), 'exec'), ns)
+          PY
+          mkdir -p app/src/main/java/com/duoopen/overlay app/src/test/java/com/duoopen/overlay
+          cp handoff-source/app/src/main/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicy.kt app/src/main/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicy.kt
+          cp handoff-source/app/src/test/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicyTest.kt app/src/test/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicyTest.kt
+
           python3 - <<'PY'
           from pathlib import Path
           p = Path('app/build.gradle.kts')
