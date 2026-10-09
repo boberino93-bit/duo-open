@@ -1,0 +1,250 @@
+name: Build Gen12.5 Integrated UI + Opening Handoff
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - build/gen12-5-ui-handoff-integration-20261008
+    paths:
+      - ".github/workflows/build-gen12-5-integrated-ui-handoff.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-gen12-5-ui-handoff-integration
+  cancel-in-progress: true
+
+jobs:
+  build-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Gen12.5 integration source
+        uses: actions/checkout@v4
+        with:
+          ref: build/gen12-5-ui-handoff-integration-20261008
+          fetch-depth: 0
+
+      - name: Record integration source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD | tee /tmp/SOURCE-HEAD.txt
+          echo 'gen12_4_source=319e89b01e73dfaf7ed667b28f0612de3f4c8096' | tee /tmp/LINEAGE.txt
+          echo 'handoff_fix_source=2e609333fcd284d8703b1933fbf962a90aca4726' >> /tmp/LINEAGE.txt
+
+      - name: Reconstruct full accepted product lineage through Gen12.3
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 service_packs/gen7_shizuku_onboarding_v1/apply_service_pack_v1.py .
+          python3 tools/apply_gen7_runtime_regression_beta2.py --repo .
+          python3 tools/apply_gen8_anchored_transition.py --repo .
+          python3 tools/apply_gen9_predictive_inner_wake.py --repo .
+          python3 tools/apply_gen9_guarded_prewake.py --repo .
+          python3 tools/apply_gen10_live_mirror_close.py --repo .
+          python3 tools/apply_gen10_1_handoff_guard.py --repo .
+          python3 tools/apply_gen10_2_secure_fail_open.py --repo .
+          python3 tools/apply_gen10_3_hybrid_animation.py --repo .
+          python3 tools/apply_gen10_4_io_coalescing.py --repo .
+          python3 tools/apply_gen10_5_mirror_warmup_retention.py --repo .
+          python3 tools/apply_gen10_6_oneui9_android17_compat.py --repo .
+          python3 tools/apply_gen10_6_api37_private_api_lint_contract.py --repo .
+          python3 tools/apply_gen10_7_oneui9_display_angle.py --repo .
+          python3 tools/apply_gen11_product_ui.py --repo .
+          python3 tools/apply_gen12_route_lane_resilience.py --repo .
+          python3 tools/apply_gen12_1_wallpaper_lifecycle.py --repo .
+          python3 tools/apply_gen12_1_wallpaper_metadata_receipt.py --repo .
+          python3 tools/apply_gen12_1_wallpaper_ui_io.py --repo .
+          python3 tools/apply_gen12_1_ui_smoke_scroll.py --repo .
+          python3 tools/apply_gen12_2_route_retention_fence.py --repo .
+          python3 tools/apply_gen12_3_angle_feed_resilience_fix1.py --repo .
+          grep -F 'versionCode = 59' app/build.gradle.kts
+          grep -F 'versionName = "5.6.3-gen12-3-angle-feed-resilience-zfold7"' app/build.gradle.kts
+
+      - name: Apply validated Gen12.4 angle authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply_gen12_4_angle_authority_model_fix2.py --repo .
+          python3 tools/apply_gen12_4_angle_transport_model.py --repo .
+          python3 tools/apply_gen12_4_angle_authority_runtime.py --repo .
+          python3 tools/apply_gen12_4_angle_transport_runtime.py --repo .
+          git diff --check
+          grep -F 'versionCode = 60' app/build.gradle.kts
+          grep -F 'versionName = "5.6.4-gen12-4-angle-authority-zfold7"' app/build.gradle.kts
+          grep -F 'GEN12_4_ANGLE_AUTHORITY' app/src/full/java/com/duoopen/shell/Fold7AngleTargetArbiter.kt
+          grep -F 'GEN12_4_ANGLE_TRANSPORT_AUTHORITY' app/src/full/java/com/duoopen/shell/Fold7AngleTransportSupervisor.kt
+
+      - name: Checkout exact tested opening-handoff repair source
+        uses: actions/checkout@v4
+        with:
+          ref: 2e609333fcd284d8703b1933fbf962a90aca4726
+          path: handoff-source
+          fetch-depth: 1
+
+      - name: Apply opening-remap ownership repair as Gen12.5
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp handoff-source/tools/apply_fold7_opening_remap_handoff_fix.py tools/apply_fold7_opening_remap_handoff_fix.py
+          python3 tools/apply_fold7_opening_remap_handoff_fix.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/build.gradle.kts')
+          text = p.read_text()
+          old_code = 'versionCode = 60'
+          old_name = 'versionName = "5.6.4-gen12-4-angle-authority-zfold7"'
+          assert text.count(old_code) == 1, text.count(old_code)
+          assert text.count(old_name) == 1, text.count(old_name)
+          text = text.replace(old_code, 'versionCode = 61', 1)
+          text = text.replace(old_name, 'versionName = "5.6.5-gen12-5-ui-handoff-zfold7"', 1)
+          p.write_text(text)
+          PY
+          git diff --check
+
+      - name: Enforce no-silent-regression capability gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'versionCode = 61' app/build.gradle.kts
+          grep -F 'versionName = "5.6.5-gen12-5-ui-handoff-zfold7"' app/build.gradle.kts
+
+          # Gen10 runtime capabilities retained.
+          grep -F 'capture-protected-or-black' app/src/full/java/com/duoopen/overlay/PanelEngine.kt
+          grep -F 'GEN10_7_TOPOLOGY_ANGLE_HOLD' app/src/full/java/com/duoopen/overlay/Fold7ContinuityCoordinator.kt
+
+          # Gen11 product UI retained.
+          grep -F 'GEN11_PRODUCT_UI' app/src/main/java/com/duoopen/ui/HomePreview.kt
+          grep -F 'Continuity Console' app/src/main/java/com/duoopen/ui/HomePreview.kt
+          grep -F 'GEN11_PRODUCT_UI_SETTINGS' app/src/main/java/com/duoopen/ui/ControlSheet.kt
+          grep -F 'listOf("Setup", "Look", "Diagnostics")' app/src/main/java/com/duoopen/ui/ControlSheet.kt
+
+          # Gen12 routing and angle authority retained.
+          grep -F 'GEN12_ROUTE_LANE_RESILIENCE' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'GEN12_4_ANGLE_AUTHORITY' app/src/full/java/com/duoopen/shell/Fold7AngleTargetArbiter.kt
+          grep -F 'GEN12_4_ANGLE_TRANSPORT_AUTHORITY' app/src/full/java/com/duoopen/shell/Fold7AngleTransportSupervisor.kt
+
+          # New handoff repair present and tested.
+          grep -F 'BRIDGE-LATCH display=' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'BRIDGE-RELEASE display=' app/src/full/java/com/duoopen/overlay/FoldOverlayService.kt
+          grep -F 'shouldRetainAcceptedOpeningOnDisplay' app/src/main/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicy.kt
+          grep -F 'retainsAcceptedOpeningAcrossSameLogicalDisplayRemap' app/src/test/java/com/duoopen/overlay/Fold7OpeningRemapHandoffPolicyTest.kt
+
+          cat > /tmp/CAPABILITIES.txt <<'EOF'
+          PASS Gen7 Shizuku onboarding/runtime regression
+          PASS Gen8 anchored transition
+          PASS Gen9 predictive wake + guarded prewake
+          PASS Gen10 live mirror close
+          PASS Gen10.1 handoff guard
+          PASS Gen10.2 secure fail-open
+          PASS Gen10.3 hybrid animation
+          PASS Gen10.4 I/O coalescing
+          PASS Gen10.5 mirror warmup retention
+          PASS Gen10.6 Android 17 / One UI 9 compatibility
+          PASS Gen10.7 topology angle hold
+          PASS Gen11 product UI / Continuity Console / Setup-Look-Diagnostics
+          PASS Gen12 route lane resilience
+          PASS Gen12.1 wallpaper lifecycle + metadata + UI I/O + scroll smoke support
+          PASS Gen12.2 route retention fence
+          PASS Gen12.3 angle feed resilience
+          PASS Gen12.4 angle target + transport authority
+          PASS Gen12.5 opening remap ownership retention
+          EOF
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Ensure Android SDKs are installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-37.0" "build-tools;36.0.0" "platforms;android-35"
+          test -d "$ANDROID_HOME/platforms/android-37.0"
+
+      - name: Unit test lint and assemble complete product
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew testFullDebugUnitTest lintFullDebug assembleFullDebug --stacktrace
+
+      - name: Enable KVM access for product UI smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run Gen11 product UI instrumentation smoke tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: ./gradlew connectedFullDebugAndroidTest --stacktrace
+
+      - name: Package Gen12.5 successor build
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gen12-5-successor
+          APK="$(find app/build/outputs/apk/full/debug -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          OUTPUT="gen12-5-successor/DuoOpen-ZFold7-5.6.5-gen12-5-ui-handoff-debug.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" > gen12-5-successor/APK-SHA256.txt
+          cp /tmp/SOURCE-HEAD.txt gen12-5-successor/SOURCE-HEAD.txt
+          cp /tmp/LINEAGE.txt gen12-5-successor/LINEAGE.txt
+          cp /tmp/CAPABILITIES.txt gen12-5-successor/CAPABILITIES.txt
+          git diff -- app > gen12-5-successor/APPLIED-PRODUCT.diff
+          {
+            echo 'version=5.6.5-gen12-5-ui-handoff-zfold7'
+            echo 'versionCode=61'
+            echo 'targetDevice=Samsung Galaxy Z Fold7'
+            echo 'innerGeometry=1968x2184'
+            echo 'coverGeometry=1080x2520'
+            echo 'baseGen12_4=319e89b01e73dfaf7ed667b28f0612de3f4c8096'
+            echo 'openingRepairSource=2e609333fcd284d8703b1933fbf962a90aca4726'
+            echo 'productUi=Gen11 retained'
+            echo 'validation=unit+lint+assemble+API35 UI instrumentation smoke'
+            echo 'physicalFold7Validation=NOT_RUN'
+          } > gen12-5-successor/BUILD-INFO.txt
+
+      - name: Upload Gen12.5 successor APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.6.5-gen12-5-ui-handoff
+          path: gen12-5-successor/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Package failure evidence
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          mkdir -p gen12-5-failure
+          cp /tmp/SOURCE-HEAD.txt gen12-5-failure/SOURCE-HEAD.txt 2>/dev/null || true
+          cp /tmp/LINEAGE.txt gen12-5-failure/LINEAGE.txt 2>/dev/null || true
+          cp /tmp/CAPABILITIES.txt gen12-5-failure/CAPABILITIES.txt 2>/dev/null || true
+          git diff -- app > gen12-5-failure/APPLIED-PRODUCT.diff || true
+
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DuoOpen-ZFold7-5.6.5-gen12-5-ui-handoff-failure
+          path: gen12-5-failure/
+          if-no-files-found: warn
+          retention-days: 14
