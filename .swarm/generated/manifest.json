@@ -1,19 +1,16 @@
 {
   "affected_roles": [
     "MANAGER",
-    "PRIMARY",
-    "RESEARCHER"
+    "PRIMARY"
   ],
   "changed_files": [
-    "AGENT_BOOTSTRAP.json",
-    "CHATGPT_PROJECT_REPOSITORY_LINK.json",
-    "HERD_V32R2_COMMUNICATION_AUDIT.md",
-    "HERD_V32R2_COMMUNICATION_CONTRACT.json"
+    ".github/workflows/herd-v32r2-contract.yml",
+    "tools/verify_v32r2_contract.py"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "416c21dc929e8acc532480457648ef33887899429eb24084bd68ea39cf642863",
-    "PRIMARY_PROMPT.md": "5ca4adb298449bf9ff3db47687bec960ec451ad385c0246dbccd2610768d6249",
-    "RESEARCHER_PROMPT.md": "a71e8b50b5c9385c49f384204fe59881e223649c3c1958b29dbca359fdb7f47e"
+    "MANAGER_PROMPT.md": "6974def451b79c3db9939b66fb709852c0dc59c09d051874171ace7ce055465b",
+    "PRIMARY_PROMPT.md": "d0d94d0c0c2432789673f37fff5354c53619db9207f046c7b9433dcede923d98",
+    "RESEARCHER_PROMPT.md": "ccfb5a696fb0f0bb6108caa0d992ab7368c156edee74df972e2d77849a312db7"
   },
   "schema": "duo-open/generated-role-prompts/v1",
   "source_hashes": {

@@ -51,6 +51,6 @@ Reduce uncertainty with reproducible evidence and implementation-ready findings 
 Generated from source fingerprint `inputs-sha256:18b028557ac29b0172077f3f9b073836490409e61a701846f7890ede9aecdd6b`.
 
 Role-relevant changed paths:
-- `AGENT_BOOTSTRAP.json`
+- No changed path mapped specifically to this role in the selected range.
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.
