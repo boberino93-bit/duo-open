@@ -1,0 +1,29 @@
+name: HERD V32-R2 project and communication contract
+on:
+  push:
+    paths:
+      - "AGENT_BOOTSTRAP.json"
+      - "HERD_V32R2_COMMUNICATION_CONTRACT.json"
+      - "CHATGPT_PROJECT_REPOSITORY_LINK.json"
+      - "PROJECT_ROLE_ROUTING_REGISTRY.json"
+      - "governance/V32R2_CHATGPT_PROJECT_REPOSITORY_BINDINGS.json"
+      - "tools/verify_v32r2_contract.py"
+      - ".github/workflows/herd-v32r2-contract.yml"
+  pull_request:
+    paths:
+      - "AGENT_BOOTSTRAP.json"
+      - "HERD_V32R2_COMMUNICATION_CONTRACT.json"
+      - "CHATGPT_PROJECT_REPOSITORY_LINK.json"
+      - "PROJECT_ROLE_ROUTING_REGISTRY.json"
+      - "governance/V32R2_CHATGPT_PROJECT_REPOSITORY_BINDINGS.json"
+      - "tools/verify_v32r2_contract.py"
+      - ".github/workflows/herd-v32r2-contract.yml"
+permissions:
+  contents: read
+jobs:
+  verify-herd-communication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify static V32-R2 contract and explicit operational HOLD
+        run: python3 tools/verify_v32r2_contract.py
