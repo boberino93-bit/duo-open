@@ -1,0 +1,59 @@
+{
+  "schema": "herd/v32r4/project-origin-directive-initiative-candidate/v1",
+  "status": "CANDIDATE_ONLY_NOT_ACTIVE_NOT_OWNER_CHRONOVALIDATED",
+  "project_id": "duo-open",
+  "repository": "boberino93-bit/duo-open",
+  "repository_id": 1396743140,
+  "priority": {
+    "proposed": "P1",
+    "approved": false
+  },
+  "project_origin": {
+    "description": "Android/Samsung Galaxy Z Fold7 dual-display continuity and screen-transition research and implementation.",
+    "verification": "REPOSITORY_BOOTSTRAP_DERIVED_ORIGINAL_CHATGPT_PROJECT_UNINSPECTED"
+  },
+  "initiatives": [
+    {
+      "statement": "Inner/cover display continuity and hinge transition engineering",
+      "status": "NEEDS_CHRONOVALIDATION"
+    },
+    {
+      "statement": "Mirroring, portal geometry and state-machine experiments",
+      "status": "NEEDS_CHRONOVALIDATION"
+    },
+    {
+      "statement": "Measured on-device validation with rollback evidence",
+      "status": "NEEDS_CHRONOVALIDATION"
+    }
+  ],
+  "candidate_standing_directives": [
+    {
+      "statement": "Original Duo Open user-interaction model is advisory only",
+      "authority": "SOURCE_INFERENCE_NOT_OWNER_PROMOTED"
+    },
+    {
+      "statement": "Preserve source experiment history and physical validation caveats",
+      "authority": "SOURCE_INFERENCE_NOT_OWNER_PROMOTED"
+    },
+    {
+      "statement": "Do not infer tested device behavior from a successful build",
+      "authority": "SOURCE_INFERENCE_NOT_OWNER_PROMOTED"
+    }
+  ],
+  "evidence_sources": [
+    {
+      "repository_file_path": "AGENT_CONTEXT_REFERENCE.md",
+      "github_blob_sha1": "121be2e9d201c44533cc717418ae4c38317a9891",
+      "source_role": "EVIDENCE_NOT_AUTOMATIC_AUTHORITY"
+    },
+    {
+      "repository_file_path": "AGENTBUS_IMPORT/messages/20261002T223700Z__user-directive-bridge__all__user-interaction-model-v1.json",
+      "github_blob_sha1": "0f816d16d5e6e030cdca92e465494d5d30fa3867",
+      "source_role": "UNVERIFIED_USER_DIRECTIVE_BRIDGE_RECORD"
+    }
+  ],
+  "unavailable_source_behavior": "UNINSPECTED_NOT_ABSENT",
+  "source_of_truth": "APPROVED_GITHUB_PROJECT_STATE_ONCE_PROMOTED",
+  "security_boundary": "PROJECT_LOCAL",
+  "automatic_task_start": false
+}
