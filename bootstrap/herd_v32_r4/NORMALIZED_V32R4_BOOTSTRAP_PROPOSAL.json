@@ -1,0 +1,104 @@
+{
+  "boot_sequence": [
+    "IDENTIFY_EXACT_PROJECT_AND_STABLE_GITHUB_REPOSITORY_ID",
+    "EXECUTE_EXISTING_PROJECT_SECURITY_AND_IDENTITY_GATE",
+    "VERIFY_OWNER_AUTHENTICATION_AND_CASE_BOUNDED_START",
+    "READ_AND_VERIFY_APPROVED_GITHUB_OPERATING_RELEASE_AND_SOURCE_HASH",
+    "CHRONOVALIDATE_PROJECT_ORIGIN_DIRECTIVES_INITIATIVES_AND_HANDOFF",
+    "RESPECT_PROJECT_PRIORITIES_HOLDS_LEASES_AND_BOUNDARIES",
+    "EXECUTE_ONLY_SCOPED_AND_AUTHORIZED_WORK",
+    "REQUIRE_FRESH_CASE_FOR_ANY_DURABLE_MUTATION",
+    "PREPARE_MINIMAL_ADDITIVE_DIFF_AND_CHECK_CURRENT_GIT_HEAD",
+    "COMMIT_ONLY_IF_CASE_VALID_AND_VERIFY_READBACK",
+    "RECORD_IMMUTABLE_HANDOFF_AND_SEAL_SESSION"
+  ],
+  "compatibility_constraints": {
+    "apply_known_r3_overlay_controls_without_claiming_r3_inheritance": true,
+    "native_host_status": "UNVERIFIED",
+    "no_live_agentbus_claim": true,
+    "no_scheduler_autostart": true,
+    "r3_full_body_remains_unverified": true,
+    "r3_verified_github_sources": [
+      "boberino93-bit/intercommunicationsenhancements:coordination/v32r3/README.md",
+      "boberino93-bit/intercommunicationsenhancements:coordination/v32r3/SCHEDULER_PAUSE_DIRECTIVE.json",
+      "boberino93-bit/intercommunicationsenhancements:bootstrap/HERD_V32R3_COORDINATION_ENTRYPOINT.md"
+    ]
+  },
+  "cv_export": {
+    "allow_private_corpus_to_central": false
+  },
+  "cv_support_nonfederated": false,
+  "cv_support_security_bootstrap_first": false,
+  "existing_security_admission_first": true,
+  "git": {
+    "commit_at_session_end_requires_fresh_mutation_case": true,
+    "commit_readback_required": true,
+    "expected_head_compare_and_swap": true,
+    "force_push_allowed": false,
+    "minimal_additive_diff_default": true,
+    "read_approved_source_first": true
+  },
+  "owner_authorization": {
+    "each_external_mutation_needs_valid_fresh_case": true,
+    "explicit_claim_required": true,
+    "independent_proof_for_high_consequence": true,
+    "name_alone_is_not_authentication": true,
+    "registered_principal_id": "robert_leonard"
+  },
+  "part1_staging": {
+    "additive_candidate_only": true,
+    "branch": "candidate/herd-v32r4-context-20261020",
+    "does_not_enable_schedules": true,
+    "draft_pr": "https://github.com/boberino93-bit/duo-open/pull/15",
+    "existing_candidate_head_sha": "bc3680e5983a8a767d768f2a4acc26ddeca66750",
+    "github_data_authority": "APPROVED_STATE_ONLY_NOT_REPO_HEAD_BY_RECENCY",
+    "no_rewrite_of_root_agent_bootstrap": true,
+    "parent_repository_main_sha": "82a465b94f1cc1215e2ec414105795df26db3dc2",
+    "requires_fresh_case_for_publish": true
+  },
+  "previous_r2_r3_files": "RETAIN_UNMODIFIED_AS_EVIDENCE_OR_COMPATIBILITY_UNTIL_APPROVED_RECLASSIFICATION",
+  "project": {
+    "github_numeric_id": 1396743140,
+    "github_repository": "boberino93-bit/duo-open",
+    "id": "duo-open",
+    "priority_owner_approved": false,
+    "proposed_portfolio_priority": "P1"
+  },
+  "release": {
+    "active": false,
+    "candidate_release": "V32-R4",
+    "candidate_sha256": "1bf1786c4f4a5f5ed45599c27a1a0ee9be109bdebef0dc2c8180c3b95945afb9",
+    "full_r3_source_verified": false,
+    "native_transport_certified": false,
+    "promotion_hold": "HOLD_PENDING_ARTIFACT_DISTRIBUTION_ORIGIN_ADJUDICATION_TESTS_FRESH_AUTHORIZATION",
+    "r2_parent_release_lineage_choice": "OWNER_SELECTED_IN_CURRENT_CONVERSATION_NOT_GITHUB_MUTATION_AUTHORIZATION",
+    "r3_finalized_pointer_sha256": "138c9694988e7133cd96f8eb5f36c0fdb4482db7df150e9864a6144e230c80ed",
+    "r3_status": "UNVERIFIED_UNACTIVATED_HISTORICAL_BRANCH",
+    "verified_parent_artifact": "V32-R2",
+    "verified_parent_sha256": "1dd3cbd73092b810f934ff32d33e3f4d968c5474c8e92b6ec7462fb417d0ca47"
+  },
+  "retention": {
+    "history_and_sealed_sessions_excluded": true,
+    "includes_current_version": true,
+    "prune": {
+      "authorized_now": false,
+      "git_history_rewrite": false,
+      "requires_fresh_destructive_case": true,
+      "requires_verified_archive": true
+    },
+    "unverified_candidates_count": false,
+    "verified_operating_versions_total": 3
+  },
+  "schema": "herd/v32r4/universal-project-bootstrap-r2-parent-proposal/v2",
+  "source_authority": {
+    "approved_current_project_state": "GITHUB_EXPLICITLY_APPROVED_PROJECT_RECORD_ONLY",
+    "candidate_is_not_authoritative": true,
+    "candidate_record_path": "project_state/herd_v32r4/PROJECT_ORIGIN_DIRECTIVES_INITIATIVES_CANDIDATE.json",
+    "candidate_source_truth_note": "Proposals do not become authoritative by being on GitHub; only a separately approved current-state release is authoritative.",
+    "github_commit_is_not_agentbus_message_receipt": true,
+    "legacy_message_board_evidence": "READ_ONLY_PROVENANCE_EVIDENCE_NOT_LIVE_TRANSPORT",
+    "native_chatgpt_library_agentbus": "HOST_UNVERIFIED"
+  },
+  "staging_blocker": null,
+  "status": "GITHUB_PART1_STAGING_CANDIDATE_NOT_ACTIVE"
+}
