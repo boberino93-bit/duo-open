@@ -1,0 +1,45 @@
+{
+  "bootstrap_host_linkage": "NOT_VERIFIED",
+  "case_required": "CROSS_PROJECT_MUTATION_CANDIDATE_ONLY",
+  "cv_support": {
+    "cross_repo_private_corpus_export": false,
+    "nonfederated": false,
+    "security_bootstrap_must_run_first": false
+  },
+  "draft_pr": "https://github.com/boberino93-bit/duo-open/pull/15",
+  "expected_current_main_sha": "82a465b94f1cc1215e2ec414105795df26db3dc2",
+  "expected_existing_candidate_branch_head_sha": "bc3680e5983a8a767d768f2a4acc26ddeca66750",
+  "keep_three_applies_only_to_verified_operating_versions": true,
+  "lineage": {
+    "candidate_release": "V32-R4",
+    "candidate_sha256": "1bf1786c4f4a5f5ed45599c27a1a0ee9be109bdebef0dc2c8180c3b95945afb9",
+    "parent_sha256": "1dd3cbd73092b810f934ff32d33e3f4d968c5474c8e92b6ec7462fb417d0ca47",
+    "r3_branch_status": "UNVERIFIED_HISTORICAL_NOT_ACTIVE",
+    "verified_parent": "V32-R2"
+  },
+  "no_activation_or_merge": true,
+  "no_delete_or_history_rewrite": true,
+  "outcome": "OFFLINE_ARTIFACT_ONLY",
+  "owner_approval_for_project_directives": "PENDING",
+  "preconditions_before_write": [
+    "FRESH_SINGLE_USE_CASE_AND_EXTERNAL_PROOF",
+    "RECHECK_STABLE_REPOSITORY_ID",
+    "RECHECK_MAIN_HEAD",
+    "RECHECK_CANDIDATE_HEAD",
+    "VERIFY_TARGET_PATHS_ABSENT",
+    "HOST_POLICY_ALLOWS_WRITE"
+  ],
+  "preserve_existing_r2_root_and_legacy_contracts": true,
+  "project_id": "duo-open",
+  "proposal_path": "bootstrap/herd_v32_r4/NORMALIZED_V32R4_BOOTSTRAP_PROPOSAL.json",
+  "proposal_sha256": "c08827d64b84e68f1567820d3f808600127ab8932dfc277eb3ae59ee7bc61d23",
+  "repository": "boberino93-bit/duo-open",
+  "repository_id": 1396743140,
+  "sasha_recovery": {
+    "do_not_bypass_block": false,
+    "prior_platform_write_safety_block": false,
+    "recreate_repo": false
+  },
+  "schema": "herd/v32r4/part1-staging-attestation/v1",
+  "status": "PREPARED_OFFLINE_NOT_PUBLISHED_NOT_ACTIVE"
+}
