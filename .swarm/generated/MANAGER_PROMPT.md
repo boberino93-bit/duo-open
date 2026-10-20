@@ -1,5 +1,5 @@
 <!-- GENERATED: edit role-specs.json / role-impact-map.json, not this file. -->
-<!-- source_revision: inputs-sha256:cf645fcf50d82c716ff4698183ea7d8cd3ff3b781cc18f0691e07561ef6d12b7 -->
+<!-- source_revision: inputs-sha256:18b028557ac29b0172077f3f9b073836490409e61a701846f7890ede9aecdd6b -->
 
 # Duo Open Manager Agent Template
 
@@ -49,9 +49,12 @@ Own coordination, concurrency, dependency visibility, quality gates, and swarm e
 
 ## Current project-change context
 
-Generated from source fingerprint `inputs-sha256:cf645fcf50d82c716ff4698183ea7d8cd3ff3b781cc18f0691e07561ef6d12b7`.
+Generated from source fingerprint `inputs-sha256:18b028557ac29b0172077f3f9b073836490409e61a701846f7890ede9aecdd6b`.
 
 Role-relevant changed paths:
-- `swarm_kernel/FORENSIC_AUDIT_LIFECYCLE_DIRECTIVE.md`
+- `AGENT_BOOTSTRAP.json`
+- `CHATGPT_PROJECT_REPOSITORY_LINK.json`
+- `HERD_V32R2_COMMUNICATION_AUDIT.md`
+- `HERD_V32R2_COMMUNICATION_CONTRACT.json`
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.

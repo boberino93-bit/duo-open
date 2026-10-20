@@ -1,20 +1,24 @@
 {
   "affected_roles": [
     "MANAGER",
-    "PRIMARY"
+    "PRIMARY",
+    "RESEARCHER"
   ],
   "changed_files": [
-    "swarm_kernel/FORENSIC_AUDIT_LIFECYCLE_DIRECTIVE.md"
+    "AGENT_BOOTSTRAP.json",
+    "CHATGPT_PROJECT_REPOSITORY_LINK.json",
+    "HERD_V32R2_COMMUNICATION_AUDIT.md",
+    "HERD_V32R2_COMMUNICATION_CONTRACT.json"
   ],
   "generated_hashes": {
-    "MANAGER_PROMPT.md": "5fa9b8fdb94155a9c63a8e9c93bc034959639b38de3b6a9a45f8ca0e12553d5a",
-    "PRIMARY_PROMPT.md": "2946854d45bf382a978e3f617396793505ac12b76e0c83ffbd7bdff1455f3313",
-    "RESEARCHER_PROMPT.md": "2750c7d4b4cc19cd7b4923fafbb018ad77f5d3a87221e6b691d0279eca881558"
+    "MANAGER_PROMPT.md": "416c21dc929e8acc532480457648ef33887899429eb24084bd68ea39cf642863",
+    "PRIMARY_PROMPT.md": "5ca4adb298449bf9ff3db47687bec960ec451ad385c0246dbccd2610768d6249",
+    "RESEARCHER_PROMPT.md": "a71e8b50b5c9385c49f384204fe59881e223649c3c1958b29dbca359fdb7f47e"
   },
   "schema": "duo-open/generated-role-prompts/v1",
   "source_hashes": {
     "role-impact-map.json": "6582b008eae2f89ec6c41a1131b454e07ed74c6a99ef4bd95c75a8cd68aae322",
     "role-specs.json": "8c7e88dbe8c2c233f55daa72b1553ea9c65ebecde968f6487ddab646dda883f2"
   },
-  "source_revision": "inputs-sha256:cf645fcf50d82c716ff4698183ea7d8cd3ff3b781cc18f0691e07561ef6d12b7"
+  "source_revision": "inputs-sha256:18b028557ac29b0172077f3f9b073836490409e61a701846f7890ede9aecdd6b"
 }
