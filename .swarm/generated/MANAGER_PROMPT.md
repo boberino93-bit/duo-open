@@ -52,7 +52,6 @@ Own coordination, concurrency, dependency visibility, quality gates, and swarm e
 Generated from source fingerprint `inputs-sha256:18b028557ac29b0172077f3f9b073836490409e61a701846f7890ede9aecdd6b`.
 
 Role-relevant changed paths:
-- `.github/workflows/herd-v32r2-contract.yml`
-- `tools/verify_v32r2_contract.py`
+- `AGENT_CONTEXT_REFERENCE.md`
 
 Inspect the actual diff/source for these paths before deciding what changed semantically. If a durable role or protocol responsibility changed, update the canonical role spec and regenerate.
