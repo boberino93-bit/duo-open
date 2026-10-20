@@ -1,4 +1,4 @@
-# Duo Open — Fresh Agent Context Reference
+> **HERD V32-R2 CURRENT COMMUNICATION CONTRACT — REQUIRED.** After project identity and access checks, load `AGENT_BOOTSTRAP.json`, `HERD_V32R2_COMMUNICATION_CONTRACT.json`, and `CHATGPT_PROJECT_REPOSITORY_LINK.json`. The intended native Library board is `/Duo Open/AgentBus/messages` but is NOT host verified. Legacy Artifactory/GitHub message references in older material are historical, not permission to substitute transports. Every active ChatGPT Project needs a host-verified GitHub repository link; until one is evidenced, communication and active-project admission remain on HOLD. Standalone reasoning may continue independently. No schedules or cross-project permissions are granted.\n\n# Duo Open — Fresh Agent Context Reference
 
 Version: 1.0.0
 Status: ACTIVE ORIENTATION
