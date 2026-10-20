@@ -1,0 +1,16 @@
+{
+  "schema": "herd/v32r2/chatgpt-project-github-binding/v1",
+  "project_id": "duo-open",
+  "suggested_chatgpt_project_name": "Duo Open",
+  "chatgpt_project_id": null,
+  "active_in_chatgpt": "UNVERIFIED",
+  "github_repository": "boberino93-bit/duo-open",
+  "github_repository_id": 1396743140,
+  "github_binding_verified": true,
+  "chatgpt_project_file_attachment_readback_verified": false,
+  "required_for_active_chatgpt_project": true,
+  "enforcement": "ACTIVE_CHATGPT_PROJECT_WITHOUT_VERIFIED_GITHUB_LINK_IS_NONCOMPLIANT",
+  "host_link_state": "PENDING_NATIVE_CHATGPT_PROJECT_INTERFACE",
+  "repository_must_not_be_recreated_for_binding": true,
+  "project_private_files_must_not_be_published_to_git": true
+}

@@ -1,0 +1,60 @@
+{
+  "schema": "herd/v32r2/mandatory-communication-contract/v1",
+  "project_id": "duo-open",
+  "repository": {
+    "full_name": "boberino93-bit/duo-open",
+    "id": 1396743140,
+    "identity_verified": true,
+    "source_and_backup_role": true
+  },
+  "canonical_specification": {
+    "version": "V32-R2",
+    "sha256": "1dd3cbd73092b810f934ff32d33e3f4d968c5474c8e92b6ec7462fb417d0ca47",
+    "status": "PROMOTED_BY_OWNER_DIRECTIVE",
+    "operational_certification": "HOLD",
+    "independently_certified_gates": 0
+  },
+  "authoritative_transport": {
+    "provider": "CHATGPT_NATIVE_LIBRARY",
+    "logical_board": "/Duo Open/AgentBus/messages",
+    "host_verified": false,
+    "independent_authenticated_roundtrips": 0,
+    "host_scoped_agent_grants_verified": false,
+    "signed_messages_required": true,
+    "replay_rejection_required": true,
+    "immutable_readback_receipts_required": true
+  },
+  "separate_transports": {
+    "github": "VERSIONED_SOURCE_AND_BACKUP_NOT_AGENTBUS",
+    "jfrog": "HISTORICAL_ONLY_NOT_NATIVE_LIBRARY",
+    "library": "INTENDED_NOT_HOST_VERIFIED"
+  },
+  "chatgpt_project_binding": {
+    "required_for_active_project": true,
+    "host_project_id": null,
+    "host_project_active_state": "UNKNOWN",
+    "host_native_link_verified": false,
+    "on_missing": "BLOCK_CLAIM_OF_COMPLETED_INTEGRATION"
+  },
+  "security": {
+    "cross_project_state_default": "DENY",
+    "foreign_agent_commands_authorized": false,
+    "do_not_reopen_sealed_sessions": true,
+    "no_transport_substitution_without_explicit_authorization": true,
+    "original_evidence_immutable": true,
+    "model_upgrade_not_herd_improvement": true
+  },
+  "standalone_architecture": {
+    "reasoning_continues_without_agentbus": true,
+    "governance_continues_without_agentbus": true
+  },
+  "legacy_forum_evidence": {
+    "authority": "INTERNAL_ARTIFACTORY",
+    "namespace": "/DuoOpen-AgentBus/messages",
+    "repository_view": {
+      "mode": "SNAPSHOT_BACKUP",
+      "path": "DEPLOYMENT_METADATA/AGENTBUS_SNAPSHOT/messages"
+    }
+  },
+  "validation_state": "GITHUB_POLICY_MATERIALIZED_HOST_LINKAGE_AND_COMMUNICATION_UNVERIFIED"
+}
